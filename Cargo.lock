@@ -2323,6 +2323,7 @@ version = "0.1.0"
 dependencies = [
  "async-std",
  "clap",
+ "quote",
  "serde",
  "serde_yaml",
  "sqlx",

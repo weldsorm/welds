@@ -7,8 +7,11 @@ use std::path::PathBuf;
 #[command(name = "welds")]
 #[command(about = "A post-modern ORM", long_about = None)]
 pub(crate) struct Args {
+    /// Set the path to the schema definition file
+    #[arg(short, long, value_name = "schema")]
+    pub schema_file: Option<PathBuf>,
     #[command(subcommand)]
-    command: Commands,
+    pub command: Commands,
 }
 
 #[derive(Debug, Subcommand)]

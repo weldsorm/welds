@@ -1,0 +1,22 @@
+---
+tables:
+
+- name: people
+  model: Person
+  schema:
+  - name: id
+    type: integer
+  - name: name
+    type: text
+  - name: farts
+    type: blob
+    
+- name: orders
+  # model: order # value Default to singularized version of table name
+  schema:
+  - name: id
+    type: integer
+  - name: name
+    type: text
+  - name: price
+    type: real

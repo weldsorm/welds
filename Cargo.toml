@@ -1,0 +1,11 @@
+[package]
+name = "welds"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+async-std = { version = "1", features = [ "attributes" ] }
+sqlx = { version = "0.6", features = [ "runtime-async-std-native-tls", "all", "postgres", "mysql", "mssql", "sqlite" ] }
+clap = "4.0"

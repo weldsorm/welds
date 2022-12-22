@@ -8,4 +8,4 @@ edition = "2021"
 [dependencies]
 async-std = { version = "1", features = [ "attributes" ] }
 sqlx = { version = "0.6", features = [ "runtime-async-std-native-tls", "all", "postgres", "mysql", "mssql", "sqlite" ] }
-clap = "4.0"
+clap = { version = "4.0", features = [ "derive"] }

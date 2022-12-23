@@ -6,6 +6,7 @@ use std::fs;
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::PathBuf;
+mod struct_def;
 
 pub fn run(config: &Config, opt: &GenerateOption) -> Result<()> {
     //match sure we are working in a valid project
@@ -20,27 +21,44 @@ pub fn run(config: &Config, opt: &GenerateOption) -> Result<()> {
     for table in tables {
         let path = model_path(&opt.project_dir, &table);
         fs::create_dir_all(&path)?;
-        init_files(&path)?;
+        init_mod_file(&path)?;
+        init_customizations(&path)?;
+        struct_def::generate(&path, &table)?;
     }
 
     Ok(())
 }
 
-fn init_files(path: &PathBuf) -> Result<()> {
+fn init_mod_file(path: &PathBuf) -> Result<()> {
     let mut path = PathBuf::from(path);
     path.push("mod.rs");
+    if path.exists() {
+        return Ok(());
+    }
 
     let code = quote::quote! {
         mod definition;
-        mod genearted;
+        mod sql;
         mod customizations;
         pub use definition::*;
-        pub use genearted::*;
+        pub use sql::*;
         pub use customizations::*;
     };
+
     let mut file = File::create(path)?;
     let formated = RustFmt::default().format_str(code.to_string()).unwrap();
     file.write_all(formated.as_bytes())?;
+    Ok(())
+}
+
+fn init_customizations(mod_path: &PathBuf) -> Result<()> {
+    let mut path = PathBuf::from(mod_path);
+    path.push("customizations.rs");
+    if path.exists() {
+        return Ok(());
+    }
+    let mut file = File::create(path)?;
+    file.write_all(&[])?;
     Ok(())
 }
 

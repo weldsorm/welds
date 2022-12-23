@@ -53,6 +53,8 @@ impl Table {
 pub struct Schema {
     pub name: String,
     pub r#type: String,
+    #[serde(default)]
+    pub null: bool,
 }
 
 fn all_abilities() -> Vec<Ability> {

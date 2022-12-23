@@ -1,15 +1,16 @@
-use clap::{Parser, Subcommand, ValueEnum};
-use std::ffi::OsStr;
-use std::ffi::OsString;
+use clap::{Parser, Subcommand};
 use std::path::PathBuf;
 
 #[derive(Parser)] // requires `derive` feature
 #[command(name = "welds")]
 #[command(about = "A post-modern ORM", long_about = None)]
 pub struct Args {
-    /// Set the path to the schema definition file
+    /// Set the path to the schema definition file (defaults to the current directory)
     #[arg(short, long, value_name = "schema")]
     pub schema_file: Option<PathBuf>,
+    /// Set the path to the root of your project (defaults to the path of the schema file)
+    #[arg(short, long, value_name = "project")]
+    pub project_dir: Option<PathBuf>,
     #[command(subcommand)]
     pub command: Commands,
 }

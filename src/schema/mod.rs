@@ -14,12 +14,12 @@ pub(crate) fn read(path: &PathBuf) -> Result<Config> {
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
-pub(crate) struct Config {
+pub struct Config {
     pub tables: Vec<Table>,
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
-pub(crate) struct Table {
+pub struct Table {
     pub name: String,          // Table name
     pub model: Option<String>, // value Default to singularized version of table name
     pub schema: Vec<Schema>,
@@ -28,7 +28,7 @@ pub(crate) struct Table {
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
-pub(crate) struct Schema {
+pub struct Schema {
     pub name: String,
     pub r#type: String,
 }
@@ -43,7 +43,7 @@ fn all_abilities() -> Vec<Ability> {
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
-pub(crate) enum Ability {
+pub enum Ability {
     Create,
     Update,
     Delete,

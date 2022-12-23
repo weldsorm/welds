@@ -2,6 +2,7 @@ pub mod commands;
 mod errors;
 pub mod generators;
 pub mod schema;
+pub mod adapters;
 
 use errors::Result;
 pub use errors::WeldsError;

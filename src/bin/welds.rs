@@ -1,9 +1,10 @@
 use clap::Parser;
 use std::path::PathBuf;
-use weldslib::{commands::Commands::*, GenerateOption};
+use weldslib::{commands::Commands::*, GenerateOption, adapters::sqlite::schema};
+use anyhow::Result;
 
 #[async_std::main]
-async fn main() {
+async fn main() -> Result<()> {
     let args = weldslib::commands::Args::parse();
 
     let mut schema_path = args
@@ -30,6 +31,10 @@ async fn main() {
                 ..Default::default()
             };
             weldslib::generate(opt)
+        },
+        PrintExample {  } => {
+            schema().await?;
+            Ok(())
         }
     };
 
@@ -38,4 +43,5 @@ async fn main() {
         eprintln!("Error: {}", err);
         std::process::exit(1);
     }
+    Ok(())
 }

@@ -20,11 +20,33 @@ pub struct Config {
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct Table {
-    pub name: String,          // Table name
-    pub model: Option<String>, // value Default to singularized version of table name
+    pub name: String,      // Table name
+    model: Option<String>, // value Default to singularized version of table name
     pub schema: Vec<Schema>,
     #[serde(default = "all_abilities")]
     pub abilities: Vec<Ability>,
+}
+
+impl Table {
+    /// Returns the name of the module this table will be placed in
+    pub fn module_name(&self) -> String {
+        use inflector::Inflector;
+        let start = match &self.model {
+            Some(s) => s.to_string(),
+            None => self.name.to_singular(),
+        };
+        start.to_snake_case()
+    }
+
+    /// Returns the name of the struct this table will generate
+    pub fn struct_name(&self) -> String {
+        use inflector::Inflector;
+        let start = match &self.model {
+            Some(s) => s.to_string(),
+            None => self.name.to_singular(),
+        };
+        start.to_class_case()
+    }
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]

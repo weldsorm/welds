@@ -5,6 +5,8 @@ pub(crate) type Result<T> = std::result::Result<T, WeldsError>;
 pub enum WeldsError {
     MissingSchemaFile(PathBuf),
     ReadError(PathBuf),
+    InvalidProject,
+    IoError(std::io::Error),
     ConfigReadError((PathBuf, serde_yaml::Error)),
     DbError(sqlx::Error),
 }
@@ -34,6 +36,11 @@ impl std::fmt::Display for WeldsError {
                 path.to_string_lossy(),
                 yaml_err
             ),
+            IoError(inner) => write!(f, "There was an IO error: {}", inner),
+            InvalidProject => write!(
+                f,
+                "It doesn't appear you are working in a valid rust project."
+            ),
             DbError(err) => write!(f, "{}", err),
         }
     }
@@ -42,5 +49,11 @@ impl std::fmt::Display for WeldsError {
 impl From<sqlx::Error> for WeldsError {
     fn from(inner: sqlx::Error) -> WeldsError {
         WeldsError::DbError(inner)
+    }
+}
+
+impl From<std::io::Error> for WeldsError {
+    fn from(inner: std::io::Error) -> WeldsError {
+        WeldsError::IoError(inner)
     }
 }

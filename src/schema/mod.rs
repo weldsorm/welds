@@ -1,4 +1,17 @@
+use crate::errors::{Result, WeldsError};
 use serde::{Deserialize, Serialize};
+use std::path::PathBuf;
+
+/// Reads in a schema config file and parses it into a config
+pub(crate) fn read(path: &PathBuf) -> Result<Config> {
+    let yaml_str =
+        std::fs::read_to_string(path).map_err(|_| WeldsError::ReadError(path.clone()))?;
+    let config: std::result::Result<Config, serde_yaml::Error> = serde_yaml::from_str(&yaml_str);
+    match config {
+        Err(err) => Err(WeldsError::ConfigReadError((path.clone(), err))),
+        Ok(config) => Ok(config),
+    }
+}
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub(crate) struct Config {

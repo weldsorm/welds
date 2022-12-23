@@ -22,11 +22,8 @@ pub async fn generate(schema_path: PathBuf, table: Option<String>) -> Result<()>
         return Err(WeldsError::MissingSchemaFile(schema_path));
     }
 
-    println!(
-        "generate: {} {:?}",
-        schema_path.to_string_lossy().to_string(),
-        table
-    );
+    let config = schema::read(&schema_path)?;
+    //println!("CONFIG: {:?}", config);
 
     Ok(())
 }

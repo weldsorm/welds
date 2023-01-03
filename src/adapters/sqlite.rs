@@ -53,7 +53,7 @@ async fn columns(pool: &Pool<sqlx::Sqlite>, table: &Table) -> Result<Vec<Column>
         Column{
             name: row.name,
             r#type: row.r#type,
-            null: false
+            null: row.notnull == 1
         }
     }).collect();
 

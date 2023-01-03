@@ -14,7 +14,7 @@ pub(crate) fn generate(mod_path: &PathBuf, table: &Table) -> Result<()> {
     let struct_name = format_ident!("{}", table.struct_name());
 
     let mut fields = Vec::default();
-    for col in &table.schema {
+    for col in &table.columns {
         if let Some(tt) = type_mapper(col) {
             let name = format_ident!("{}", col.name);
             let feild = quote! { #name: #tt };

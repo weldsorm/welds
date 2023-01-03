@@ -2,7 +2,7 @@ use quote::__private::TokenStream;
 
 use crate::{
     errors::{Result, WeldsError},
-    schema::Schema,
+    schema::Column,
 };
 use std::path::PathBuf;
 
@@ -30,7 +30,7 @@ fn validate_project_path(path: &PathBuf) -> Result<()> {
     Ok(())
 }
 
-pub(crate) fn type_mapper(col: &Schema) -> Option<TokenStream> {
+pub(crate) fn type_mapper(col: &Column) -> Option<TokenStream> {
     use quote::quote;
     let root_base_type = match col.r#type.as_str() {
         "integer" => quote::format_ident!("u32"),

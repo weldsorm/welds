@@ -8,12 +8,21 @@ name = "weldslib"
 path = "src/lib.rs"
 
 [dependencies]
-async-std = { version = "1", features = [ "attributes" ] }
-sqlx = { version = "0.6", features = [ "runtime-async-std-rustls", "all", "postgres", "mysql", "mssql", "sqlite", "macros" ] }
-clap = { version = "4.0", features = [ "derive"] }
-serde = { version="1", features = ["derive"] }
+async-std = { version = "1", features = ["attributes"] }
+sqlx = { version = "0.6", features = [
+  "runtime-async-std-rustls",
+  "all",
+  "postgres",
+  "mysql",
+  "mssql",
+  "sqlite",
+  "macros",
+] }
+clap = { version = "4.0", features = ["derive"] }
+serde = { version = "1", features = ["derive"] }
 serde_yaml = "0.9"
 quote = "1"
 Inflector = "0.11"
 rust-format = "0.3"
 anyhow = "1.0"
+futures = "0.3.25"

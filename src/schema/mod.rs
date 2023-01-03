@@ -22,12 +22,25 @@ pub struct Config {
 pub struct Table {
     pub name: String,      // Table name
     model: Option<String>, // value Default to singularized version of table name
-    pub schema: Vec<Schema>,
+    pub r#type: String,    // This could be a table or view
+    pub schema: Schema,    // What schema this table belongs to
+    pub columns: Vec<Column>, // What are the columns on this table
     #[serde(default = "all_abilities")]
     pub abilities: Vec<Ability>,
 }
 
 impl Table {
+    pub fn new(name: String, schema: String, r#type: Option<String> ) -> Self {
+        Table {
+            name,
+            schema: Schema{ name: schema },
+            model: None,
+            columns: vec![],
+            r#type: r#type.unwrap_or_else(|| "table".to_string()),
+            abilities: vec![]
+        }
+    }
+
     /// Returns the name of the module this table will be placed in
     pub fn module_name(&self) -> String {
         use inflector::Inflector;
@@ -51,6 +64,11 @@ impl Table {
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct Schema {
+    pub name: String,
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+pub struct Column {
     pub name: String,
     pub r#type: String,
     #[serde(default)]

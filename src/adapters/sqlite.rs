@@ -1,14 +1,10 @@
-use sqlx::{ Pool, SqlitePool};
-use crate::schema::{Table, Column};
-use std::env;
-use anyhow::Result;
+use crate::database::Pool;
+use crate::errors::Result;
+use crate::schema::{Column, Table};
+use sqlx::{AnyConnection, Execute, QueryBuilder, Sqlite, SqliteConnection, SqlitePool};
 
-pub async fn schema() -> Result<Vec<Table>> {
-    let uri = env::var("DATABASE_URL")?;
-    let pool = SqlitePool::connect(&uri).await?;
-
-
-    let mut tbls = tables(&pool).await?;
+pub async fn schema(pool: &SqlitePool) -> Result<Vec<Table>> {
+    let mut tbls = tables(pool).await?;
     // Insert the task, then obtain the ID of this row
 
     for tbl in tbls.iter_mut() {
@@ -16,21 +12,48 @@ pub async fn schema() -> Result<Vec<Table>> {
         tbl.columns.append(&mut cols)
     }
 
-    println!("Results: {:?}", tbls);
+    //println!("Results: {:?}", tbls);
 
     Ok(tbls)
 }
 
-async fn tables(pool: &Pool<sqlx::Sqlite>) -> Result<Vec<Table>> {
-    let rows = sqlx::query!(r#"PRAGMA table_list"#).fetch_all(pool).await?;
+async fn tables(conn: &SqlitePool) -> Result<Vec<Table>> {
+    let mut qb: QueryBuilder<_> = QueryBuilder::new(r#"PRAGMA table_list"#);
+    let q = qb.build_query_as::<TableRow>();
+    let rows = q.fetch_all(conn).await?;
 
+    let tables = rows
+        .into_iter()
+        .map(|row| Table::new(row.name, row.schema, row.r#type))
+        .collect();
 
-    let tables = rows.into_iter().map(|row|{
-        Table::new(row.name, row.schema, Some(row.r#type) )
-    }).collect();
-
-    //"select * from pragma_table_info('tblName') as tblInfo;"
+    ////"select * from pragma_table_info('tblName') as tblInfo;"
     Ok(tables)
+}
+
+async fn columns(pool: &SqlitePool, table: &Table) -> Result<Vec<Column>> {
+    let rows = sqlx::query_as::<_, ColumnInfoRow>("select * from pragma_table_info(?)")
+        .bind(&table.name)
+        .fetch_all(pool)
+        .await?;
+
+    let columns = rows
+        .into_iter()
+        .map(|row| Column {
+            name: row.name,
+            r#type: row.r#type,
+            null: row.notnull == 1,
+        })
+        .collect();
+
+    Ok(columns)
+}
+
+#[derive(sqlx::FromRow, Debug)]
+struct TableRow {
+    name: String,
+    schema: String,
+    r#type: Option<String>,
 }
 
 #[derive(sqlx::FromRow, Debug)]
@@ -40,23 +63,5 @@ struct ColumnInfoRow {
     r#type: String,
     notnull: i64,
     pk: i64,
-    dflt_value: Option<String>
-}
-
-async fn columns(pool: &Pool<sqlx::Sqlite>, table: &Table) -> Result<Vec<Column>> {
-
-    let rows = sqlx::query_as::<_, ColumnInfoRow>("select * from pragma_table_info(?)")
-        .bind(&table.name)
-        .fetch_all(pool).await?;
-
-    let columns = rows.into_iter().map(|row| {
-        Column{
-            name: row.name,
-            r#type: row.r#type,
-            null: row.notnull == 1
-        }
-    }).collect();
-
-
-    Ok(columns)
+    dflt_value: Option<String>,
 }

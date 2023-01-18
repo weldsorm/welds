@@ -1,7 +1,7 @@
+use anyhow::Result;
 use clap::Parser;
 use std::path::PathBuf;
-use weldslib::{commands::Commands::*, GenerateOption, adapters::sqlite::schema};
-use anyhow::Result;
+use weldslib::{commands::Commands::*, GenerateOption};
 
 #[async_std::main]
 async fn main() -> Result<()> {
@@ -31,10 +31,6 @@ async fn main() -> Result<()> {
                 ..Default::default()
             };
             weldslib::generate(opt)
-        },
-        PrintExample {  } => {
-            schema().await?;
-            Ok(())
         }
     };
 

@@ -21,6 +21,4 @@ pub enum Commands {
     Update { table: Option<String> },
     /// Generate new models in your code based on the knowledge of the database
     Generate { table: Option<String> },
-    /// Print example db
-    PrintExample {},
 }

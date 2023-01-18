@@ -9,6 +9,9 @@ pub enum WeldsError {
     IoError(std::io::Error),
     ConfigReadError((PathBuf, serde_yaml::Error)),
     DbError(sqlx::Error),
+    NoDatabaseUrl,
+    ConfigWrite,
+    UnsupportedDatabase,
 }
 
 impl std::error::Error for WeldsError {}
@@ -42,6 +45,12 @@ impl std::fmt::Display for WeldsError {
                 "It doesn't appear you are working in a valid rust project."
             ),
             DbError(err) => write!(f, "{}", err),
+            ConfigWrite => write!(f, "There was an unknown error writing the weld.yaml config"),
+            NoDatabaseUrl => write!(f, "`DATABASE_URL` must be set to use welds"),
+            UnsupportedDatabase => write!(
+                f,
+                "`DATABASE_URL` does not contain a URL to a supported Database"
+            ),
         }
     }
 }

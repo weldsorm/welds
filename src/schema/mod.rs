@@ -1,3 +1,4 @@
+use crate::adapters::TableIdent;
 use crate::errors::{Result, WeldsError};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
@@ -13,31 +14,38 @@ pub(crate) fn read(path: &PathBuf) -> Result<Config> {
     }
 }
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+/// Writes a schema config file to disk
+pub(crate) fn write(path: &PathBuf, config: &Config) -> Result<()> {
+    let yaml = serde_yaml::to_string(config).map_err(|_| WeldsError::ConfigWrite)?;
+    std::fs::write(path, yaml.as_bytes())?;
+    Ok(())
+}
+
+#[derive(Debug, Default, PartialEq, Serialize, Deserialize)]
 pub struct Config {
     pub tables: Vec<Table>,
 }
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub struct Table {
-    pub name: String,      // Table name
-    model: Option<String>, // value Default to singularized version of table name
-    pub r#type: String,    // This could be a table or view
-    pub schema: Schema,    // What schema this table belongs to
+    pub name: String,         // Table name
+    model: Option<String>,    // value Default to singularized version of table name
+    pub r#type: String,       // This could be a table or view
+    pub schema: Schema,       // What schema this table belongs to
     pub columns: Vec<Column>, // What are the columns on this table
     #[serde(default = "all_abilities")]
     pub abilities: Vec<Ability>,
 }
 
 impl Table {
-    pub fn new(name: String, schema: String, r#type: Option<String> ) -> Self {
+    pub fn new(name: String, schema: String, r#type: Option<String>) -> Self {
         Table {
             name,
-            schema: Schema{ name: schema },
+            schema: Schema { name: schema },
             model: None,
             columns: vec![],
             r#type: r#type.unwrap_or_else(|| "table".to_string()),
-            abilities: vec![]
+            abilities: vec![],
         }
     }
 
@@ -60,14 +68,22 @@ impl Table {
         };
         start.to_class_case()
     }
+
+    /// return how this table is identified by the database
+    pub(crate) fn ident(&self) -> TableIdent {
+        TableIdent {
+            name: self.name.clone(),
+            schema: self.schema.name.clone(),
+        }
+    }
 }
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub struct Schema {
     pub name: String,
 }
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub struct Column {
     pub name: String,
     pub r#type: String,
@@ -84,7 +100,7 @@ fn all_abilities() -> Vec<Ability> {
     ]
 }
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub enum Ability {
     Create,
     Update,

@@ -26,3 +26,6 @@ Inflector = "0.11"
 rust-format = "0.3"
 anyhow = "1.0"
 futures = "0.3.25"
+
+[profile.dev.package.sqlx-macros]
+opt-level = 3

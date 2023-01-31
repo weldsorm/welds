@@ -1,8 +1,8 @@
 pub mod sqlite;
 
-use crate::database::Pool;
 use crate::errors::Result;
 use crate::schema::Table;
+use welds_core::database::Pool;
 
 pub async fn schema(pool: &Pool) -> Result<Vec<Table>> {
     match pool {

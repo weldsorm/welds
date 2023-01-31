@@ -1,5 +1,6 @@
 use std::path::PathBuf;
-pub(crate) type Result<T> = std::result::Result<T, WeldsError>;
+pub type Result<T> = std::result::Result<T, WeldsError>;
+use welds_core::errors::WeldsError as WeldsCoreError;
 
 #[derive(Debug)]
 pub enum WeldsError {
@@ -7,11 +8,9 @@ pub enum WeldsError {
     ReadError(PathBuf),
     InvalidProject,
     IoError(std::io::Error),
-    ConfigReadError((PathBuf, serde_yaml::Error)),
-    DbError(sqlx::Error),
-    NoDatabaseUrl,
+    ConfigReadError(PathBuf),
     ConfigWrite,
-    UnsupportedDatabase,
+    Core(WeldsCoreError),
 }
 
 impl std::error::Error for WeldsError {}
@@ -33,36 +32,37 @@ impl std::fmt::Display for WeldsError {
                 "There was an error reading the file {}",
                 path.to_string_lossy()
             ),
-            ConfigReadError((path, yaml_err)) => write!(
+            ConfigReadError(path) => write!(
                 f,
-                "There is an error in the config file {}. \n {}",
-                path.to_string_lossy(),
-                yaml_err
+                "There is an error in the config file {}. ",
+                path.to_string_lossy()
             ),
             IoError(inner) => write!(f, "There was an IO error: {}", inner),
             InvalidProject => write!(
                 f,
                 "It doesn't appear you are working in a valid rust project."
             ),
-            DbError(err) => write!(f, "{}", err),
             ConfigWrite => write!(f, "There was an unknown error writing the weld.yaml config"),
-            NoDatabaseUrl => write!(f, "`DATABASE_URL` must be set to use welds"),
-            UnsupportedDatabase => write!(
-                f,
-                "`DATABASE_URL` does not contain a URL to a supported Database"
-            ),
+            Core(inner) => write!(f, "{}", inner),
         }
     }
 }
 
 impl From<sqlx::Error> for WeldsError {
     fn from(inner: sqlx::Error) -> WeldsError {
-        WeldsError::DbError(inner)
+        let inin = WeldsCoreError::DbError(inner);
+        WeldsError::Core(inin)
     }
 }
 
 impl From<std::io::Error> for WeldsError {
     fn from(inner: std::io::Error) -> WeldsError {
         WeldsError::IoError(inner)
+    }
+}
+
+impl From<WeldsCoreError> for WeldsError {
+    fn from(inner: WeldsCoreError) -> WeldsError {
+        WeldsError::Core(inner)
     }
 }

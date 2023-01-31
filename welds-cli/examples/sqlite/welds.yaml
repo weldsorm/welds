@@ -14,7 +14,7 @@ tables:
   - name: price
     type: REAL
     'null': true
-  abilities: ['select']
+  abilities: ['Select']
 
 - name: people
   model: null

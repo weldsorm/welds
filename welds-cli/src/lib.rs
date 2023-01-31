@@ -1,17 +1,15 @@
 pub mod adapters;
 pub mod commands;
-pub(crate) mod database;
-mod errors;
+pub mod errors;
 pub mod generators;
 pub mod schema;
+use crate::errors::{Result, WeldsError};
 use adapters::TableIdent;
-use errors::Result;
-pub use errors::WeldsError;
 use schema::Table;
 use std::path::PathBuf;
 
 pub async fn update(schema_path: PathBuf, identifier: Option<String>) -> Result<()> {
-    let conn = crate::database::connect().await?;
+    let conn = welds_core::database::connect().await?;
     let identifier = identifier.as_ref().map(|x| TableIdent::new(x, &conn));
     let mut tables = crate::adapters::schema(&conn).await?;
     let tables: Vec<Table> = tables

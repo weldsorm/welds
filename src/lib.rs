@@ -33,9 +33,7 @@ pub async fn update(schema_path: PathBuf, identifier: Option<String>) -> Result<
 }
 
 fn update_single(ident: &TableIdent, table: Option<&Table>, current: &[Table]) -> Vec<Table> {
-    println!("in single: {:?}", &ident);
     let mut found = false;
-
     let mut new_list: Vec<Table> = current
         .iter()
         .filter_map(|t| {
@@ -46,7 +44,6 @@ fn update_single(ident: &TableIdent, table: Option<&Table>, current: &[Table]) -
             table.map(|nt| nt.clone())
         })
         .collect();
-
     // When the table is new to the schema Definition
     if let Some(table) = table {
         if !found {

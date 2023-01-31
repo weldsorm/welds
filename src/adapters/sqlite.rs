@@ -1,7 +1,6 @@
-use crate::database::Pool;
 use crate::errors::Result;
 use crate::schema::{Column, Table};
-use sqlx::{AnyConnection, Execute, QueryBuilder, Sqlite, SqliteConnection, SqlitePool};
+use sqlx::{QueryBuilder, SqlitePool};
 
 pub async fn schema(pool: &SqlitePool) -> Result<Vec<Table>> {
     let mut tbls = tables(pool).await?;
@@ -11,8 +10,6 @@ pub async fn schema(pool: &SqlitePool) -> Result<Vec<Table>> {
         let mut cols = columns(&pool, tbl).await?;
         tbl.columns.append(&mut cols)
     }
-
-    //println!("Results: {:?}", tbls);
 
     Ok(tbls)
 }
@@ -27,7 +24,6 @@ async fn tables(conn: &SqlitePool) -> Result<Vec<Table>> {
         .map(|row| Table::new(row.name, row.schema, row.r#type))
         .collect();
 
-    ////"select * from pragma_table_info('tblName') as tblInfo;"
     Ok(tables)
 }
 
@@ -59,9 +55,9 @@ struct TableRow {
 #[derive(sqlx::FromRow, Debug)]
 struct ColumnInfoRow {
     name: String,
-    cid: i64,
+    //cid: i64,
     r#type: String,
     notnull: i64,
-    pk: i64,
-    dflt_value: Option<String>,
+    //pk: i64,
+    //dflt_value: Option<String>,
 }

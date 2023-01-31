@@ -10,7 +10,7 @@ mod struct_def;
 
 pub fn run(config: &Config, opt: &GenerateOption) -> Result<()> {
     //match sure we are working in a valid project
-    super::validate_project_path(&opt.project_dir)?;
+    //super::validate_project_path(&opt.project_dir)?;
 
     let tables: Vec<_> = config
         .tables
@@ -23,6 +23,7 @@ pub fn run(config: &Config, opt: &GenerateOption) -> Result<()> {
         fs::create_dir_all(&path)?;
         init_mod_file(&path)?;
         init_customizations(&path)?;
+        init_sql(&path)?;
         struct_def::generate(&path, &table)?;
     }
 
@@ -37,12 +38,12 @@ fn init_mod_file(path: &PathBuf) -> Result<()> {
     }
 
     let code = quote::quote! {
+        mod customizations;
         mod definition;
         mod sql;
-        mod customizations;
+        pub use customizations::*;
         pub use definition::*;
         pub use sql::*;
-        pub use customizations::*;
     };
 
     let mut file = File::create(path)?;
@@ -54,6 +55,17 @@ fn init_mod_file(path: &PathBuf) -> Result<()> {
 fn init_customizations(mod_path: &PathBuf) -> Result<()> {
     let mut path = PathBuf::from(mod_path);
     path.push("customizations.rs");
+    if path.exists() {
+        return Ok(());
+    }
+    let mut file = File::create(path)?;
+    file.write_all(&[])?;
+    Ok(())
+}
+
+fn init_sql(mod_path: &PathBuf) -> Result<()> {
+    let mut path = PathBuf::from(mod_path);
+    path.push("sql.rs");
     if path.exists() {
         return Ok(());
     }

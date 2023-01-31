@@ -1,6 +1,6 @@
 #[derive(Debug, Clone)]
-pub struct Order {
+pub struct People {
     pub id: Option<i32>,
     pub name: Option<String>,
-    pub price: Option<f64>,
+    pub farts: Option<u8>,
 }

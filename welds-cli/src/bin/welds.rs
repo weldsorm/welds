@@ -26,7 +26,7 @@ async fn main() -> Result<()> {
         Generate { table } => {
             let opt = GenerateOption {
                 schema_path,
-                project_dir,
+                output_path: project_dir,
                 table,
                 ..Default::default()
             };

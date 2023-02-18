@@ -8,7 +8,7 @@ pub struct Args {
     /// Set the path to the schema definition file (defaults to the current directory)
     #[arg(short, long, value_name = "schema")]
     pub schema_file: Option<PathBuf>,
-    /// Set the path to the root of your project (defaults to the path of the schema file)
+    /// Set the path to where the generated models will be saved (defaults to the path of the schema file)
     #[arg(short, long, value_name = "project")]
     pub project_dir: Option<PathBuf>,
     #[command(subcommand)]

@@ -33,6 +33,7 @@ pub(crate) fn generate(mod_path: &PathBuf, table: &Table) -> Result<()> {
 
     let mut file = File::create(path)?;
     let formated = RustFmt::default().format_str(code.to_string()).unwrap();
+    let formated = format!("{}\n\n{}", super::GENERATED_WARNING, formated);
     file.write_all(formated.as_bytes())?;
     Ok(())
 }

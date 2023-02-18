@@ -58,18 +58,48 @@ const IGNORE_TABLES: &'static [&'static str] =
 #[derive(Debug, Default)]
 pub struct GenerateOption {
     pub schema_path: PathBuf,
-    pub project_dir: PathBuf,
+    pub output_path: PathBuf,
     pub table: Option<String>,
     pub force: bool,
 }
 
-pub fn generate(opt: GenerateOption) -> Result<()> {
+pub fn generate(mut opt: GenerateOption) -> Result<()> {
     if !opt.schema_path.exists() {
         return Err(WeldsError::MissingSchemaFile(opt.schema_path));
     }
 
     let config = schema::read(&opt.schema_path)?;
+
+    clean_code_output_path(&mut opt);
     generators::models::run(&config, &opt)?;
 
     Ok(())
+}
+
+/// If the path is the root of a project, add on ./src/models
+/// If the use is giving a path directly allow it to fly
+fn clean_code_output_path(opt: &mut GenerateOption) {
+    if is_project_path(&opt.output_path) {
+        let mut new_path = PathBuf::from(&opt.output_path);
+        new_path.push("src");
+        new_path.push("models");
+        opt.output_path = new_path;
+    }
+}
+
+fn is_project_path(path: &PathBuf) -> bool {
+    if !path.exists() || !path.is_dir() {
+        return false;
+    }
+    let mut src = PathBuf::from(path);
+    src.push("src");
+    if !src.exists() || !src.is_dir() {
+        return false;
+    }
+    let mut cargo_toml = PathBuf::from(path);
+    cargo_toml.push("Cargo.toml");
+    if !cargo_toml.exists() || !cargo_toml.is_file() {
+        return false;
+    }
+    true
 }

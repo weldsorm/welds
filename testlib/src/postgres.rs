@@ -1,17 +1,31 @@
+use static_init::dynamic;
 use std::process::{Command, Stdio};
 use std::thread::sleep;
 
-pub struct Postgres {
+#[dynamic(drop)]
+static mut POSTGRES: Postgres = Postgres::new();
+
+/// A shared connection to the testing Postgres database.
+/// Automatically booted and drop as needed
+pub fn conn() -> Result<sqlx::PgPool, sqlx::Error> {
+    let pg = &POSTGRES;
+    let _status = pg.read().is_running();
+    let url = "";
+    sqlx::PgPool::connect_lazy(url)
+}
+
+pub(crate) struct Postgres {
     container_id: String,
 }
 
 impl Postgres {
-    pub fn new() -> Result<Self, String> {
+    pub fn new() -> Self {
         let mut pg = Self {
             container_id: String::default(),
         };
-        pg.boot()?;
-        Ok(pg)
+        pg.boot().unwrap();
+        pg.wait_for_ready().unwrap();
+        pg
     }
 
     fn boot(&mut self) -> Result<(), String> {

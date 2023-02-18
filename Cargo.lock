@@ -2054,6 +2054,7 @@ name = "testlib"
 version = "0.1.0"
 dependencies = [
  "async-std",
+ "rand",
  "sqlx",
  "static_init",
 ]

@@ -1,37 +1,82 @@
+use rand::{distributions::Alphanumeric, Rng};
 use static_init::dynamic;
 use std::process::{Command, Stdio};
-use std::thread::sleep;
+use std::thread::sleep; // 0.8
 
 #[dynamic(drop)]
 static mut POSTGRES: Postgres = Postgres::new();
 
 /// A shared connection to the testing Postgres database.
 /// Automatically booted and drop as needed
-pub fn conn() -> Result<sqlx::PgPool, sqlx::Error> {
+pub async fn conn() -> Result<sqlx::PgPool, sqlx::Error> {
     let pg = &POSTGRES;
-    let _status = pg.read().is_running();
-    let url = "";
-    sqlx::PgPool::connect_lazy(url)
+    let _ = pg.read().wait_for_ready();
+    let url = pg.read().connection_string();
+    sqlx::PgPool::connect(&url).await
+}
+
+/// A shared connection to the testing Postgres database.
+/// Automatically booted and drop as needed
+pub fn conn_string() -> String {
+    let pg = &POSTGRES;
+    let _ = pg.read().wait_for_ready();
+    pg.read().connection_string().to_string()
+}
+
+pub(crate) fn init() {
+    let pg = &POSTGRES;
+    pg.read().is_running();
+}
+
+pub(crate) fn wait_with_ready() {
+    let pg = &POSTGRES;
+    pg.read().wait_for_ready().unwrap();
 }
 
 pub(crate) struct Postgres {
+    port: u32,
+    password: String,
     container_id: String,
 }
 
 impl Postgres {
     pub fn new() -> Self {
+        let mut rng = rand::thread_rng();
+        let port: u32 = rng.gen_range(20000..49000);
+
+        let password: String = rand::thread_rng()
+            .sample_iter(&Alphanumeric)
+            .take(16)
+            .map(char::from)
+            .collect();
+
         let mut pg = Self {
             container_id: String::default(),
+            port,
+            password,
         };
+        eprintln!("Booting Postgres test Environment");
         pg.boot().unwrap();
-        pg.wait_for_ready().unwrap();
         pg
     }
 
+    fn connection_string(&self) -> String {
+        format!(
+            "postgresql://postgres:{}@127.0.0.1:{}",
+            self.password, self.port
+        )
+    }
+
     fn boot(&mut self) -> Result<(), String> {
+        let port = format!("127.0.0.1:{}:5432", self.port);
+        let env = format!("POSTGRES_PASSWORD={}", self.password);
         let output = Command::new("docker")
             .arg("run")
             .arg("--rm")
+            .arg("-p")
+            .arg(port)
+            .arg("--env")
+            .arg(env)
             .arg("-d")
             .arg("welds_pg_testing_db")
             .output()
@@ -71,7 +116,7 @@ impl Postgres {
             .unwrap();
         let grep = Command::new("grep")
             .arg("-q")
-            .arg("database system is ready to accept connections")
+            .arg("checkpoint complete: wrote")
             .stdin(Stdio::from(logs.stdout.unwrap()))
             .stdout(Stdio::piped())
             .stderr(Stdio::null())
@@ -88,6 +133,9 @@ impl Postgres {
                 return Err("Container No Running");
             }
             if self.is_ready() {
+                // HACK: PG says it is ready before it really is :/
+                sleep(ten_millis);
+                sleep(ten_millis);
                 return Ok(());
             }
             sleep(ten_millis);

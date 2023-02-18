@@ -4,20 +4,9 @@ pub mod query;
 pub mod table;
 
 #[test]
-fn failing_test() {
-    let conn = testlib::postgres::conn();
-    assert!(false)
-}
-
-#[test]
-fn passing_test() {
-    let conn = testlib::postgres::conn();
-    assert!(true)
-}
-
-#[test]
-fn panic_test() {
-    let conn = testlib::postgres::conn();
-    panic!();
-    assert!(true)
+fn verify_pg_test_db_connection() {
+    async_std::task::block_on(async {
+        let conn = testlib::postgres::conn().await.unwrap();
+        assert!(!conn.is_closed(), "Error Connecting to Testing DB");
+    })
 }

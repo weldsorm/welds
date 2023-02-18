@@ -2016,6 +2016,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "testlib"
+version = "0.1.0"
+
+[[package]]
 name = "thiserror"
 version = "1.0.38"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2310,7 +2314,9 @@ dependencies = [
 name = "welds-core"
 version = "0.1.0"
 dependencies = [
+ "async-std",
  "sqlx",
+ "testlib",
 ]
 
 [[package]]

@@ -11,6 +11,30 @@ pub enum Pool {
     Postgres(PgPool),
 }
 
+impl From<PgPool> for Pool {
+    fn from(inner: PgPool) -> Self {
+        Pool::Postgres(inner)
+    }
+}
+
+impl From<MssqlPool> for Pool {
+    fn from(inner: MssqlPool) -> Self {
+        Pool::Mssql(inner)
+    }
+}
+
+impl From<SqlitePool> for Pool {
+    fn from(inner: SqlitePool) -> Self {
+        Pool::Sqlite(inner)
+    }
+}
+
+impl From<MySqlPool> for Pool {
+    fn from(inner: MySqlPool) -> Self {
+        Pool::MySql(inner)
+    }
+}
+
 impl Pool {
     pub fn as_sqlite<'a>(&'a self) -> Option<&'a SqlitePool> {
         match self {

@@ -15,13 +15,15 @@ CREATE TABLE Products (
 
 CREATE TABLE Orders (
   id bigserial PRIMARY KEY,
-  product_id int,
+  product_id INTEGER REFERENCES products (product_id),
   quantity smallint,
   code char,
   SoldFor MONEY
 );
 
-CREATE TABLE Others (
+CREATE SCHEMA alt;
+
+CREATE TABLE alt.Others (
   id serial PRIMARY KEY,
   interval INTERVAL,
   range_int4 INT4RANGE,

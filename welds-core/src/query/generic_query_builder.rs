@@ -106,9 +106,14 @@ where
                     let data = query.fetch_all(conn).await?;
                     Ok(data)
             },
+            Postgres(qb) => {
+                    let conn = conn.as_postgres().unwrap();
+                    let query = qb.build_query_as::<T>();
+                    let data = query.fetch_all(conn).await?;
+                    Ok(data)
+            },
             _ => todo!()
             //Mssql(qb) => qb.into_sql(),
             //MySql(qb) => qb.into_sql(),
-            //Postgres(qb) => qb.into_sql(),
         }
 }

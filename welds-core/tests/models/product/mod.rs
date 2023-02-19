@@ -1,5 +1,5 @@
 use welds_core::query::clause::QueryBuilderAdder;
-use welds_core::query::clause::{Clause, ClauseOpt};
+use welds_core::query::clause::{Basic, BasicOpt, Numeric, NumericOpt};
 use welds_core::query::optional::Optional;
 use welds_core::table::TableInfo;
 
@@ -24,27 +24,27 @@ pub struct Product {
 }
 
 pub struct ProductSchema {
-    pub id: Clause<i32>,
-    pub name: Clause<String>,
-    pub description: ClauseOpt<Optional<String>>,
-    pub price1: ClauseOpt<Optional<f32>>,
-    pub price2: ClauseOpt<Optional<f64>>,
+    pub id: Numeric<i32>,
+    pub name: Basic<String>,
+    pub description: BasicOpt<Optional<String>>,
+    pub price1: NumericOpt<Optional<f32>>,
+    pub price2: NumericOpt<Optional<f64>>,
     //pub price3: ClauseOpt<Optional<sqlx::postgres::types::PgMoney>>,
     //pub barcode: ClauseOpt<Optional<Vec<u8>>>,
-    pub active: ClauseOpt<Optional<bool>>,
+    pub active: BasicOpt<Optional<bool>>,
 }
 
 impl Default for ProductSchema {
     fn default() -> Self {
         Self {
-            id: Clause::new("id"),
-            name: Clause::new("name"),
-            description: ClauseOpt::new("Description"),
-            price1: ClauseOpt::new("price1"),
-            price2: ClauseOpt::new("price2"),
+            id: Numeric::new("id"),
+            name: Basic::new("name"),
+            description: BasicOpt::new("Description"),
+            price1: NumericOpt::new("price1"),
+            price2: NumericOpt::new("price2"),
             //price3: ClauseOpt::new("price3"),
             //barcode: ClauseOpt::new("barcode"),
-            active: ClauseOpt::new("active"),
+            active: BasicOpt::new("active"),
         }
     }
 }

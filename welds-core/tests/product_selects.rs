@@ -27,3 +27,21 @@ fn should_be_able_to_filter_on_equal() {
         );
     })
 }
+
+#[test]
+fn should_be_able_to_filter_on_lt() {
+    async_std::task::block_on(async {
+        let conn = testlib::postgres::conn().await.unwrap();
+        let pool: welds_core::database::Pool = conn.into();
+        let mut q = Product::where_col(|x| x.price1.lt(3.00));
+        let sql = q.to_sql(&pool);
+        let data = q.run(&pool).await.unwrap();
+        assert_eq!(
+            data.len(),
+            2,
+            "Expected horse and dog: \n{} \n\n{:?}",
+            sql,
+            dbg!(data)
+        );
+    })
+}

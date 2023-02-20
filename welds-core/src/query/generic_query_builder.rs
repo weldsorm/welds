@@ -1,10 +1,5 @@
 use crate::database::Pool;
 use crate::errors::Result;
-use sqlx::mssql::MssqlRow;
-use sqlx::mysql::MySqlRow;
-use sqlx::postgres::PgRow;
-use sqlx::sqlite::SqliteRow;
-use sqlx::FromRow;
 use std::fmt::Display;
 
 type QB1<'args> = sqlx::QueryBuilder<'args, sqlx::Sqlite>;
@@ -43,16 +38,7 @@ impl<'args> GenericQueryBuilder<'args> {
 
     pub fn push_bind<T>(&mut self, value: T) -> &mut Self
     where
-        T: 'args
-            + Send
-            + sqlx::Type<sqlx::Sqlite>
-            + sqlx::Type<sqlx::MySql>
-            + sqlx::Type<sqlx::Postgres>
-            + sqlx::Type<sqlx::Mssql>
-            + sqlx::Encode<'args, sqlx::Sqlite>
-            + sqlx::Encode<'args, sqlx::MySql>
-            + sqlx::Encode<'args, sqlx::Postgres>
-            + sqlx::Encode<'args, sqlx::Mssql>,
+        T: 'args + crate::row::ToRow<'args>,
     {
         use GenericQueryBuilder::*;
         match self {
@@ -91,12 +77,7 @@ where
     'b: 'q,
     T: Send,
     T: Unpin,
-    T: Send
-        + Unpin
-        + for<'r> FromRow<'r, SqliteRow>
-        + for<'r> FromRow<'r, MySqlRow>
-        + for<'r> FromRow<'r, MssqlRow>
-        + for<'r> FromRow<'r, PgRow>,
+    T: crate::row::FromRow,
 {
     use GenericQueryBuilder::*;
     match gqb {

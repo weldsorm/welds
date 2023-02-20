@@ -22,17 +22,7 @@ pub struct ClauseColVal<T> {
 
 impl<'args, T> QueryBuilderAdder<'args> for ClauseColVal<T>
 where
-    T: 'args
-        + Send
-        + Clone
-        + sqlx::Type<sqlx::Sqlite>
-        + sqlx::Encode<'args, sqlx::Sqlite>
-        + sqlx::Type<sqlx::MySql>
-        + sqlx::Encode<'args, sqlx::MySql>
-        + sqlx::Type<sqlx::Postgres>
-        + sqlx::Encode<'args, sqlx::Postgres>
-        + sqlx::Type<sqlx::Mssql>
-        + sqlx::Encode<'args, sqlx::Mssql>,
+    T: 'args + Clone + crate::row::ToRow<'args>,
 {
     fn append_to(&self, qb: &mut QB<'args>) {
         qb.push(self.col.clone());

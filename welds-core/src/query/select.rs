@@ -3,11 +3,6 @@ use crate::errors::Result;
 use crate::query::clause::QueryBuilderAdder;
 use crate::query::GenericQueryBuilder;
 use crate::table::TableInfo;
-use sqlx::mssql::MssqlRow;
-use sqlx::mysql::MySqlRow;
-use sqlx::postgres::PgRow;
-use sqlx::sqlite::SqliteRow;
-use sqlx::FromRow;
 use std::marker::PhantomData;
 
 pub struct SelectBuilder<'args, T, S> {
@@ -20,12 +15,7 @@ pub struct SelectBuilder<'args, T, S> {
 impl<'schema, 'args, T, S> SelectBuilder<'schema, T, S>
 where
     S: Default + TableInfo,
-    T: Send
-        + Unpin
-        + for<'r> FromRow<'r, SqliteRow>
-        + for<'r> FromRow<'r, MySqlRow>
-        + for<'r> FromRow<'r, MssqlRow>
-        + for<'r> FromRow<'r, PgRow>,
+    T: crate::row::FromRow,
 {
     pub fn new() -> Self {
         Self {

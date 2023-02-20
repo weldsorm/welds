@@ -9,18 +9,7 @@ pub struct NumericOpt<T> {
 use crate::query::optional::HasSomeNone;
 impl<'args, T> NumericOpt<T>
 where
-    T: Send
-        + HasSomeNone
-        + Clone
-        + sqlx::Type<sqlx::Sqlite>
-        + sqlx::Encode<'args, sqlx::Sqlite>
-        + sqlx::Type<sqlx::MySql>
-        + sqlx::Encode<'args, sqlx::MySql>
-        + sqlx::Type<sqlx::Postgres>
-        + sqlx::Encode<'args, sqlx::Postgres>
-        + sqlx::Type<sqlx::Mssql>
-        + sqlx::Encode<'args, sqlx::Mssql>
-        + 'static,
+    T: Send + HasSomeNone + Clone + crate::row::ToRow<'args> + 'static,
 {
     pub fn new(field: impl Into<String>) -> Self {
         Self {

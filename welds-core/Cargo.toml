@@ -7,27 +7,25 @@ edition = "2021"
 
 [dependencies]
 sqlx = { version = "0.6", features = [
-  "all",
-  "postgres",
-  "mysql",
-  "mssql",
-  "sqlite",
   "macros",
 ] }
+
+[features]
+#"default" = ["postgres", "mysql", "mssql", "sqlite"]
+"default" = []
+"postgres" = ["sqlx/postgres"]
+"mysql" = ["sqlx/mysql"]
+"mssql" = ["sqlx/mssql"]
+"sqlite" = ["sqlx/sqlite"]
+
 
 [profile.dev.package.sqlx-macros]
 opt-level = 3
 
 
 [dev-dependencies]
-testlib = { path = "../testlib" }
 async-std = { version = "1", features = ["attributes"] }
-sqlx = { version = "0.6", features = [
-  "runtime-async-std-rustls",
-  "all",
-  "postgres",
-  "mysql",
-  "mssql",
-  "sqlite",
-  "macros",
-] }
+sqlx = { version = "0.6", features = [ "runtime-async-std-rustls",  "macros"] }
+#"welds-core" = { path='./', features=["postgres", "mysql", "mssql", "sqlite"]}
+
+

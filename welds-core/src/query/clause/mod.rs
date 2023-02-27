@@ -7,10 +7,10 @@ pub use numeric::Numeric;
 mod numericopt;
 pub use numericopt::NumericOpt;
 
-type QB<'q> = crate::query::GenericQueryBuilder<'q>;
+type QB<'q, DB> = sqlx::QueryBuilder<'q, DB>;
 
-pub trait QueryBuilderAdder<'args> {
-    fn append_to(&self, qb: &mut QB<'args>);
+pub trait QueryBuilderAdder<'args, DB: sqlx::Database> {
+    fn append_to(&self, qb: &mut QB<'args, DB>);
 }
 
 pub struct ClauseColVal<T> {
@@ -20,11 +20,12 @@ pub struct ClauseColVal<T> {
     pub val: T,
 }
 
-impl<'args, T> QueryBuilderAdder<'args> for ClauseColVal<T>
+impl<'args, T, DB> QueryBuilderAdder<'args, DB> for ClauseColVal<T>
 where
-    T: 'args + Clone + crate::row::ToRow<'args>,
+    DB: sqlx::Database,
+    T: 'args + Clone + Send + sqlx::Type<DB> + sqlx::Encode<'args, DB>,
 {
-    fn append_to(&self, qb: &mut QB<'args>) {
+    fn append_to(&self, qb: &mut QB<'args, DB>) {
         qb.push(self.col.clone());
         qb.push(self.operator);
         qb.push_bind(self.val.clone());

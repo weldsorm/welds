@@ -3,43 +3,43 @@ use static_init::dynamic;
 use std::process::{Command, Stdio};
 use std::thread::sleep; // 0.8
 
-#[dynamic(drop)]
-static mut POSTGRES: Postgres = Postgres::new();
+#[dynamic(drop, lazy)]
+static mut MSSQL: Mssql = Mssql::new();
 
-/// A shared connection to the testing Postgres database.
+/// A shared connection to the testing Mssql database.
 /// Automatically booted and drop as needed
-pub async fn conn() -> Result<sqlx::PgPool, sqlx::Error> {
-    let pg = &POSTGRES;
-    let _ = pg.read().wait_for_ready();
-    let url = pg.read().connection_string();
-    sqlx::PgPool::connect(&url).await
+pub async fn conn() -> Result<sqlx::MssqlPool, sqlx::Error> {
+    let db = &MSSQL;
+    let _ = db.read().wait_for_ready();
+    let url = db.read().connection_string();
+    sqlx::MssqlPool::connect(&url).await
 }
 
-/// A shared connection to the testing Postgres database.
+/// A shared connection to the testing Mssql database.
 /// Automatically booted and drop as needed
 pub fn conn_string() -> String {
-    let pg = &POSTGRES;
-    let _ = pg.read().wait_for_ready();
-    pg.read().connection_string().to_string()
+    let db = &MSSQL;
+    let _ = db.read().wait_for_ready();
+    db.read().connection_string().to_string()
 }
 
-pub(crate) fn init() {
-    let pg = &POSTGRES;
-    pg.read().is_running();
+pub fn init() {
+    let db = &MSSQL;
+    db.read().is_running();
 }
 
-pub(crate) fn wait_with_ready() {
-    let pg = &POSTGRES;
-    pg.read().wait_for_ready().unwrap();
+pub fn wait_with_ready() {
+    let db = &MSSQL;
+    db.read().wait_for_ready().unwrap();
 }
 
-pub(crate) struct Postgres {
+pub(crate) struct Mssql {
     port: u32,
-    password: String,
     container_id: String,
+    password: String,
 }
 
-impl Postgres {
+impl Mssql {
     pub fn new() -> Self {
         let mut rng = rand::thread_rng();
         let port: u32 = rng.gen_range(20000..49000);
@@ -50,26 +50,23 @@ impl Postgres {
             .map(char::from)
             .collect();
 
-        let mut pg = Self {
+        let mut db = Self {
             container_id: String::default(),
             port,
             password,
         };
-        eprintln!("Booting Postgres test Environment");
-        pg.boot().unwrap();
-        pg
+        eprintln!("Booting Mssql test Environment");
+        db.boot().unwrap();
+        db
     }
 
     fn connection_string(&self) -> String {
-        format!(
-            "postgresql://postgres:{}@127.0.0.1:{}",
-            self.password, self.port
-        )
+        format!("mssql://sa:{}@127.0.0.1:{}/", self.password, self.port)
     }
 
     fn boot(&mut self) -> Result<(), String> {
-        let port = format!("127.0.0.1:{}:5432", self.port);
-        let env = format!("POSTGRES_PASSWORD={}", self.password);
+        let port = format!("127.0.0.1:{}:1433", self.port);
+        let env = format!("SA_PASSWORD={}", self.password);
         let output = Command::new("docker")
             .arg("run")
             .arg("--rm")
@@ -78,7 +75,7 @@ impl Postgres {
             .arg("--env")
             .arg(env)
             .arg("-d")
-            .arg("welds_pg_testing_db")
+            .arg("welds_mssql_testing_db")
             .output()
             .map_err(|err| format!("{:?}", err))?;
         let id = String::from_utf8_lossy(output.stdout.as_ref());
@@ -116,7 +113,7 @@ impl Postgres {
             .unwrap();
         let grep = Command::new("grep")
             .arg("-q")
-            .arg("checkpoint complete: wrote")
+            .arg("All SQL Seeded")
             .stdin(Stdio::from(logs.stdout.unwrap()))
             .stdout(Stdio::piped())
             .stderr(Stdio::null())
@@ -133,7 +130,6 @@ impl Postgres {
                 return Err("Container No Running");
             }
             if self.is_ready() {
-                // HACK: PG says it is ready before it really is :/
                 sleep(ten_millis);
                 sleep(ten_millis);
                 return Ok(());
@@ -143,7 +139,7 @@ impl Postgres {
     }
 }
 
-impl Drop for Postgres {
+impl Drop for Mssql {
     fn drop(&mut self) {
         let _ = Command::new("docker")
             .arg("kill")

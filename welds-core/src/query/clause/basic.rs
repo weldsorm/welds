@@ -4,20 +4,27 @@ use std::marker::PhantomData;
 pub struct Basic<T> {
     field: String,
     _t: PhantomData<T>,
+    //_db: PhantomData<DB>,
 }
 
-impl<'args, T> Basic<T>
+impl<T> Basic<T>
 where
-    T: Send + Clone + crate::row::ToRow<'args> + 'static,
+    //    DB: sqlx::Database,
+    T: 'static + Clone + Send,
 {
     pub fn new(field: impl Into<String>) -> Self {
         Self {
             field: field.into(),
             _t: Default::default(),
+            //_db: Default::default(),
         }
     }
 
-    pub fn equal(self, v: impl Into<T>) -> Box<dyn QueryBuilderAdder<'args>> {
+    pub fn equal<'args, DB>(self, v: impl Into<T>) -> Box<dyn QueryBuilderAdder<'args, DB>>
+    where
+        DB: sqlx::Database,
+        T: sqlx::Type<DB> + sqlx::Encode<'args, DB>,
+    {
         let cv = ClauseColVal::<T> {
             isnull_clause: false,
             col: self.field,
@@ -27,7 +34,11 @@ where
         Box::new(cv)
     }
 
-    pub fn not_equal(self, v: impl Into<T>) -> Box<dyn QueryBuilderAdder<'args>> {
+    pub fn not_equal<'args, DB>(self, v: impl Into<T>) -> Box<dyn QueryBuilderAdder<'args, DB>>
+    where
+        DB: sqlx::Database,
+        T: sqlx::Type<DB> + sqlx::Encode<'args, DB>,
+    {
         let cv = ClauseColVal::<T> {
             isnull_clause: false,
             col: self.field,

@@ -18,3 +18,5 @@ sqlx = { version = "0.6", features = [
   "sqlite",
   "macros",
 ] }
+
+[workspace]

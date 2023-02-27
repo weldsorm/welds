@@ -1,21 +1,23 @@
-use crate::database::Pool;
 use crate::errors::Result;
 use crate::query::clause::QueryBuilderAdder;
-use crate::query::GenericQueryBuilder;
 use crate::table::TableInfo;
+use sqlx::database::HasArguments;
+use sqlx::IntoArguments;
+use sqlx::QueryBuilder;
 use std::marker::PhantomData;
 
-pub struct SelectBuilder<'args, T, S> {
+pub struct SelectBuilder<'schema, T, S, DB: sqlx::Database> {
     _t: PhantomData<T>,
     _s: PhantomData<S>,
-    wheres: Vec<Box<dyn QueryBuilderAdder<'args>>>,
-    qb: Option<GenericQueryBuilder<'args>>,
+    wheres: Vec<Box<dyn QueryBuilderAdder<'schema, DB>>>,
+    qb: Option<QueryBuilder<'schema, DB>>,
 }
 
-impl<'schema, 'args, T, S> SelectBuilder<'schema, T, S>
+impl<'schema, 'args, T, S, DB> SelectBuilder<'schema, T, S, DB>
 where
     S: Default + TableInfo,
-    T: crate::row::FromRow,
+    T: Send + Unpin + for<'r> sqlx::FromRow<'r, DB::Row>,
+    DB: sqlx::Database,
 {
     pub fn new() -> Self {
         Self {
@@ -26,15 +28,15 @@ where
         }
     }
 
-    pub fn where_col(mut self, lam: impl Fn(S) -> Box<dyn QueryBuilderAdder<'schema>>) -> Self {
+    pub fn where_col(mut self, lam: impl Fn(S) -> Box<dyn QueryBuilderAdder<'schema, DB>>) -> Self {
         let c = S::default();
         let qba = lam(c);
         self.wheres.push(qba);
         self
     }
 
-    fn build(&mut self, conn: &Pool) {
-        self.qb = Some(conn.querybuilder());
+    fn build(&mut self) {
+        self.qb = Some(sqlx::QueryBuilder::<DB>::new(""));
         let qb = self.qb.as_mut().unwrap();
         let wheres: &[_] = self.wheres.as_ref();
         qb.push("SELECT ");
@@ -60,22 +62,24 @@ where
         }
     }
 
-    pub fn to_sql(&mut self, conn: &Pool) -> String {
-        self.build(conn);
-        let mut qb: Option<GenericQueryBuilder> = None;
+    pub fn to_sql(&mut self) -> String {
+        self.build();
+        let mut qb: Option<QueryBuilder<DB>> = None;
         std::mem::swap(&mut qb, &mut self.qb);
         let qb = qb.unwrap();
         qb.into_sql()
     }
 
-    pub async fn run<'q>(&'q mut self, conn: &Pool) -> Result<Vec<T>>
+    pub async fn run<'q, 'ex, 'e, E>(&'q mut self, exec: &'ex E) -> Result<Vec<T>>
     where
         'q: 'args,
+        &'ex E: sqlx::Executor<'e, Database = DB>,
+        <DB as HasArguments<'schema>>::Arguments: IntoArguments<'args, DB>,
     {
-        use crate::query::generic_query_builder::run;
-        self.build(conn);
+        self.build();
         let qb = self.qb.as_mut().unwrap();
-        let out = run::<T>(qb, conn).await?;
-        Ok(out)
+        let query = qb.build_query_as::<T>();
+        let data = query.fetch_all(exec).await?;
+        Ok(data)
     }
 }

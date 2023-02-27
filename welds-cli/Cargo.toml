@@ -9,17 +9,7 @@ path = "src/lib.rs"
 
 [dependencies]
 async-std = { version = "1", features = ["attributes"] }
-
-sqlx = { version = "0.6", features = [
-  "runtime-async-std-rustls",
-  "all",
-  "postgres",
-  "mysql",
-  "mssql",
-  "sqlite",
-  "macros",
-] }
-
+sqlx = { version = "0.6", features = [ "runtime-async-std-rustls",  "macros"] }
 clap = { version = "4.0", features = ["derive"] }
 serde = { version = "1", features = ["derive"] }
 serde_yaml = "0.9"
@@ -29,7 +19,7 @@ rust-format = "0.3"
 anyhow = "1.0"
 futures = "0.3.25"
 
-welds-core = { path = "../welds-core", version = '0.1.0' }
+welds-core = { path = "../welds-core", version = '0.1.0', features=["postgres", "mssql", "mysql", "sqlite"] }
 
 [profile.dev.package.sqlx-macros]
 opt-level = 3

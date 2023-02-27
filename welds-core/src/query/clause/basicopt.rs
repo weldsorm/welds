@@ -1,4 +1,5 @@
 use super::{ClauseColVal, QueryBuilderAdder};
+use crate::query::optional::HasSomeNone;
 use std::marker::PhantomData;
 
 pub struct BasicOpt<T> {
@@ -6,10 +7,9 @@ pub struct BasicOpt<T> {
     _t: PhantomData<T>,
 }
 
-use crate::query::optional::HasSomeNone;
-impl<'args, T> BasicOpt<T>
+impl<T> BasicOpt<T>
 where
-    T: Send + HasSomeNone + Clone + crate::row::ToRow<'args> + 'static,
+    T: 'static + HasSomeNone + Clone + Send,
 {
     pub fn new(field: impl Into<String>) -> Self {
         Self {
@@ -18,7 +18,11 @@ where
         }
     }
 
-    pub fn equal(self, v: impl Into<T>) -> Box<dyn QueryBuilderAdder<'args>> {
+    pub fn equal<'args, DB>(self, v: impl Into<T>) -> Box<dyn QueryBuilderAdder<'args, DB>>
+    where
+        DB: sqlx::Database,
+        T: sqlx::Type<DB> + sqlx::Encode<'args, DB>,
+    {
         let val = v.into();
         let cv = ClauseColVal::<T> {
             isnull_clause: val.is_none(),
@@ -29,7 +33,11 @@ where
         Box::new(cv)
     }
 
-    pub fn not_equal(self, v: impl Into<T>) -> Box<dyn QueryBuilderAdder<'args>> {
+    pub fn not_equal<'args, DB>(self, v: impl Into<T>) -> Box<dyn QueryBuilderAdder<'args, DB>>
+    where
+        DB: sqlx::Database,
+        T: sqlx::Type<DB> + sqlx::Encode<'args, DB>,
+    {
         let val = v.into();
         let cv = ClauseColVal::<T> {
             isnull_clause: val.is_none(),

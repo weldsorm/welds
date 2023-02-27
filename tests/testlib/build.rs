@@ -14,4 +14,18 @@ pub fn main() {
         eprintln!("DOCKER BUILD ERROR: {:?}", outs);
         panic!("Docker Build Failed");
     }
+
+    // Make sure the Mssql Image is built
+    let mut docker = Command::new("docker");
+    let outs = docker
+        .arg("build")
+        .arg("./databases/mssql")
+        .arg("-t")
+        .arg("welds_mssql_testing_db")
+        .output()
+        .expect("failed to build PG test image");
+    if outs.status.success() == false {
+        eprintln!("DOCKER BUILD ERROR: {:?}", outs);
+        panic!("Docker Build Failed");
+    }
 }

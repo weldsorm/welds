@@ -1,0 +1,20 @@
+[package]
+name = "postgres_test"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+testlib = { path = "../testlib" }
+welds-core = { path = "../../welds-core", features = ["postgres", 'mssql']  }
+async-std = { version = "1", features = ["attributes"] }
+sqlx = { version = "0.6", features = [ "runtime-async-std-rustls",  "macros"] }
+
+#[dev-dependencies]
+#testlib = { path = "../testlib" }
+#welds-core = { path = "../../welds-core", features = ["postgres"]  }
+#async-std = { version = "1", features = ["attributes"] }
+#sqlx = { version = "0.6", features = [ "runtime-async-std-rustls",  "macros"] }
+
+[workspace]

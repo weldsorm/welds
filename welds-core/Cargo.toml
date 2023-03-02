@@ -26,6 +26,6 @@ opt-level = 3
 [dev-dependencies]
 async-std = { version = "1", features = ["attributes"] }
 sqlx = { version = "0.6", features = [ "runtime-async-std-rustls",  "macros"] }
-#"welds-core" = { path='./', features=["postgres", "mysql", "mssql", "sqlite"]}
+welds-core = { path="./", features=["postgres", "mysql", "mssql", "sqlite"] }
 
 

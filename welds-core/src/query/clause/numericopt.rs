@@ -1,4 +1,4 @@
-use super::{ClauseColVal, QueryBuilderAdder};
+use super::{ClauseAdder, ClauseColVal};
 use std::marker::PhantomData;
 
 pub struct NumericOpt<T> {
@@ -18,14 +18,19 @@ where
         }
     }
 
-    pub fn equal<'args, DB>(self, v: impl Into<T>) -> Box<dyn QueryBuilderAdder<'args, DB>>
+    pub fn equal<'args, DB>(self, v: impl Into<T>) -> Box<dyn ClauseAdder<'args, DB>>
     where
         DB: sqlx::Database,
         T: sqlx::Type<DB> + sqlx::Encode<'args, DB>,
     {
         let val = v.into();
+        let null_clause = if val.is_none() {
+            Some(format!("{} IS NULL", self.field))
+        } else {
+            None
+        };
         let cv = ClauseColVal::<T> {
-            isnull_clause: val.is_none(),
+            null_clause,
             col: self.field,
             operator: "=",
             val,
@@ -33,14 +38,19 @@ where
         Box::new(cv)
     }
 
-    pub fn not_equal<'args, DB>(self, v: impl Into<T>) -> Box<dyn QueryBuilderAdder<'args, DB>>
+    pub fn not_equal<'args, DB>(self, v: impl Into<T>) -> Box<dyn ClauseAdder<'args, DB>>
     where
         DB: sqlx::Database,
         T: sqlx::Type<DB> + sqlx::Encode<'args, DB>,
     {
         let val = v.into();
+        let null_clause = if val.is_none() {
+            Some(format!("{} IS NOT NULL", self.field))
+        } else {
+            None
+        };
         let cv = ClauseColVal::<T> {
-            isnull_clause: val.is_none(),
+            null_clause,
             col: self.field,
             operator: "!=",
             val,
@@ -48,14 +58,19 @@ where
         Box::new(cv)
     }
 
-    pub fn gt<'args, DB>(self, v: impl Into<T>) -> Box<dyn QueryBuilderAdder<'args, DB>>
+    pub fn gt<'args, DB>(self, v: impl Into<T>) -> Box<dyn ClauseAdder<'args, DB>>
     where
         DB: sqlx::Database,
         T: sqlx::Type<DB> + sqlx::Encode<'args, DB>,
     {
         let val = v.into();
+        let null_clause = if val.is_none() {
+            Some(format!("{} > NULL", self.field))
+        } else {
+            None
+        };
         let cv = ClauseColVal::<T> {
-            isnull_clause: val.is_none(),
+            null_clause,
             col: self.field,
             operator: ">",
             val,
@@ -63,14 +78,19 @@ where
         Box::new(cv)
     }
 
-    pub fn lt<'args, DB>(self, v: impl Into<T>) -> Box<dyn QueryBuilderAdder<'args, DB>>
+    pub fn lt<'args, DB>(self, v: impl Into<T>) -> Box<dyn ClauseAdder<'args, DB>>
     where
         DB: sqlx::Database,
         T: sqlx::Type<DB> + sqlx::Encode<'args, DB>,
     {
         let val = v.into();
+        let null_clause = if val.is_none() {
+            Some(format!("{} < NULL", self.field))
+        } else {
+            None
+        };
         let cv = ClauseColVal::<T> {
-            isnull_clause: val.is_none(),
+            null_clause,
             col: self.field,
             operator: "<",
             val,
@@ -78,14 +98,19 @@ where
         Box::new(cv)
     }
 
-    pub fn gte<'args, DB>(self, v: impl Into<T>) -> Box<dyn QueryBuilderAdder<'args, DB>>
+    pub fn gte<'args, DB>(self, v: impl Into<T>) -> Box<dyn ClauseAdder<'args, DB>>
     where
         DB: sqlx::Database,
         T: sqlx::Type<DB> + sqlx::Encode<'args, DB>,
     {
         let val = v.into();
+        let null_clause = if val.is_none() {
+            Some(format!("{} >= NULL", self.field))
+        } else {
+            None
+        };
         let cv = ClauseColVal::<T> {
-            isnull_clause: val.is_none(),
+            null_clause,
             col: self.field,
             operator: ">=",
             val,
@@ -93,14 +118,19 @@ where
         Box::new(cv)
     }
 
-    pub fn lte<'args, DB>(self, v: impl Into<T>) -> Box<dyn QueryBuilderAdder<'args, DB>>
+    pub fn lte<'args, DB>(self, v: impl Into<T>) -> Box<dyn ClauseAdder<'args, DB>>
     where
         DB: sqlx::Database,
         T: sqlx::Type<DB> + sqlx::Encode<'args, DB>,
     {
         let val = v.into();
+        let null_clause = if val.is_none() {
+            Some(format!("{} <= NULL", self.field))
+        } else {
+            None
+        };
         let cv = ClauseColVal::<T> {
-            isnull_clause: val.is_none(),
+            null_clause,
             col: self.field,
             operator: "<=",
             val,

@@ -7,14 +7,6 @@ edition = "2021"
 
 [dependencies]
 testlib = { path = "../testlib" }
-welds-core = { path = "../../welds-core", features = ["postgres", 'mssql']  }
+welds-core = { path = "../../welds-core", features = ["postgres"]  }
 async-std = { version = "1", features = ["attributes"] }
 sqlx = { version = "0.6", features = [ "runtime-async-std-rustls",  "macros"] }
-
-#[dev-dependencies]
-#testlib = { path = "../testlib" }
-#welds-core = { path = "../../welds-core", features = ["postgres"]  }
-#async-std = { version = "1", features = ["attributes"] }
-#sqlx = { version = "0.6", features = [ "runtime-async-std-rustls",  "macros"] }
-
-[workspace]

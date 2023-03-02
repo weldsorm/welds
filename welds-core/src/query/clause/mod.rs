@@ -1,3 +1,6 @@
+use sqlx::database::HasArguments;
+use sqlx::Arguments;
+
 mod basic;
 pub use basic::Basic;
 mod basicopt;
@@ -6,28 +9,48 @@ mod numeric;
 pub use numeric::Numeric;
 mod numericopt;
 pub use numericopt::NumericOpt;
-
-type QB<'q, DB> = sqlx::QueryBuilder<'q, DB>;
-
-pub trait QueryBuilderAdder<'args, DB: sqlx::Database> {
-    fn append_to(&self, qb: &mut QB<'args, DB>);
-}
+mod nextparam;
+pub use nextparam::{DbParam, NextParam};
 
 pub struct ClauseColVal<T> {
-    pub isnull_clause: bool,
+    pub null_clause: Option<String>,
     pub col: String,
     pub operator: &'static str,
     pub val: T,
 }
 
-impl<'args, T, DB> QueryBuilderAdder<'args, DB> for ClauseColVal<T>
+pub trait ClauseAdder<'args, DB: sqlx::Database> {
+    /// Add the argument to the list of Arguments to send to the database
+    fn bind(&self, args: &mut <DB as HasArguments<'args>>::Arguments);
+
+    /// Returns the SQL snipit for this clause
+    fn clause(&self, next_params: &NextParam) -> Option<String>;
+}
+
+impl<'args, T, DB> ClauseAdder<'args, DB> for ClauseColVal<T>
 where
     DB: sqlx::Database,
     T: 'args + Clone + Send + sqlx::Type<DB> + sqlx::Encode<'args, DB>,
 {
-    fn append_to(&self, qb: &mut QB<'args, DB>) {
-        qb.push(self.col.clone());
+    fn bind(&self, args: &mut <DB as HasArguments<'args>>::Arguments) {
+        if self.null_clause.is_none() {
+            args.add(self.val.clone());
+        }
+    }
+
+    fn clause(&self, next_params: &NextParam) -> Option<String> {
+        // handle null clones
+        if let Some(null_clause) = &self.null_clause {
+            return Some(null_clause.clone());
+        }
+
+        // normal path
+        let mut qb: Vec<&str> = Vec::default();
+        qb.push(&self.col);
         qb.push(self.operator);
-        qb.push_bind(self.val.clone());
+        let np = next_params.next();
+        qb.push(&np);
+        let clause: String = qb.join(" ");
+        Some(clause)
     }
 }

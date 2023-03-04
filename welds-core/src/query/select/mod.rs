@@ -1,7 +1,8 @@
 use super::clause::{DbParam, NextParam};
 use crate::errors::Result;
 use crate::query::clause::ClauseAdder;
-use crate::table::TableInfo;
+use crate::table::col_writer::{DbSelectWriter, SelectWriter};
+use crate::table::{TableColumns, TableInfo};
 use sqlx::database::HasArguments;
 use sqlx::query::{Query, QueryAs};
 use sqlx::IntoArguments;
@@ -18,9 +19,9 @@ pub struct SelectBuilder<'schema, T, S, DB: sqlx::Database> {
 
 impl<'schema, 'args, T, S, DB> SelectBuilder<'schema, T, S, DB>
 where
-    S: Default + TableInfo,
-    T: Send + Unpin + for<'r> sqlx::FromRow<'r, DB::Row>,
     DB: sqlx::Database,
+    S: Default + TableInfo + TableColumns<DB>,
+    T: Send + Unpin + for<'r> sqlx::FromRow<'r, DB::Row>,
 {
     pub fn new() -> Self {
         Self {
@@ -41,14 +42,14 @@ where
     pub fn to_sql(&mut self) -> String
     where
         <DB as HasArguments<'schema>>::Arguments: IntoArguments<'args, DB>,
-        DB: DbParam,
+        DB: DbParam + DbSelectWriter,
     {
         let mut args: Option<<DB as HasArguments>::Arguments> = None;
         let next_params = NextParam::new::<DB>();
         let wheres = self.wheres.as_slice();
 
         join_sql_parts(&[
-            build_head_select::<S>(),
+            build_head_select::<DB, S>(),
             build_where(&next_params, &mut args, wheres),
         ])
     }
@@ -60,14 +61,14 @@ where
         <DB as HasArguments<'schema>>::Arguments: IntoArguments<'args, DB>,
         i64: sqlx::Type<DB> + for<'r> sqlx::Decode<'r, DB>,
         usize: sqlx::ColumnIndex<<DB as sqlx::Database>::Row>,
-        DB: DbParam,
+        DB: DbParam + DbSelectWriter,
     {
         let mut args: Option<<DB as HasArguments>::Arguments> = Some(Default::default());
         let next_params = NextParam::new::<DB>();
         let wheres = self.wheres.as_slice();
 
         let sql = join_sql_parts(&[
-            build_head_count::<S>(),
+            build_head_count::<DB, S>(),
             build_where(&next_params, &mut args, wheres),
         ]);
 
@@ -88,14 +89,14 @@ where
         'q: 'args,
         &'ex E: sqlx::Executor<'e, Database = DB>,
         <DB as HasArguments<'schema>>::Arguments: IntoArguments<'args, DB>,
-        DB: DbParam,
+        DB: DbParam + DbSelectWriter,
     {
         let mut args: Option<<DB as HasArguments>::Arguments> = Some(Default::default());
         let next_params = NextParam::new::<DB>();
         let wheres = self.wheres.as_slice();
 
         let sql = join_sql_parts(&[
-            build_head_select::<S>(),
+            build_head_select::<DB, S>(),
             build_where(&next_params, &mut args, wheres),
         ]);
 
@@ -146,17 +147,28 @@ where
     Some(where_sql.join(" "))
 }
 
-fn build_head_select<S: TableInfo>() -> Option<String> {
+fn build_head_select<DB, S>() -> Option<String>
+where
+    DB: sqlx::Database + DbSelectWriter,
+    S: TableInfo + TableColumns<DB>,
+{
+    let writer = SelectWriter::new::<DB>();
     let mut head: Vec<&str> = Vec::default();
     head.push("SELECT");
-    let cols = S::columns().join(", ");
+    let cols_info = S::columns();
+    let cols: Vec<_> = cols_info.iter().map(|col| writer.write(col)).collect();
+    let cols = cols.join(", ");
     head.push(&cols);
     head.push("FROM");
     head.push(S::identifier());
     Some(head.join(" "))
 }
 
-fn build_head_count<S: TableInfo>() -> Option<String> {
+fn build_head_count<DB, S>() -> Option<String>
+where
+    DB: sqlx::Database + DbSelectWriter,
+    S: TableInfo + TableColumns<DB>,
+{
     let mut head: Vec<&str> = Vec::default();
     head.push("SELECT cast(count(*) as bigint) FROM");
     head.push(S::identifier());

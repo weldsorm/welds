@@ -2,7 +2,7 @@ use welds_core::query::clause::ClauseAdder;
 use welds_core::query::clause::{Basic, BasicOpt, Numeric, NumericOpt};
 use welds_core::query::optional::Optional;
 use welds_core::query::select::SelectBuilder;
-use welds_core::table::TableInfo;
+use welds_core::table::{Column, TableColumns, TableInfo};
 
 /*
  * NOTE: You shouldn't be writing Models by hand.
@@ -23,7 +23,7 @@ pub struct Product {
     #[sqlx(rename = "price2")]
     pub price2: Option<f32>,
     #[sqlx(rename = "active")]
-    pub active: Option<bool>,
+    pub active: Option<i32>,
 }
 
 pub struct ProductSchema {
@@ -52,8 +52,19 @@ impl TableInfo for ProductSchema {
     fn identifier() -> &'static str {
         "welds.Products"
     }
-    fn columns() -> &'static [&'static str] {
-        &["ID", "name", "Description", "price1", "price2", "active"]
+}
+
+impl TableColumns<sqlx::Mssql> for ProductSchema {
+    fn columns() -> Vec<Column> {
+        type DB = sqlx::Mssql;
+        vec![
+            Column::new::<DB, i32>("ID"),
+            Column::new::<DB, String>("name"),
+            Column::new::<DB, Option<String>>("Description"),
+            Column::new::<DB, Option<f32>>("price1"),
+            Column::new::<DB, Option<f32>>("price2"),
+            Column::new::<DB, Option<i32>>("active"),
+        ]
     }
 }
 
@@ -61,6 +72,7 @@ impl Product {
     pub fn all<'args, DB>() -> SelectBuilder<'args, Self, ProductSchema, DB>
     where
         DB: sqlx::Database,
+        ProductSchema: TableColumns<DB>,
         Self: Send + Unpin + for<'r> sqlx::FromRow<'r, DB::Row>,
     {
         SelectBuilder::new()
@@ -70,6 +82,7 @@ impl Product {
     ) -> SelectBuilder<'args, Self, ProductSchema, DB>
     where
         DB: sqlx::Database,
+        ProductSchema: TableColumns<DB>,
         Self: Send + Unpin + for<'r> sqlx::FromRow<'r, DB::Row>,
     {
         let select = SelectBuilder::new();

@@ -7,8 +7,7 @@ fn should_be_able_to_read_all_products() {
         let pool: welds_core::database::Pool = conn.into();
         let conn = pool.as_mssql().unwrap();
         let mut q = Product::all();
-        let sql = q.to_sql();
-        eprintln!("SQL: {}", sql);
+        eprintln!("SQL: {}", q.to_sql());
         let all = q.run(conn).await.unwrap();
 
         assert_eq!(all.len(), 6, "Unexpected number of rows returned");
@@ -21,10 +20,9 @@ fn should_be_able_to_filter_on_equal() {
         let conn = testlib::mssql::conn().await.unwrap();
         let pool: welds_core::database::Pool = conn.into();
         let conn = pool.as_mssql().unwrap();
-        let just_horse = Product::where_col(|x| x.price1.equal(1.10))
-            .run(conn)
-            .await
-            .unwrap();
+        let mut q = Product::where_col(|x| x.price1.equal(1.10));
+        eprintln!("SQL: {}", q.to_sql());
+        let just_horse = q.run(conn).await.unwrap();
         assert_eq!(
             just_horse.len(),
             1,
@@ -40,35 +38,29 @@ fn should_be_able_to_filter_on_lt() {
         let pool: welds_core::database::Pool = conn.into();
         let conn = pool.as_mssql().unwrap();
         let mut q = Product::where_col(|x| x.price1.lt(3.00));
-
-        let sql = q.to_sql();
+        eprintln!("SQL: {}", q.to_sql());
         let data = q.run(&conn).await.unwrap();
-        assert_eq!(
-            data.len(),
-            2,
-            "Expected horse and dog: \n{} \n\n{:?}",
-            sql,
-            dbg!(data)
-        );
+        assert_eq!(data.len(), 2, "Expected horse and dog",);
     })
 }
 
 #[test]
 fn should_be_able_to_filter_on_lte() {
     async_std::task::block_on(async {
+        eprintln!("1");
         let conn = testlib::mssql::conn().await.unwrap();
+        eprintln!("2");
         let pool: welds_core::database::Pool = conn.into();
+        eprintln!("3");
         let conn = pool.as_mssql().unwrap();
+        eprintln!("4");
         let mut q = Product::where_col(|x| x.price1.lte(2.10));
-        let sql = q.to_sql();
+        eprintln!("5");
+        eprintln!("SQL: {}", q.to_sql());
+        eprintln!("6");
         let data = q.run(&conn).await.unwrap();
-        assert_eq!(
-            data.len(),
-            2,
-            "Expected horse and dog: \n{} \n\n{:?}",
-            sql,
-            dbg!(data)
-        );
+        eprintln!("7");
+        assert_eq!(data.len(), 2, "Expected horse and dog");
     })
 }
 

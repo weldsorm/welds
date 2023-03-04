@@ -1,0 +1,1 @@
+SELECT case(ID as INT4) as ID, case(name as TEXT) as name FROM welds.products

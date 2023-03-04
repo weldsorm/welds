@@ -1,5 +1,4 @@
 use sqlx::TypeInfo;
-pub(crate) mod col_writer;
 
 pub trait TableInfo {
     /// the unique name (schema + tablename) that identities this database object

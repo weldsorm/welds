@@ -1,8 +1,8 @@
 use super::clause::{DbParam, NextParam};
 use crate::errors::Result;
 use crate::query::clause::ClauseAdder;
-use crate::table::col_writer::{DbSelectWriter, SelectWriter};
 use crate::table::{TableColumns, TableInfo};
+use crate::writers::column::{ColumnWriter, DbColumnWriter};
 use sqlx::database::HasArguments;
 use sqlx::query::{Query, QueryAs};
 use sqlx::IntoArguments;
@@ -42,7 +42,7 @@ where
     pub fn to_sql(&mut self) -> String
     where
         <DB as HasArguments<'schema>>::Arguments: IntoArguments<'args, DB>,
-        DB: DbParam + DbSelectWriter,
+        DB: DbParam + DbColumnWriter,
     {
         let mut args: Option<<DB as HasArguments>::Arguments> = None;
         let next_params = NextParam::new::<DB>();
@@ -61,7 +61,7 @@ where
         <DB as HasArguments<'schema>>::Arguments: IntoArguments<'args, DB>,
         i64: sqlx::Type<DB> + for<'r> sqlx::Decode<'r, DB>,
         usize: sqlx::ColumnIndex<<DB as sqlx::Database>::Row>,
-        DB: DbParam + DbSelectWriter,
+        DB: DbParam + DbColumnWriter,
     {
         let mut args: Option<<DB as HasArguments>::Arguments> = Some(Default::default());
         let next_params = NextParam::new::<DB>();
@@ -89,7 +89,7 @@ where
         'q: 'args,
         &'ex E: sqlx::Executor<'e, Database = DB>,
         <DB as HasArguments<'schema>>::Arguments: IntoArguments<'args, DB>,
-        DB: DbParam + DbSelectWriter,
+        DB: DbParam + DbColumnWriter,
     {
         let mut args: Option<<DB as HasArguments>::Arguments> = Some(Default::default());
         let next_params = NextParam::new::<DB>();
@@ -149,10 +149,10 @@ where
 
 fn build_head_select<DB, S>() -> Option<String>
 where
-    DB: sqlx::Database + DbSelectWriter,
+    DB: sqlx::Database + DbColumnWriter,
     S: TableInfo + TableColumns<DB>,
 {
-    let writer = SelectWriter::new::<DB>();
+    let writer = ColumnWriter::new::<DB>();
     let mut head: Vec<&str> = Vec::default();
     head.push("SELECT");
     let cols_info = S::columns();
@@ -166,7 +166,7 @@ where
 
 fn build_head_count<DB, S>() -> Option<String>
 where
-    DB: sqlx::Database + DbSelectWriter,
+    DB: sqlx::Database + DbColumnWriter,
     S: TableInfo + TableColumns<DB>,
 {
     let mut head: Vec<&str> = Vec::default();

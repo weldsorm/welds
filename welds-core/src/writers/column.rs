@@ -1,10 +1,10 @@
-use super::Column;
+use crate::table::Column;
 
-pub(crate) struct SelectWriter {
+pub(crate) struct ColumnWriter {
     write: fn(&Column) -> String,
 }
-impl SelectWriter {
-    pub fn new<DB: DbSelectWriter>() -> Self {
+impl ColumnWriter {
+    pub fn new<DB: DbColumnWriter>() -> Self {
         Self { write: DB::write }
     }
     pub fn write(&self, col: &Column) -> String {
@@ -12,33 +12,33 @@ impl SelectWriter {
     }
 }
 
-pub trait DbSelectWriter {
+pub trait DbColumnWriter {
     fn write(col: &Column) -> String;
 }
 
 #[cfg(feature = "postgres")]
-impl DbSelectWriter for sqlx::Postgres {
+impl DbColumnWriter for sqlx::Postgres {
     fn write(col: &Column) -> String {
         format!("{}", col.name())
     }
 }
 
 #[cfg(feature = "sqlite")]
-impl DbSelectWriter for sqlx::Sqlite {
+impl DbColumnWriter for sqlx::Sqlite {
     fn write(col: &Column) -> String {
         format!("{}", col.name())
     }
 }
 
 #[cfg(feature = "mysql")]
-impl DbSelectWriter for sqlx::MySql {
+impl DbColumnWriter for sqlx::MySql {
     fn write(col: &Column) -> String {
         format!("{}", col.name())
     }
 }
 
 #[cfg(feature = "mssql")]
-impl DbSelectWriter for sqlx::Mssql {
+impl DbColumnWriter for sqlx::Mssql {
     fn write(col: &Column) -> String {
         let dbtype = mssql_type_overrides(col.dbtype());
         format!("cast({} as {}) as {}", col.name(), dbtype, col.name())

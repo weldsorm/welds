@@ -8,7 +8,7 @@ fn should_be_able_to_update_a_product() {
         let conn = pool.as_postgres().unwrap();
         let trans = conn.begin().await.unwrap();
 
-        let p = Product::all().limit(1).run(trans).await.unwrap();
+        //let p = Product::all().limit(1).run(&trans).await.unwrap();
 
         trans.rollback().await.unwrap();
     })

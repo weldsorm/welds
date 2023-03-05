@@ -3,6 +3,7 @@ use crate::errors::Result;
 use crate::query::clause::ClauseAdder;
 use crate::table::{TableColumns, TableInfo};
 use crate::writers::column::{ColumnWriter, DbColumnWriter};
+use crate::writers::limit_skip::{DbLimitSkipWriter, LimitSkipWriter};
 use sqlx::database::HasArguments;
 use sqlx::query::{Query, QueryAs};
 use sqlx::IntoArguments;
@@ -13,6 +14,8 @@ pub struct SelectBuilder<'schema, T, S, DB: sqlx::Database> {
     _t: PhantomData<T>,
     _s: PhantomData<S>,
     wheres: Vec<Box<dyn ClauseAdder<'schema, DB>>>,
+    limit: Option<i64>,
+    offset: Option<i64>,
     // This is needed for lifetime issues, remove if you can
     history: Vec<String>,
 }
@@ -28,6 +31,8 @@ where
             _t: Default::default(),
             _s: Default::default(),
             wheres: Vec::default(),
+            limit: None,
+            offset: None,
             history: Default::default(),
         }
     }
@@ -39,10 +44,20 @@ where
         self
     }
 
+    pub fn limit(mut self, x: i64) -> Self {
+        self.limit = Some(x);
+        self
+    }
+
+    pub fn offset(mut self, x: i64) -> Self {
+        self.offset = Some(x);
+        self
+    }
+
     pub fn to_sql(&mut self) -> String
     where
         <DB as HasArguments<'schema>>::Arguments: IntoArguments<'args, DB>,
-        DB: DbParam + DbColumnWriter,
+        DB: DbParam + DbColumnWriter + DbLimitSkipWriter,
     {
         let mut args: Option<<DB as HasArguments>::Arguments> = None;
         let next_params = NextParam::new::<DB>();
@@ -51,6 +66,7 @@ where
         join_sql_parts(&[
             build_head_select::<DB, S>(),
             build_where(&next_params, &mut args, wheres),
+            build_tail(&self),
         ])
     }
 
@@ -61,7 +77,7 @@ where
         <DB as HasArguments<'schema>>::Arguments: IntoArguments<'args, DB>,
         i64: sqlx::Type<DB> + for<'r> sqlx::Decode<'r, DB>,
         usize: sqlx::ColumnIndex<<DB as sqlx::Database>::Row>,
-        DB: DbParam + DbColumnWriter,
+        DB: DbParam + DbColumnWriter + DbLimitSkipWriter,
     {
         let mut args: Option<<DB as HasArguments>::Arguments> = Some(Default::default());
         let next_params = NextParam::new::<DB>();
@@ -70,11 +86,14 @@ where
         let sql = join_sql_parts(&[
             build_head_count::<DB, S>(),
             build_where(&next_params, &mut args, wheres),
+            build_tail(&self),
         ]);
 
         // lifetime hack
         self.history.push(sql);
         let sql = self.history.last().unwrap();
+
+        eprintln!("RUNNING: {}", sql);
 
         // Run the query
         let query: Query<DB, <DB as HasArguments>::Arguments> =
@@ -89,7 +108,7 @@ where
         'q: 'args,
         &'ex E: sqlx::Executor<'e, Database = DB>,
         <DB as HasArguments<'schema>>::Arguments: IntoArguments<'args, DB>,
-        DB: DbParam + DbColumnWriter,
+        DB: DbParam + DbColumnWriter + DbLimitSkipWriter,
     {
         let mut args: Option<<DB as HasArguments>::Arguments> = Some(Default::default());
         let next_params = NextParam::new::<DB>();
@@ -98,6 +117,7 @@ where
         let sql = join_sql_parts(&[
             build_head_select::<DB, S>(),
             build_where(&next_params, &mut args, wheres),
+            build_tail(&self),
         ]);
 
         // lifetime hack
@@ -145,6 +165,22 @@ where
         }
     }
     Some(where_sql.join(" "))
+}
+
+fn build_tail<'schema, T, S, DB>(select: &SelectBuilder<'schema, T, S, DB>) -> Option<String>
+where
+    DB: sqlx::Database + DbLimitSkipWriter,
+    S: TableInfo + TableColumns<DB>,
+{
+    if select.limit.is_none() && select.offset.is_none() {
+        return None;
+    }
+    let w = LimitSkipWriter::new::<DB>();
+    Some(format!(
+        "{} {}",
+        w.limit(select.limit),
+        w.skip(select.offset)
+    ))
 }
 
 fn build_head_select<DB, S>() -> Option<String>

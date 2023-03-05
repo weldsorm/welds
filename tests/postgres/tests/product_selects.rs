@@ -87,3 +87,16 @@ fn should_be_able_to_count_in_sql() {
         assert_eq!(count, 2,);
     })
 }
+
+#[test]
+fn should_be_able_to_limit_results_in_sql() {
+    async_std::task::block_on(async {
+        let conn = testlib::postgres::conn().await.unwrap();
+        let pool: welds_core::database::Pool = conn.into();
+        let conn = pool.as_postgres().unwrap();
+        let mut q = Product::all().limit(2).offset(1);
+        eprintln!("SQL: {}", q.to_sql());
+        let count = q.run(&conn).await.unwrap().len();
+        assert_eq!(count, 2);
+    })
+}

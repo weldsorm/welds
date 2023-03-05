@@ -70,10 +70,10 @@ where
         ])
     }
 
-    pub async fn count<'q, 'ex, 'e, E>(&'q mut self, exec: &'ex E) -> Result<u64>
+    pub async fn count<'q, 'e, E>(&'q mut self, exec: E) -> Result<u64>
     where
         'q: 'args,
-        &'ex E: sqlx::Executor<'e, Database = DB>,
+        E: sqlx::Executor<'e, Database = DB>,
         <DB as HasArguments<'schema>>::Arguments: IntoArguments<'args, DB>,
         i64: sqlx::Type<DB> + for<'r> sqlx::Decode<'r, DB>,
         usize: sqlx::ColumnIndex<<DB as sqlx::Database>::Row>,
@@ -103,10 +103,10 @@ where
         Ok(count as u64)
     }
 
-    pub async fn run<'q, 'ex, 'e, E>(&'q mut self, exec: &'ex E) -> Result<Vec<T>>
+    pub async fn run<'q, 'e, E>(&'q mut self, exec: E) -> Result<Vec<T>>
     where
         'q: 'args,
-        &'ex E: sqlx::Executor<'e, Database = DB>,
+        E: sqlx::Executor<'e, Database = DB>,
         <DB as HasArguments<'schema>>::Arguments: IntoArguments<'args, DB>,
         DB: DbParam + DbColumnWriter + DbLimitSkipWriter,
     {

@@ -54,7 +54,7 @@ fn should_be_able_to_count_in_sql_product_lite() {
         let pool: welds_core::database::Pool = conn.into();
         let conn = pool.as_mssql().unwrap();
         let mut q = ProductLite::all();
-        let count = q.count(&conn).await.unwrap();
+        let count = q.count(conn).await.unwrap();
         assert_eq!(count, 6);
     })
 }
@@ -98,7 +98,7 @@ fn should_be_able_to_filter_on_lt() {
         let conn = pool.as_mssql().unwrap();
         let mut q = Product::where_col(|x| x.price1.lt(3.00));
         eprintln!("SQL: {}", q.to_sql());
-        let data = q.run(&conn).await.unwrap();
+        let data = q.run(conn).await.unwrap();
         assert_eq!(data.len(), 2, "Expected horse and dog",);
     })
 }
@@ -117,7 +117,7 @@ fn should_be_able_to_filter_on_lte() {
         eprintln!("5");
         eprintln!("SQL: {}", q.to_sql());
         eprintln!("6");
-        let data = q.run(&conn).await.unwrap();
+        let data = q.run(conn).await.unwrap();
         eprintln!("7");
         assert_eq!(data.len(), 2, "Expected horse and dog");
     })
@@ -131,7 +131,20 @@ fn should_be_able_to_count_in_sql() {
         let conn = pool.as_mssql().unwrap();
         let mut q = Product::where_col(|x| x.price1.lte(2.10));
         eprintln!("SQL: {}", q.to_sql());
-        let count = q.count(&conn).await.unwrap();
+        let count = q.count(conn).await.unwrap();
         assert_eq!(count, 2,);
+    })
+}
+
+#[test]
+fn should_be_able_to_limit_results_in_sql() {
+    async_std::task::block_on(async {
+        let conn = testlib::mssql::conn().await.unwrap();
+        let pool: welds_core::database::Pool = conn.into();
+        let conn = pool.as_mssql().unwrap();
+        let mut q = Product::all().limit(2).offset(1);
+        eprintln!("SQL: {}", q.to_sql());
+        let count = q.run(conn).await.unwrap().len();
+        assert_eq!(count, 2);
     })
 }

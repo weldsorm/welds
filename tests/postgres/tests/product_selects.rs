@@ -38,7 +38,7 @@ fn should_be_able_to_filter_on_lt() {
         let conn = pool.as_postgres().unwrap();
         let mut q = Product::where_col(|x| x.price1.lt(3.00));
         eprintln!("SQL: {}", q.to_sql());
-        let data = q.run(&conn).await.unwrap();
+        let data = q.run(conn).await.unwrap();
         assert_eq!(data.len(), 2, "Expected horse and dog",);
     })
 }
@@ -51,7 +51,7 @@ fn should_be_able_to_filter_on_lte() {
         let conn = pool.as_postgres().unwrap();
         let mut q = Product::where_col(|x| x.price1.lte(2.10));
         eprintln!("SQL: {}", q.to_sql());
-        let data = q.run(&conn).await.unwrap();
+        let data = q.run(conn).await.unwrap();
         assert_eq!(data.len(), 2, "Expected horse and dog",);
     })
 }
@@ -65,12 +65,12 @@ fn should_be_able_to_filter_with_nulls() {
         // is null
         let mut q1 = Product::where_col(|x| x.price1.equal(None));
         eprintln!("SQL_1: {}", q1.to_sql());
-        let data1 = q1.run(&conn).await.unwrap();
+        let data1 = q1.run(conn).await.unwrap();
         assert_eq!(data1.len(), 0, "Expected All",);
         // is not null
         let mut q1 = Product::where_col(|x| x.price1.not_equal(None));
         eprintln!("SQL_2: {}", q1.to_sql());
-        let data1 = q1.run(&conn).await.unwrap();
+        let data1 = q1.run(conn).await.unwrap();
         assert_eq!(data1.len(), 6, "Expected All",);
     })
 }
@@ -83,7 +83,7 @@ fn should_be_able_to_count_in_sql() {
         let conn = pool.as_postgres().unwrap();
         let mut q = Product::where_col(|x| x.price1.lte(2.10));
         eprintln!("SQL: {}", q.to_sql());
-        let count = q.count(&conn).await.unwrap();
+        let count = q.count(conn).await.unwrap();
         assert_eq!(count, 2,);
     })
 }
@@ -96,7 +96,7 @@ fn should_be_able_to_limit_results_in_sql() {
         let conn = pool.as_postgres().unwrap();
         let mut q = Product::all().limit(2).offset(1);
         eprintln!("SQL: {}", q.to_sql());
-        let count = q.run(&conn).await.unwrap().len();
+        let count = q.run(conn).await.unwrap().len();
         assert_eq!(count, 2);
     })
 }

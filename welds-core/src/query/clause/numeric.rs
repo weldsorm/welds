@@ -1,4 +1,4 @@
-use super::{ClauseAdder, ClauseColVal};
+use super::{AsFieldName, ClauseAdder, ClauseColVal};
 use std::marker::PhantomData;
 
 // Clauses for numeric types such as int, float, etc
@@ -6,6 +6,12 @@ use std::marker::PhantomData;
 pub struct Numeric<T> {
     field: String,
     _t: PhantomData<T>,
+}
+
+impl<T> AsFieldName for Numeric<T> {
+    fn fieldname<'a>(&'a self) -> &'a str {
+        self.field.as_str()
+    }
 }
 
 impl<T> Numeric<T>

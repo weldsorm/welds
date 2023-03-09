@@ -1,10 +1,16 @@
-use super::{ClauseAdder, ClauseColVal};
+use super::{AsFieldName, ClauseAdder, ClauseColVal};
 use crate::query::optional::HasSomeNone;
 use std::marker::PhantomData;
 
 pub struct BasicOpt<T> {
     field: String,
     _t: PhantomData<T>,
+}
+
+impl<T> AsFieldName for BasicOpt<T> {
+    fn fieldname<'a>(&'a self) -> &'a str {
+        self.field.as_str()
+    }
 }
 
 impl<T> BasicOpt<T>

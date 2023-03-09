@@ -1,9 +1,15 @@
-use super::{ClauseAdder, ClauseColVal};
+use super::{AsFieldName, ClauseAdder, ClauseColVal};
 use std::marker::PhantomData;
 
 pub struct Basic<T> {
     field: String,
     _t: PhantomData<T>,
+}
+
+impl<T> AsFieldName for Basic<T> {
+    fn fieldname<'a>(&'a self) -> &'a str {
+        self.field.as_str()
+    }
 }
 
 impl<T> Basic<T>

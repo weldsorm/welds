@@ -10,17 +10,13 @@ impl LimitSkipWriter {
             skip: DB::skip,
         }
     }
-    pub fn limit(&self, x: Option<i64>) -> String {
-        match x {
-            Some(x) => (self.limit)(x),
-            None => "".to_owned(),
-        }
+    pub fn limit(&self, x: Option<i64>) -> Option<String> {
+        let x = x?;
+        Some((self.limit)(x))
     }
-    pub fn skip(&self, x: Option<i64>) -> String {
-        match x {
-            Some(x) => (self.skip)(x),
-            None => "".to_owned(),
-        }
+    pub fn skip(&self, x: Option<i64>) -> Option<String> {
+        let x = x?;
+        Some((self.skip)(x))
     }
 }
 

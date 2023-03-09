@@ -1,3 +1,5 @@
+use crate::errors::Result;
+use sqlx::database::HasArguments;
 use sqlx::TypeInfo;
 
 pub trait TableInfo {
@@ -5,6 +7,7 @@ pub trait TableInfo {
     fn identifier() -> &'static str;
 }
 
+#[derive(Clone, PartialEq)]
 pub struct Column {
     name: String,
     dbtype: String,
@@ -31,5 +34,20 @@ impl Column {
 }
 
 pub trait TableColumns<DB> {
+    fn primary_keys() -> Vec<Column>;
     fn columns() -> Vec<Column>;
+}
+
+pub trait WriteToArgs<DB> {
+    fn bind<'args>(
+        &self,
+        column: &str,
+        args: &mut <DB as HasArguments<'args>>::Arguments,
+    ) -> Result<()>
+    where
+        DB: sqlx::Database;
+}
+
+pub trait HasSchema {
+    type Schema: Default + TableInfo;
 }

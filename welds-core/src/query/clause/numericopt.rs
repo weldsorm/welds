@@ -1,9 +1,15 @@
-use super::{ClauseAdder, ClauseColVal};
+use super::{AsFieldName, ClauseAdder, ClauseColVal};
 use std::marker::PhantomData;
 
 pub struct NumericOpt<T> {
     field: String,
     _t: PhantomData<T>,
+}
+
+impl<T> AsFieldName for NumericOpt<T> {
+    fn fieldname<'a>(&'a self) -> &'a str {
+        self.field.as_str()
+    }
 }
 
 use crate::query::optional::HasSomeNone;

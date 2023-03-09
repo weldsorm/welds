@@ -1,5 +1,10 @@
 use postgres_test::models::product::Product;
 
+#[derive(Default, Debug, Clone, sqlx::FromRow)]
+pub struct Count {
+    pub count: i32,
+}
+
 #[test]
 fn should_be_able_to_read_all_products() {
     async_std::task::block_on(async {
@@ -98,5 +103,45 @@ fn should_be_able_to_limit_results_in_sql() {
         eprintln!("SQL: {}", q.to_sql());
         let count = q.run(conn).await.unwrap().len();
         assert_eq!(count, 2);
+    })
+}
+
+#[test]
+fn should_be_able_to_order_by_id() {
+    async_std::task::block_on(async {
+        let conn = testlib::postgres::conn().await.unwrap();
+        let pool: welds_core::database::Pool = conn.into();
+        let conn = pool.as_postgres().unwrap();
+        let mut q = Product::all().order_by_asc(|x| x.id);
+        eprintln!("SQL: {}", q.to_sql());
+        let all = q.run(conn).await.unwrap();
+        let ids: Vec<i32> = all.iter().map(|x| x.id).collect();
+        let mut ids_sorted = ids.clone();
+        ids_sorted.sort();
+        assert_eq!(ids, ids_sorted);
+    })
+}
+
+
+#[test]
+fn should_be_able_to_update_a_product() {
+    async_std::task::block_on(async {
+        let conn = testlib::postgres::conn().await.unwrap();
+        let pool: welds_core::database::Pool = conn.into();
+        let conn = pool.as_postgres().unwrap();
+        let mut trans = conn.begin().await.unwrap();
+
+        let mut q = Product::all().limit(1);
+        let mut found: Vec<_> = q.run(&mut trans).await.unwrap();
+        let mut p1 = found.pop().unwrap();
+        p1.name = "Test1".to_owned();
+        p1.save(&mut trans).await.unwrap();
+
+        let mut q = Product::where_col(|x| x.id.equal(p1.id));
+        let mut found: Vec<_> = q.run(&mut trans).await.unwrap();
+        let p2 = found.pop().unwrap();
+        assert_eq!(p2.name, "Test1");
+
+        trans.rollback().await.unwrap();
     })
 }

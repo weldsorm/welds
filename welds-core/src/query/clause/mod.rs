@@ -9,14 +9,21 @@ mod numeric;
 pub use numeric::Numeric;
 mod numericopt;
 pub use numericopt::NumericOpt;
+
 mod nextparam;
 pub use nextparam::{DbParam, NextParam};
+pub(crate) mod orderby;
+pub(crate) use orderby::OrderBy;
 
 pub struct ClauseColVal<T> {
     pub null_clause: Option<String>,
     pub col: String,
     pub operator: &'static str,
     pub val: T,
+}
+
+pub trait AsFieldName {
+    fn fieldname<'a>(&'a self) -> &'a str;
 }
 
 pub trait ClauseAdder<'args, DB: sqlx::Database> {

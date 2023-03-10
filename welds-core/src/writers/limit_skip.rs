@@ -1,66 +1,66 @@
 pub(crate) struct LimitSkipWriter {
-    limit: fn(i64) -> String,
-    skip: fn(i64) -> String,
+    skiplimit: fn(Option<i64>, Option<i64>) -> Option<String>,
 }
 
 impl LimitSkipWriter {
     pub fn new<DB: DbLimitSkipWriter>() -> Self {
         Self {
-            limit: DB::limit,
-            skip: DB::skip,
+            skiplimit: DB::skiplimit,
         }
     }
-    pub fn limit(&self, x: Option<i64>) -> Option<String> {
-        let x = x?;
-        Some((self.limit)(x))
-    }
-    pub fn skip(&self, x: Option<i64>) -> Option<String> {
-        let x = x?;
-        Some((self.skip)(x))
+    pub fn skiplimit(&self, s: Option<i64>, l: Option<i64>) -> Option<String> {
+        (self.skiplimit)(s, l)
     }
 }
 
 pub trait DbLimitSkipWriter {
-    fn limit(x: i64) -> String;
-    fn skip(x: i64) -> String;
+    fn skiplimit(s: Option<i64>, l: Option<i64>) -> Option<String>;
 }
 
 #[cfg(feature = "postgres")]
 impl DbLimitSkipWriter for sqlx::Postgres {
-    fn limit(x: i64) -> String {
-        format!("LIMIT {}", x)
-    }
-    fn skip(x: i64) -> String {
-        format!("OFFSET {}", x)
+    fn skiplimit(s: Option<i64>, l: Option<i64>) -> Option<String> {
+        if s.is_none() && l.is_none() {
+            return None;
+        }
+        let s = s.unwrap_or(0);
+        let l = l.unwrap_or(9999999);
+        Some(format!("OFFSET {} LIMIT {}", s, l))
     }
 }
 
 #[cfg(feature = "sqlite")]
 impl DbLimitSkipWriter for sqlx::Sqlite {
-    fn limit(x: i64) -> String {
-        format!("LIMIT {}", x)
-    }
-    fn skip(x: i64) -> String {
-        format!("OFFSET {}", x)
+    fn skiplimit(s: Option<i64>, l: Option<i64>) -> Option<String> {
+        if s.is_none() && l.is_none() {
+            return None;
+        }
+        let s = s.unwrap_or(0);
+        let l = l.unwrap_or(9999999);
+        Some(format!("OFFSET {} LIMIT {}", s, l))
     }
 }
 
 #[cfg(feature = "mssql")]
 impl DbLimitSkipWriter for sqlx::Mssql {
-    fn limit(x: i64) -> String {
-        format!("FETCH NEXT {} ROWS ONLY", x)
-    }
-    fn skip(x: i64) -> String {
-        format!("OFFSET {} ROWS", x)
+    fn skiplimit(s: Option<i64>, l: Option<i64>) -> Option<String> {
+        if s.is_none() && l.is_none() {
+            return None;
+        }
+        let s = s.unwrap_or(0);
+        let l = l.unwrap_or(9999999);
+        Some(format!("OFFSET {} ROWS FETCH FIRST {} ROWS ONLY", s, l))
     }
 }
 
 #[cfg(feature = "mysql")]
 impl DbLimitSkipWriter for sqlx::MySql {
-    fn limit(x: i64) -> String {
-        format!("LIMIT {}", x)
-    }
-    fn skip(x: i64) -> String {
-        format!("OFFSET {}", x)
+    fn skiplimit(s: Option<i64>, l: Option<i64>) -> Option<String> {
+        if s.is_none() && l.is_none() {
+            return None;
+        }
+        let s = s.unwrap_or(0);
+        let l = l.unwrap_or(9999999);
+        Some(format!("LIMIT {}, {}", s, l))
     }
 }

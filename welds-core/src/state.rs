@@ -1,7 +1,9 @@
 use crate::errors::Result;
 use crate::query::clause::DbParam;
-use crate::query::update;
+use crate::query::{insert, update};
 use crate::table::{HasSchema, TableColumns, TableInfo, WriteToArgs};
+use crate::writers::column::DbColumnWriter;
+use crate::writers::insert::DbInsertWriter;
 use sqlx::database::HasArguments;
 use sqlx::IntoArguments;
 use std::marker::PhantomData;
@@ -22,6 +24,15 @@ pub struct DbState<T> {
 }
 
 impl<T> DbState<T> {
+    pub fn new_uncreated(inner: T) -> DbState<T> {
+        DbState {
+            _t: PhantomData::default(),
+            inner,
+            status: DbStatus::NotInDatabase,
+            sql_buff: String::default(),
+        }
+    }
+
     pub(crate) fn db_loaded(inner: T) -> DbState<T> {
         DbState {
             _t: PhantomData::default(),
@@ -35,20 +46,21 @@ impl<T> DbState<T> {
     where
         'q: 'args,
         'schema: 'args,
-        T: WriteToArgs<DB>,
+        T: WriteToArgs<DB> + HasSchema + for<'r> sqlx::FromRow<'r, DB::Row>,
         E: sqlx::Executor<'e, Database = DB>,
-        DB: sqlx::Database + DbParam,
-        T: HasSchema, //T: HasSchema + WriteToArgs<DB>,
+        DB: sqlx::Database + DbParam + DbInsertWriter + DbColumnWriter,
         <DB as HasArguments<'schema>>::Arguments: IntoArguments<'args, DB>,
         <T as HasSchema>::Schema: TableInfo + TableColumns<DB>,
     {
         match self.status {
             DbStatus::NotModified => {}
             DbStatus::Edited => {
+                self.sql_buff = String::default();
                 update::update_one(&mut self.sql_buff, &self.inner, exec).await?;
             }
             DbStatus::NotInDatabase => {
-                todo!("impl creating");
+                self.sql_buff = String::default();
+                insert::insert_one(&mut self.sql_buff, &mut self.inner, exec).await?;
             }
         }
         self.status = DbStatus::NotModified;

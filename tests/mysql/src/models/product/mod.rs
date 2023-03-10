@@ -1,4 +1,3 @@
-use sqlx::postgres::types::PgMoney;
 use welds_core::query::clause::ClauseAdder;
 use welds_core::query::clause::{Basic, BasicOpt, Numeric, NumericOpt};
 use welds_core::query::optional::Optional;
@@ -19,8 +18,6 @@ pub struct Product {
     pub description: Option<String>,
     pub price1: Option<f32>,
     pub price2: Option<f64>,
-    pub price3: Option<PgMoney>,
-    pub barcode: Option<Vec<u8>>,
     pub active: Option<bool>,
 }
 
@@ -28,11 +25,11 @@ impl HasSchema for Product {
     type Schema = ProductSchema;
 }
 
-impl WriteToArgs<sqlx::Postgres> for Product {
+impl WriteToArgs<sqlx::MySql> for Product {
     fn bind<'args>(
         &self,
         column: &str,
-        args: &mut <sqlx::Postgres as sqlx::database::HasArguments<'args>>::Arguments,
+        args: &mut <sqlx::MySql as sqlx::database::HasArguments<'args>>::Arguments,
     ) -> Result<(), welds_core::errors::WeldsError> {
         use sqlx::Arguments;
         match column {
@@ -41,8 +38,6 @@ impl WriteToArgs<sqlx::Postgres> for Product {
             "description" => args.add(&self.description),
             "price1" => args.add(&self.price1),
             "price2" => args.add(&self.price2),
-            "price3" => args.add(&self.price3),
-            "barcode" => args.add(&self.barcode),
             "active" => args.add(&self.active),
             _ => {
                 return Err(welds_core::errors::WeldsError::MissingDbColumn(
@@ -60,8 +55,6 @@ pub struct ProductSchema {
     pub description: BasicOpt<Optional<String>>,
     pub price1: NumericOpt<Optional<f32>>,
     pub price2: NumericOpt<Optional<f64>>,
-    pub price3: NumericOpt<Optional<PgMoney>>,
-    pub barcode: BasicOpt<Optional<Vec<u8>>>,
     pub active: BasicOpt<Optional<bool>>,
 }
 
@@ -73,8 +66,6 @@ impl Default for ProductSchema {
             description: BasicOpt::new("description"),
             price1: NumericOpt::new("price1"),
             price2: NumericOpt::new("price2"),
-            price3: NumericOpt::new("price3"),
-            barcode: BasicOpt::new("barcode"),
             active: BasicOpt::new("active"),
         }
     }
@@ -82,25 +73,23 @@ impl Default for ProductSchema {
 
 impl TableInfo for ProductSchema {
     fn identifier() -> &'static str {
-        "products"
+        "Products"
     }
 }
 
-impl TableColumns<sqlx::Postgres> for ProductSchema {
+impl TableColumns<sqlx::MySql> for ProductSchema {
     fn primary_keys() -> Vec<Column> {
-        type DB = sqlx::Postgres;
+        type DB = sqlx::MySql;
         vec![Column::new::<DB, i32>("product_id")]
     }
     fn columns() -> Vec<Column> {
-        type DB = sqlx::Postgres;
+        type DB = sqlx::MySql;
         vec![
             Column::new::<DB, i32>("product_id"),
             Column::new::<DB, String>("name"),
             Column::new::<DB, Option<String>>("description"),
             Column::new::<DB, Option<f32>>("price1"),
             Column::new::<DB, Option<f64>>("price2"),
-            Column::new::<DB, Option<PgMoney>>("price3"),
-            Column::new::<DB, Option<Vec<u8>>>("barcode"),
             Column::new::<DB, Option<bool>>("active"),
         ]
     }
@@ -114,8 +103,6 @@ impl Product {
             description: Default::default(),
             price1: Default::default(),
             price2: Default::default(),
-            price3: Default::default(),
-            barcode: Default::default(),
             active: Default::default(),
         })
     }

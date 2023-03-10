@@ -101,6 +101,17 @@ impl TableColumns<sqlx::Mssql> for ProductSchema {
 }
 
 impl Product {
+    pub fn new() -> welds_core::state::DbState<Self> {
+        welds_core::state::DbState::new_uncreated(Self {
+            id: Default::default(),
+            name: Default::default(),
+            description: Default::default(),
+            price1: Default::default(),
+            price2: Default::default(),
+            active: Default::default(),
+        })
+    }
+
     pub fn all<'args, DB>() -> SelectBuilder<'args, Self, DB>
     where
         DB: sqlx::Database,

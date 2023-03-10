@@ -5,6 +5,7 @@ use crate::query::clause::{AsFieldName, ClauseAdder, OrderBy};
 use crate::state::DbState;
 use crate::table::{HasSchema, TableColumns, TableInfo};
 use crate::writers::column::{ColumnWriter, DbColumnWriter};
+use crate::writers::count::{CountWriter, DbCountWriter};
 use crate::writers::limit_skip::{DbLimitSkipWriter, LimitSkipWriter};
 use sqlx::database::HasArguments;
 use sqlx::query::{Query, QueryAs};
@@ -84,7 +85,7 @@ where
     pub fn to_sql(&mut self) -> String
     where
         <DB as HasArguments<'schema>>::Arguments: IntoArguments<'args, DB>,
-        DB: DbParam + DbColumnWriter + DbLimitSkipWriter,
+        DB: DbParam + DbColumnWriter + DbLimitSkipWriter + DbCountWriter,
         <T as HasSchema>::Schema: TableInfo + TableColumns<DB>,
     {
         let mut args: Option<<DB as HasArguments>::Arguments> = None;
@@ -105,7 +106,7 @@ where
         <DB as HasArguments<'schema>>::Arguments: IntoArguments<'args, DB>,
         i64: sqlx::Type<DB> + for<'r> sqlx::Decode<'r, DB>,
         usize: sqlx::ColumnIndex<<DB as sqlx::Database>::Row>,
-        DB: DbParam + DbColumnWriter + DbLimitSkipWriter,
+        DB: DbParam + DbColumnWriter + DbLimitSkipWriter + DbCountWriter,
         <T as HasSchema>::Schema: TableInfo + TableColumns<DB>,
     {
         let mut args: Option<<DB as HasArguments>::Arguments> = Some(Default::default());
@@ -189,7 +190,6 @@ where
         return None;
     }
     let mut where_sql: Vec<String> = Vec::default();
-    where_sql.push("WHERE".to_owned());
     for clause in wheres {
         if let Some(args) = args {
             clause.bind(args);
@@ -198,7 +198,7 @@ where
             where_sql.push(p);
         }
     }
-    Some(where_sql.join(" "))
+    Some(format!("WHERE ( {} )", where_sql.join(" AND ")))
 }
 
 fn build_tail<'schema, T, DB>(select: &SelectBuilder<'schema, T, DB>) -> Option<String>
@@ -210,11 +210,15 @@ where
     let w = LimitSkipWriter::new::<DB>();
     let mut parts = VecDeque::default();
 
-    if let Some(skip) = w.skip(select.offset) {
-        parts.push_back(skip);
-    }
-    if let Some(limit) = w.limit(select.limit) {
-        parts.push_back(limit);
+    //if let Some(skip) = w.skip(select.offset) {
+    //    parts.push_back(skip);
+    //}
+    //if let Some(limit) = w.limit(select.limit) {
+    //    parts.push_back(limit);
+    //}
+
+    if let Some(skiplimit) = w.skiplimit(select.offset, select.limit) {
+        parts.push_back(skiplimit);
     }
 
     // If we are limiting but no order is given force an order (needed for MSSQL)
@@ -252,11 +256,10 @@ where
 
 fn build_head_count<DB, S>() -> Option<String>
 where
-    DB: sqlx::Database + DbColumnWriter,
+    DB: sqlx::Database + DbColumnWriter + DbCountWriter,
     S: TableInfo + TableColumns<DB>,
 {
-    let mut head: Vec<&str> = Vec::default();
-    head.push("SELECT cast(count(*) as bigint) FROM");
-    head.push(S::identifier());
-    Some(head.join(" "))
+    let cw = CountWriter::new::<DB>();
+    let count_star = cw.count(None);
+    Some(format!("SELECT {} FROM {}", count_star, S::identifier()))
 }

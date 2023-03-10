@@ -37,6 +37,7 @@ pub(crate) struct Mssql {
     port: u32,
     container_id: String,
     password: String,
+    ready: std::cell::Cell<bool>,
 }
 
 impl Mssql {
@@ -54,6 +55,7 @@ impl Mssql {
             container_id: String::default(),
             port,
             password,
+            ready: std::cell::Cell::new(false)
         };
         eprintln!("Booting Mssql test Environment");
         db.boot().unwrap();
@@ -104,6 +106,9 @@ impl Mssql {
     }
 
     pub fn is_ready(&self) -> bool {
+        if self.ready.get() {
+            return true;
+        }
         let logs = Command::new("docker")
             .arg("logs")
             .arg(&self.container_id)
@@ -130,8 +135,9 @@ impl Mssql {
                 return Err("Container No Running");
             }
             if self.is_ready() {
-                sleep(ten_millis);
-                sleep(ten_millis);
+                let extra = std::time::Duration::from_millis(200);
+                sleep(extra);
+                self.ready.set(true);
                 return Ok(());
             }
             sleep(ten_millis);

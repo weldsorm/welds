@@ -148,3 +148,26 @@ fn should_be_able_to_limit_results_in_sql() {
         assert_eq!(count, 2);
     })
 }
+
+#[test]
+fn should_be_able_to_create_a_new_product() {
+    async_std::task::block_on(async {
+        let conn = testlib::mssql::conn().await.unwrap();
+        let pool: welds_core::database::Pool = conn.into();
+        let conn = pool.as_mssql().unwrap();
+        let mut trans = conn.begin().await.unwrap();
+
+        let mut p1 = Product::new();
+        p1.name = "newyNewFace".to_owned();
+        p1.description = Some("YES!".to_owned());
+        // Note: creation will set the PK for the model.
+        p1.save(&mut trans).await.unwrap();
+
+        let mut q = Product::where_col(|x| x.id.equal(p1.id));
+        let mut found: Vec<_> = q.run(&mut trans).await.unwrap();
+        let p2 = found.pop().unwrap();
+        assert_eq!(p2.name, "newyNewFace");
+
+        trans.rollback().await.unwrap();
+    })
+}

@@ -93,4 +93,7 @@ INSERT INTO Orders (
 );
 
 
+-- RESET THE NEXT IDs
+SELECT setval('products_product_id_seq', COALESCE((SELECT MAX(product_id)+1 FROM products), 1), false);
+SELECT setval('orders_id_seq', COALESCE((SELECT MAX(id)+1 FROM orders), 1), false);
 

@@ -37,7 +37,7 @@ impl DbLimitSkipWriter for sqlx::Sqlite {
         }
         let s = s.unwrap_or(0);
         let l = l.unwrap_or(9999999);
-        Some(format!("OFFSET {} LIMIT {}", s, l))
+        Some(format!("LIMIT {limit} OFFSET {skip} ", limit = l, skip = s))
     }
 }
 

@@ -1712,6 +1712,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "sqlite_test"
+version = "0.1.0"
+dependencies = [
+ "async-std",
+ "sqlx",
+ "testlib",
+ "welds-core",
+]
+
+[[package]]
 name = "sqlx"
 version = "0.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"

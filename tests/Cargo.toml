@@ -1,6 +1,6 @@
 [workspace]
-default-members = ["mssql", "mysql", "postgres", "testlib"]
-members = ["mssql", "mysql", "postgres", "testlib"]
+default-members = ["mssql", "mysql", "postgres", "testlib", "sqlite"]
+members = ["mssql", "mysql", "postgres", "testlib", "sqlite"]
 
 [profile.dev.package.sqlx-macros]
 opt-level = 3

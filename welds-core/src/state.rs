@@ -23,6 +23,15 @@ pub struct DbState<T> {
     sql_buff: String,
 }
 
+impl<T> std::fmt::Debug for DbState<T>
+where
+    T: std::fmt::Debug,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        std::fmt::Debug::fmt(&self.inner, f)
+    }
+}
+
 impl<T> DbState<T> {
     pub fn new_uncreated(inner: T) -> DbState<T> {
         DbState {

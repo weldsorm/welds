@@ -101,7 +101,7 @@ where
 
     pub async fn count<'q, 'e, E>(&'q mut self, exec: E) -> Result<u64>
     where
-        'q: 'args,
+        'schema: 'args,
         E: sqlx::Executor<'e, Database = DB>,
         <DB as HasArguments<'schema>>::Arguments: IntoArguments<'args, DB>,
         i64: sqlx::Type<DB> + for<'r> sqlx::Decode<'r, DB>,
@@ -120,8 +120,15 @@ where
         ]);
 
         // lifetime hack
+        // We know the SQL string is keep around until after execution is complete.
         self.history.push(sql);
         let sql = self.history.last().unwrap();
+        let sql_len = sql.len();
+        let sqlp = sql.as_ptr();
+        let sql_hack: &[u8] = unsafe { std::slice::from_raw_parts(sqlp, sql_len) };
+        let sql: &str = std::str::from_utf8(&sql_hack).unwrap();
+
+        eprintln!("SQL: {}", sql);
 
         // Run the query
         let query: Query<DB, <DB as HasArguments>::Arguments> =
@@ -133,7 +140,7 @@ where
 
     pub async fn run<'q, 'e, E>(&'q mut self, exec: E) -> Result<Vec<DbState<T>>>
     where
-        'q: 'args,
+        'schema: 'args,
         E: sqlx::Executor<'e, Database = DB>,
         <DB as HasArguments<'schema>>::Arguments: IntoArguments<'args, DB>,
         DB: DbParam + DbColumnWriter + DbLimitSkipWriter,
@@ -142,7 +149,6 @@ where
         let mut args: Option<<DB as HasArguments>::Arguments> = Some(Default::default());
         let next_params = NextParam::new::<DB>();
         let wheres = self.wheres.as_slice();
-
         let sql = join_sql_parts(&[
             build_head_select::<DB, <T as HasSchema>::Schema>(),
             build_where(&next_params, &mut args, wheres),
@@ -150,8 +156,13 @@ where
         ]);
 
         // lifetime hack
+        // We know the SQL string is keep around until after execution is complete.
         self.history.push(sql);
         let sql = self.history.last().unwrap();
+        let sql_len = sql.len();
+        let sqlp = sql.as_ptr();
+        let sql_hack: &[u8] = unsafe { std::slice::from_raw_parts(sqlp, sql_len) };
+        let sql: &str = std::str::from_utf8(&sql_hack).unwrap();
 
         // Run the query
         let q: QueryAs<DB, T, <DB as HasArguments>::Arguments> =
@@ -162,10 +173,32 @@ where
             .drain(..)
             .map(|d| DbState::db_loaded(d))
             .collect();
-
         Ok(data)
     }
 }
+
+//async fn runit<'sql, 'hasargs, 'intoargs, 'e, DB, T, E>(
+//    sql: &'sql str,
+//    args: <DB as HasArguments<'hasargs>>::Arguments,
+//    exec: E,
+//) -> Result<Vec<DbState<T>>>
+//where
+//    'sql: 'intoargs,
+//    'hasargs: 'intoargs,
+//    E: sqlx::Executor<'e, Database = DB>,
+//    DB: sqlx::database::Database,
+//    <DB as HasArguments<'hasargs>>::Arguments: IntoArguments<'intoargs, DB>,
+//    T: Send + Unpin + for<'r> sqlx::FromRow<'r, DB::Row>,
+//{
+//    let q: QueryAs<DB, T, <DB as HasArguments>::Arguments> = sqlx::query_as_with(&sql, args);
+//    let data = q
+//        .fetch_all(exec)
+//        .await?
+//        .drain(..)
+//        .map(|d| DbState::db_loaded(d))
+//        .collect();
+//    Ok(data)
+//}
 
 fn join_sql_parts(parts: &[Option<String>]) -> String {
     // Join al the parts into
@@ -209,13 +242,6 @@ where
 {
     let w = LimitSkipWriter::new::<DB>();
     let mut parts = VecDeque::default();
-
-    //if let Some(skip) = w.skip(select.offset) {
-    //    parts.push_back(skip);
-    //}
-    //if let Some(limit) = w.limit(select.limit) {
-    //    parts.push_back(limit);
-    //}
 
     if let Some(skiplimit) = w.skiplimit(select.offset, select.limit) {
         parts.push_back(skiplimit);

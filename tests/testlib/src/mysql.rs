@@ -55,7 +55,7 @@ impl Mysql {
             container_id: String::default(),
             port,
             password,
-            ready: std::cell::Cell::new(false)
+            ready: std::cell::Cell::new(false),
         };
         eprintln!("Booting Mysql test Environment");
         db.boot().unwrap();
@@ -121,7 +121,8 @@ impl Mysql {
             .unwrap();
         let grep = Command::new("grep")
             .arg("-q")
-            .arg("mysqld: ready for connections")
+            //.arg("*** DONE INIT ***")
+            .arg("X Plugin ready for connections. Bind-address: '::' port")
             .stdin(Stdio::from(logs.stderr.unwrap()))
             .stdout(Stdio::piped())
             .stderr(Stdio::null())
@@ -142,7 +143,7 @@ impl Mysql {
             }
             if self.is_ready() {
                 // HACK: DB says it is ready before it really is :/
-                let extra = std::time::Duration::from_millis(5000);
+                let extra = std::time::Duration::from_millis(100);
                 sleep(extra);
                 self.ready.set(true);
                 return Ok(());

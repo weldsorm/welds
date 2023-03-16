@@ -11,7 +11,6 @@ sqlx = { version = "0.6", features = [
 ] }
 
 [features]
-#"default" = ["postgres", "mysql", "mssql", "sqlite"]
 "default" = []
 "postgres" = ["sqlx/postgres"]
 "mysql" = ["sqlx/mysql"]

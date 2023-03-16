@@ -35,7 +35,7 @@ impl WriteToArgs<sqlx::Sqlite> for Product {
         match column {
             "product_id" => args.add(self.id.clone()),
             "name" => args.add(self.name.clone()),
-            "Description" => args.add(self.description.clone()),
+            "description" => args.add(self.description.clone()),
             "price1" => args.add(self.price1.clone()),
             "price2" => args.add(self.price2.clone()),
             "active" => args.add(self.active.clone()),

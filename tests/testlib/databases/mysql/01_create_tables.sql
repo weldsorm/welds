@@ -8,7 +8,7 @@ USE weldstests;
 CREATE TABLE Products (
   product_id INT NOT NULL AUTO_INCREMENT,
   name VARCHAR ( 50 ) UNIQUE NOT NULL,
-  Description text,
+  description text,
   price1 FLOAT,
   price2 DOUBLE,
   active bool,

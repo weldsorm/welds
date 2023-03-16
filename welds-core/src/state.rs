@@ -51,12 +51,13 @@ impl<T> DbState<T> {
         }
     }
 
-    pub async fn save<'q, 'schema, 'args, 'e, E, DB>(&'q mut self, exec: E) -> Result<()>
+    pub async fn save<'q, 'schema, 'args, 'e, E, DB>(&'q mut self, exec: &'e mut E) -> Result<()>
     where
+        E: 'e,
         'q: 'args,
         'schema: 'args,
         T: WriteToArgs<DB> + HasSchema + for<'r> sqlx::FromRow<'r, DB::Row>,
-        E: sqlx::Executor<'e, Database = DB>,
+        &'e mut E: sqlx::Executor<'e, Database = DB>,
         DB: sqlx::Database + DbParam + DbInsertWriter + DbColumnWriter,
         <DB as HasArguments<'schema>>::Arguments: IntoArguments<'args, DB>,
         <T as HasSchema>::Schema: TableInfo + TableColumns<DB>,

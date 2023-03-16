@@ -8,14 +8,15 @@ use sqlx::IntoArguments;
 pub async fn update_one<'schema, 'args, 'e, DB, T, E>(
     buff: &'args mut String,
     obj: &T,
-    exec: E,
+    exec: &'e mut E,
 ) -> Result<()>
 where
+    E: 'e,
     'schema: 'args,
     DB: sqlx::Database + DbParam + DbColumnWriter,
     T: WriteToArgs<DB> + HasSchema,
     <T as HasSchema>::Schema: TableInfo + TableColumns<DB>,
-    E: sqlx::Executor<'e, Database = DB>,
+    &'e mut E: sqlx::Executor<'e, Database = DB>,
     <DB as HasArguments<'schema>>::Arguments: IntoArguments<'args, DB>,
 {
     let mut args: <DB as HasArguments>::Arguments = Default::default();
@@ -45,7 +46,8 @@ where
     for col in pks {
         obj.bind(col.name(), &mut args)?;
         let p = next_params.next();
-        wheres.push(format!("\"{}\"={}", col.name(), p));
+        let colname = col_writer.excape(col.name());
+        wheres.push(format!("{}={}", colname, p));
     }
 
     let sets = sets.join(", ");
@@ -53,6 +55,7 @@ where
 
     *buff = format!("UPDATE {} SET {} where {}", identifier, sets, wheres);
 
+    eprintln!("SQL: {:?}", buff);
     let q = sqlx::query_with(buff, args);
     q.execute(exec).await?;
 

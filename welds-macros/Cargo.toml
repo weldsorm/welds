@@ -1,0 +1,28 @@
+[package]
+name = "welds-macros"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+syn = "^1.0"
+log = "^0.4"
+quote = "^1.0.2"
+sqlx = "0.6"
+proc-macro2 = "1"
+
+[features]
+"default" = []
+"postgres" = ["sqlx/postgres"]
+"mysql" = ["sqlx/mysql"]
+"mssql" = ["sqlx/mssql"]
+"sqlite" = ["sqlx/sqlite"]
+
+[dev-dependencies]
+async-std = { version = "1", features = ["attributes"] }
+sqlx = { version = "0.6", features = [ "runtime-async-std-rustls",  "macros"] }
+welds-macros = { path="./", features=["postgres", "mysql", "mssql", "sqlite"] }
+
+

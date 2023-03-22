@@ -2179,6 +2179,18 @@ name = "welds-core"
 version = "0.1.0"
 dependencies = [
  "sqlx",
+ "welds-macros",
+]
+
+[[package]]
+name = "welds-macros"
+version = "0.1.0"
+dependencies = [
+ "log",
+ "proc-macro2",
+ "quote",
+ "sqlx",
+ "syn",
 ]
 
 [[package]]

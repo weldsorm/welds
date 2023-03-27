@@ -1,9 +1,11 @@
 use super::clause::{DbParam, NextParam};
 use crate::errors::Result;
+use crate::query::clause::exists::ExistIn;
 use crate::query::clause::orderby;
 use crate::query::clause::{AsFieldName, ClauseAdder, OrderBy};
+use crate::relations::{HasRelations, Relationship};
 use crate::state::DbState;
-use crate::table::{HasSchema, TableColumns, TableInfo};
+use crate::table::{HasSchema, TableColumns, TableInfo, UniqueIdentifier};
 use crate::writers::column::{ColumnWriter, DbColumnWriter};
 use crate::writers::count::{CountWriter, DbCountWriter};
 use crate::writers::limit_skip::{DbLimitSkipWriter, LimitSkipWriter};
@@ -16,11 +18,13 @@ use std::marker::PhantomData;
 
 pub struct SelectBuilder<'schema, T, DB: sqlx::Database> {
     _t: PhantomData<T>,
-    wheres: Vec<Box<dyn ClauseAdder<'schema, DB>>>,
+    pub(crate) wheres: Vec<Box<dyn ClauseAdder<'schema, DB>>>,
+    pub(crate) exist_ins: Vec<ExistIn<'schema, DB>>,
     limit: Option<i64>,
     offset: Option<i64>,
+    identifier_count: u32,
     orderby: Vec<OrderBy>,
-    // This is needed for lifetime issues, remove if you can
+    // these are needed for lifetime issues, remove if you can
     history: Vec<String>,
 }
 
@@ -35,8 +39,10 @@ where
             wheres: Vec::default(),
             limit: None,
             offset: None,
+            identifier_count: 1,
             orderby: Vec::default(),
             history: Default::default(),
+            exist_ins: Default::default(),
         }
     }
 
@@ -47,9 +53,38 @@ where
     where
         <T as HasSchema>::Schema: Default,
     {
-        let qba = lam(Default::default());
+        let mut qba = lam(Default::default());
+        qba.set_tablealias(format!("t{}", self.identifier_count));
         self.wheres.push(qba);
         self
+    }
+
+    pub fn map_query<R, Ship>(
+        self,
+        lam: impl Fn(<T as HasRelations>::Relation) -> Ship,
+    ) -> SelectBuilder<'schema, R, DB>
+    where
+        T: HasRelations + UniqueIdentifier<DB>,
+        Ship: Relationship<R>,
+        R: HasSchema + UniqueIdentifier<DB>,
+        R: Send + Unpin + for<'r> sqlx::FromRow<'r, DB::Row> + HasSchema,
+        <R as HasSchema>::Schema: TableInfo + TableColumns<DB>,
+        <T as HasRelations>::Relation: Default,
+    {
+        let ship = lam(Default::default());
+        let mut sb: SelectBuilder<R, DB> = SelectBuilder::new();
+        sb.identifier_count = self.identifier_count + 1;
+
+        let out_tn = format!("t{}", sb.identifier_count);
+        let out_col = ship.their_key::<DB, R, T>();
+        let inner_ta = format!("t{}", self.identifier_count);
+        let inner_tn = <T as HasSchema>::Schema::identifier().to_owned();
+        let inner_col = ship.my_key::<DB, R, T>();
+
+        let exist_in =
+            ExistIn::<'schema, DB>::new(self, out_tn, out_col, inner_tn, inner_ta, inner_col);
+        sb.exist_ins.push(exist_in);
+        sb
     }
 
     pub fn limit(mut self, x: i64) -> Self {
@@ -91,10 +126,11 @@ where
         let mut args: Option<<DB as HasArguments>::Arguments> = None;
         let next_params = NextParam::new::<DB>();
         let wheres = self.wheres.as_slice();
+        let exists_in = self.exist_ins.as_slice();
 
         join_sql_parts(&[
-            build_head_select::<DB, <T as HasSchema>::Schema>(),
-            build_where(&next_params, &mut args, wheres),
+            build_head_select::<DB, <T as HasSchema>::Schema>(self.identifier_count),
+            build_where(&next_params, &mut args, wheres, exists_in),
             build_tail(&self),
         ])
     }
@@ -112,10 +148,11 @@ where
         let mut args: Option<<DB as HasArguments>::Arguments> = Some(Default::default());
         let next_params = NextParam::new::<DB>();
         let wheres = self.wheres.as_slice();
+        let exists_in = self.exist_ins.as_slice();
 
         let sql = join_sql_parts(&[
-            build_head_count::<DB, <T as HasSchema>::Schema>(),
-            build_where(&next_params, &mut args, wheres),
+            build_head_count::<DB, <T as HasSchema>::Schema>(self.identifier_count),
+            build_where(&next_params, &mut args, wheres, exists_in),
             build_tail(&self),
         ]);
 
@@ -127,8 +164,6 @@ where
         let sqlp = sql.as_ptr();
         let sql_hack: &[u8] = unsafe { std::slice::from_raw_parts(sqlp, sql_len) };
         let sql: &str = std::str::from_utf8(&sql_hack).unwrap();
-
-        eprintln!("SQL: {}", sql);
 
         // Run the query
         let query: Query<DB, <DB as HasArguments>::Arguments> =
@@ -149,9 +184,10 @@ where
         let mut args: Option<<DB as HasArguments>::Arguments> = Some(Default::default());
         let next_params = NextParam::new::<DB>();
         let wheres = self.wheres.as_slice();
+        let exists_in = self.exist_ins.as_slice();
         let sql = join_sql_parts(&[
-            build_head_select::<DB, <T as HasSchema>::Schema>(),
-            build_where(&next_params, &mut args, wheres),
+            build_head_select::<DB, <T as HasSchema>::Schema>(self.identifier_count),
+            build_where(&next_params, &mut args, wheres, exists_in),
             build_tail(&self),
         ]);
 
@@ -177,29 +213,6 @@ where
     }
 }
 
-//async fn runit<'sql, 'hasargs, 'intoargs, 'e, DB, T, E>(
-//    sql: &'sql str,
-//    args: <DB as HasArguments<'hasargs>>::Arguments,
-//    exec: E,
-//) -> Result<Vec<DbState<T>>>
-//where
-//    'sql: 'intoargs,
-//    'hasargs: 'intoargs,
-//    E: sqlx::Executor<'e, Database = DB>,
-//    DB: sqlx::database::Database,
-//    <DB as HasArguments<'hasargs>>::Arguments: IntoArguments<'intoargs, DB>,
-//    T: Send + Unpin + for<'r> sqlx::FromRow<'r, DB::Row>,
-//{
-//    let q: QueryAs<DB, T, <DB as HasArguments>::Arguments> = sqlx::query_as_with(&sql, args);
-//    let data = q
-//        .fetch_all(exec)
-//        .await?
-//        .drain(..)
-//        .map(|d| DbState::db_loaded(d))
-//        .collect();
-//    Ok(data)
-//}
-
 fn join_sql_parts(parts: &[Option<String>]) -> String {
     // Join al the parts into
     let sql: Vec<&str> = parts
@@ -214,15 +227,14 @@ fn build_where<'schema, 'args, DB>(
     next_params: &NextParam,
     args: &mut Option<<DB as HasArguments<'schema>>::Arguments>,
     wheres: &[Box<dyn ClauseAdder<'schema, DB>>],
+    exist_ins: &[ExistIn<'schema, DB>],
 ) -> Option<String>
 where
     DB: sqlx::Database,
     <DB as HasArguments<'schema>>::Arguments: IntoArguments<'args, DB>,
 {
-    if wheres.len() == 0 {
-        return None;
-    }
     let mut where_sql: Vec<String> = Vec::default();
+
     for clause in wheres {
         if let Some(args) = args {
             clause.bind(args);
@@ -230,6 +242,19 @@ where
         if let Some(p) = clause.clause(&next_params) {
             where_sql.push(p);
         }
+    }
+
+    for clause in exist_ins {
+        if let Some(args) = args {
+            clause.bind(args);
+        }
+        if let Some(p) = clause.clause(&next_params) {
+            where_sql.push(p);
+        }
+    }
+
+    if where_sql.len() == 0 {
+        return None;
     }
     Some(format!("WHERE ( {} )", where_sql.join(" AND ")))
 }
@@ -263,29 +288,36 @@ where
     Some(parts.join(" "))
 }
 
-fn build_head_select<DB, S>() -> Option<String>
+fn build_head_select<DB, S>(identifier_count: u32) -> Option<String>
 where
     DB: sqlx::Database + DbColumnWriter,
     S: TableInfo + TableColumns<DB>,
 {
     let writer = ColumnWriter::new::<DB>();
+    let prefix = format!("t{}", identifier_count);
     let mut head: Vec<&str> = Vec::default();
     head.push("SELECT");
     let cols_info = S::columns();
-    let cols: Vec<_> = cols_info.iter().map(|col| writer.write(col)).collect();
+    let cols: Vec<_> = cols_info
+        .iter()
+        .map(|col| writer.write_with_prefix(&prefix, col))
+        .collect();
     let cols = cols.join(", ");
     head.push(&cols);
     head.push("FROM");
-    head.push(S::identifier());
+    let identifier = format!("{} {}", S::identifier(), prefix);
+    head.push(&identifier);
     Some(head.join(" "))
 }
 
-fn build_head_count<DB, S>() -> Option<String>
+fn build_head_count<DB, S>(identifier_count: u32) -> Option<String>
 where
     DB: sqlx::Database + DbColumnWriter + DbCountWriter,
     S: TableInfo + TableColumns<DB>,
 {
+    let prefix = format!("t{}", identifier_count);
+    let identifier = format!("{} {}", S::identifier(), &prefix);
     let cw = CountWriter::new::<DB>();
-    let count_star = cw.count(None);
-    Some(format!("SELECT {} FROM {}", count_star, S::identifier()))
+    let count_star = cw.count(Some(&prefix), Some("*"));
+    Some(format!("SELECT {} FROM {}", count_star, identifier))
 }

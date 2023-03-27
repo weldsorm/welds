@@ -22,7 +22,8 @@ pub fn model_gen(input: TokenStream) -> TokenStream {
     let p3 = blocks::define_schema(&info);
     let p4 = blocks::table_info(&info);
     let p5 = blocks::table_columns(&info);
-    let p6 = blocks::impl_struct(&info);
+    let p6 = blocks::unique_identifier(&info);
+    let p7 = blocks::impl_struct(&info);
 
     quote! {
         #p1
@@ -31,6 +32,7 @@ pub fn model_gen(input: TokenStream) -> TokenStream {
         #p4
         #p5
         #p6
+        #p7
     }
     .into()
 }

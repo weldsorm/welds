@@ -1,21 +1,20 @@
 use super::{AsFieldName, ClauseAdder, ClauseColVal};
 use std::marker::PhantomData;
 
-pub struct NumericOpt<T> {
+pub struct Text<T> {
     field: String,
     _t: PhantomData<T>,
 }
 
-impl<T> AsFieldName for NumericOpt<T> {
+impl<T> AsFieldName for Text<T> {
     fn fieldname<'a>(&'a self) -> &'a str {
         self.field.as_str()
     }
 }
 
-use crate::query::optional::HasSomeNone;
-impl<T> NumericOpt<T>
+impl<T> Text<T>
 where
-    T: 'static + HasSomeNone + Clone + Send, //T: 'static + HasSomeNone + Clone + Send + sqlx::Type<DB> + sqlx::Encode<'args, DB>,
+    T: 'static + Clone + Send,
 {
     pub fn new(field: impl Into<String>) -> Self {
         Self {
@@ -29,15 +28,13 @@ where
         DB: sqlx::Database,
         T: sqlx::Type<DB> + sqlx::Encode<'args, DB>,
     {
-        let val = v.into();
-
         let cv = ClauseColVal::<T> {
-            null_clause: val.is_none(),
+            null_clause: false,
             not_clause: false,
             tablealias: None,
             col: self.field,
             operator: "=",
-            val,
+            val: v.into(),
         };
         Box::new(cv)
     }
@@ -47,87 +44,74 @@ where
         DB: sqlx::Database,
         T: sqlx::Type<DB> + sqlx::Encode<'args, DB>,
     {
-        let val = v.into();
-
         let cv = ClauseColVal::<T> {
-            null_clause: val.is_none(),
+            null_clause: false,
             not_clause: true,
             tablealias: None,
             col: self.field,
             operator: "!=",
-            val,
+            val: v.into(),
         };
         Box::new(cv)
     }
 
-    pub fn gt<'args, DB>(self, v: impl Into<T>) -> Box<dyn ClauseAdder<'args, DB>>
+    pub fn like<'args, DB>(self, v: impl Into<T>) -> Box<dyn ClauseAdder<'args, DB>>
     where
         DB: sqlx::Database,
         T: sqlx::Type<DB> + sqlx::Encode<'args, DB>,
     {
-        let val = v.into();
-
         let cv = ClauseColVal::<T> {
-            null_clause: val.is_none(),
+            null_clause: false,
             not_clause: false,
             tablealias: None,
             col: self.field,
-            operator: ">",
-            val,
+            operator: "like",
+            val: v.into(),
         };
         Box::new(cv)
     }
-
-    pub fn lt<'args, DB>(self, v: impl Into<T>) -> Box<dyn ClauseAdder<'args, DB>>
+    pub fn not_like<'args, DB>(self, v: impl Into<T>) -> Box<dyn ClauseAdder<'args, DB>>
     where
         DB: sqlx::Database,
         T: sqlx::Type<DB> + sqlx::Encode<'args, DB>,
     {
-        let val = v.into();
-
         let cv = ClauseColVal::<T> {
-            null_clause: val.is_none(),
-            not_clause: false,
+            null_clause: false,
+            not_clause: true,
             tablealias: None,
             col: self.field,
-            operator: "<",
-            val,
+            operator: "not like",
+            val: v.into(),
         };
         Box::new(cv)
     }
-
-    pub fn gte<'args, DB>(self, v: impl Into<T>) -> Box<dyn ClauseAdder<'args, DB>>
+    pub fn ilike<'args, DB>(self, v: impl Into<T>) -> Box<dyn ClauseAdder<'args, DB>>
     where
         DB: sqlx::Database,
         T: sqlx::Type<DB> + sqlx::Encode<'args, DB>,
     {
-        let val = v.into();
-
         let cv = ClauseColVal::<T> {
-            null_clause: val.is_none(),
+            null_clause: false,
             not_clause: false,
             tablealias: None,
             col: self.field,
-            operator: ">=",
-            val,
+            operator: "ilike",
+            val: v.into(),
         };
         Box::new(cv)
     }
-
-    pub fn lte<'args, DB>(self, v: impl Into<T>) -> Box<dyn ClauseAdder<'args, DB>>
+    pub fn not_ilike<'args, DB>(self, v: impl Into<T>) -> Box<dyn ClauseAdder<'args, DB>>
     where
         DB: sqlx::Database,
         T: sqlx::Type<DB> + sqlx::Encode<'args, DB>,
     {
-        let val = v.into();
-
         let cv = ClauseColVal::<T> {
-            null_clause: val.is_none(),
-            not_clause: false,
+            null_clause: false,
+            not_clause: true,
             tablealias: None,
             col: self.field,
-            operator: "<=",
-            val,
+            operator: "not ilike",
+            val: v.into(),
         };
         Box::new(cv)
     }

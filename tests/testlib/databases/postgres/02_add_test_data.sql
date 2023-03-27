@@ -71,7 +71,7 @@ INSERT INTO Orders (
   product_id,
   quantity,
   code,
-  SoldFor
+  "SoldFor"
 ) VALUES (
 1
 , 2

@@ -120,6 +120,7 @@ impl Product {
     {
         SelectBuilder::new()
     }
+
     pub fn where_col<'args, DB>(
         lam: impl Fn(ProductSchema) -> Box<dyn ClauseAdder<'args, DB>>,
     ) -> SelectBuilder<'args, Self, DB>

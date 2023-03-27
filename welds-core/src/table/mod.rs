@@ -34,8 +34,14 @@ impl Column {
 }
 
 pub trait TableColumns<DB> {
+    // Used to identify models that have N columns in their primary_key
     fn primary_keys() -> Vec<Column>;
     fn columns() -> Vec<Column>;
+}
+
+pub trait UniqueIdentifier<DB> {
+    /// The column that is used to uniquely identify a row.
+    fn id_column() -> Column;
 }
 
 pub trait WriteToArgs<DB> {

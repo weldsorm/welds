@@ -1,6 +1,7 @@
 use sqlx::database::HasArguments;
 use sqlx::Arguments;
 
+// Concrete Types
 mod basic;
 pub use basic::Basic;
 mod basicopt;
@@ -9,6 +10,13 @@ mod numeric;
 pub use numeric::Numeric;
 mod numericopt;
 pub use numericopt::NumericOpt;
+mod text;
+pub use text::Text;
+mod textopt;
+pub use textopt::TextOpt;
+
+// Relationships / SubQueries
+pub(crate) mod exists;
 
 mod nextparam;
 pub use nextparam::{DbParam, NextParam};
@@ -16,7 +24,9 @@ pub(crate) mod orderby;
 pub(crate) use orderby::OrderBy;
 
 pub struct ClauseColVal<T> {
-    pub null_clause: Option<String>,
+    pub tablealias: Option<String>,
+    pub null_clause: bool,
+    pub not_clause: bool,
     pub col: String,
     pub operator: &'static str,
     pub val: T,
@@ -32,6 +42,9 @@ pub trait ClauseAdder<'args, DB: sqlx::Database> {
 
     /// Returns the SQL snipit for this clause
     fn clause(&self, next_params: &NextParam) -> Option<String>;
+
+    /// Returns the SQL snipit for this clause
+    fn set_tablealias(&mut self, alias: String);
 }
 
 impl<'args, T, DB> ClauseAdder<'args, DB> for ClauseColVal<T>
@@ -39,25 +52,40 @@ where
     DB: sqlx::Database,
     T: 'args + Clone + Send + sqlx::Type<DB> + sqlx::Encode<'args, DB>,
 {
+    fn set_tablealias(&mut self, alias: String) {
+        self.tablealias = Some(alias);
+    }
+
     fn bind(&self, args: &mut <DB as HasArguments<'args>>::Arguments) {
-        if self.null_clause.is_none() {
+        if !self.null_clause {
             args.add(self.val.clone());
         }
     }
 
     fn clause(&self, next_params: &NextParam) -> Option<String> {
+        // build the column name
+        let mut col = self.col.to_string();
+        if let Some(ta) = &self.tablealias {
+            col = format!("{}.{}", ta, col);
+        }
+        let mut parts = vec![col.as_str()];
+
         // handle null clones
-        if let Some(null_clause) = &self.null_clause {
-            return Some(null_clause.clone());
+        if self.null_clause {
+            parts.push("IS");
+            if self.not_clause {
+                parts.push("NOT");
+            }
+            parts.push("NULL");
+            let clause: String = parts.join(" ");
+            return Some(clause);
         }
 
         // normal path
-        let mut qb: Vec<&str> = Vec::default();
-        qb.push(&self.col);
-        qb.push(self.operator);
+        parts.push(self.operator);
         let np = next_params.next();
-        qb.push(&np);
-        let clause: String = qb.join(" ");
+        parts.push(&np);
+        let clause: String = parts.join(" ");
         Some(clause)
     }
 }

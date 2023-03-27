@@ -42,7 +42,7 @@ impl<T> DbState<T> {
         }
     }
 
-    pub(crate) fn db_loaded(inner: T) -> DbState<T> {
+    pub fn db_loaded(inner: T) -> DbState<T> {
         DbState {
             _t: PhantomData::default(),
             inner,

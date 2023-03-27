@@ -33,6 +33,7 @@ fn get_clause_typepath(ty: &TypePath) -> Option<&'static str> {
         "i64" => "Numeric",
         "f32" => "Numeric",
         "f64" => "Numeric",
+        "String" => "Text",
         "PgMoney" => "Numeric",
         _ => return None,
     };

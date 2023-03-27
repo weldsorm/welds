@@ -30,15 +30,10 @@ where
         T: sqlx::Type<DB> + sqlx::Encode<'args, DB>,
     {
         let val = v.into();
-
-        let null_clause = if val.is_none() {
-            Some(format!("{} IS NULL", self.field))
-        } else {
-            None
-        };
-
         let cv = ClauseColVal::<T> {
-            null_clause,
+            null_clause: val.is_none(),
+            not_clause: false,
+            tablealias: None,
             col: self.field,
             operator: "=",
             val,
@@ -52,15 +47,10 @@ where
         T: sqlx::Type<DB> + sqlx::Encode<'args, DB>,
     {
         let val = v.into();
-
-        let null_clause = if val.is_none() {
-            Some(format!("{} IS NOT NULL", self.field))
-        } else {
-            None
-        };
-
         let cv = ClauseColVal::<T> {
-            null_clause,
+            null_clause: val.is_none(),
+            not_clause: true,
+            tablealias: None,
             col: self.field,
             operator: "!=",
             val,

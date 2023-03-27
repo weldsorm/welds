@@ -1,3 +1,4 @@
+use postgres_test::models::order::Order;
 use postgres_test::models::product::Product;
 
 #[derive(Default, Debug, Clone, sqlx::FromRow)]
@@ -167,3 +168,181 @@ fn should_be_able_to_create_a_new_product() {
         trans.rollback().await.unwrap();
     })
 }
+
+#[test]
+fn should_be_able_to_drop_down_to_sqlx() {
+    async_std::task::block_on(async {
+        //setup
+        let conn = testlib::postgres::conn().await.unwrap();
+        let pool: welds_core::database::Pool = conn.into();
+        let conn = pool.as_postgres().unwrap();
+        // Build some args to send to the database
+        use sqlx::{postgres::PgArguments, Arguments};
+        let mut args: PgArguments = Default::default();
+        args.add(1_i32);
+        // Go run a query from the database.
+        let sql = "SELECT * FROM products where product_id > $1";
+        let all_but_one: Vec<Product> = sqlx::query_as_with(sql, args)
+            .fetch_all(conn)
+            .await
+            .unwrap();
+        assert_eq!(all_but_one.len(), 5);
+    })
+}
+
+#[test]
+fn should_be_able_to_run_raw_sql() {
+    async_std::task::block_on(async {
+        //setup
+        let conn = testlib::postgres::conn().await.unwrap();
+        let pool: welds_core::database::Pool = conn.into();
+        let conn = pool.as_postgres().unwrap();
+
+        // Go run a query from the database.
+        let sql = "SELECT * FROM products";
+
+        let args = sqlx::postgres::PgArguments::default();
+        let all = Product::from_raw_sql(sql, args, conn).await.unwrap();
+
+        assert_eq!(all.len(), 6);
+    })
+}
+
+#[test]
+fn should_be_able_to_crud_orders() {
+    async_std::task::block_on(async {
+        let conn = testlib::postgres::conn().await.unwrap();
+        let pool: welds_core::database::Pool = conn.into();
+        let conn = pool.as_postgres().unwrap();
+        let mut trans = conn.begin().await.unwrap();
+        let mut o = Order::new();
+        o.quantity = Some(9942);
+        o.save(&mut trans).await.unwrap();
+        let created = Order::all()
+            .limit(1)
+            .order_by_desc(|x| x.id)
+            .run(&mut trans)
+            .await
+            .unwrap();
+        let created2 = Order::where_col(|x| x.quantity.gt(9941))
+            .run(&mut trans)
+            .await
+            .unwrap();
+        let created1 = &created[0];
+        let created2 = &created2[0];
+        assert_eq!(o.id, created1.id);
+        assert_eq!(created1.quantity, Some(9942));
+        assert_eq!(o.id, created2.id);
+        assert_eq!(created2.quantity, Some(9942));
+    })
+}
+
+#[test]
+fn should_be_able_to_find_by_id() {
+    async_std::task::block_on(async {
+        let conn = testlib::postgres::conn().await.unwrap();
+        let pool: welds_core::database::Pool = conn.into();
+        let conn = pool.as_postgres().unwrap();
+        let id = 1;
+        let product_result = Product::find_by_id(conn, id).await;
+        let product = product_result.unwrap();
+        let found = product.unwrap();
+        assert_eq!(found.id, 1);
+    })
+}
+
+#[test]
+fn should_be_able_to_find_like() {
+    async_std::task::block_on(async {
+        let conn = testlib::postgres::conn().await.unwrap();
+        let pool: welds_core::database::Pool = conn.into();
+        let conn = pool.as_postgres().unwrap();
+        //build the queries
+        let mut like = Product::where_col(|x| x.name.like("%Horse%"));
+        let mut ilike = Product::where_col(|x| x.name.ilike("%Horse%"));
+        eprintln!("SQL: {}", ilike.to_sql());
+        let mut not_like = Product::where_col(|x| x.name.not_like("%Horse%"));
+        let mut not_ilike = Product::where_col(|x| x.name.not_ilike("%Horse%"));
+        //run the queries
+        let like = like.run(conn).await.unwrap();
+        let ilike = ilike.run(conn).await.unwrap();
+        let not_like = not_like.run(conn).await.unwrap();
+        let not_ilike = not_ilike.run(conn).await.unwrap();
+        //validate data
+        assert_eq!(like.len(), 0, "like");
+        assert_eq!(ilike.len(), 1, "ilike");
+        assert_eq!(not_like.len(), 6, "not like");
+        assert_eq!(not_ilike.len(), 5, "not ilike");
+    })
+}
+
+#[test]
+fn should_be_able_to_filter_on_relations() {
+    async_std::task::block_on(async {
+        let conn = testlib::postgres::conn().await.unwrap();
+        let pool: welds_core::database::Pool = conn.into();
+        let conn = pool.as_postgres().unwrap();
+        let mut orders = Product::where_col(|x| x.name.like("%horse%")).map_query(|p| p.orders);
+        let orders = orders.run(conn).await.unwrap();
+        assert_eq!(2, orders.len());
+    })
+}
+
+#[test]
+fn should_be_able_to_filter_on_relations2() {
+    async_std::task::block_on(async {
+        let conn = testlib::postgres::conn().await.unwrap();
+        let pool: welds_core::database::Pool = conn.into();
+        let conn = pool.as_postgres().unwrap();
+        let mut product_query = Order::all().map_query(|p| p.product);
+        use welds_core::state::DbState;
+        // Vec<_> would be simpler, but want to hard code to type for test.
+        let products: Vec<DbState<Product>> = product_query.run(conn).await.unwrap();
+        assert_eq!(2, products.len());
+    })
+}
+
+/*
+products -> orders
+
+select * from orders t2
+where exists (select t1.id from products t1 where t1.t1 = t2.product_id)
+
+*/
+
+/*
+orders -> product
+
+select * from products t2
+where exists (select t1.product_id from orders t1 where t1.product_id = t2.id)
+*/
+
+//#[test]
+//fn should_be_able_to_filter_on_joined_table() {
+//    async_std::task::block_on(async {
+//        let conn = testlib::postgres::conn().await.unwrap();
+//        let pool: welds_core::database::Pool = conn.into();
+//        let conn = pool.as_postgres().unwrap();
+//
+//        /*
+//         select * from products where id in (select product_id from orders)
+//        select * from orders where product_id in (select id from product)
+//
+//         *
+//        let products = Order::where_col(|order| order.quantity.eq(1))
+//            .map(|order| order.product)
+//            .where_col(|p| p.name.eq("horse"))
+//            .run(conn)
+//            .await
+//            .unwrap();
+//         * */
+//
+//        /*
+//        let sub_q = Order::all();
+//        let products_in_orders = Product::where_relation(|x| x.orders.any(sub_q))
+//            .run(conn)
+//            .await
+//            .unwrap();
+//         * */
+//    })
+//}

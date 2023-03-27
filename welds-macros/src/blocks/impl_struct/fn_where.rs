@@ -22,5 +22,7 @@ pub(crate) fn write(infos: &Info) -> TokenStream {
     }
 
 
+
+
     }
 }

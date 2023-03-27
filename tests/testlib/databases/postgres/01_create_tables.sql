@@ -2,6 +2,8 @@
 -- They use a variety of styles and types to test Welds in many ways
 -- This collection of table focues on the build in types 
 
+
+
 CREATE TABLE Products (
   product_id serial PRIMARY KEY,
   name VARCHAR ( 50 ) UNIQUE NOT NULL,
@@ -17,8 +19,8 @@ CREATE TABLE Orders (
   id bigserial PRIMARY KEY,
   product_id INTEGER REFERENCES products (product_id),
   quantity smallint,
-  code char,
-  SoldFor MONEY
+  code text,
+  "SoldFor" FLOAT8
 );
 
 CREATE SCHEMA alt;

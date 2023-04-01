@@ -23,8 +23,9 @@ pub use nextparam::{DbParam, NextParam};
 pub(crate) mod orderby;
 pub(crate) use orderby::OrderBy;
 
+use crate::alias::TableAlias;
+
 pub struct ClauseColVal<T> {
-    pub tablealias: Option<String>,
     pub null_clause: bool,
     pub not_clause: bool,
     pub col: String,
@@ -41,10 +42,7 @@ pub trait ClauseAdder<'args, DB: sqlx::Database> {
     fn bind(&self, args: &mut <DB as HasArguments<'args>>::Arguments);
 
     /// Returns the SQL snipit for this clause
-    fn clause(&self, next_params: &NextParam) -> Option<String>;
-
-    /// Returns the SQL snipit for this clause
-    fn set_tablealias(&mut self, alias: String);
+    fn clause(&self, alias: &TableAlias, next_params: &NextParam) -> Option<String>;
 }
 
 impl<'args, T, DB> ClauseAdder<'args, DB> for ClauseColVal<T>
@@ -52,22 +50,15 @@ where
     DB: sqlx::Database,
     T: 'args + Clone + Send + sqlx::Type<DB> + sqlx::Encode<'args, DB>,
 {
-    fn set_tablealias(&mut self, alias: String) {
-        self.tablealias = Some(alias);
-    }
-
     fn bind(&self, args: &mut <DB as HasArguments<'args>>::Arguments) {
         if !self.null_clause {
             args.add(self.val.clone());
         }
     }
 
-    fn clause(&self, next_params: &NextParam) -> Option<String> {
+    fn clause(&self, alias: &TableAlias, next_params: &NextParam) -> Option<String> {
         // build the column name
-        let mut col = self.col.to_string();
-        if let Some(ta) = &self.tablealias {
-            col = format!("{}.{}", ta, col);
-        }
+        let col = format!("{}.{}", alias.peek(), self.col);
         let mut parts = vec![col.as_str()];
 
         // handle null clones

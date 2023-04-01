@@ -302,47 +302,24 @@ fn should_be_able_to_filter_on_relations2() {
     })
 }
 
-/*
-products -> orders
-
-select * from orders t2
-where exists (select t1.id from products t1 where t1.t1 = t2.product_id)
-
-*/
-
-/*
-orders -> product
-
-select * from products t2
-where exists (select t1.product_id from orders t1 where t1.product_id = t2.id)
-*/
-
 //#[test]
-//fn should_be_able_to_filter_on_joined_table() {
+//fn should_be_able_to_filter_on_relations2() {
 //    async_std::task::block_on(async {
 //        let conn = testlib::postgres::conn().await.unwrap();
 //        let pool: welds_core::database::Pool = conn.into();
 //        let conn = pool.as_postgres().unwrap();
 //
-//        /*
-//         select * from products where id in (select product_id from orders)
-//        select * from orders where product_id in (select id from product)
+//        let filter1 = Product::where_col(|x| x.id.gte(0));
+//        let filter2 = Product::where_col(|x| x.id.lte(999999));
 //
-//         *
-//        let products = Order::where_col(|order| order.quantity.eq(1))
-//            .map(|order| order.product)
-//            .where_col(|p| p.name.eq("horse"))
-//            .run(conn)
-//            .await
-//            .unwrap();
-//         * */
+//        let mut order_query = Order::all();
 //
-//        /*
-//        let sub_q = Order::all();
-//        let products_in_orders = Product::where_relation(|x| x.orders.any(sub_q))
-//            .run(conn)
-//            .await
-//            .unwrap();
-//         * */
+//        order_query = order_query.where_relation(|o| o.product, filter1);
+//        order_query = order_query.where_relation(|o| o.product, filter2);
+//
+//        //use welds_core::state::DbState;
+//        //// Vec<_> would be simpler, but want to hard code to type for test.
+//        //let products: Vec<DbState<Product>> = product_query.run(conn).await.unwrap();
+//        //assert_eq!(2, products.len());
 //    })
 //}

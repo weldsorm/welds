@@ -31,7 +31,6 @@ where
         let cv = ClauseColVal::<T> {
             null_clause: false,
             not_clause: false,
-            tablealias: None,
             col: self.field,
             operator: "=",
             val: v.into(),
@@ -47,7 +46,6 @@ where
         let cv = ClauseColVal::<T> {
             null_clause: false,
             not_clause: true,
-            tablealias: None,
             col: self.field,
             operator: "!=",
             val: v.into(),
@@ -63,7 +61,6 @@ where
         let cv = ClauseColVal::<T> {
             null_clause: false,
             not_clause: false,
-            tablealias: None,
             col: self.field,
             operator: "like",
             val: v.into(),
@@ -78,7 +75,6 @@ where
         let cv = ClauseColVal::<T> {
             null_clause: false,
             not_clause: true,
-            tablealias: None,
             col: self.field,
             operator: "not like",
             val: v.into(),
@@ -93,7 +89,6 @@ where
         let cv = ClauseColVal::<T> {
             null_clause: false,
             not_clause: false,
-            tablealias: None,
             col: self.field,
             operator: "ilike",
             val: v.into(),
@@ -108,7 +103,6 @@ where
         let cv = ClauseColVal::<T> {
             null_clause: false,
             not_clause: true,
-            tablealias: None,
             col: self.field,
             operator: "not ilike",
             val: v.into(),

@@ -1,15 +1,14 @@
 use super::ClauseAdder;
-use crate::query::select::SelectBuilder;
-use std::marker::PhantomData;
+use crate::{alias::TableAlias, query::select::SelectBuilder};
+use std::cell::RefCell;
 
 /// Used to generated a SQL EXISTS clause for writing sub-queries
 
 pub struct ExistIn<'args, DB> {
     outer_column: String,
-    outer_tablealias: String,
+    outer_tablealias: RefCell<Option<String>>,
     inner_column: String,
     inner_tablename: String,
-    inner_tablealias: String,
     wheres: Vec<Box<dyn ClauseAdder<'args, DB>>>,
     inner_exists_ins: Vec<Self>,
 }
@@ -20,34 +19,37 @@ where
 {
     pub(crate) fn new<T>(
         sb: SelectBuilder<'args, T, DB>,
-        outer_tablealias: String,
         outer_column: String,
         inner_tablename: String,
-        inner_tablealias: String,
         inner_column: String,
     ) -> Self {
         ExistIn::<'args, DB> {
             outer_column,
-            outer_tablealias,
+            outer_tablealias: RefCell::new(None),
             inner_column,
             inner_tablename,
-            inner_tablealias,
             wheres: sb.wheres, //wheres: sb.wheres,
             inner_exists_ins: sb.exist_ins,
         }
     }
 
-    fn inner_fk_equal(&self) -> String {
+    pub(crate) fn set_outer_tablealias(&self, tablealias: &str) {
+        self.outer_tablealias.replace(Some(tablealias.to_owned()));
+    }
+
+    fn inner_fk_equal(&self, inner_tablealias: &str) -> String {
+        let cell = self.outer_tablealias.borrow();
+        let outer_tablealias = cell.as_ref().unwrap();
         format!(
             "{}.{} = {}.{}",
-            self.inner_tablealias, self.inner_column, self.outer_tablealias, self.outer_column
+            inner_tablealias, self.inner_column, outer_tablealias, self.outer_column
         )
     }
 
-    fn exists_clause(&self, inner_clauses: &str) -> String {
+    fn exists_clause(&self, inner_tablealias: &str, inner_clauses: &str) -> String {
         format!(
             "EXISTS ( SELECT {} FROM {} {} WHERE {} )",
-            self.inner_column, self.inner_tablename, self.inner_tablealias, inner_clauses
+            self.inner_column, self.inner_tablename, inner_tablealias, inner_clauses
         )
     }
 }
@@ -65,27 +67,26 @@ where
         }
     }
 
-    fn clause(&self, next_params: &super::NextParam) -> Option<String> {
+    fn clause(&self, alias: &TableAlias, next_params: &super::NextParam) -> Option<String> {
+        let self_tablealias = alias.peek();
         let mut inner_wheres: Vec<String> = self
             .wheres
             .iter()
-            .map(|w| w.clause(next_params))
+            .map(|w| w.clause(alias, next_params))
             .filter_map(|x| x)
             .collect();
-        inner_wheres.push(self.inner_fk_equal());
+        inner_wheres.push(self.inner_fk_equal(&self_tablealias));
 
         // exists inside this exist clause
         for ins in &self.inner_exists_ins {
-            if let Some(more) = ins.clause(next_params) {
+            alias.bump();
+            ins.set_outer_tablealias(&self_tablealias);
+            if let Some(more) = ins.clause(alias, next_params) {
                 inner_wheres.push(more);
             }
         }
 
         let inner_clauses = inner_wheres.join(" AND ");
-        Some(self.exists_clause(&inner_clauses))
-    }
-
-    fn set_tablealias(&mut self, _alias: String) {
-        panic!("not used");
+        Some(self.exists_clause(&self_tablealias, &inner_clauses))
     }
 }

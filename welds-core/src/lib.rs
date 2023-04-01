@@ -1,3 +1,4 @@
+pub(crate) mod alias;
 pub mod database;
 pub mod errors;
 pub mod query;

@@ -1,4 +1,5 @@
 use super::clause::{DbParam, NextParam};
+use crate::alias::TableAlias;
 use crate::errors::Result;
 use crate::query::clause::exists::ExistIn;
 use crate::query::clause::orderby;
@@ -22,7 +23,6 @@ pub struct SelectBuilder<'schema, T, DB: sqlx::Database> {
     pub(crate) exist_ins: Vec<ExistIn<'schema, DB>>,
     limit: Option<i64>,
     offset: Option<i64>,
-    identifier_count: u32,
     orderby: Vec<OrderBy>,
     // these are needed for lifetime issues, remove if you can
     history: Vec<String>,
@@ -39,7 +39,6 @@ where
             wheres: Vec::default(),
             limit: None,
             offset: None,
-            identifier_count: 1,
             orderby: Vec::default(),
             history: Default::default(),
             exist_ins: Default::default(),
@@ -54,14 +53,39 @@ where
         <T as HasSchema>::Schema: Default,
     {
         let mut qba = lam(Default::default());
-        qba.set_tablealias(format!("t{}", self.identifier_count));
         self.wheres.push(qba);
         self
     }
 
+    //pub fn where_relation<R, Ship>(
+    //    mut self,
+    //    relationship: impl Fn(<T as HasRelations>::Relation) -> Ship,
+    //    filter: SelectBuilder<'schema, R, DB>,
+    //) -> Self
+    //where
+    //    T: HasRelations + UniqueIdentifier<DB>,
+    //    Ship: Relationship<R>,
+    //    R: HasSchema + UniqueIdentifier<DB>,
+    //    R: Send + Unpin + for<'r> sqlx::FromRow<'r, DB::Row> + HasSchema,
+    //    <R as HasSchema>::Schema: TableInfo + TableColumns<DB>,
+    //    <T as HasRelations>::Relation: Default,
+    //{
+    //    //let ship = relationship(Default::default());
+    //    ////let mut sb: SelectBuilder<R, DB> = SelectBuilder::new();
+    //    //sb.identifier_count = self.identifier_count + 1;
+    //    //let out_tn = format!("t{}", sb.identifier_count);
+    //    //let out_col = ship.their_key::<DB, R, T>();
+    //    //let inner_ta = format!("t{}", self.identifier_count);
+    //    //let inner_tn = <T as HasSchema>::Schema::identifier().to_owned();
+    //    //let inner_col = ship.my_key::<DB, R, T>();
+    //    //let exist_in =
+    //    //    ExistIn::<'schema, DB>::new(self, out_tn, out_col, inner_tn, inner_ta, inner_col);
+    //    self
+    //}
+
     pub fn map_query<R, Ship>(
         self,
-        lam: impl Fn(<T as HasRelations>::Relation) -> Ship,
+        relationship: impl Fn(<T as HasRelations>::Relation) -> Ship,
     ) -> SelectBuilder<'schema, R, DB>
     where
         T: HasRelations + UniqueIdentifier<DB>,
@@ -71,18 +95,14 @@ where
         <R as HasSchema>::Schema: TableInfo + TableColumns<DB>,
         <T as HasRelations>::Relation: Default,
     {
-        let ship = lam(Default::default());
+        let ship = relationship(Default::default());
         let mut sb: SelectBuilder<R, DB> = SelectBuilder::new();
-        sb.identifier_count = self.identifier_count + 1;
 
-        let out_tn = format!("t{}", sb.identifier_count);
         let out_col = ship.their_key::<DB, R, T>();
-        let inner_ta = format!("t{}", self.identifier_count);
         let inner_tn = <T as HasSchema>::Schema::identifier().to_owned();
         let inner_col = ship.my_key::<DB, R, T>();
+        let exist_in = ExistIn::<'schema, DB>::new(self, out_col, inner_tn, inner_col);
 
-        let exist_in =
-            ExistIn::<'schema, DB>::new(self, out_tn, out_col, inner_tn, inner_ta, inner_col);
         sb.exist_ins.push(exist_in);
         sb
     }
@@ -127,10 +147,12 @@ where
         let next_params = NextParam::new::<DB>();
         let wheres = self.wheres.as_slice();
         let exists_in = self.exist_ins.as_slice();
+        let alias = TableAlias::new();
+        let self_tablealias = alias.peek();
 
         join_sql_parts(&[
-            build_head_select::<DB, <T as HasSchema>::Schema>(self.identifier_count),
-            build_where(&next_params, &mut args, wheres, exists_in),
+            build_head_select::<DB, <T as HasSchema>::Schema>(self_tablealias),
+            build_where(&next_params, &alias, &mut args, wheres, exists_in),
             build_tail(&self),
         ])
     }
@@ -149,10 +171,12 @@ where
         let next_params = NextParam::new::<DB>();
         let wheres = self.wheres.as_slice();
         let exists_in = self.exist_ins.as_slice();
+        let alias = TableAlias::new();
+        let self_tablealias = alias.peek();
 
         let sql = join_sql_parts(&[
-            build_head_count::<DB, <T as HasSchema>::Schema>(self.identifier_count),
-            build_where(&next_params, &mut args, wheres, exists_in),
+            build_head_count::<DB, <T as HasSchema>::Schema>(self_tablealias),
+            build_where(&next_params, &alias, &mut args, wheres, exists_in),
             build_tail(&self),
         ]);
 
@@ -185,9 +209,12 @@ where
         let next_params = NextParam::new::<DB>();
         let wheres = self.wheres.as_slice();
         let exists_in = self.exist_ins.as_slice();
+        let alias = TableAlias::new();
+        let self_tablealias = alias.peek();
+
         let sql = join_sql_parts(&[
-            build_head_select::<DB, <T as HasSchema>::Schema>(self.identifier_count),
-            build_where(&next_params, &mut args, wheres, exists_in),
+            build_head_select::<DB, <T as HasSchema>::Schema>(self_tablealias),
+            build_where(&next_params, &alias, &mut args, wheres, exists_in),
             build_tail(&self),
         ]);
 
@@ -225,6 +252,7 @@ fn join_sql_parts(parts: &[Option<String>]) -> String {
 
 fn build_where<'schema, 'args, DB>(
     next_params: &NextParam,
+    alias: &TableAlias,
     args: &mut Option<<DB as HasArguments<'schema>>::Arguments>,
     wheres: &[Box<dyn ClauseAdder<'schema, DB>>],
     exist_ins: &[ExistIn<'schema, DB>],
@@ -239,16 +267,19 @@ where
         if let Some(args) = args {
             clause.bind(args);
         }
-        if let Some(p) = clause.clause(&next_params) {
+        if let Some(p) = clause.clause(&alias, &next_params) {
             where_sql.push(p);
         }
     }
 
+    let self_tablealias = alias.peek();
     for clause in exist_ins {
         if let Some(args) = args {
             clause.bind(args);
         }
-        if let Some(p) = clause.clause(&next_params) {
+        alias.bump();
+        clause.set_outer_tablealias(&self_tablealias);
+        if let Some(p) = clause.clause(&alias, &next_params) {
             where_sql.push(p);
         }
     }
@@ -288,36 +319,34 @@ where
     Some(parts.join(" "))
 }
 
-fn build_head_select<DB, S>(identifier_count: u32) -> Option<String>
+fn build_head_select<DB, S>(tablealias: String) -> Option<String>
 where
     DB: sqlx::Database + DbColumnWriter,
     S: TableInfo + TableColumns<DB>,
 {
     let writer = ColumnWriter::new::<DB>();
-    let prefix = format!("t{}", identifier_count);
     let mut head: Vec<&str> = Vec::default();
     head.push("SELECT");
     let cols_info = S::columns();
     let cols: Vec<_> = cols_info
         .iter()
-        .map(|col| writer.write_with_prefix(&prefix, col))
+        .map(|col| writer.write_with_prefix(&tablealias, col))
         .collect();
     let cols = cols.join(", ");
     head.push(&cols);
     head.push("FROM");
-    let identifier = format!("{} {}", S::identifier(), prefix);
+    let identifier = format!("{} {}", S::identifier(), tablealias);
     head.push(&identifier);
     Some(head.join(" "))
 }
 
-fn build_head_count<DB, S>(identifier_count: u32) -> Option<String>
+fn build_head_count<DB, S>(tablealias: String) -> Option<String>
 where
     DB: sqlx::Database + DbColumnWriter + DbCountWriter,
     S: TableInfo + TableColumns<DB>,
 {
-    let prefix = format!("t{}", identifier_count);
-    let identifier = format!("{} {}", S::identifier(), &prefix);
+    let identifier = format!("{} {}", S::identifier(), &tablealias);
     let cw = CountWriter::new::<DB>();
-    let count_star = cw.count(Some(&prefix), Some("*"));
+    let count_star = cw.count(Some(&tablealias), Some("*"));
     Some(format!("SELECT {} FROM {}", count_star, identifier))
 }

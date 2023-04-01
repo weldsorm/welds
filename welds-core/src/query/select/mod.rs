@@ -57,31 +57,27 @@ where
         self
     }
 
-    //pub fn where_relation<R, Ship>(
-    //    mut self,
-    //    relationship: impl Fn(<T as HasRelations>::Relation) -> Ship,
-    //    filter: SelectBuilder<'schema, R, DB>,
-    //) -> Self
-    //where
-    //    T: HasRelations + UniqueIdentifier<DB>,
-    //    Ship: Relationship<R>,
-    //    R: HasSchema + UniqueIdentifier<DB>,
-    //    R: Send + Unpin + for<'r> sqlx::FromRow<'r, DB::Row> + HasSchema,
-    //    <R as HasSchema>::Schema: TableInfo + TableColumns<DB>,
-    //    <T as HasRelations>::Relation: Default,
-    //{
-    //    //let ship = relationship(Default::default());
-    //    ////let mut sb: SelectBuilder<R, DB> = SelectBuilder::new();
-    //    //sb.identifier_count = self.identifier_count + 1;
-    //    //let out_tn = format!("t{}", sb.identifier_count);
-    //    //let out_col = ship.their_key::<DB, R, T>();
-    //    //let inner_ta = format!("t{}", self.identifier_count);
-    //    //let inner_tn = <T as HasSchema>::Schema::identifier().to_owned();
-    //    //let inner_col = ship.my_key::<DB, R, T>();
-    //    //let exist_in =
-    //    //    ExistIn::<'schema, DB>::new(self, out_tn, out_col, inner_tn, inner_ta, inner_col);
-    //    self
-    //}
+    pub fn where_relation<R, Ship>(
+        mut self,
+        relationship: impl Fn(<T as HasRelations>::Relation) -> Ship,
+        filter: SelectBuilder<'schema, R, DB>,
+    ) -> Self
+    where
+        T: HasRelations + UniqueIdentifier<DB>,
+        Ship: Relationship<R>,
+        R: HasSchema + UniqueIdentifier<DB>,
+        R: Send + Unpin + for<'r> sqlx::FromRow<'r, DB::Row> + HasSchema,
+        <R as HasSchema>::Schema: TableInfo + TableColumns<DB>,
+        <T as HasRelations>::Relation: Default,
+    {
+        let ship = relationship(Default::default());
+        let out_col = ship.my_key::<DB, R, T>();
+        let inner_tn = <R as HasSchema>::Schema::identifier().to_owned();
+        let inner_col = ship.their_key::<DB, R, T>();
+        let exist_in = ExistIn::<'schema, DB>::new(filter, out_col, inner_tn, inner_col);
+        self.exist_ins.push(exist_in);
+        self
+    }
 
     pub fn map_query<R, Ship>(
         self,

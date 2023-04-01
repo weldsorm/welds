@@ -295,31 +295,41 @@ fn should_be_able_to_filter_on_relations2() {
         let pool: welds_core::database::Pool = conn.into();
         let conn = pool.as_postgres().unwrap();
         let mut product_query = Order::all().map_query(|p| p.product);
-        use welds_core::state::DbState;
         // Vec<_> would be simpler, but want to hard code to type for test.
+        use welds_core::state::DbState;
         let products: Vec<DbState<Product>> = product_query.run(conn).await.unwrap();
         assert_eq!(2, products.len());
     })
 }
 
-//#[test]
-//fn should_be_able_to_filter_on_relations2() {
-//    async_std::task::block_on(async {
-//        let conn = testlib::postgres::conn().await.unwrap();
-//        let pool: welds_core::database::Pool = conn.into();
-//        let conn = pool.as_postgres().unwrap();
-//
-//        let filter1 = Product::where_col(|x| x.id.gte(0));
-//        let filter2 = Product::where_col(|x| x.id.lte(999999));
-//
-//        let mut order_query = Order::all();
-//
-//        order_query = order_query.where_relation(|o| o.product, filter1);
-//        order_query = order_query.where_relation(|o| o.product, filter2);
-//
-//        //use welds_core::state::DbState;
-//        //// Vec<_> would be simpler, but want to hard code to type for test.
-//        //let products: Vec<DbState<Product>> = product_query.run(conn).await.unwrap();
-//        //assert_eq!(2, products.len());
-//    })
-//}
+#[test]
+fn should_be_able_to_filter_with_relations() {
+    async_std::task::block_on(async {
+        let conn = testlib::postgres::conn().await.unwrap();
+        let pool: welds_core::database::Pool = conn.into();
+        let conn = pool.as_postgres().unwrap();
+        let filter1 = Product::where_col(|x| x.id.equal(1));
+        let mut order_query = Order::all();
+        order_query = order_query.where_relation(|o| o.product, filter1);
+        // Vec<_> would be simpler, but want to hard code to type for test.
+        use welds_core::state::DbState;
+        let orders: Vec<DbState<Order>> = order_query.run(conn).await.unwrap();
+        assert_eq!(2, orders.len());
+    })
+}
+
+#[test]
+fn should_be_able_to_filter_with_relations2() {
+    async_std::task::block_on(async {
+        let conn = testlib::postgres::conn().await.unwrap();
+        let pool: welds_core::database::Pool = conn.into();
+        let conn = pool.as_postgres().unwrap();
+        let filter1 = Order::where_col(|x| x.id.lte(3));
+        let mut product_query = Product::all();
+        product_query = product_query.where_relation(|p| p.orders, filter1);
+        // Vec<_> would be simpler, but want to hard code to type for test.
+        use welds_core::state::DbState;
+        let orders: Vec<DbState<Product>> = product_query.run(conn).await.unwrap();
+        assert_eq!(2, orders.len());
+    })
+}

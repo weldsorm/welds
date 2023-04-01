@@ -10,6 +10,7 @@ use welds_core::WeldsModel;
 #[derive(Debug, sqlx::FromRow, WeldsModel)]
 #[welds(db(Postgres))]
 #[welds(table = "products")]
+#[welds(HasMany(orders, super::order::Order, "product_id"))]
 pub struct Product {
     #[sqlx(rename = "product_id")]
     #[welds(primary_key)]
@@ -37,11 +38,5 @@ impl Default for ProductRelation {
         Self {
             orders: HasMany::using("product_id"),
         }
-    }
-}
-
-impl welds_core::table::UniqueIdentifier<sqlx::Postgres> for Product {
-    fn id_column() -> welds_core::table::Column {
-        welds_core::table::Column::new::<sqlx::Postgres, i32>("product_id")
     }
 }

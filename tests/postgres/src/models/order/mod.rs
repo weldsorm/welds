@@ -19,20 +19,3 @@ pub struct Order {
     #[sqlx(rename = "SoldFor")]
     pub sold_for: Option<f64>,
 }
-
-impl welds_core::relations::HasRelations for Order {
-    type Relation = OrderRelation;
-}
-
-use welds_core::relations::*;
-pub struct OrderRelation {
-    pub product: BelongsTo<super::product::Product>,
-}
-
-impl Default for OrderRelation {
-    fn default() -> Self {
-        Self {
-            product: BelongsTo::using("product_id"),
-        }
-    }
-}

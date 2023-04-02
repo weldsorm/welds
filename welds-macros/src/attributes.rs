@@ -1,7 +1,8 @@
-use crate::column::Column;
 use crate::engine;
 use crate::engine::Engine;
+use crate::errors::Result;
 use crate::utils::as_typepath;
+use crate::{column::Column, relation::Relation};
 use std::collections::HashSet;
 use syn::{Attribute, Field, Type};
 
@@ -135,6 +136,35 @@ pub(crate) fn get_engines(ast: &syn::DeriveInput) -> Vec<Engine> {
     }
 
     engines
+}
+
+pub(crate) fn get_relations(ast: &syn::DeriveInput) -> Result<Vec<Relation>> {
+    let metas = welds_meta(&ast.attrs);
+
+    // Read out the inner meta from [welds(this, and_this)]
+    let inners: Vec<&syn::Meta> = metas
+        .iter()
+        .map(|ml| as_metalist_nested_meta(ml))
+        .flatten()
+        .collect();
+
+    let relations1: Result<Vec<_>> = inners
+        .iter()
+        .filter_map(|m| as_metalist_ref(m))
+        .filter(|m| m.path.is_ident("HasMany"))
+        .map(|m| Relation::new(m, "HasMany"))
+        .collect();
+    let mut relations1 = relations1?;
+    let relations2: Result<Vec<_>> = inners
+        .iter()
+        .filter_map(|m| as_metalist_ref(m))
+        .filter(|m| m.path.is_ident("BelongsTo"))
+        .map(|m| Relation::new(m, "BelongsTo"))
+        .collect();
+    let mut relations2 = relations2?;
+    let relations: Vec<_> = relations1.drain(..).chain(relations2.drain(..)).collect();
+
+    Ok(relations)
 }
 
 pub(crate) fn get_scructname(ast: &syn::DeriveInput) -> syn::Ident {

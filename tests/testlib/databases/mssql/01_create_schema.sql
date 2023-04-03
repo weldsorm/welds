@@ -12,6 +12,11 @@ CREATE TABLE welds.Products (
     active bit
 );
 
+CREATE TABLE welds.Orders (
+    id int NOT NULL PRIMARY KEY,
+    product_id int NOT NULL
+);
+
 CREATE TABLE welds.Persons (
     PersonID int,
     LastName varchar(255),

@@ -8,10 +8,10 @@ use welds_core::WeldsModel;
 
 #[derive(Debug, sqlx::FromRow, WeldsModel)]
 #[welds(db(Mssql))]
-#[welds(schema = "welds", table = "products")]
-pub struct Product {
+#[welds(schema = "welds", table = "Orders")]
+#[welds(BelongsTo(product, super::product::Product, "product_id"))]
+pub struct Order {
     #[welds(primary_key)]
-    #[sqlx(rename = "ID")]
     pub id: i32,
-    pub name: String,
+    pub product_id: i32,
 }

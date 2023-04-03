@@ -51,3 +51,17 @@ Insert INTO welds.Products (
 , 1
 );
 
+
+Insert INTO welds.Orders (
+  id,
+  product_id 
+) VALUES 
+( 1,1 ),
+( 2,1 ),
+( 3,1 ),
+( 4,2 ),
+( 5,2 )
+
+
+
+

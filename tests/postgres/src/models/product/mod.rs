@@ -23,20 +23,3 @@ pub struct Product {
     pub barcode: Option<Vec<u8>>,
     pub active: Option<bool>,
 }
-
-//impl welds_core::relations::HasRelations for Product {
-//    type Relation = ProductRelation;
-//}
-//
-//use welds_core::relations::*;
-//pub struct ProductRelation {
-//    pub orders: HasMany<super::order::Order>,
-//}
-//
-//impl Default for ProductRelation {
-//    fn default() -> Self {
-//        Self {
-//            orders: HasMany::using("product_id"),
-//        }
-//    }
-//}

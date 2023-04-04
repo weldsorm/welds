@@ -1,11 +1,11 @@
 use anyhow::Result;
 use clap::Parser;
 use std::path::PathBuf;
-use weldslib::{commands::Commands::*, GenerateOption};
+use weldscli_lib::{commands::Commands::*, GenerateOption};
 
 #[async_std::main]
 async fn main() -> Result<()> {
-    let args = weldslib::commands::Args::parse();
+    let args = weldscli_lib::commands::Args::parse();
 
     let mut schema_path = args
         .schema_file
@@ -22,7 +22,7 @@ async fn main() -> Result<()> {
         .unwrap_or_else(|| schema_path.parent().unwrap().to_path_buf());
 
     let result = match args.command {
-        Update { table } => weldslib::update(schema_path, table).await,
+        Update { table } => weldscli_lib::update(schema_path, table).await,
         Generate { table } => {
             let opt = GenerateOption {
                 schema_path,
@@ -30,7 +30,7 @@ async fn main() -> Result<()> {
                 table,
                 ..Default::default()
             };
-            weldslib::generate(opt)
+            weldscli_lib::generate(opt)
         }
     };
 

@@ -25,7 +25,7 @@ fn test_selecting_from_mssql() {
             sqlx::query_as_with(sql, args);
 
         let conn = testlib::mssql::conn().await.unwrap();
-        let pool: welds_core::database::Pool = conn.into();
+        let pool: welds::database::Pool = conn.into();
         let conn = pool.as_mssql().unwrap();
         let data = q.fetch_all(conn).await.unwrap();
 
@@ -37,7 +37,7 @@ fn test_selecting_from_mssql() {
 fn should_be_able_to_read_all_products_lite() {
     async_std::task::block_on(async {
         let conn = testlib::mssql::conn().await.unwrap();
-        let pool: welds_core::database::Pool = conn.into();
+        let pool: welds::database::Pool = conn.into();
         let conn = pool.as_mssql().unwrap();
         let mut q = ProductLite::all();
         let sql = q.to_sql();
@@ -52,7 +52,7 @@ fn should_be_able_to_read_all_products_lite() {
 fn should_be_able_to_count_in_sql_product_lite() {
     async_std::task::block_on(async {
         let conn = testlib::mssql::conn().await.unwrap();
-        let pool: welds_core::database::Pool = conn.into();
+        let pool: welds::database::Pool = conn.into();
         let conn = pool.as_mssql().unwrap();
         let mut q = ProductLite::all();
         let count = q.count(conn).await.unwrap();
@@ -64,7 +64,7 @@ fn should_be_able_to_count_in_sql_product_lite() {
 fn should_be_able_to_read_all_products() {
     async_std::task::block_on(async {
         let conn = testlib::mssql::conn().await.unwrap();
-        let pool: welds_core::database::Pool = conn.into();
+        let pool: welds::database::Pool = conn.into();
         let conn = pool.as_mssql().unwrap();
         let mut q = Product::all();
         eprintln!("SQL: {}", q.to_sql());
@@ -78,7 +78,7 @@ fn should_be_able_to_read_all_products() {
 fn should_be_able_to_filter_on_equal() {
     async_std::task::block_on(async {
         let conn = testlib::mssql::conn().await.unwrap();
-        let pool: welds_core::database::Pool = conn.into();
+        let pool: welds::database::Pool = conn.into();
         let conn = pool.as_mssql().unwrap();
         let mut q = Product::where_col(|x| x.price1.equal(1.10));
         eprintln!("SQL: {}", q.to_sql());
@@ -95,7 +95,7 @@ fn should_be_able_to_filter_on_equal() {
 fn should_be_able_to_filter_on_lt() {
     async_std::task::block_on(async {
         let conn = testlib::mssql::conn().await.unwrap();
-        let pool: welds_core::database::Pool = conn.into();
+        let pool: welds::database::Pool = conn.into();
         let conn = pool.as_mssql().unwrap();
         let mut q = Product::where_col(|x| x.price1.lt(3.00));
         eprintln!("SQL: {}", q.to_sql());
@@ -110,7 +110,7 @@ fn should_be_able_to_filter_on_lte() {
         eprintln!("1");
         let conn = testlib::mssql::conn().await.unwrap();
         eprintln!("2");
-        let pool: welds_core::database::Pool = conn.into();
+        let pool: welds::database::Pool = conn.into();
         eprintln!("3");
         let conn = pool.as_mssql().unwrap();
         eprintln!("4");
@@ -128,7 +128,7 @@ fn should_be_able_to_filter_on_lte() {
 fn should_be_able_to_count_in_sql() {
     async_std::task::block_on(async {
         let conn = testlib::mssql::conn().await.unwrap();
-        let pool: welds_core::database::Pool = conn.into();
+        let pool: welds::database::Pool = conn.into();
         let conn = pool.as_mssql().unwrap();
         let mut q = Product::where_col(|x| x.price1.lte(2.10));
         eprintln!("SQL: {}", q.to_sql());
@@ -141,7 +141,7 @@ fn should_be_able_to_count_in_sql() {
 fn should_be_able_to_limit_results_in_sql() {
     async_std::task::block_on(async {
         let conn = testlib::mssql::conn().await.unwrap();
-        let pool: welds_core::database::Pool = conn.into();
+        let pool: welds::database::Pool = conn.into();
         let conn = pool.as_mssql().unwrap();
         let mut q = Product::all().limit(2).offset(1);
         eprintln!("SQL: {}", q.to_sql());
@@ -154,7 +154,7 @@ fn should_be_able_to_limit_results_in_sql() {
 fn should_be_able_to_create_a_new_product() {
     async_std::task::block_on(async {
         let conn = testlib::mssql::conn().await.unwrap();
-        let pool: welds_core::database::Pool = conn.into();
+        let pool: welds::database::Pool = conn.into();
         let conn = pool.as_mssql().unwrap();
         let mut trans = conn.begin().await.unwrap();
 
@@ -168,6 +168,7 @@ fn should_be_able_to_create_a_new_product() {
         let mut found: Vec<_> = q.run(&mut trans).await.unwrap();
         let p2 = found.pop().unwrap();
         assert_eq!(p2.name, "newyNewFace");
+        assert!(p2.id != 0, "New ID should not be Zero");
 
         trans.rollback().await.unwrap();
     })
@@ -177,7 +178,7 @@ fn should_be_able_to_create_a_new_product() {
 fn should_be_able_to_filter_on_relations() {
     async_std::task::block_on(async {
         let conn = testlib::mssql::conn().await.unwrap();
-        let pool: welds_core::database::Pool = conn.into();
+        let pool: welds::database::Pool = conn.into();
         let conn = pool.as_mssql().unwrap();
         let mut orders = Product::where_col(|x| x.id.equal(1)).map_query(|p| p.orders);
         let orders = orders.run(conn).await.unwrap();
@@ -189,11 +190,11 @@ fn should_be_able_to_filter_on_relations() {
 fn should_be_able_to_filter_on_relations2() {
     async_std::task::block_on(async {
         let conn = testlib::mssql::conn().await.unwrap();
-        let pool: welds_core::database::Pool = conn.into();
+        let pool: welds::database::Pool = conn.into();
         let conn = pool.as_mssql().unwrap();
         let mut product_query = Order::all().map_query(|p| p.product);
         // Vec<_> would be simpler, but want to hard code to type for test.
-        use welds_core::state::DbState;
+        use welds::state::DbState;
         let products: Vec<DbState<Product>> = product_query.run(conn).await.unwrap();
         assert_eq!(2, products.len());
     })
@@ -203,13 +204,13 @@ fn should_be_able_to_filter_on_relations2() {
 fn should_be_able_to_filter_with_relations() {
     async_std::task::block_on(async {
         let conn = testlib::mssql::conn().await.unwrap();
-        let pool: welds_core::database::Pool = conn.into();
+        let pool: welds::database::Pool = conn.into();
         let conn = pool.as_mssql().unwrap();
         let filter1 = Product::where_col(|x| x.id.equal(1));
         let mut order_query = Order::all();
         order_query = order_query.where_relation(|o| o.product, filter1);
         // Vec<_> would be simpler, but want to hard code to type for test.
-        use welds_core::state::DbState;
+        use welds::state::DbState;
         let orders: Vec<DbState<Order>> = order_query.run(conn).await.unwrap();
         assert_eq!(3, orders.len());
     })
@@ -219,13 +220,13 @@ fn should_be_able_to_filter_with_relations() {
 fn should_be_able_to_filter_with_relations2() {
     async_std::task::block_on(async {
         let conn = testlib::mssql::conn().await.unwrap();
-        let pool: welds_core::database::Pool = conn.into();
+        let pool: welds::database::Pool = conn.into();
         let conn = pool.as_mssql().unwrap();
         let filter1 = Order::where_col(|x| x.id.lte(3));
         let mut product_query = Product::all();
         product_query = product_query.where_relation(|p| p.orders, filter1);
         // Vec<_> would be simpler, but want to hard code to type for test.
-        use welds_core::state::DbState;
+        use welds::state::DbState;
         let orders: Vec<DbState<Product>> = product_query.run(conn).await.unwrap();
         assert_eq!(1, orders.len());
     })

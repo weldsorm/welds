@@ -9,7 +9,7 @@ pub struct Count {
 fn should_be_able_to_connect() {
     async_std::task::block_on(async {
         let conn = testlib::mysql::conn().await.unwrap();
-        let pool: welds_core::database::Pool = conn.into();
+        let pool: welds::database::Pool = conn.into();
         let conn = pool.as_mysql().unwrap();
         assert!(!conn.is_closed());
     })
@@ -19,7 +19,7 @@ fn should_be_able_to_connect() {
 fn should_be_able_to_read_all_products() {
     async_std::task::block_on(async {
         let conn = testlib::mysql::conn().await.unwrap();
-        let pool: welds_core::database::Pool = conn.into();
+        let pool: welds::database::Pool = conn.into();
         let conn = pool.as_mysql().unwrap();
         let mut q = Product::all();
         eprintln!("SQL: {}", q.to_sql());
@@ -32,7 +32,7 @@ fn should_be_able_to_read_all_products() {
 fn should_be_able_to_filter_on_id() {
     async_std::task::block_on(async {
         let conn = testlib::mysql::conn().await.unwrap();
-        let pool: welds_core::database::Pool = conn.into();
+        let pool: welds::database::Pool = conn.into();
         let conn = pool.as_mysql().unwrap();
         let mut q = Product::where_col(|x| x.id.equal(1));
         eprintln!("SQL: {}", q.to_sql());
@@ -49,7 +49,7 @@ fn should_be_able_to_filter_on_id() {
 fn should_be_able_to_filter_on_equal() {
     async_std::task::block_on(async {
         let conn = testlib::mysql::conn().await.unwrap();
-        let pool: welds_core::database::Pool = conn.into();
+        let pool: welds::database::Pool = conn.into();
         let conn = pool.as_mysql().unwrap();
         let mut q = Product::where_col(|x| x.price1.equal(1.10));
         eprintln!("SQL: {}", q.to_sql());
@@ -66,7 +66,7 @@ fn should_be_able_to_filter_on_equal() {
 fn should_be_able_to_filter_on_lt() {
     async_std::task::block_on(async {
         let conn = testlib::mysql::conn().await.unwrap();
-        let pool: welds_core::database::Pool = conn.into();
+        let pool: welds::database::Pool = conn.into();
         let conn = pool.as_mysql().unwrap();
         let mut q = Product::where_col(|x| x.price1.lt(3.00));
         eprintln!("SQL: {}", q.to_sql());
@@ -79,7 +79,7 @@ fn should_be_able_to_filter_on_lt() {
 fn should_be_able_to_filter_on_lte() {
     async_std::task::block_on(async {
         let conn = testlib::mysql::conn().await.unwrap();
-        let pool: welds_core::database::Pool = conn.into();
+        let pool: welds::database::Pool = conn.into();
         let conn = pool.as_mysql().unwrap();
         let mut q = Product::where_col(|x| x.price1.lte(2.10));
         eprintln!("SQL: {}", q.to_sql());
@@ -92,7 +92,7 @@ fn should_be_able_to_filter_on_lte() {
 fn should_be_able_to_filter_with_nulls() {
     async_std::task::block_on(async {
         let conn = testlib::mysql::conn().await.unwrap();
-        let pool: welds_core::database::Pool = conn.into();
+        let pool: welds::database::Pool = conn.into();
         let conn = pool.as_mysql().unwrap();
         // is null
         let mut q1 = Product::where_col(|x| x.price1.equal(None));
@@ -111,7 +111,7 @@ fn should_be_able_to_filter_with_nulls() {
 fn should_be_able_to_count_in_sql() {
     async_std::task::block_on(async {
         let conn = testlib::mysql::conn().await.unwrap();
-        let pool: welds_core::database::Pool = conn.into();
+        let pool: welds::database::Pool = conn.into();
         let conn = pool.as_mysql().unwrap();
         let mut q = Product::where_col(|x| x.price1.lte(2.10));
         eprintln!("SQL: {}", q.to_sql());
@@ -124,7 +124,7 @@ fn should_be_able_to_count_in_sql() {
 fn should_be_able_to_limit_results_in_sql() {
     async_std::task::block_on(async {
         let conn = testlib::mysql::conn().await.unwrap();
-        let pool: welds_core::database::Pool = conn.into();
+        let pool: welds::database::Pool = conn.into();
         let conn = pool.as_mysql().unwrap();
         let mut q = Product::all().limit(2).offset(1);
         eprintln!("SQL: {}", q.to_sql());
@@ -137,7 +137,7 @@ fn should_be_able_to_limit_results_in_sql() {
 fn should_be_able_to_order_by_id() {
     async_std::task::block_on(async {
         let conn = testlib::mysql::conn().await.unwrap();
-        let pool: welds_core::database::Pool = conn.into();
+        let pool: welds::database::Pool = conn.into();
         let conn = pool.as_mysql().unwrap();
         let mut q = Product::all().order_by_asc(|x| x.id);
         eprintln!("SQL: {}", q.to_sql());
@@ -153,7 +153,7 @@ fn should_be_able_to_order_by_id() {
 fn should_be_able_to_update_a_product() {
     async_std::task::block_on(async {
         let conn = testlib::mysql::conn().await.unwrap();
-        let pool: welds_core::database::Pool = conn.into();
+        let pool: welds::database::Pool = conn.into();
         let conn = pool.as_mysql().unwrap();
         let mut trans = conn.begin().await.unwrap();
 
@@ -176,7 +176,7 @@ fn should_be_able_to_update_a_product() {
 fn should_be_able_to_create_a_new_product() {
     async_std::task::block_on(async {
         let conn = testlib::mysql::conn().await.unwrap();
-        let pool: welds_core::database::Pool = conn.into();
+        let pool: welds::database::Pool = conn.into();
         let conn = pool.as_mysql().unwrap();
         let mut trans = conn.begin().await.unwrap();
 

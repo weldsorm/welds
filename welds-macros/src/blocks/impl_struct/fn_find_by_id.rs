@@ -28,17 +28,17 @@ pub(crate) fn write(infos: &Info) -> TokenStream {
     pub async fn find_by_id<'a, 'e, 'args, E, DB>(
         exec: E,
         #id_params
-    ) -> welds_core::errors::Result<Option<welds_core::state::DbState<Self>>>
+    ) -> welds::errors::Result<Option<welds::state::DbState<Self>>>
     where
         'a: 'args,
         E: sqlx::Executor<'e, Database = DB>,
         DB: sqlx::Database,
-        <Self as welds_core::table::HasSchema>::Schema: welds_core::table::TableColumns<DB>,
+        <Self as welds::table::HasSchema>::Schema: welds::table::TableColumns<DB>,
         <DB as sqlx::database::HasArguments<'a>>::Arguments: sqlx::IntoArguments<'args, DB>,
         Self: Send + Unpin + for<'r> sqlx::FromRow<'r, DB::Row>,
-        DB: welds_core::writers::DbLimitSkipWriter,
-        DB: welds_core::writers::DbColumnWriter,
-        DB: welds_core::query::clause::DbParam,
+        DB: welds::writers::DbLimitSkipWriter,
+        DB: welds::writers::DbColumnWriter,
+        DB: welds::query::clause::DbParam,
         #encode_types
     {
         #converts

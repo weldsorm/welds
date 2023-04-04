@@ -8,3 +8,8 @@ CREATE TABLE Products (
   active bool
 );
 
+CREATE TABLE Orders (
+  id INTEGER PRIMARY KEY,
+  product_id INTEGER NOT NULL,
+  price REAL
+);

@@ -17,7 +17,7 @@ pub(crate) fn write(infos: &Info) -> TokenStream {
 
     quote! {
 
-        impl welds_core::relations::HasRelations for #defstruct {
+        impl welds::relations::HasRelations for #defstruct {
             type Relation = #relations_struct;
         }
 
@@ -41,7 +41,7 @@ fn fielddef(relation: &Relation) -> TokenStream {
     let field = &relation.field;
     let other = &relation.foreign_struct;
     quote! {
-        pub #field: welds_core::relations::#kind<#other>
+        pub #field: welds::relations::#kind<#other>
     }
 }
 
@@ -50,6 +50,6 @@ fn defaultdef(relation: &Relation) -> TokenStream {
     let field = &relation.field;
     let fk = &relation.foreign_key;
     quote! {
-        #field: welds_core::relations::#kind::using(#fk)
+        #field: welds::relations::#kind::using(#fk)
     }
 }

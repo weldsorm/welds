@@ -7,13 +7,13 @@ pub(crate) fn write(infos: &Info) -> TokenStream {
 
     quote! {
 
-        pub fn all<'args, DB>() -> welds_core::query::select::SelectBuilder<'args, Self, DB>
+        pub fn all<'args, DB>() -> welds::query::select::SelectBuilder<'args, Self, DB>
             where
             DB: sqlx::Database,
-            #schema: welds_core::table::TableColumns<DB>,
+            #schema: welds::table::TableColumns<DB>,
             Self: Send + Unpin + for<'r> sqlx::FromRow<'r, DB::Row>,
             {
-                welds_core::query::select::SelectBuilder::new()
+                welds::query::select::SelectBuilder::new()
             }
 
     }

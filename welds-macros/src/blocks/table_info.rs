@@ -11,7 +11,7 @@ pub(crate) fn write(info: &Info) -> TokenStream {
 
     quote! {
 
-        impl welds_core::table::TableInfo for #schema {
+        impl welds::table::TableInfo for #schema {
             fn identifier() -> &'static str {
                 #identifier
             }

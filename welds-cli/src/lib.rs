@@ -9,7 +9,7 @@ use schema::Table;
 use std::path::PathBuf;
 
 pub async fn update(schema_path: PathBuf, identifier: Option<String>) -> Result<()> {
-    let conn = welds_core::database::connect().await?;
+    let conn = welds::database::connect().await?;
     let identifier = identifier.as_ref().map(|x| TableIdent::new(x, &conn));
     let mut tables = crate::adapters::schema(&conn).await?;
     let tables: Vec<Table> = tables

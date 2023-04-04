@@ -1,4 +1,4 @@
-use welds_core::WeldsModel;
+use welds::WeldsModel;
 
 /*
  * NOTE: You shouldn't be writing Models by hand.

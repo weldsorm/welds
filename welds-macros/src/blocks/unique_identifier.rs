@@ -24,9 +24,9 @@ pub(crate) fn write_for_db(info: &Info, db: &Ident, pk: &Column) -> TokenStream 
     let name = &pk.dbname;
 
     quote! {
-        impl welds_core::table::UniqueIdentifier<sqlx::#db> for #def {
-            fn id_column() -> welds_core::table::Column {
-                welds_core::table::Column::new::<sqlx::#db, #pktype>(#name)
+        impl welds::table::UniqueIdentifier<sqlx::#db> for #def {
+            fn id_column() -> welds::table::Column {
+                welds::table::Column::new::<sqlx::#db, #pktype>(#name)
             }
         }
     }

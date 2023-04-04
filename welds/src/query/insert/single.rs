@@ -61,7 +61,7 @@ where
         // HACK: fix if you can.
         //
         // We need to mut twice,
-        // but the lifetimes hold the exec way longer than what is needed.
+        // but the sqlx lifetimes hold the exec way longer than what is needed.
         // we are executing sequentially here, and not sharing these borrows.
         let exec_ptr: *const &mut E = &exec;
         let exec_hack1: &mut E = unsafe { *(exec_ptr as *mut &mut E) };

@@ -8,15 +8,10 @@ use welds::WeldsModel;
 
 #[derive(Debug, sqlx::FromRow, WeldsModel)]
 #[welds(db(Sqlite))]
-#[welds(table = "products")]
-#[welds(HasMany(orders, super::order::Order, "product_id"))]
-pub struct Product {
-    #[sqlx(rename = "product_id")]
+#[welds(table = "orders")]
+#[welds(BelongsTo(product, super::product::Product, "product_id"))]
+pub struct Order {
     #[welds(primary_key)]
     pub id: i32,
-    pub name: String,
-    pub description: Option<String>,
-    pub price1: Option<f32>,
-    pub price2: Option<f64>,
-    pub active: Option<bool>,
+    pub product_id: i32,
 }

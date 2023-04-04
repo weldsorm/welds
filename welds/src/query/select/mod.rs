@@ -52,7 +52,7 @@ where
     where
         <T as HasSchema>::Schema: Default,
     {
-        let mut qba = lam(Default::default());
+        let qba = lam(Default::default());
         self.wheres.push(qba);
         self
     }
@@ -326,7 +326,7 @@ where
     let cols_info = S::columns();
     let cols: Vec<_> = cols_info
         .iter()
-        .map(|col| writer.write_with_prefix(&tablealias, col))
+        .map(|col| writer.write(&tablealias, col))
         .collect();
     let cols = cols.join(", ");
     head.push(&cols);

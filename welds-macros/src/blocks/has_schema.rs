@@ -8,7 +8,7 @@ pub(crate) fn write(infos: &Info) -> TokenStream {
 
     quote! {
 
-        impl welds_core::table::HasSchema for #defstruct {
+        impl welds::table::HasSchema for #defstruct {
             type Schema = #schemastruct;
         }
 

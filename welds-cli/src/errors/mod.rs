@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 pub type Result<T> = std::result::Result<T, WeldsError>;
-use welds_core::errors::WeldsError as WeldsCoreError;
+use welds::errors::WeldsError as WeldsCoreError;
 
 #[derive(Debug)]
 pub enum WeldsError {

@@ -43,10 +43,10 @@ fn def_field(col: &Column) -> TokenStream {
     let type_inner = &col.field_type;
     let mut ty = quote! { #type_inner };
     if col.is_option {
-        ty = quote! { welds_core::query::optional::Optional<#type_inner> }
+        ty = quote! { welds::query::optional::Optional<#type_inner> }
     }
     let clause = get_clause(type_inner, col.is_option);
-    let full_type = quote! { welds_core::query::clause::#clause<#ty> };
+    let full_type = quote! { welds::query::clause::#clause<#ty> };
     quote! { pub #name: #full_type }
 }
 
@@ -61,5 +61,5 @@ fn default_fields(col: &Column) -> TokenStream {
     let type_inner = &col.field_type;
     let clause = get_clause(type_inner, col.is_option);
     let dbname = col.dbname.as_str();
-    quote! { #name: welds_core::query::clause::#clause::new(#dbname) }
+    quote! { #name: welds::query::clause::#clause::new(#dbname) }
 }

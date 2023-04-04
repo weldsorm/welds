@@ -1,5 +1,5 @@
 [package]
-name = "welds-core"
+name = "welds"
 version = "0.1.0"
 edition = "2021"
 
@@ -24,6 +24,6 @@ opt-level = 3
 [dev-dependencies]
 async-std = { version = "1", features = ["attributes"] }
 sqlx = { version = "0.6", features = [ "runtime-async-std-rustls",  "macros"] }
-welds-core = { path="./", features=["postgres", "mysql", "mssql", "sqlite"] }
+welds = { path="./", features=["postgres", "mysql", "mssql", "sqlite"] }
 
 

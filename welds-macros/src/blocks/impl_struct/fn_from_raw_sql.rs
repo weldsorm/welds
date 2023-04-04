@@ -2,16 +2,14 @@ use crate::info::Info;
 use proc_macro2::TokenStream;
 use quote::quote;
 
-pub(crate) fn write(infos: &Info) -> TokenStream {
-    let schema = &infos.schemastruct;
-
+pub(crate) fn write(_infos: &Info) -> TokenStream {
     quote! {
 
     pub async fn from_raw_sql<'q, 'schema, 'args, 'e, DB, E, A>(
         sql: &'static str,
         arguments: A,
         exec: E,
-    ) -> welds_core::errors::Result<Vec<welds_core::state::DbState<Self>>>
+    ) -> welds::errors::Result<Vec<welds::state::DbState<Self>>>
     where
         A: sqlx::IntoArguments<'q, DB> + 'q,
         DB: sqlx::Database,
@@ -22,7 +20,7 @@ pub(crate) fn write(infos: &Info) -> TokenStream {
         let mut data: Vec<Self> = sqlx::query_as_with(sql, arguments).fetch_all(exec).await?;
         Ok(data
             .drain(..)
-            .map(|x| welds_core::state::DbState::db_loaded(x))
+            .map(|x| welds::state::DbState::db_loaded(x))
             .collect())
     }
 

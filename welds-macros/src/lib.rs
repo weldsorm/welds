@@ -35,7 +35,7 @@ fn model_gen_inner(input: TokenStream) -> errors::Result<TokenStream> {
     let p7 = blocks::unique_identifier(&info);
     let p8 = blocks::impl_struct(&info);
 
-    Ok(quote! {
+    let q = quote! {
         #p1
         #p2
         #p3
@@ -44,6 +44,7 @@ fn model_gen_inner(input: TokenStream) -> errors::Result<TokenStream> {
         #p6
         #p7
         #p8
-    }
-    .into())
+    };
+
+    Ok(q.into())
 }

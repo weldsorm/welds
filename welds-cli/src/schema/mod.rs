@@ -9,7 +9,7 @@ pub(crate) fn read(path: &PathBuf) -> Result<Config> {
         std::fs::read_to_string(path).map_err(|_| WeldsError::ReadError(path.clone()))?;
     let config: std::result::Result<Config, serde_yaml::Error> = serde_yaml::from_str(&yaml_str);
     match config {
-        Err(err) => Err(WeldsError::ConfigReadError(path.clone())),
+        Err(_err) => Err(WeldsError::ConfigReadError(path.clone())),
         Ok(config) => Ok(config),
     }
 }

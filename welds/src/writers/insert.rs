@@ -105,7 +105,7 @@ impl DbInsertWriter for sqlx::Mssql {
         let col_write = ColumnWriter::new::<sqlx::Mssql>();
         let return_col: Vec<String> = columns
             .iter()
-            .map(|c| col_write.write_with_prefix("Inserted", c))
+            .map(|c| col_write.write("Inserted", c))
             .collect();
         let outputs = return_col.join(", ");
 

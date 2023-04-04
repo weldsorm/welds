@@ -4,7 +4,7 @@ CREATE SCHEMA welds;
 GO
 
 CREATE TABLE welds.Products (
-    ID int NOT NULL PRIMARY KEY,
+    ID INT NOT NULL IDENTITY PRIMARY KEY,
     name varchar(50) NOT NULL,
     Description varchar(max),
     price1 REAL,
@@ -13,12 +13,12 @@ CREATE TABLE welds.Products (
 );
 
 CREATE TABLE welds.Orders (
-    id int NOT NULL PRIMARY KEY,
+    id INT NOT NULL IDENTITY PRIMARY KEY,
     product_id int NOT NULL
 );
 
 CREATE TABLE welds.Persons (
-    PersonID int,
+    PersonID INT IDENTITY PRIMARY KEY,
     LastName varchar(255),
     FirstName varchar(255),
     Address varchar(255),
@@ -26,7 +26,7 @@ CREATE TABLE welds.Persons (
 );
 
 CREATE TABLE welds.Persons2 (
-    PersonID int,
+    PersonID INT IDENTITY PRIMARY KEY,
     LastName varchar(255),
     FirstName varchar(255),
     Address varchar(255),

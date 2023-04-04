@@ -1,4 +1,3 @@
-use crate::column::Column;
 use crate::info::Info;
 use proc_macro2::TokenStream;
 use quote::quote;
@@ -62,15 +61,15 @@ pub(crate) fn write_for_db(
 
     quote! {
 
-        impl welds_core::table::TableColumns<sqlx::#db> for #def {
-            fn primary_keys() -> Vec<welds_core::table::Column> {
+        impl welds::table::TableColumns<sqlx::#db> for #def {
+            fn primary_keys() -> Vec<welds::table::Column> {
                 type DB = sqlx::#db;
-                use welds_core::table::Column;
+                use welds::table::Column;
                 #pks
             }
-            fn columns() -> Vec<welds_core::table::Column> {
+            fn columns() -> Vec<welds::table::Column> {
                 type DB = sqlx::#db;
-                use welds_core::table::Column;
+                use welds::table::Column;
                 #columns
             }
         }

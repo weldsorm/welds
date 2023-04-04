@@ -7,6 +7,6 @@ edition = "2021"
 
 [dependencies]
 testlib = { path = "../testlib" }
-welds-core = { path = "../../welds-core", features = ["sqlite"]  }
+welds = { path = "../../welds", features = ["sqlite"]  }
 async-std = { version = "1", features = ["attributes"] }
 sqlx = { version = "0.6", features = [ "runtime-async-std-rustls",  "macros"] }

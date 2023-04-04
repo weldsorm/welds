@@ -15,8 +15,8 @@ pub(crate) fn write(infos: &Info) -> TokenStream {
 
     quote! {
 
-        pub fn new() -> welds_core::state::DbState<Self> {
-            welds_core::state::DbState::new_uncreated(Self {
+        pub fn new() -> welds::state::DbState<Self> {
+            welds::state::DbState::new_uncreated(Self {
                 #cols
             })
         }

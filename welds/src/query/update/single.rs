@@ -55,7 +55,6 @@ where
 
     *buff = format!("UPDATE {} SET {} where {}", identifier, sets, wheres);
 
-    eprintln!("SQL: {:?}", buff);
     let q = sqlx::query_with(buff, args);
     q.execute(exec).await?;
 

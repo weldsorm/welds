@@ -1,10 +1,10 @@
 [package]
-name = "welds"
+name = "welds-cli"
 version = "0.1.0"
 edition = "2021"
 
 [lib]
-name = "weldslib"
+name = "weldscli_lib"
 path = "src/lib.rs"
 
 [dependencies]
@@ -19,7 +19,7 @@ rust-format = "0.3"
 anyhow = "1.0"
 futures = "0.3.25"
 
-welds-core = { path = "../welds-core", version = '0.1.0', features=["postgres", "mssql", "mysql", "sqlite"] }
+welds = { path = "../welds", version = '0.1.0', features=["postgres", "mssql", "mysql", "sqlite"] }
 
 [profile.dev.package.sqlx-macros]
 opt-level = 3

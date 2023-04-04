@@ -1,4 +1,6 @@
 
+SET IDENTITY_INSERT welds.Products ON;
+GO
 
 Insert INTO welds.Products (
   ID,
@@ -51,6 +53,12 @@ Insert INTO welds.Products (
 , 1
 );
 
+SET IDENTITY_INSERT welds.Products OFF;
+GO
+
+
+SET IDENTITY_INSERT welds.Orders ON;
+GO
 
 Insert INTO welds.Orders (
   id,
@@ -62,6 +70,5 @@ Insert INTO welds.Orders (
 ( 4,2 ),
 ( 5,2 )
 
-
-
-
+SET IDENTITY_INSERT welds.Orders OFF;
+GO

@@ -208,3 +208,14 @@ fn should_be_able_to_create_a_new_product() {
         trans.rollback().await.unwrap();
     })
 }
+
+#[test]
+fn should_be_able_to_scan_for_all_tables() {
+    async_std::task::block_on(async {
+        let conn = testlib::sqlite::conn().await.unwrap();
+        let pool: welds::database::Pool = conn.into();
+        let conn = pool.as_sqlite().unwrap();
+        let tables = welds::detect::find_tables(&conn).await.unwrap();
+        assert_eq!(2, tables.len());
+    })
+}

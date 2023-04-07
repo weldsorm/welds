@@ -157,13 +157,13 @@ fn should_be_able_to_update_a_product() {
         let conn = pool.as_mysql().unwrap();
         let mut trans = conn.begin().await.unwrap();
 
-        let mut q = Product::all().limit(1);
+        let q = Product::all().limit(1);
         let mut found: Vec<_> = q.run(&mut trans).await.unwrap();
         let mut p1 = found.pop().unwrap();
         p1.name = "Test1".to_owned();
         p1.save(&mut trans).await.unwrap();
 
-        let mut q = Product::where_col(|x| x.id.equal(p1.id));
+        let q = Product::where_col(|x| x.id.equal(p1.id));
         let mut found: Vec<_> = q.run(&mut trans).await.unwrap();
         let p2 = found.pop().unwrap();
         assert_eq!(p2.name, "Test1");
@@ -186,11 +186,22 @@ fn should_be_able_to_create_a_new_product() {
         // Note: creation will set the PK for the model.
         p1.save(&mut trans).await.unwrap();
 
-        let mut q = Product::where_col(|x| x.id.equal(p1.id));
+        let q = Product::where_col(|x| x.id.equal(p1.id));
         let mut found: Vec<_> = q.run(&mut trans).await.unwrap();
         let p2 = found.pop().unwrap();
         assert_eq!(p2.name, "newyNewFace");
 
         trans.rollback().await.unwrap();
+    })
+}
+
+#[test]
+fn should_be_able_to_scan_for_all_tables() {
+    async_std::task::block_on(async {
+        let conn = testlib::mysql::conn().await.unwrap();
+        let pool: welds::database::Pool = conn.into();
+        let conn = pool.as_mysql().unwrap();
+        let tables = welds::detect::find_tables(&conn).await.unwrap();
+        assert_eq!(2, tables.len());
     })
 }

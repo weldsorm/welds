@@ -238,16 +238,21 @@ fn should_be_able_to_crud_orders() {
 }
 
 #[test]
-fn should_be_able_to_find_by_id() {
+fn should_be_able_to_delete_a_product() {
     async_std::task::block_on(async {
         let conn = testlib::postgres::conn().await.unwrap();
         let pool: welds::database::Pool = conn.into();
         let conn = pool.as_postgres().unwrap();
-        let id = 1;
-        let product_result = Product::find_by_id(conn, id).await;
-        let product = product_result.unwrap();
-        let found = product.unwrap();
-        assert_eq!(found.id, 1);
+        let mut trans = conn.begin().await.unwrap();
+
+        let id = 6;
+        let original_total = Product::all().count(&mut trans).await.unwrap();
+        let mut product = Product::find_by_id(&mut trans, id).await.unwrap().unwrap();
+        product.delete(&mut trans).await.unwrap();
+        let new_total = Product::all().count(&mut trans).await.unwrap();
+
+        assert_eq!(new_total, original_total - 1);
+        trans.rollback().await.unwrap();
     })
 }
 
@@ -331,5 +336,16 @@ fn should_be_able_to_filter_with_relations2() {
         use welds::state::DbState;
         let orders: Vec<DbState<Product>> = product_query.run(conn).await.unwrap();
         assert_eq!(2, orders.len());
+    })
+}
+
+#[test]
+fn should_be_able_to_scan_for_all_tables() {
+    async_std::task::block_on(async {
+        let conn = testlib::postgres::conn().await.unwrap();
+        let pool: welds::database::Pool = conn.into();
+        let conn = pool.as_postgres().unwrap();
+        let tables = welds::detect::find_tables(&conn).await.unwrap();
+        assert_eq!(3, tables.len());
     })
 }

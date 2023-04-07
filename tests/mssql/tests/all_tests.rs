@@ -231,3 +231,14 @@ fn should_be_able_to_filter_with_relations2() {
         assert_eq!(1, orders.len());
     })
 }
+
+#[test]
+fn should_be_able_to_scan_for_all_tables() {
+    async_std::task::block_on(async {
+        let conn = testlib::mssql::conn().await.unwrap();
+        let pool: welds::database::Pool = conn.into();
+        let conn = pool.as_mssql().unwrap();
+        let tables = welds::detect::find_tables(&conn).await.unwrap();
+        assert_eq!(4, tables.len());
+    })
+}

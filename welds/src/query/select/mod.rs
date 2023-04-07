@@ -2,30 +2,29 @@ use super::clause::{DbParam, NextParam};
 use crate::alias::TableAlias;
 use crate::errors::Result;
 use crate::query::clause::exists::ExistIn;
-use crate::query::clause::orderby;
 use crate::query::clause::{AsFieldName, ClauseAdder, OrderBy};
 use crate::relations::{HasRelations, Relationship};
 use crate::state::DbState;
 use crate::table::{HasSchema, TableColumns, TableInfo, UniqueIdentifier};
 use crate::writers::column::{ColumnWriter, DbColumnWriter};
 use crate::writers::count::{CountWriter, DbCountWriter};
-use crate::writers::limit_skip::{DbLimitSkipWriter, LimitSkipWriter};
+use crate::writers::limit_skip::DbLimitSkipWriter;
 use sqlx::database::HasArguments;
 use sqlx::query::{Query, QueryAs};
 use sqlx::IntoArguments;
 use sqlx::Row;
-use std::collections::VecDeque;
+use std::cell::RefCell;
 use std::marker::PhantomData;
 
 pub struct SelectBuilder<'schema, T, DB: sqlx::Database> {
     _t: PhantomData<T>,
     pub(crate) wheres: Vec<Box<dyn ClauseAdder<'schema, DB>>>,
     pub(crate) exist_ins: Vec<ExistIn<'schema, DB>>,
-    limit: Option<i64>,
-    offset: Option<i64>,
-    orderby: Vec<OrderBy>,
+    pub(crate) limit: Option<i64>,
+    pub(crate) offset: Option<i64>,
+    pub(crate) orderby: Vec<OrderBy>,
     // these are needed for lifetime issues, remove if you can
-    history: Vec<String>,
+    history: RefCell<Vec<String>>,
 }
 
 impl<'schema, 'args, T, DB> SelectBuilder<'schema, T, DB>
@@ -63,6 +62,7 @@ where
         filter: SelectBuilder<'schema, R, DB>,
     ) -> Self
     where
+        DB: sqlx::Database + DbLimitSkipWriter,
         T: HasRelations + UniqueIdentifier<DB>,
         Ship: Relationship<R>,
         R: HasSchema + UniqueIdentifier<DB>,
@@ -84,6 +84,7 @@ where
         relationship: impl Fn(<T as HasRelations>::Relation) -> Ship,
     ) -> SelectBuilder<'schema, R, DB>
     where
+        DB: sqlx::Database + DbLimitSkipWriter,
         T: HasRelations + UniqueIdentifier<DB>,
         Ship: Relationship<R>,
         R: HasSchema + UniqueIdentifier<DB>,
@@ -133,7 +134,7 @@ where
         self
     }
 
-    pub fn to_sql(&mut self) -> String
+    pub fn to_sql(&self) -> String
     where
         <DB as HasArguments<'schema>>::Arguments: IntoArguments<'args, DB>,
         DB: DbParam + DbColumnWriter + DbLimitSkipWriter + DbCountWriter,
@@ -153,7 +154,7 @@ where
         ])
     }
 
-    pub async fn count<'q, 'e, E>(&'q mut self, exec: E) -> Result<u64>
+    pub async fn count<'q, 'e, E>(&'q self, exec: E) -> Result<u64>
     where
         'schema: 'args,
         E: sqlx::Executor<'e, Database = DB>,
@@ -178,8 +179,10 @@ where
 
         // lifetime hack
         // We know the SQL string is keep around until after execution is complete.
-        self.history.push(sql);
-        let sql = self.history.last().unwrap();
+        let mut history = self.history.borrow_mut();
+        history.push(sql);
+        let sql = history.last().unwrap();
+
         let sql_len = sql.len();
         let sqlp = sql.as_ptr();
         let sql_hack: &[u8] = unsafe { std::slice::from_raw_parts(sqlp, sql_len) };
@@ -193,7 +196,7 @@ where
         Ok(count as u64)
     }
 
-    pub async fn run<'q, 'e, E>(&'q mut self, exec: E) -> Result<Vec<DbState<T>>>
+    pub async fn run<'q, 'e, E>(&'q self, exec: E) -> Result<Vec<DbState<T>>>
     where
         'schema: 'args,
         E: sqlx::Executor<'e, Database = DB>,
@@ -216,8 +219,10 @@ where
 
         // lifetime hack
         // We know the SQL string is keep around until after execution is complete.
-        self.history.push(sql);
-        let sql = self.history.last().unwrap();
+        let mut history = self.history.borrow_mut();
+        history.push(sql);
+        let sql = history.last().unwrap();
+
         let sql_len = sql.len();
         let sqlp = sql.as_ptr();
         let sql_hack: &[u8] = unsafe { std::slice::from_raw_parts(sqlp, sql_len) };
@@ -254,7 +259,7 @@ fn build_where<'schema, 'args, DB>(
     exist_ins: &[ExistIn<'schema, DB>],
 ) -> Option<String>
 where
-    DB: sqlx::Database,
+    DB: sqlx::Database + DbLimitSkipWriter,
     <DB as HasArguments<'schema>>::Arguments: IntoArguments<'args, DB>,
 {
     let mut where_sql: Vec<String> = Vec::default();
@@ -292,27 +297,7 @@ where
     DB: sqlx::Database + DbLimitSkipWriter,
     <T as HasSchema>::Schema: TableInfo + TableColumns<DB>,
 {
-    let w = LimitSkipWriter::new::<DB>();
-    let mut parts = VecDeque::default();
-
-    if let Some(skiplimit) = w.skiplimit(select.offset, select.limit) {
-        parts.push_back(skiplimit);
-    }
-
-    // If we are limiting but no order is given force an order (needed for MSSQL)
-    if !parts.is_empty() && select.orderby.is_empty() {
-        parts.push_front("ORDER BY 1".to_owned())
-    }
-
-    if !select.orderby.is_empty() {
-        parts.push_front(orderby::to_sql(&select.orderby));
-    }
-
-    if parts.is_empty() {
-        return None;
-    }
-    let parts: Vec<String> = parts.drain(..).collect();
-    Some(parts.join(" "))
+    super::tail::write::<DB>(&select.limit, &select.offset, &select.orderby)
 }
 
 fn build_head_select<DB, S>(tablealias: String) -> Option<String>

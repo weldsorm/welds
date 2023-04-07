@@ -6,11 +6,14 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+futures-core = "0.3" 
+futures-util = "0.3" 
 sqlx = { version = "0.6", features = [ "macros"] }
 welds-macros = { path="../welds-macros", version = "^0.1" }
 
 [features]
-"default" = []
+"default" = ["detect"]
+"detect" = []
 "postgres" = ["sqlx/postgres", "welds-macros/postgres"]
 "mysql" = ["sqlx/mysql", "welds-macros/mysql"]
 "mssql" = ["sqlx/mssql", "welds-macros/mssql"]

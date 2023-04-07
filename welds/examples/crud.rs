@@ -37,13 +37,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let pool = sqlx::SqlitePool::connect("sqlite::memory:").await?;
     let schema = include_str!("../../tests/testlib/databases/sqlite/01_create_tables.sql");
     pool.clone().execute(schema).await?;
+    println!("");
     // Create and update a Product
     let product = create_and_update_products(&pool).await?;
     // Create a bunch of orders
     create_orders(&product, &pool).await?;
-    // Count the Orders Using the Product
+    // Select the Orders Using the Product
     chain_query_together(&pool).await?;
-
+    // Filter Orders using relationships from other tables
+    filter_order_using_relationships(&pool).await?;
+    // Delete Some Stuff
+    delete_the_product(&pool, product.id).await?;
     Ok(())
 }
 
@@ -82,26 +86,59 @@ async fn create_orders(
         o.sell_price = Some(3.50);
         o.save(&mut conn).await?;
     }
-    println!("Orders Created");
+    let total = Order::all().count(&mut conn).await?;
+    println!("");
+    println!("Orders Created: {}", total);
     Ok(())
 }
 
 async fn chain_query_together(pool: &sqlx::SqlitePool) -> Result<(), Box<dyn std::error::Error>> {
-    let mut conn = pool.acquire().await?;
-
     // Start from a product and ending on its orders
-    let mut order_query = Product::all()
+    let order_query = Product::all()
         .order_by_asc(|p| p.id)
         .limit(1)
         .map_query(|p| p.orders)
         .where_col(|x| x.id.lte(2));
 
     let sql = order_query.to_sql();
-    let orders = order_query.run(&mut conn).await?;
-    let count_in_sql = order_query.count(&mut conn).await?;
+    let orders = order_query.run(pool).await?;
 
+    println!("");
     println!("Some Orders SQL: {}", sql);
-    println!("Some Orders {}: {:?}", count_in_sql, orders);
+    println!("Some Orders: {:?}", orders);
 
+    Ok(())
+}
+
+async fn filter_order_using_relationships(
+    pool: &sqlx::SqlitePool,
+) -> Result<(), Box<dyn std::error::Error>> {
+    // NOTE: this is an un-executed query.
+    let product_query = Product::where_col(|p| p.name.like("%Cookie%"));
+
+    // select all the orders, where order match the product query
+    let orders = Order::all()
+        .where_relation(|o| o.product, product_query)
+        .run(pool)
+        .await?;
+
+    println!("");
+    println!("Found More Orders: {}", orders.len());
+    Ok(())
+}
+
+async fn delete_the_product(
+    pool: &sqlx::SqlitePool,
+    product_id: i32,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let mut conn = pool.acquire().await?;
+
+    let mut product = Product::find_by_id(&mut conn, product_id).await?.unwrap();
+    product.delete(&mut conn).await?;
+    let count = Product::all().count(&mut conn).await?;
+
+    println!("");
+    println!("DELETE: {:?}", product);
+    println!("NEW COUNT: {}", count);
     Ok(())
 }

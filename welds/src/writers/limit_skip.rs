@@ -1,5 +1,5 @@
 pub(crate) struct LimitSkipWriter {
-    skiplimit: fn(Option<i64>, Option<i64>) -> Option<String>,
+    skiplimit: fn(&Option<i64>, &Option<i64>) -> Option<String>,
 }
 
 impl LimitSkipWriter {
@@ -8,18 +8,18 @@ impl LimitSkipWriter {
             skiplimit: DB::skiplimit,
         }
     }
-    pub fn skiplimit(&self, s: Option<i64>, l: Option<i64>) -> Option<String> {
+    pub fn skiplimit(&self, s: &Option<i64>, l: &Option<i64>) -> Option<String> {
         (self.skiplimit)(s, l)
     }
 }
 
 pub trait DbLimitSkipWriter {
-    fn skiplimit(s: Option<i64>, l: Option<i64>) -> Option<String>;
+    fn skiplimit(s: &Option<i64>, l: &Option<i64>) -> Option<String>;
 }
 
 #[cfg(feature = "postgres")]
 impl DbLimitSkipWriter for sqlx::Postgres {
-    fn skiplimit(s: Option<i64>, l: Option<i64>) -> Option<String> {
+    fn skiplimit(s: &Option<i64>, l: &Option<i64>) -> Option<String> {
         if s.is_none() && l.is_none() {
             return None;
         }
@@ -31,7 +31,7 @@ impl DbLimitSkipWriter for sqlx::Postgres {
 
 #[cfg(feature = "sqlite")]
 impl DbLimitSkipWriter for sqlx::Sqlite {
-    fn skiplimit(s: Option<i64>, l: Option<i64>) -> Option<String> {
+    fn skiplimit(s: &Option<i64>, l: &Option<i64>) -> Option<String> {
         if s.is_none() && l.is_none() {
             return None;
         }
@@ -43,7 +43,7 @@ impl DbLimitSkipWriter for sqlx::Sqlite {
 
 #[cfg(feature = "mssql")]
 impl DbLimitSkipWriter for sqlx::Mssql {
-    fn skiplimit(s: Option<i64>, l: Option<i64>) -> Option<String> {
+    fn skiplimit(s: &Option<i64>, l: &Option<i64>) -> Option<String> {
         if s.is_none() && l.is_none() {
             return None;
         }
@@ -55,7 +55,7 @@ impl DbLimitSkipWriter for sqlx::Mssql {
 
 #[cfg(feature = "mysql")]
 impl DbLimitSkipWriter for sqlx::MySql {
-    fn skiplimit(s: Option<i64>, l: Option<i64>) -> Option<String> {
+    fn skiplimit(s: &Option<i64>, l: &Option<i64>) -> Option<String> {
         if s.is_none() && l.is_none() {
             return None;
         }

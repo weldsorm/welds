@@ -1,0 +1,29 @@
+
+# Here just to help with development. 
+# If you need to jump into a DB
+
+version: "3.9"
+services:
+
+  db:
+    build: .
+    image: welds_pg_testing_db
+    environment:
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+
+  adminer:
+    image: adminer
+    ports:
+      - "127.0.0.1:5050:8080"
+
+  #pgadmin:
+  #  container_name: pgadmin4_container
+  #  image: dpage/pgadmin4
+  #  environment:
+  #    PGADMIN_DEFAULT_EMAIL: dev@dev.com
+  #    PGADMIN_DEFAULT_PASSWORD: root
+  #  ports:
+  #    - "5050:80"
+

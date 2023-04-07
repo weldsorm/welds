@@ -10,6 +10,7 @@ use sqlx::PgPool;
 #[cfg(feature = "sqlite")]
 use sqlx::SqlitePool;
 
+#[derive(Debug)]
 pub enum Pool {
     #[cfg(feature = "sqlite")]
     Sqlite(SqlitePool),

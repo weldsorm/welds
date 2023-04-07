@@ -1,0 +1,21 @@
+
+# Here just to help with development. 
+# If you need to jump into a DB
+
+version: "3.9"
+services:
+
+  db:
+    build: .
+    image: welds_mssql_testing_db
+    environment:
+      SA_PASSWORD: welds!123
+    ports:
+      - "127.0.0.1:1433:1433"
+
+  adminer:
+    image: adminer
+    ports:
+      - "127.0.0.1:5050:8080"
+
+

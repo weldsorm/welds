@@ -57,3 +57,40 @@ pub trait WriteToArgs<DB> {
 pub trait HasSchema {
     type Schema: Default + TableInfo;
 }
+
+#[cfg(feature = "detect")]
+#[derive(Debug, Clone, Hash, Eq, PartialEq)]
+pub struct TableIdent {
+    pub schema: Option<String>,
+    pub name: String,
+}
+impl TableIdent {
+    pub fn equals(&self, schema: &Option<String>, name: &str) -> bool {
+        &self.schema == schema && self.name == name
+    }
+}
+
+#[cfg(feature = "detect")]
+#[derive(Debug, Clone, Hash, Eq, PartialEq)]
+pub struct ColumnDef {
+    pub name: String,
+    pub ty: String,
+    pub null: bool,
+    pub primary_key: bool,
+    pub updatable: bool,
+}
+
+#[derive(Debug, Clone, Hash, Eq, PartialEq)]
+#[cfg(feature = "detect")]
+pub enum DataType {
+    Table,
+    View,
+}
+
+#[derive(Debug, Clone, Hash, Eq, PartialEq)]
+#[cfg(feature = "detect")]
+pub struct TableDef {
+    pub ident: TableIdent,
+    pub ty: DataType,
+    pub columns: Vec<ColumnDef>, // What are the columns on this table
+}

@@ -1,6 +1,6 @@
 use crate::errors::Result;
 use crate::query::clause::DbParam;
-use crate::query::{insert, update};
+use crate::query::{delete, insert, update};
 use crate::table::{HasSchema, TableColumns, TableInfo, WriteToArgs};
 use crate::writers::column::DbColumnWriter;
 use crate::writers::insert::DbInsertWriter;
@@ -74,6 +74,32 @@ impl<T> DbState<T> {
             }
         }
         self.status = DbStatus::NotModified;
+        Ok(())
+    }
+
+    pub async fn delete<'q, 'schema, 'args, 'e, E, DB>(&'q mut self, exec: &'e mut E) -> Result<()>
+    where
+        E: 'e,
+        'q: 'args,
+        'schema: 'args,
+        T: WriteToArgs<DB> + HasSchema + for<'r> sqlx::FromRow<'r, DB::Row>,
+        &'e mut E: sqlx::Executor<'e, Database = DB>,
+        DB: sqlx::Database + DbParam + DbInsertWriter + DbColumnWriter,
+        <DB as HasArguments<'schema>>::Arguments: IntoArguments<'args, DB>,
+        <T as HasSchema>::Schema: TableInfo + TableColumns<DB>,
+    {
+        match self.status {
+            DbStatus::NotModified => {
+                self.sql_buff = String::default();
+                delete::delete_one(&mut self.sql_buff, &self.inner, exec).await?;
+            }
+            DbStatus::Edited => {
+                self.sql_buff = String::default();
+                delete::delete_one(&mut self.sql_buff, &self.inner, exec).await?;
+            }
+            DbStatus::NotInDatabase => {}
+        }
+        self.status = DbStatus::NotInDatabase;
         Ok(())
     }
 }

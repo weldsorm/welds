@@ -1878,6 +1878,8 @@ name = "welds"
 version = "0.1.0"
 dependencies = [
  "async-std",
+ "futures-core",
+ "futures-util",
  "sqlx",
  "welds",
  "welds-macros",

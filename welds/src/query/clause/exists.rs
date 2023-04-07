@@ -1,4 +1,6 @@
 use super::ClauseAdder;
+use crate::query::clause::OrderBy;
+use crate::writers::limit_skip::DbLimitSkipWriter;
 use crate::{alias::TableAlias, query::select::SelectBuilder};
 use std::cell::RefCell;
 
@@ -11,11 +13,14 @@ pub struct ExistIn<'args, DB> {
     inner_tablename: String,
     wheres: Vec<Box<dyn ClauseAdder<'args, DB>>>,
     inner_exists_ins: Vec<Self>,
+    limit: Option<i64>,
+    offset: Option<i64>,
+    orderby: Vec<OrderBy>,
 }
 
 impl<'args, DB> ExistIn<'args, DB>
 where
-    DB: sqlx::Database,
+    DB: sqlx::Database + DbLimitSkipWriter,
 {
     pub(crate) fn new<T>(
         sb: SelectBuilder<'args, T, DB>,
@@ -30,6 +35,9 @@ where
             inner_tablename,
             wheres: sb.wheres, //wheres: sb.wheres,
             inner_exists_ins: sb.exist_ins,
+            limit: sb.limit,
+            offset: sb.offset,
+            orderby: sb.orderby,
         }
     }
 
@@ -46,17 +54,23 @@ where
         )
     }
 
+    fn tails(&self) -> String {
+        use crate::query::tail;
+        tail::write::<DB>(&self.limit, &self.offset, &self.orderby).unwrap_or_default()
+    }
+
     fn exists_clause(&self, inner_tablealias: &str, inner_clauses: &str) -> String {
+        let tails = self.tails();
         format!(
-            "EXISTS ( SELECT {} FROM {} {} WHERE {} )",
-            self.inner_column, self.inner_tablename, inner_tablealias, inner_clauses
+            "EXISTS ( SELECT {} FROM {} {} WHERE {} {})",
+            self.inner_column, self.inner_tablename, inner_tablealias, inner_clauses, tails
         )
     }
 }
 
 impl<'args, DB> ClauseAdder<'args, DB> for ExistIn<'args, DB>
 where
-    DB: sqlx::Database,
+    DB: sqlx::Database + DbLimitSkipWriter,
 {
     fn bind(&self, args: &mut <DB as sqlx::database::HasArguments<'args>>::Arguments) {
         for w in &self.wheres {

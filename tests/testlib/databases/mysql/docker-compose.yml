@@ -1,0 +1,22 @@
+
+# Here just to help with development. 
+# If you need to jump into a DB
+
+version: "3.9"
+services:
+
+  db:
+    build: .
+    image: welds_mysql_testing_db
+    environment:
+      #DATABASE weldstests;
+      MYSQL_ROOT_PASSWORD: welds!123
+    ports:
+      - "127.0.0.1:3306:3306"
+
+  adminer:
+    image: adminer
+    ports:
+      - "127.0.0.1:5050:8080"
+
+

@@ -14,3 +14,11 @@ CREATE TABLE Products (
   active bool,
   PRIMARY KEY (product_id)
 );
+
+USE mysql;
+CREATE TABLE Orders (
+  id INT NOT NULL AUTO_INCREMENT,
+  product_id INT,
+  price FLOAT,
+  PRIMARY KEY (id)
+);

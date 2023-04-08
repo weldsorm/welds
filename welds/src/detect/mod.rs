@@ -7,6 +7,8 @@ use std::collections::HashMap;
 mod table_scan;
 use table_scan::{TableScan, TableScanRow};
 
+/// Returns a list of all user defined tables in the database
+/// requires feature `detect`
 pub async fn find_tables<'i, 's, 'e, 'ee, 'args, DB, E>(exec: &'ee E) -> Result<Vec<TableDef>>
 where
     &'ee E: sqlx::Executor<'e, Database = DB>,

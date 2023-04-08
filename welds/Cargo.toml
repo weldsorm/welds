@@ -12,7 +12,7 @@ sqlx = { version = "0.6", features = [ "macros"] }
 welds-macros = { path="../welds-macros", version = "^0.1" }
 
 [features]
-"default" = ["detect"]
+"default" = []
 "detect" = []
 "postgres" = ["sqlx/postgres", "welds-macros/postgres"]
 "mysql" = ["sqlx/mysql", "welds-macros/mysql"]

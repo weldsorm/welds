@@ -65,6 +65,17 @@ pub struct TableIdent {
     pub name: String,
 }
 impl TableIdent {
+    pub fn parse(raw: &str) -> Self {
+        let parts: Vec<&str> = raw.split(".").collect();
+        let parts: Vec<&str> = parts.iter().rev().take(2).cloned().collect();
+        let name = parts
+            .get(0)
+            .cloned()
+            .map(|x| x.to_owned())
+            .unwrap_or_default();
+        let schema = parts.get(1).cloned().map(|x| x.to_owned());
+        Self { schema, name }
+    }
     pub fn equals(&self, schema: &Option<String>, name: &str) -> bool {
         &self.schema == schema && self.name == name
     }
@@ -80,7 +91,7 @@ pub struct ColumnDef {
     pub updatable: bool,
 }
 
-#[derive(Debug, Clone, Hash, Eq, PartialEq)]
+#[derive(Debug, Clone, Copy, Hash, Eq, PartialEq)]
 #[cfg(feature = "detect")]
 pub enum DataType {
     Table,
@@ -89,8 +100,50 @@ pub enum DataType {
 
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
 #[cfg(feature = "detect")]
+pub struct RelationDef {
+    pub(crate) ident: TableIdent,
+    pub(crate) column: String,
+}
+
+impl RelationDef {
+    pub(crate) fn new(schema: Option<String>, table: String, column: String) -> Self {
+        Self {
+            ident: TableIdent {
+                schema,
+                name: table,
+            },
+            column,
+        }
+    }
+    pub(crate) fn new2(ident: TableIdent, column: String) -> Self {
+        Self { ident, column }
+    }
+}
+
+#[derive(Debug, Clone, Hash, Eq, PartialEq)]
+#[cfg(feature = "detect")]
 pub struct TableDef {
-    pub ident: TableIdent,
-    pub ty: DataType,
-    pub columns: Vec<ColumnDef>, // What are the columns on this table
+    pub(crate) ident: TableIdent,
+    pub(crate) ty: DataType,
+    pub(crate) columns: Vec<ColumnDef>, // What are the columns on this table
+    pub(crate) has_many: Vec<RelationDef>,
+    pub(crate) belongs_to: Vec<RelationDef>,
+}
+
+impl TableDef {
+    pub fn ident<'a>(&'a self) -> &'a TableIdent {
+        &self.ident
+    }
+    pub fn ty(&self) -> DataType {
+        self.ty
+    }
+    pub fn columns<'a>(&'a self) -> &'a [ColumnDef] {
+        &self.columns
+    }
+    pub fn has_many<'a>(&'a self) -> &'a [RelationDef] {
+        &self.has_many
+    }
+    pub fn belongs_to<'a>(&'a self) -> &'a [RelationDef] {
+        &self.belongs_to
+    }
 }

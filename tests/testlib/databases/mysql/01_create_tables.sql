@@ -19,6 +19,9 @@ USE mysql;
 CREATE TABLE Orders (
   id INT NOT NULL AUTO_INCREMENT,
   product_id INT,
+  product_id2 INT,
   price FLOAT,
-  PRIMARY KEY (id)
+  PRIMARY KEY (id),
+  FOREIGN KEY (product_id)  REFERENCES weldstests.Products(product_id),
+  FOREIGN KEY (product_id2) REFERENCES weldstests.Products(product_id)
 );

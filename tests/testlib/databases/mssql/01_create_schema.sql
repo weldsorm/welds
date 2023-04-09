@@ -14,7 +14,8 @@ CREATE TABLE welds.Products (
 
 CREATE TABLE welds.Orders (
     id INT NOT NULL IDENTITY PRIMARY KEY,
-    product_id int NOT NULL
+    product_id int NOT NULL FOREIGN KEY (product_id) REFERENCES welds.Products(ID),
+    product_id2 int FOREIGN KEY (product_id2) REFERENCES welds.Products(ID)
 );
 
 CREATE TABLE welds.Persons (

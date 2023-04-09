@@ -1,7 +1,7 @@
-use crate::adapters::TableIdent;
 use crate::errors::{Result, WeldsError};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
+use welds::table::TableIdent;
 
 /// Reads in a schema config file and parses it into a config
 pub(crate) fn read(path: &PathBuf) -> Result<Config> {
@@ -73,7 +73,7 @@ impl Table {
     pub(crate) fn ident(&self) -> TableIdent {
         TableIdent {
             name: self.name.clone(),
-            schema: self.schema.name.clone(),
+            schema: Some(self.schema.name.clone()),
         }
     }
 }
@@ -98,6 +98,14 @@ fn all_abilities() -> Vec<Ability> {
         Ability::Select,
         Ability::Delete,
     ]
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
+pub enum DbProvider {
+    Postgres,
+    Mysql,
+    Mssql,
+    Sqlite,
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]

@@ -10,6 +10,9 @@ CREATE TABLE Products (
 
 CREATE TABLE Orders (
   id INTEGER PRIMARY KEY,
+  price REAL,
   product_id INTEGER NOT NULL,
-  price REAL
+  product_id2 INTEGER,
+  FOREIGN KEY(product_id) REFERENCES Products(product_id),
+  FOREIGN KEY(product_id2) REFERENCES Products(product_id)
 );

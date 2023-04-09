@@ -1,31 +1,49 @@
-pub mod adapters;
 pub mod commands;
 pub mod errors;
 pub mod generators;
 pub mod schema;
 use crate::errors::{Result, WeldsError};
-use adapters::TableIdent;
+use schema::DbProvider;
 use schema::Table;
 use std::path::PathBuf;
+use welds::table::TableIdent;
 
 pub async fn update(schema_path: PathBuf, identifier: Option<String>) -> Result<()> {
-    let conn = welds::database::connect().await?;
-    let identifier = identifier.as_ref().map(|x| TableIdent::new(x, &conn));
-    let mut tables = crate::adapters::schema(&conn).await?;
-    let tables: Vec<Table> = tables
-        .drain(..)
-        .filter(|t| !IGNORE_TABLES.contains(&t.name.as_str()))
-        .collect();
+    use welds::database::Pool;
+    use welds::detect::find_tables;
+    let identifier = identifier.as_ref().map(|x| TableIdent::parse(x));
+    let unknown_pool = welds::database::connect().await?;
+
+    let provider = match unknown_pool {
+        Pool::Postgres(_) => DbProvider::Postgres,
+        Pool::MySql(_) => DbProvider::Mysql,
+        Pool::Mssql(_) => DbProvider::Mssql,
+        Pool::Sqlite(_) => DbProvider::Sqlite,
+    };
+
+    let mut tables = match unknown_pool {
+        Pool::Postgres(conn) => find_tables(&conn).await?,
+        Pool::Mssql(conn) => find_tables(&conn).await?,
+        Pool::MySql(conn) => find_tables(&conn).await?,
+        Pool::Sqlite(conn) => find_tables(&conn).await?,
+    };
+
+    if let Some(ident) = identifier {
+        tables = tables.drain(..).filter(|t| t.ident() == &ident).collect()
+    }
 
     let mut config = schema::read(&schema_path).unwrap_or_default();
 
-    match identifier {
-        Some(identifier) => {
-            let table = tables.iter().find(|t| t.ident() == identifier);
-            config.tables = update_single(&identifier, table, &config.tables);
-        }
-        None => config.tables = tables,
-    };
+    dbg!(tables);
+
+    //match identifier {
+    //    Some(identifier) => {
+    //        let table = tables.iter().find(|t| t.ident() == &identifier);
+    //        config.tables = update_single(&identifier, table, &config.tables);
+    //    }
+    //    None => config.tables = tables,
+    //};
+
     schema::write(&schema_path, &config)?;
     Ok(())
 }
@@ -51,9 +69,6 @@ fn update_single(ident: &TableIdent, table: Option<&Table>, current: &[Table]) -
 
     new_list
 }
-
-const IGNORE_TABLES: &'static [&'static str] =
-    &["_sqlx_migrations", "sqlite_schema", "sqlite_temp_schema"];
 
 #[derive(Debug, Default)]
 pub struct GenerateOption {

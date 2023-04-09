@@ -19,7 +19,7 @@ rust-format = "0.3"
 anyhow = "1.0"
 futures = "0.3.25"
 
-welds = { path = "../welds", version = '0.1.0', features=["postgres", "mssql", "mysql", "sqlite"] }
+welds = { path = "../welds", version = '0.1.0', features=["postgres", "mssql", "mysql", "sqlite", "detect"] }
 
 [profile.dev.package.sqlx-macros]
 opt-level = 3

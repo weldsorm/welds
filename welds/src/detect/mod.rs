@@ -86,8 +86,6 @@ where
         }
     }
 
-    dbg!(&tables);
-
     Ok(tables)
 }
 

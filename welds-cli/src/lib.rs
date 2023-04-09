@@ -34,8 +34,6 @@ pub async fn update(schema_path: PathBuf, identifier: Option<String>) -> Result<
 
     let mut config = schema::read(&schema_path).unwrap_or_default();
 
-    dbg!(tables);
-
     //match identifier {
     //    Some(identifier) => {
     //        let table = tables.iter().find(|t| t.ident() == &identifier);

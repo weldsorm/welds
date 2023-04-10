@@ -3,6 +3,9 @@
 -- This collection of table focues on the build in types 
 
 
+CREATE SCHEMA alt;
+
+CREATE TYPE alt.Color AS ENUM ('Red', 'Green', 'Blue', 'Yellow');
 
 CREATE TABLE Products (
   product_id serial PRIMARY KEY,
@@ -23,13 +26,13 @@ CREATE TABLE Orders (
   "SoldFor" FLOAT8
 );
 
-CREATE SCHEMA alt;
 
 CREATE TABLE alt.Others (
   id serial PRIMARY KEY,
   interval INTERVAL,
   range_int4 INT4RANGE,
-  range_int8 INT8RANGE
+  range_int8 INT8RANGE,
+  colour alt.Color
 );
 
 

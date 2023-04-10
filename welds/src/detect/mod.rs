@@ -5,7 +5,7 @@ use sqlx::{IntoArguments, Row};
 use std::collections::HashMap;
 
 mod table_scan;
-use table_scan::{FkScanRow, TableScan, TableScanRow};
+use table_scan::{FkScanRow, FkScanTableCol, TableScan, TableScanRow};
 
 /// Returns a list of all user defined tables in the database
 /// requires feature `detect`
@@ -67,22 +67,36 @@ where
         .await?
         .iter()
         .map(|r| FkScanRow {
-            me: RelationDef::new(r.get(0), r.get(1), r.get(2)),
-            other: RelationDef::new(r.get(3), r.get(4), r.get(5)),
+            me: FkScanTableCol::new(r.get(0), r.get(1), r.get(2)),
+            other: FkScanTableCol::new(r.get(3), r.get(4), r.get(5)),
         })
         .collect();
     // Build lookup to the FKs
-    let mut belongs_to = build_lookup(&fks, |x| &x.me, |x| &x.other);
-    let mut has_many = build_lookup(&fks, |x| &x.other, |x| &x.me);
+    let mut belongs_to = build_lookup(&fks, |x| &x.me);
+    let mut has_many = build_lookup(&fks, |x| &x.other);
 
     // Add all the FKs to their appropriate tables
     for table in &mut tables {
         let ident = table.ident.clone();
+        // build the belongs_to
         if let Some(bt) = belongs_to.remove(&ident) {
-            bt.iter().for_each(|&x| table.belongs_to.push(x.clone()));
+            bt.iter().for_each(|&x| {
+                let other_table = x.other.ident.clone();
+                let fk = x.me.column.as_str();
+                let pk = x.other.column.as_str();
+                let ref_def = RelationDef::new(other_table, fk, pk);
+                table.belongs_to.push(ref_def);
+            });
         }
-        if let Some(bt) = has_many.remove(&ident) {
-            bt.iter().for_each(|&x| table.has_many.push(x.clone()));
+        // has_many
+        if let Some(hm) = has_many.remove(&ident) {
+            hm.iter().for_each(|&x| {
+                let other_table = x.me.ident.clone();
+                let fk = x.me.column.as_str();
+                let pk = x.other.column.as_str();
+                let ref_def = RelationDef::new(other_table, fk, pk);
+                table.has_many.push(ref_def);
+            });
         }
     }
 
@@ -91,15 +105,13 @@ where
 
 fn build_lookup<'a>(
     fks: &'a [FkScanRow],
-    src: impl Fn(&FkScanRow) -> &RelationDef,
-    dest: impl Fn(&FkScanRow) -> &RelationDef,
-) -> HashMap<&'a TableIdent, Vec<&'a RelationDef>> {
+    src: impl Fn(&FkScanRow) -> &FkScanTableCol,
+) -> HashMap<&'a TableIdent, Vec<&'a FkScanRow>> {
     let mut map = HashMap::new();
     for fk in fks {
         let key = &src(fk).ident;
-        let value = dest(fk);
         let values = map.entry(key).or_insert_with(|| Vec::default());
-        values.push(value);
+        values.push(fk);
     }
     map
 }

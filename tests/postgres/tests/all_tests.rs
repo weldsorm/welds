@@ -1,4 +1,6 @@
+use postgres_test::models::enums::Color;
 use postgres_test::models::order::Order;
+use postgres_test::models::other::Other;
 use postgres_test::models::product::Product;
 
 #[derive(Default, Debug, Clone, sqlx::FromRow)]
@@ -12,7 +14,7 @@ fn should_be_able_to_read_all_products() {
         let conn = testlib::postgres::conn().await.unwrap();
         let pool: welds::database::Pool = conn.into();
         let conn = pool.as_postgres().unwrap();
-        let mut q = Product::all();
+        let q = Product::all();
         eprintln!("SQL: {}", q.to_sql());
         let all = q.run(conn).await.unwrap();
         assert_eq!(all.len(), 6, "Unexpected number of rows returned");
@@ -25,7 +27,7 @@ fn should_be_able_to_filter_on_equal() {
         let conn = testlib::postgres::conn().await.unwrap();
         let pool: welds::database::Pool = conn.into();
         let conn = pool.as_postgres().unwrap();
-        let mut q = Product::where_col(|x| x.price1.equal(1.10));
+        let q = Product::where_col(|x| x.price_1.equal(1.10));
         eprintln!("SQL: {}", q.to_sql());
         let just_horse = q.run(conn).await.unwrap();
         assert_eq!(
@@ -42,7 +44,7 @@ fn should_be_able_to_filter_on_lt() {
         let conn = testlib::postgres::conn().await.unwrap();
         let pool: welds::database::Pool = conn.into();
         let conn = pool.as_postgres().unwrap();
-        let mut q = Product::where_col(|x| x.price1.lt(3.00));
+        let q = Product::where_col(|x| x.price_1.lt(3.00));
         eprintln!("SQL: {}", q.to_sql());
         let data = q.run(conn).await.unwrap();
         assert_eq!(data.len(), 2, "Expected horse and dog",);
@@ -55,7 +57,7 @@ fn should_be_able_to_filter_on_lte() {
         let conn = testlib::postgres::conn().await.unwrap();
         let pool: welds::database::Pool = conn.into();
         let conn = pool.as_postgres().unwrap();
-        let mut q = Product::where_col(|x| x.price1.lte(2.10));
+        let q = Product::where_col(|x| x.price_1.lte(2.10));
         eprintln!("SQL: {}", q.to_sql());
         let data = q.run(conn).await.unwrap();
         assert_eq!(data.len(), 2, "Expected horse and dog",);
@@ -69,12 +71,12 @@ fn should_be_able_to_filter_with_nulls() {
         let pool: welds::database::Pool = conn.into();
         let conn = pool.as_postgres().unwrap();
         // is null
-        let mut q1 = Product::where_col(|x| x.price1.equal(None));
+        let q1 = Product::where_col(|x| x.price_1.equal(None));
         eprintln!("SQL_1: {}", q1.to_sql());
         let data1 = q1.run(conn).await.unwrap();
         assert_eq!(data1.len(), 0, "Expected All",);
         // is not null
-        let mut q1 = Product::where_col(|x| x.price1.not_equal(None));
+        let q1 = Product::where_col(|x| x.price_1.not_equal(None));
         eprintln!("SQL_2: {}", q1.to_sql());
         let data1 = q1.run(conn).await.unwrap();
         assert_eq!(data1.len(), 6, "Expected All",);
@@ -87,7 +89,7 @@ fn should_be_able_to_count_in_sql() {
         let conn = testlib::postgres::conn().await.unwrap();
         let pool: welds::database::Pool = conn.into();
         let conn = pool.as_postgres().unwrap();
-        let mut q = Product::where_col(|x| x.price1.lte(2.10));
+        let q = Product::where_col(|x| x.price_1.lte(2.10));
         eprintln!("SQL: {}", q.to_sql());
         let count = q.count(conn).await.unwrap();
         assert_eq!(count, 2,);
@@ -100,7 +102,7 @@ fn should_be_able_to_limit_results_in_sql() {
         let conn = testlib::postgres::conn().await.unwrap();
         let pool: welds::database::Pool = conn.into();
         let conn = pool.as_postgres().unwrap();
-        let mut q = Product::all().limit(2).offset(1);
+        let q = Product::all().limit(2).offset(1);
         eprintln!("SQL: {}", q.to_sql());
         let count = q.run(conn).await.unwrap().len();
         assert_eq!(count, 2);
@@ -113,10 +115,10 @@ fn should_be_able_to_order_by_id() {
         let conn = testlib::postgres::conn().await.unwrap();
         let pool: welds::database::Pool = conn.into();
         let conn = pool.as_postgres().unwrap();
-        let mut q = Product::all().order_by_asc(|x| x.id);
+        let q = Product::all().order_by_asc(|x| x.product_id);
         eprintln!("SQL: {}", q.to_sql());
         let all = q.run(conn).await.unwrap();
-        let ids: Vec<i32> = all.iter().map(|x| x.id).collect();
+        let ids: Vec<i32> = all.iter().map(|x| x.product_id).collect();
         let mut ids_sorted = ids.clone();
         ids_sorted.sort();
         assert_eq!(ids, ids_sorted);
@@ -131,13 +133,13 @@ fn should_be_able_to_update_a_product() {
         let conn = pool.as_postgres().unwrap();
         let mut trans = conn.begin().await.unwrap();
 
-        let mut q = Product::all().limit(1);
+        let q = Product::all().limit(1);
         let mut found: Vec<_> = q.run(&mut trans).await.unwrap();
         let mut p1 = found.pop().unwrap();
         p1.name = "Test1".to_owned();
         p1.save(&mut trans).await.unwrap();
 
-        let mut q = Product::where_col(|x| x.id.equal(p1.id));
+        let q = Product::where_col(|x| x.product_id.equal(p1.product_id));
         let mut found: Vec<_> = q.run(&mut trans).await.unwrap();
         let p2 = found.pop().unwrap();
         assert_eq!(p2.name, "Test1");
@@ -160,7 +162,7 @@ fn should_be_able_to_create_a_new_product() {
         // Note: creation will set the PK for the model.
         p1.save(&mut trans).await.unwrap();
 
-        let mut q = Product::where_col(|x| x.id.equal(p1.id));
+        let q = Product::where_col(|x| x.product_id.equal(p1.product_id));
         let mut found: Vec<_> = q.run(&mut trans).await.unwrap();
         let p2 = found.pop().unwrap();
         assert_eq!(p2.name, "newyNewFace");
@@ -263,11 +265,11 @@ fn should_be_able_to_find_like() {
         let pool: welds::database::Pool = conn.into();
         let conn = pool.as_postgres().unwrap();
         //build the queries
-        let mut like = Product::where_col(|x| x.name.like("%Horse%"));
-        let mut ilike = Product::where_col(|x| x.name.ilike("%Horse%"));
+        let like = Product::where_col(|x| x.name.like("%Horse%"));
+        let ilike = Product::where_col(|x| x.name.ilike("%Horse%"));
         eprintln!("SQL: {}", ilike.to_sql());
-        let mut not_like = Product::where_col(|x| x.name.not_like("%Horse%"));
-        let mut not_ilike = Product::where_col(|x| x.name.not_ilike("%Horse%"));
+        let not_like = Product::where_col(|x| x.name.not_like("%Horse%"));
+        let not_ilike = Product::where_col(|x| x.name.not_ilike("%Horse%"));
         //run the queries
         let like = like.run(conn).await.unwrap();
         let ilike = ilike.run(conn).await.unwrap();
@@ -287,7 +289,7 @@ fn should_be_able_to_filter_on_relations() {
         let conn = testlib::postgres::conn().await.unwrap();
         let pool: welds::database::Pool = conn.into();
         let conn = pool.as_postgres().unwrap();
-        let mut orders = Product::where_col(|x| x.name.like("%horse%")).map_query(|p| p.orders);
+        let orders = Product::where_col(|x| x.name.like("%horse%")).map_query(|p| p.order);
         let orders = orders.run(conn).await.unwrap();
         assert_eq!(2, orders.len());
     })
@@ -299,7 +301,7 @@ fn should_be_able_to_filter_on_relations2() {
         let conn = testlib::postgres::conn().await.unwrap();
         let pool: welds::database::Pool = conn.into();
         let conn = pool.as_postgres().unwrap();
-        let mut product_query = Order::all().map_query(|p| p.product);
+        let product_query = Order::all().map_query(|p| p.product);
         // Vec<_> would be simpler, but want to hard code to type for test.
         use welds::state::DbState;
         let products: Vec<DbState<Product>> = product_query.run(conn).await.unwrap();
@@ -313,7 +315,7 @@ fn should_be_able_to_filter_with_relations() {
         let conn = testlib::postgres::conn().await.unwrap();
         let pool: welds::database::Pool = conn.into();
         let conn = pool.as_postgres().unwrap();
-        let filter1 = Product::where_col(|x| x.id.equal(1));
+        let filter1 = Product::where_col(|x| x.product_id.equal(1));
         let mut order_query = Order::all();
         order_query = order_query.where_relation(|o| o.product, filter1);
         // Vec<_> would be simpler, but want to hard code to type for test.
@@ -331,7 +333,7 @@ fn should_be_able_to_filter_with_relations2() {
         let conn = pool.as_postgres().unwrap();
         let filter1 = Order::where_col(|x| x.id.lte(3));
         let mut product_query = Product::all();
-        product_query = product_query.where_relation(|p| p.orders, filter1);
+        product_query = product_query.where_relation(|p| p.order, filter1);
         // Vec<_> would be simpler, but want to hard code to type for test.
         use welds::state::DbState;
         let orders: Vec<DbState<Product>> = product_query.run(conn).await.unwrap();
@@ -347,5 +349,29 @@ fn should_be_able_to_scan_for_all_tables() {
         let conn = pool.as_postgres().unwrap();
         let tables = welds::detect::find_tables(&conn).await.unwrap();
         assert_eq!(3, tables.len());
+    })
+}
+
+#[test]
+fn should_be_able_to_save_load_obj_with_db_enum_type() {
+    async_std::task::block_on(async {
+        let conn = testlib::postgres::conn().await.unwrap();
+        let pool: welds::database::Pool = conn.into();
+        let conn = pool.as_postgres().unwrap();
+        let mut trans = conn.begin().await.unwrap();
+
+        let start_count = Other::all().count(&mut trans).await.unwrap();
+        let mut tmp = Other::new();
+        tmp.colour = Color::Blue;
+        tmp.save(&mut trans).await.unwrap();
+
+        let count = Other::all().count(&mut trans).await.unwrap();
+        assert_eq!(start_count + 1, count);
+
+        let loaded = Other::find_by_id(&mut trans, tmp.id)
+            .await
+            .unwrap()
+            .unwrap();
+        assert_eq!(*tmp, *loaded);
     })
 }

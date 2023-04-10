@@ -1,0 +1,167 @@
+tables:
+- schema: welds
+  name: Persons2
+  manual_update: false
+  model: null
+  type: table
+  columns:
+  - db_name: PersonID
+    db_type: int
+    model_name: person_id
+    is_null: false
+    primary_key: true
+    writeable: true
+  - db_name: Address
+    db_type: varchar
+    model_name: address
+    is_null: true
+    primary_key: false
+    writeable: true
+  - db_name: City
+    db_type: varchar
+    model_name: city
+    is_null: true
+    primary_key: false
+    writeable: true
+  - db_name: FirstName
+    db_type: varchar
+    model_name: first_name
+    is_null: true
+    primary_key: false
+    writeable: true
+  - db_name: LastName
+    db_type: varchar
+    model_name: last_name
+    is_null: true
+    primary_key: false
+    writeable: true
+  belongs_to: []
+  has_many: []
+  databases:
+  - Mssql
+- schema: welds
+  name: Orders
+  manual_update: false
+  model: null
+  type: table
+  columns:
+  - db_name: id
+    db_type: int
+    model_name: id
+    is_null: false
+    primary_key: true
+    writeable: true
+  - db_name: product_id
+    db_type: int
+    model_name: product_id
+    is_null: false
+    primary_key: false
+    writeable: true
+  - db_name: product_id2
+    db_type: int
+    model_name: product_id_2
+    is_null: true
+    primary_key: false
+    writeable: true
+  belongs_to:
+  - schema: welds
+    tablename: Products
+    foreign_key: product_id
+  - schema: welds
+    tablename: Products
+    foreign_key: product_id2
+  has_many: []
+  databases:
+  - Mssql
+- schema: welds
+  name: Persons
+  manual_update: false
+  model: null
+  type: table
+  columns:
+  - db_name: PersonID
+    db_type: int
+    model_name: person_id
+    is_null: false
+    primary_key: true
+    writeable: true
+  - db_name: Address
+    db_type: varchar
+    model_name: address
+    is_null: true
+    primary_key: false
+    writeable: true
+  - db_name: City
+    db_type: varchar
+    model_name: city
+    is_null: true
+    primary_key: false
+    writeable: true
+  - db_name: FirstName
+    db_type: varchar
+    model_name: first_name
+    is_null: true
+    primary_key: false
+    writeable: true
+  - db_name: LastName
+    db_type: varchar
+    model_name: last_name
+    is_null: true
+    primary_key: false
+    writeable: true
+  belongs_to: []
+  has_many: []
+  databases:
+  - Mssql
+- schema: welds
+  name: Products
+  manual_update: false
+  model: null
+  type: table
+  columns:
+  - db_name: ID
+    db_type: int
+    model_name: id
+    is_null: false
+    primary_key: true
+    writeable: true
+  - db_name: active
+    db_type: bit
+    model_name: active
+    is_null: true
+    primary_key: false
+    writeable: true
+  - db_name: Description
+    db_type: varchar
+    model_name: description
+    is_null: true
+    primary_key: false
+    writeable: true
+  - db_name: name
+    db_type: varchar
+    model_name: name
+    is_null: false
+    primary_key: false
+    writeable: true
+  - db_name: price1
+    db_type: real
+    model_name: price_1
+    is_null: true
+    primary_key: false
+    writeable: true
+  - db_name: price2
+    db_type: real
+    model_name: price_2
+    is_null: true
+    primary_key: false
+    writeable: true
+  belongs_to: []
+  has_many:
+  - schema: welds
+    tablename: Orders
+    foreign_key: product_id
+  - schema: welds
+    tablename: Orders
+    foreign_key: product_id2
+  databases:
+  - Mssql

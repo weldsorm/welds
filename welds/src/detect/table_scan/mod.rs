@@ -27,10 +27,28 @@ impl TableScanRow {
     }
 }
 
-#[derive(Debug, sqlx::FromRow)]
+#[derive(Debug)]
 pub struct FkScanRow {
-    pub(super) me: RelationDef,
-    pub(super) other: RelationDef,
+    pub(super) me: FkScanTableCol,
+    pub(super) other: FkScanTableCol,
+}
+
+#[derive(Debug)]
+pub struct FkScanTableCol {
+    pub(super) ident: TableIdent,
+    pub(super) column: String,
+}
+
+impl FkScanTableCol {
+    pub(super) fn new(schema: Option<String>, table: String, column: String) -> Self {
+        Self {
+            ident: TableIdent {
+                schema,
+                name: table,
+            },
+            column,
+        }
+    }
 }
 
 pub trait TableScan {
@@ -40,6 +58,7 @@ pub trait TableScan {
     fn fk_scan_sql() -> &'static str;
 }
 
+#[cfg(feature = "postgres")]
 impl TableScan for sqlx::Postgres {
     fn table_scan_sql() -> &'static str {
         include_str!("./postgres.sql")
@@ -49,6 +68,7 @@ impl TableScan for sqlx::Postgres {
     }
 }
 
+#[cfg(feature = "mysql")]
 impl TableScan for sqlx::MySql {
     fn table_scan_sql() -> &'static str {
         include_str!("./mysql.sql")
@@ -58,6 +78,7 @@ impl TableScan for sqlx::MySql {
     }
 }
 
+#[cfg(feature = "mssql")]
 impl TableScan for sqlx::Mssql {
     fn table_scan_sql() -> &'static str {
         include_str!("./mssql.sql")
@@ -67,6 +88,7 @@ impl TableScan for sqlx::Mssql {
     }
 }
 
+#[cfg(feature = "sqlite")]
 impl TableScan for sqlx::Sqlite {
     fn table_scan_sql() -> &'static str {
         include_str!("./sqlite.sql")

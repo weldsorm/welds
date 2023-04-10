@@ -2,8 +2,10 @@
 # Here just to help with development. 
 # If you need to jump into a DB
 
-version: "3.9"
+version: "3.4"
 services:
+
+  # export DATABASE_URL='mssql://sa:welds!123@127.0.0.1:1433'
 
   db:
     build: .

@@ -98,6 +98,12 @@ pub async fn connect_with_connection_string(url: &str) -> Result<Pool> {
         return Ok(Pool::Postgres(pool));
     }
 
+    #[cfg(feature = "postgres")]
+    if url.starts_with("postgres:") {
+        let pool = PgPool::connect(&url).await?;
+        return Ok(Pool::Postgres(pool));
+    }
+
     #[cfg(feature = "mysql")]
     if url.starts_with("mysql:") {
         let pool = MySqlPool::connect(&url).await?;

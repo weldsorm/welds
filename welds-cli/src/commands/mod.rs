@@ -21,4 +21,6 @@ pub enum Commands {
     Update { table: Option<String> },
     /// Generate new models in your code based on the knowledge of the database
     Generate { table: Option<String> },
+    /// Verify Welds can connect to the database in DATABASE_URL
+    TestConnection,
 }

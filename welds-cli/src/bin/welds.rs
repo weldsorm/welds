@@ -5,6 +5,7 @@ use weldscli_lib::{commands::Commands::*, GenerateOption};
 
 #[async_std::main]
 async fn main() -> Result<()> {
+    pretty_env_logger::init();
     let args = weldscli_lib::commands::Args::parse();
 
     let mut schema_path = args
@@ -32,6 +33,7 @@ async fn main() -> Result<()> {
             };
             weldscli_lib::generate(opt)
         }
+        TestConnection => weldscli_lib::test_connection().await,
     };
 
     if let Err(err) = result {

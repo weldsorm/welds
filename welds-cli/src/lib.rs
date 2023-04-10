@@ -1,10 +1,9 @@
 pub mod commands;
+pub mod config;
 pub mod errors;
 pub mod generators;
-pub mod schema;
 use crate::errors::{Result, WeldsError};
-use schema::DbProvider;
-use schema::Table;
+use config::DbProvider;
 use std::path::PathBuf;
 use welds::table::TableIdent;
 
@@ -28,44 +27,27 @@ pub async fn update(schema_path: PathBuf, identifier: Option<String>) -> Result<
         Pool::Sqlite(conn) => find_tables(&conn).await?,
     };
 
-    if let Some(ident) = identifier {
-        tables = tables.drain(..).filter(|t| t.ident() == &ident).collect()
-    }
+    let mut conf_def = config::read(&schema_path).unwrap_or_default();
 
-    let mut config = schema::read(&schema_path).unwrap_or_default();
-
-    //match identifier {
-    //    Some(identifier) => {
-    //        let table = tables.iter().find(|t| t.ident() == &identifier);
-    //        config.tables = update_single(&identifier, table, &config.tables);
-    //    }
-    //    None => config.tables = tables,
-    //};
-
-    schema::write(&schema_path, &config)?;
-    Ok(())
-}
-
-fn update_single(ident: &TableIdent, table: Option<&Table>, current: &[Table]) -> Vec<Table> {
-    let mut found = false;
-    let mut new_list: Vec<Table> = current
-        .iter()
-        .filter_map(|t| {
-            if &t.ident() != ident {
-                return Some(t.clone());
+    match identifier {
+        Some(identifier) => {
+            // update only the specified table
+            tables.retain(|t| t.ident() == &identifier);
+            if tables.is_empty() {
+                log::error!(
+                    "Table not found: no table updated  (HINT: make sure you include the schema)"
+                );
             }
-            found = true;
-            table.map(|nt| nt.clone())
-        })
-        .collect();
-    // When the table is new to the schema Definition
-    if let Some(table) = table {
-        if !found {
-            new_list.push(table.clone());
+            conf_def.add_update(&tables, provider);
         }
-    }
+        None => {
+            conf_def.remove_missing(&tables);
+            conf_def.add_update(&tables, provider);
+        }
+    };
 
-    new_list
+    config::write(&schema_path, &conf_def)?;
+    Ok(())
 }
 
 #[derive(Debug, Default)]
@@ -73,7 +55,6 @@ pub struct GenerateOption {
     pub schema_path: PathBuf,
     pub output_path: PathBuf,
     pub table: Option<String>,
-    pub force: bool,
 }
 
 pub fn generate(mut opt: GenerateOption) -> Result<()> {
@@ -81,10 +62,10 @@ pub fn generate(mut opt: GenerateOption) -> Result<()> {
         return Err(WeldsError::MissingSchemaFile(opt.schema_path));
     }
 
-    let config = schema::read(&opt.schema_path)?;
+    let conf_def = config::read(&opt.schema_path)?;
 
     clean_code_output_path(&mut opt);
-    generators::models::run(&config, &opt)?;
+    generators::models::run(&conf_def, &opt)?;
 
     Ok(())
 }
@@ -115,4 +96,19 @@ fn is_project_path(path: &PathBuf) -> bool {
         return false;
     }
     true
+}
+
+/// tests the underlying database connection set with DATABASE_URL
+pub async fn test_connection() -> Result<()> {
+    let result = welds::database::connect().await;
+    match result {
+        Ok(_) => {
+            println!("Database connected successfully");
+            std::process::exit(0);
+        }
+        Err(_) => {
+            eprintln!("Not able to connect to database");
+            std::process::exit(1);
+        }
+    }
 }

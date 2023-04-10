@@ -101,22 +101,21 @@ pub enum DataType {
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
 #[cfg(feature = "detect")]
 pub struct RelationDef {
-    pub(crate) ident: TableIdent,
-    pub(crate) column: String,
+    /// The Other side of this relationship
+    pub other_table: TableIdent,
+    /// this is the foreign_key side column regardless of which side this defines
+    pub foreign_key: String,
+    /// this is the column the fk point to, regardless of which side this defines
+    pub primary_key: String,
 }
 
 impl RelationDef {
-    pub(crate) fn new(schema: Option<String>, table: String, column: String) -> Self {
+    pub(crate) fn new(ident: TableIdent, foreign_key: &str, primary_key: &str) -> Self {
         Self {
-            ident: TableIdent {
-                schema,
-                name: table,
-            },
-            column,
+            other_table: ident,
+            foreign_key: foreign_key.to_owned(),
+            primary_key: primary_key.to_owned(),
         }
-    }
-    pub(crate) fn new2(ident: TableIdent, column: String) -> Self {
-        Self { ident, column }
     }
 }
 

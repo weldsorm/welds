@@ -59,11 +59,13 @@ pub trait HasSchema {
 }
 
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
+#[cfg(feature = "detect")]
 pub struct TableIdent {
     pub schema: Option<String>,
     pub name: String,
 }
 
+#[cfg(feature = "detect")]
 impl TableIdent {
     pub fn parse(raw: &str) -> Self {
         let parts: Vec<&str> = raw.split(".").collect();
@@ -109,6 +111,7 @@ pub struct RelationDef {
     pub primary_key: String,
 }
 
+#[cfg(feature = "detect")]
 impl RelationDef {
     pub(crate) fn new(ident: TableIdent, foreign_key: &str, primary_key: &str) -> Self {
         Self {
@@ -129,6 +132,7 @@ pub struct TableDef {
     pub(crate) belongs_to: Vec<RelationDef>,
 }
 
+#[cfg(feature = "detect")]
 impl TableDef {
     pub fn ident<'a>(&'a self) -> &'a TableIdent {
         &self.ident

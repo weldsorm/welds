@@ -58,12 +58,12 @@ pub trait HasSchema {
     type Schema: Default + TableInfo;
 }
 
-#[cfg(feature = "detect")]
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
 pub struct TableIdent {
     pub schema: Option<String>,
     pub name: String,
 }
+
 impl TableIdent {
     pub fn parse(raw: &str) -> Self {
         let parts: Vec<&str> = raw.split(".").collect();

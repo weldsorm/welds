@@ -1,4 +1,4 @@
-use crate::table::{DataType, RelationDef, TableIdent};
+use crate::table::{DataType, TableIdent};
 
 #[derive(Debug, sqlx::FromRow)]
 pub struct TableScanRow {

@@ -47,7 +47,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Filter Orders using relationships from other tables
     filter_order_using_relationships(&pool).await?;
     // Delete Some Stuff
-    delete_the_product(&pool, product.id).await?;
+    let product2 = create_and_update_products(&pool).await?;
+    delete_the_product(&pool, product2.id).await?;
     Ok(())
 }
 

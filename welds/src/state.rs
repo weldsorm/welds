@@ -16,6 +16,10 @@ pub(crate) enum DbStatus {
     Edited,
 }
 
+/// Wraps a T to keep track of changes and current state in the database
+///
+/// Also used to Save changes. Save will result in a create or update as needed.
+/// delete will remove from the database.
 pub struct DbState<T> {
     _t: PhantomData<T>,
     inner: T,
@@ -33,6 +37,7 @@ where
 }
 
 impl<T> DbState<T> {
+    /// Returns a DbState<T> that assumes its inner T does not exist in the database
     pub fn new_uncreated(inner: T) -> DbState<T> {
         DbState {
             _t: PhantomData::default(),
@@ -42,6 +47,7 @@ impl<T> DbState<T> {
         }
     }
 
+    /// Returns a DbState<T> that assumes its inner T already exist in the database
     pub fn db_loaded(inner: T) -> DbState<T> {
         DbState {
             _t: PhantomData::default(),
@@ -51,6 +57,8 @@ impl<T> DbState<T> {
         }
     }
 
+    /// Saves the inner T to the database. Results in an insert or update if needed. If no change
+    /// has been detected on the inner T, No operation will occur
     pub async fn save<'q, 'schema, 'args, 'e, E, DB>(&'q mut self, exec: &'e mut E) -> Result<()>
     where
         E: 'e,
@@ -77,6 +85,7 @@ impl<T> DbState<T> {
         Ok(())
     }
 
+    /// Removes the inner T from the database. If T is not in the database no operation will occur
     pub async fn delete<'q, 'schema, 'args, 'e, E, DB>(&'q mut self, exec: &'e mut E) -> Result<()>
     where
         E: 'e,

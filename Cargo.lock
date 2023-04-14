@@ -1943,7 +1943,7 @@ dependencies = [
 
 [[package]]
 name = "welds"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-std",
  "sqlx",
@@ -1973,7 +1973,7 @@ dependencies = [
 
 [[package]]
 name = "welds-macros"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-std",
  "log",

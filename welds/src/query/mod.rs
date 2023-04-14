@@ -1,7 +1,7 @@
 pub mod clause;
-pub mod delete;
-pub mod insert;
+pub(crate) mod delete;
+pub(crate) mod insert;
 pub mod optional;
 pub mod select;
-pub mod tail;
-pub mod update;
+pub(crate) mod tail;
+pub(crate) mod update;

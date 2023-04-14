@@ -218,7 +218,7 @@ pub(crate) fn get_readonly(ast: &syn::DeriveInput) -> bool {
         .map(|ml| as_metalist_nested_meta(ml))
         .flatten()
         .collect();
-    // find the first schema="name"
+    // find the first readonly
     inners
         .iter()
         .find(|&m| m.path().is_ident("readonly"))

@@ -1,3 +1,9 @@
+
+<div align="center">
+  <img src="https://raw.githubusercontent.com/weldsorm/welds/main/page/src/assets/images/banner.png"/>
+  <h3>An async ORM written in rust using the sqlx framework.</h3>
+</div>
+
 # Welds
 
 #### Welds is an async ORM written in rust using the sqlx framework. 
@@ -59,5 +65,8 @@ pub struct Product {
   // Updates the Cookies
   cookies.save.await(&conn)?; 
 ```
+
+For more good examples [check out the examples](https://github.com/weldsorm/welds/tree/main/welds/examples).
+
 
 

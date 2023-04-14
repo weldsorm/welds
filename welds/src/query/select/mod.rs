@@ -16,6 +16,13 @@ use sqlx::Row;
 use std::cell::RefCell;
 use std::marker::PhantomData;
 
+/// An un-executed Query.
+///
+/// Build out a query that can be executed on the database.
+///
+/// Can be chained with other queries to make more complex queries.
+///
+/// Can be mapped into other queries to  make more complex queries.
 pub struct SelectBuilder<'schema, T, DB: sqlx::Database> {
     _t: PhantomData<T>,
     pub(crate) wheres: Vec<Box<dyn ClauseAdder<'schema, DB>>>,
@@ -44,6 +51,8 @@ where
         }
     }
 
+    /// Filter the results returned by this query.
+    /// Used when you want to filter on the columns of this table.
     pub fn where_col(
         mut self,
         lam: impl Fn(<T as HasSchema>::Schema) -> Box<dyn ClauseAdder<'schema, DB>>,
@@ -56,6 +65,8 @@ where
         self
     }
 
+    /// Add a query to this query (JOIN on a relationship)
+    /// results on a query that is filtered using the results of both queries
     pub fn where_relation<R, Ship>(
         mut self,
         relationship: impl Fn(<T as HasRelations>::Relation) -> Ship,
@@ -79,6 +90,7 @@ where
         self
     }
 
+    /// Results in a query that is mapped into the query of one of its relationships
     pub fn map_query<R, Ship>(
         self,
         relationship: impl Fn(<T as HasRelations>::Relation) -> Ship,
@@ -104,16 +116,21 @@ where
         sb
     }
 
+    /// Limit the number of rows returned by this query
     pub fn limit(mut self, x: i64) -> Self {
         self.limit = Some(x);
         self
     }
 
+    /// Offset the starting point for the results returned by this query
     pub fn offset(mut self, x: i64) -> Self {
         self.offset = Some(x);
         self
     }
 
+    /// Order the results of the query by a given column
+    ///
+    /// multiple calls will result in multiple OrderBys
     pub fn order_by_desc<FN: AsFieldName>(
         mut self,
         lam: impl Fn(<T as HasSchema>::Schema) -> FN,
@@ -124,6 +141,9 @@ where
         self
     }
 
+    /// Order the results of the query by a given column
+    ///
+    /// multiple calls will result in multiple OrderBys
     pub fn order_by_asc<FN: AsFieldName>(
         mut self,
         lam: impl Fn(<T as HasSchema>::Schema) -> FN,
@@ -134,6 +154,7 @@ where
         self
     }
 
+    /// Get a copy of the SQL that will be executed when this query runs
     pub fn to_sql(&self) -> String
     where
         <DB as HasArguments<'schema>>::Arguments: IntoArguments<'args, DB>,
@@ -154,6 +175,9 @@ where
         ])
     }
 
+    /// Executes a `select count(...) FROM ... `
+    ///
+    /// Counts the results of your query in the database.
     pub async fn count<'q, 'e, E>(&'q self, exec: E) -> Result<u64>
     where
         'schema: 'args,
@@ -196,6 +220,7 @@ where
         Ok(count as u64)
     }
 
+    /// Executes the query in the database returning the results
     pub async fn run<'q, 'e, E>(&'q self, exec: E) -> Result<Vec<DbState<T>>>
     where
         'schema: 'args,

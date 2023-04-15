@@ -1,4 +1,5 @@
-use sqlx::Executor;
+use sqlx::{Executor, Sqlite};
+use welds::connection::Connection;
 use welds::state::DbState;
 use welds::WeldsModel;
 
@@ -33,15 +34,21 @@ pub struct Order {
 
 #[async_std::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let connection_string = "sqlite::memory:";
+    let pool = welds::connection::connect_sqlite(connection_string).await?;
+
     // Build an in memory DB with a schema (Product Table, Orders Table)
-    let pool = sqlx::SqlitePool::connect("sqlite::memory:").await?;
     let schema = include_str!("../../tests/testlib/databases/sqlite/01_create_tables.sql");
-    pool.clone().execute(schema).await?;
-    println!("");
+    pool.as_sqlx_pool().execute(schema).await?;
+
     // Create and update a Product
-    let product = create_and_update_products(&pool).await?;
+    let trans = pool.begin().await?;
+    let product = create_and_update_products(&trans).await?;
+    trans.commit().await?;
+
     // Create a bunch of orders
     create_orders(&product, &pool).await?;
+
     // Select the Orders Using the Product
     chain_query_together(&pool).await?;
     // Filter Orders using relationships from other tables
@@ -49,51 +56,46 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Delete Some Stuff
     let product2 = create_and_update_products(&pool).await?;
     delete_the_product(&pool, product2.id).await?;
+
     Ok(())
 }
 
 async fn create_and_update_products(
-    pool: &sqlx::SqlitePool,
+    conn: &impl Connection<Sqlite>,
 ) -> Result<DbState<Product>, Box<dyn std::error::Error>> {
-    let mut transaction = pool.begin().await?;
-
     // create the product
     let mut p = Product::new();
     p.name = "Girl Scout Cookies".to_owned();
     p.active = true;
-    p.save(&mut transaction).await?;
+    p.save(conn).await?;
     println!("Product Created: {:?}", p);
 
     // update the product
     p.description = Some("Yummy !!!".to_owned());
-    p.save(&mut transaction).await?;
+    p.save(conn).await?;
     println!("Product Updated: {:?}", p);
-
-    // Don't forget to commit :)
-    // default is to rollback
-    transaction.commit().await?;
-
     Ok(p)
 }
 
 async fn create_orders(
     product: &Product,
-    pool: &sqlx::SqlitePool,
+    conn: &impl Connection<Sqlite>,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let mut conn = pool.acquire().await?;
     for _ in 0..100 {
         let mut o = Order::new();
         o.product_id = Some(product.id);
         o.sell_price = Some(3.50);
-        o.save(&mut conn).await?;
+        o.save(conn).await?;
     }
-    let total = Order::all().count(&mut conn).await?;
+    let total = Order::all().count(conn).await?;
     println!("");
     println!("Orders Created: {}", total);
     Ok(())
 }
 
-async fn chain_query_together(pool: &sqlx::SqlitePool) -> Result<(), Box<dyn std::error::Error>> {
+async fn chain_query_together(
+    conn: &impl Connection<Sqlite>,
+) -> Result<(), Box<dyn std::error::Error>> {
     // Start from a product and ending on its orders
     let order_query = Product::all()
         .order_by_asc(|p| p.id)
@@ -102,7 +104,7 @@ async fn chain_query_together(pool: &sqlx::SqlitePool) -> Result<(), Box<dyn std
         .where_col(|x| x.id.lte(2));
 
     let sql = order_query.to_sql();
-    let orders = order_query.run(pool).await?;
+    let orders = order_query.run(conn).await?;
 
     println!("");
     println!("Some Orders SQL: {}", sql);
@@ -112,7 +114,7 @@ async fn chain_query_together(pool: &sqlx::SqlitePool) -> Result<(), Box<dyn std
 }
 
 async fn filter_order_using_relationships(
-    pool: &sqlx::SqlitePool,
+    conn: &impl Connection<Sqlite>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     // NOTE: this is an un-executed query.
     let product_query = Product::where_col(|p| p.name.like("%Cookie%"));
@@ -120,7 +122,7 @@ async fn filter_order_using_relationships(
     // select all the orders, where order match the product query
     let orders = Order::all()
         .where_relation(|o| o.product, product_query)
-        .run(pool)
+        .run(conn)
         .await?;
 
     println!("");
@@ -129,14 +131,12 @@ async fn filter_order_using_relationships(
 }
 
 async fn delete_the_product(
-    pool: &sqlx::SqlitePool,
+    conn: &impl Connection<Sqlite>,
     product_id: i32,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let mut conn = pool.acquire().await?;
-
-    let mut product = Product::find_by_id(&mut conn, product_id).await?.unwrap();
-    product.delete(&mut conn).await?;
-    let count = Product::all().count(&mut conn).await?;
+    let mut product = Product::find_by_id(conn, product_id).await?.unwrap();
+    product.delete(conn).await?;
+    let count = Product::all().count(conn).await?;
 
     println!("");
     println!("DELETE: {:?}", product);

@@ -23,8 +23,8 @@ pub(crate) fn write(infos: &Info) -> TokenStream {
             #p1
             #p2
             #p3
-            #p5
             #p4
+            #p5
         }
 
     }

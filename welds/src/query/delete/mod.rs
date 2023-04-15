@@ -1,3 +1,4 @@
+use crate::connection::Connection;
 use crate::errors::Result;
 use crate::query::clause::{DbParam, NextParam};
 use crate::table::{HasSchema, TableColumns, TableInfo, WriteToArgs};
@@ -5,19 +6,18 @@ use crate::writers::column::{ColumnWriter, DbColumnWriter};
 use sqlx::database::HasArguments;
 use sqlx::IntoArguments;
 
-pub async fn delete_one<'schema, 'args, 'e, DB, T, E>(
-    buff: &'args mut String,
+pub async fn delete_one<'r, 'args, DB, T, C>(
+    buff: &'r mut String,
     obj: &T,
-    exec: &'e mut E,
+    conn: &'r C,
 ) -> Result<()>
 where
-    E: 'e,
-    'schema: 'args,
+    'r: 'args,
     DB: sqlx::Database + DbParam + DbColumnWriter,
     T: WriteToArgs<DB> + HasSchema,
     <T as HasSchema>::Schema: TableInfo + TableColumns<DB>,
-    &'e mut E: sqlx::Executor<'e, Database = DB>,
-    <DB as HasArguments<'schema>>::Arguments: IntoArguments<'args, DB>,
+    C: Connection<DB>,
+    <DB as HasArguments<'r>>::Arguments: IntoArguments<'args, DB>,
 {
     let mut args: <DB as HasArguments>::Arguments = Default::default();
     let col_writer = ColumnWriter::new::<DB>();
@@ -43,8 +43,7 @@ where
     *buff = format!("DELETE FROM {} where {}", identifier, wheres);
     eprintln!("SQL: {}", &buff);
 
-    let q = sqlx::query_with(buff, args);
-    q.execute(exec).await?;
+    conn.execute(buff, args).await?;
 
     Ok(())
 }

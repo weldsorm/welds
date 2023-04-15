@@ -1,4 +1,6 @@
 use sqlite_test::models::product::Product;
+use sqlx::Sqlite;
+use welds::connection::Pool;
 
 #[derive(Default, Debug, Clone, sqlx::FromRow)]
 pub struct Count {
@@ -8,22 +10,21 @@ pub struct Count {
 #[test]
 fn should_be_able_to_connect() {
     async_std::task::block_on(async {
-        let conn = testlib::sqlite::conn().await.unwrap();
-        let pool: welds::database::Pool = conn.into();
-        let conn = pool.as_sqlite().unwrap();
-        assert!(!conn.is_closed());
+        let sqlx_conn = testlib::sqlite::conn().await.unwrap();
+        let conn: Pool<Sqlite> = sqlx_conn.into();
+        assert!(!conn.as_sqlx_pool().is_closed());
     })
 }
 
 #[test]
 fn should_be_able_to_read_all_products() {
     async_std::task::block_on(async {
-        let conn = testlib::sqlite::conn().await.unwrap();
-        let pool: welds::database::Pool = conn.into();
-        let conn = pool.as_sqlite().unwrap();
-        let mut q = Product::all();
+        let sqlx_conn = testlib::sqlite::conn().await.unwrap();
+        let conn: Pool<Sqlite> = sqlx_conn.into();
+
+        let q = Product::all();
         eprintln!("SQL: {}", q.to_sql());
-        let all = q.run(conn).await.unwrap();
+        let all = q.run(&conn).await.unwrap();
         assert_eq!(all.len(), 6, "Unexpected number of rows returned");
     })
 }
@@ -31,12 +32,12 @@ fn should_be_able_to_read_all_products() {
 #[test]
 fn should_be_able_to_filter_on_id() {
     async_std::task::block_on(async {
-        let conn = testlib::sqlite::conn().await.unwrap();
-        let pool: welds::database::Pool = conn.into();
-        let conn = pool.as_sqlite().unwrap();
-        let mut q = Product::where_col(|x| x.id.equal(1));
+        let sqlx_conn = testlib::sqlite::conn().await.unwrap();
+        let conn: Pool<Sqlite> = sqlx_conn.into();
+
+        let q = Product::where_col(|x| x.id.equal(1));
         eprintln!("SQL: {}", q.to_sql());
-        let just_horse = q.run(conn).await.unwrap();
+        let just_horse = q.run(&conn).await.unwrap();
         assert_eq!(
             just_horse.len(),
             1,
@@ -48,12 +49,11 @@ fn should_be_able_to_filter_on_id() {
 #[test]
 fn should_lt() {
     async_std::task::block_on(async {
-        let conn = testlib::sqlite::conn().await.unwrap();
-        let pool: welds::database::Pool = conn.into();
-        let conn = pool.as_sqlite().unwrap();
-        let mut q = Product::where_col(|x| x.price1.lt(2.10));
+        let sqlx_conn = testlib::sqlite::conn().await.unwrap();
+        let conn: Pool<Sqlite> = sqlx_conn.into();
+        let q = Product::where_col(|x| x.price1.lt(2.10));
         eprintln!("SQL: {}", q.to_sql());
-        let data = q.run(conn).await.unwrap();
+        let data = q.run(&conn).await.unwrap();
         assert_eq!(data.len(), 1);
     })
 }
@@ -61,12 +61,11 @@ fn should_lt() {
 #[test]
 fn should_be_able_to_filter_on_equal() {
     async_std::task::block_on(async {
-        let conn = testlib::sqlite::conn().await.unwrap();
-        let pool: welds::database::Pool = conn.into();
-        let conn = pool.as_sqlite().unwrap();
-        let mut q = Product::where_col(|x| x.id.equal(1));
+        let sqlx_conn = testlib::sqlite::conn().await.unwrap();
+        let conn: Pool<Sqlite> = sqlx_conn.into();
+        let q = Product::where_col(|x| x.id.equal(1));
         eprintln!("SQL: {}", q.to_sql());
-        let just_horse = q.run(conn).await.unwrap();
+        let just_horse = q.run(&conn).await.unwrap();
         assert_eq!(
             just_horse.len(),
             1,
@@ -78,12 +77,11 @@ fn should_be_able_to_filter_on_equal() {
 #[test]
 fn should_be_able_to_filter_on_lt() {
     async_std::task::block_on(async {
-        let conn = testlib::sqlite::conn().await.unwrap();
-        let pool: welds::database::Pool = conn.into();
-        let conn = pool.as_sqlite().unwrap();
-        let mut q = Product::where_col(|x| x.price1.lt(3.00));
+        let sqlx_conn = testlib::sqlite::conn().await.unwrap();
+        let conn: Pool<Sqlite> = sqlx_conn.into();
+        let q = Product::where_col(|x| x.price1.lt(3.00));
         eprintln!("SQL: {}", q.to_sql());
-        let data = q.run(conn).await.unwrap();
+        let data = q.run(&conn).await.unwrap();
         assert_eq!(data.len(), 2, "Expected horse and dog",);
     })
 }
@@ -91,12 +89,11 @@ fn should_be_able_to_filter_on_lt() {
 #[test]
 fn should_be_able_to_filter_on_lte() {
     async_std::task::block_on(async {
-        let conn = testlib::sqlite::conn().await.unwrap();
-        let pool: welds::database::Pool = conn.into();
-        let conn = pool.as_sqlite().unwrap();
-        let mut q = Product::where_col(|x| x.id.lte(2));
+        let sqlx_conn = testlib::sqlite::conn().await.unwrap();
+        let conn: Pool<Sqlite> = sqlx_conn.into();
+        let q = Product::where_col(|x| x.id.lte(2));
         eprintln!("SQL: {}", q.to_sql());
-        let data = q.run(conn).await.unwrap();
+        let data = q.run(&conn).await.unwrap();
         assert_eq!(data.len(), 2, "Expected horse and dog",);
     })
 }
@@ -104,18 +101,17 @@ fn should_be_able_to_filter_on_lte() {
 #[test]
 fn should_be_able_to_filter_with_nulls() {
     async_std::task::block_on(async {
-        let conn = testlib::sqlite::conn().await.unwrap();
-        let pool: welds::database::Pool = conn.into();
-        let conn = pool.as_sqlite().unwrap();
+        let sqlx_conn = testlib::sqlite::conn().await.unwrap();
+        let conn: Pool<Sqlite> = sqlx_conn.into();
         // is null
-        let mut q1 = Product::where_col(|x| x.price1.equal(None));
+        let q1 = Product::where_col(|x| x.price1.equal(None));
         eprintln!("SQL_1: {}", q1.to_sql());
-        let data1 = q1.run(conn).await.unwrap();
+        let data1 = q1.run(&conn).await.unwrap();
         assert_eq!(data1.len(), 0, "Expected All",);
         // is not null
-        let mut q1 = Product::where_col(|x| x.price1.not_equal(None));
+        let q1 = Product::where_col(|x| x.price1.not_equal(None));
         eprintln!("SQL_2: {}", q1.to_sql());
-        let data1 = q1.run(conn).await.unwrap();
+        let data1 = q1.run(&conn).await.unwrap();
         assert_eq!(data1.len(), 6, "Expected All",);
     })
 }
@@ -123,12 +119,11 @@ fn should_be_able_to_filter_with_nulls() {
 #[test]
 fn should_be_able_to_count_in_sql() {
     async_std::task::block_on(async {
-        let conn = testlib::sqlite::conn().await.unwrap();
-        let pool: welds::database::Pool = conn.into();
-        let conn = pool.as_sqlite().unwrap();
-        let mut q = Product::where_col(|x| x.price1.lte(2.15));
+        let sqlx_conn = testlib::sqlite::conn().await.unwrap();
+        let conn: Pool<Sqlite> = sqlx_conn.into();
+        let q = Product::where_col(|x| x.price1.lte(2.15));
         eprintln!("SQL: {}", q.to_sql());
-        let count = q.count(conn).await.unwrap();
+        let count = q.count(&conn).await.unwrap();
         assert_eq!(count, 2,);
     })
 }
@@ -136,12 +131,11 @@ fn should_be_able_to_count_in_sql() {
 #[test]
 fn should_be_able_to_limit_results_in_sql() {
     async_std::task::block_on(async {
-        let conn = testlib::sqlite::conn().await.unwrap();
-        let pool: welds::database::Pool = conn.into();
-        let conn = pool.as_sqlite().unwrap();
-        let mut q = Product::all().limit(2).offset(1);
+        let sqlx_conn = testlib::sqlite::conn().await.unwrap();
+        let conn: Pool<Sqlite> = sqlx_conn.into();
+        let q = Product::all().limit(2).offset(1);
         eprintln!("SQL: {}", q.to_sql());
-        let count = q.run(conn).await.unwrap().len();
+        let count = q.run(&conn).await.unwrap().len();
         assert_eq!(count, 2);
     })
 }
@@ -149,12 +143,11 @@ fn should_be_able_to_limit_results_in_sql() {
 #[test]
 fn should_be_able_to_order_by_id() {
     async_std::task::block_on(async {
-        let conn = testlib::sqlite::conn().await.unwrap();
-        let pool: welds::database::Pool = conn.into();
-        let conn = pool.as_sqlite().unwrap();
-        let mut q = Product::all().order_by_asc(|x| x.id);
+        let sqlx_conn = testlib::sqlite::conn().await.unwrap();
+        let conn: Pool<Sqlite> = sqlx_conn.into();
+        let q = Product::all().order_by_asc(|x| x.id);
         eprintln!("SQL: {}", q.to_sql());
-        let all = q.run(conn).await.unwrap();
+        let all = q.run(&conn).await.unwrap();
         let ids: Vec<i32> = all.iter().map(|x| x.id).collect();
         let mut ids_sorted = ids.clone();
         ids_sorted.sort();
@@ -165,19 +158,18 @@ fn should_be_able_to_order_by_id() {
 #[test]
 fn should_be_able_to_update_a_product() {
     async_std::task::block_on(async {
-        let conn = testlib::sqlite::conn().await.unwrap();
-        let pool: welds::database::Pool = conn.into();
-        let conn = pool.as_sqlite().unwrap();
-        let mut trans = conn.begin().await.unwrap();
+        let sqlx_conn = testlib::sqlite::conn().await.unwrap();
+        let conn: Pool<Sqlite> = sqlx_conn.into();
+        let trans = conn.begin().await.unwrap();
 
-        let mut q = Product::all().limit(1);
-        let mut found: Vec<_> = q.run(&mut trans).await.unwrap();
+        let q = Product::all().limit(1);
+        let mut found: Vec<_> = q.run(&trans).await.unwrap();
         let mut p1 = found.pop().unwrap();
         p1.name = "Test1".to_owned();
-        p1.save(&mut trans).await.unwrap();
+        p1.save(&trans).await.unwrap();
 
-        let mut q = Product::where_col(|x| x.id.equal(p1.id));
-        let mut found: Vec<_> = q.run(&mut trans).await.unwrap();
+        let q = Product::where_col(|x| x.id.equal(p1.id));
+        let mut found: Vec<_> = q.run(&trans).await.unwrap();
         let p2 = found.pop().unwrap();
         assert_eq!(p2.name, "Test1");
 
@@ -188,22 +180,27 @@ fn should_be_able_to_update_a_product() {
 #[test]
 fn should_be_able_to_create_a_new_product() {
     async_std::task::block_on(async {
-        let conn = testlib::sqlite::conn().await.unwrap();
-        let pool: welds::database::Pool = conn.into();
-        let conn = pool.as_sqlite().unwrap();
-        let mut trans = conn.begin().await.unwrap();
+        let sqlx_conn = testlib::sqlite::conn().await.unwrap();
+        let conn: Pool<Sqlite> = sqlx_conn.into();
+        let trans = conn.begin().await.unwrap();
 
         let mut p1 = Product::new();
         p1.name = "newyNewFace".to_owned();
         p1.description = Some("YES!".to_owned());
         // Note: creation will set the PK for the model.
-        p1.save(&mut trans).await.unwrap();
+        p1.save(&trans).await.unwrap();
 
-        let mut q = Product::where_col(|x| x.id.equal(p1.id));
-        let mut found: Vec<_> = q.run(&mut trans).await.unwrap();
+        let q = Product::where_col(|x| x.id.equal(p1.id));
+        let mut found: Vec<_> = q.run(&trans).await.unwrap();
         let p2 = found.pop().unwrap();
         assert_eq!(p2.name, "newyNewFace");
         assert!(p2.id != 0, "Expected new ID");
+
+        let count = Product::where_col(|x| x.id.equal(p1.id))
+            .count(&trans)
+            .await
+            .unwrap();
+        assert_eq!(count, 1);
 
         trans.rollback().await.unwrap();
     })
@@ -212,9 +209,8 @@ fn should_be_able_to_create_a_new_product() {
 #[test]
 fn should_be_able_to_scan_for_all_tables() {
     async_std::task::block_on(async {
-        let conn = testlib::sqlite::conn().await.unwrap();
-        let pool: welds::database::Pool = conn.into();
-        let conn = pool.as_sqlite().unwrap();
+        let sqlx_conn = testlib::sqlite::conn().await.unwrap();
+        let conn: Pool<Sqlite> = sqlx_conn.into();
         let tables = welds::detect::find_tables(&conn).await.unwrap();
         assert_eq!(2, tables.len());
     })

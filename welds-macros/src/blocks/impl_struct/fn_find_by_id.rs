@@ -25,14 +25,14 @@ pub(crate) fn write(infos: &Info) -> TokenStream {
 
     quote! {
 
-    pub async fn find_by_id<'a, 'e, 'args, E, DB>(
-        exec: E,
+    pub async fn find_by_id<'a, 'args, DB, C>(
+        conn: &'a C,
         #id_params
     ) -> welds::errors::Result<Option<welds::state::DbState<Self>>>
     where
         'a: 'args,
-        E: sqlx::Executor<'e, Database = DB>,
         DB: sqlx::Database,
+        C: welds::connection::Connection<DB>,
         <Self as welds::table::HasSchema>::Schema: welds::table::TableColumns<DB>,
         <DB as sqlx::database::HasArguments<'a>>::Arguments: sqlx::IntoArguments<'args, DB>,
         Self: Send + Unpin + for<'r> sqlx::FromRow<'r, DB::Row>,
@@ -44,7 +44,7 @@ pub(crate) fn write(infos: &Info) -> TokenStream {
         #converts
         let mut q = Self::all();
         #filters
-        let mut results = q.limit(1).run(exec).await?;
+        let mut results = q.limit(1).run(conn).await?;
         Ok(results.pop())
     }
 

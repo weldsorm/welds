@@ -7,7 +7,7 @@ pub struct NumericOpt<T> {
 }
 
 impl<T> AsFieldName for NumericOpt<T> {
-    fn fieldname<'a>(&'a self) -> &'a str {
+    fn fieldname(&self) -> &str {
         self.field.as_str()
     }
 }

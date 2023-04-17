@@ -7,7 +7,7 @@ pub trait TableInfo {
     fn identifier() -> &'static str;
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, Eq, PartialEq)]
 pub struct Column {
     name: String,
     dbtype: String,
@@ -25,10 +25,10 @@ impl Column {
         }
     }
 
-    pub fn name<'a>(&'a self) -> &'a str {
+    pub fn name(&self) -> &str {
         self.name.as_str()
     }
-    pub fn dbtype<'a>(&'a self) -> &'a str {
+    pub fn dbtype(&self) -> &str {
         self.dbtype.as_str()
     }
 }
@@ -68,10 +68,10 @@ pub struct TableIdent {
 #[cfg(feature = "detect")]
 impl TableIdent {
     pub fn parse(raw: &str) -> Self {
-        let parts: Vec<&str> = raw.split(".").collect();
+        let parts: Vec<&str> = raw.split('.').collect();
         let parts: Vec<&str> = parts.iter().rev().take(2).cloned().collect();
         let name = parts
-            .get(0)
+            .first()
             .cloned()
             .map(|x| x.to_owned())
             .unwrap_or_default();
@@ -134,19 +134,19 @@ pub struct TableDef {
 
 #[cfg(feature = "detect")]
 impl TableDef {
-    pub fn ident<'a>(&'a self) -> &'a TableIdent {
+    pub fn ident(&self) -> &TableIdent {
         &self.ident
     }
     pub fn ty(&self) -> DataType {
         self.ty
     }
-    pub fn columns<'a>(&'a self) -> &'a [ColumnDef] {
+    pub fn columns(&self) -> &[ColumnDef] {
         &self.columns
     }
-    pub fn has_many<'a>(&'a self) -> &'a [RelationDef] {
+    pub fn has_many(&self) -> &[RelationDef] {
         &self.has_many
     }
-    pub fn belongs_to<'a>(&'a self) -> &'a [RelationDef] {
+    pub fn belongs_to(&self) -> &[RelationDef] {
         &self.belongs_to
     }
 }

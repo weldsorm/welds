@@ -86,8 +86,7 @@ where
         let mut inner_wheres: Vec<String> = self
             .wheres
             .iter()
-            .map(|w| w.clause(alias, next_params))
-            .filter_map(|x| x)
+            .filter_map(|w| w.clause(alias, next_params))
             .collect();
         inner_wheres.push(self.inner_fk_equal(&self_tablealias));
 

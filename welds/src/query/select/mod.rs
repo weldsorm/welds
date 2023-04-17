@@ -13,7 +13,6 @@ use sqlx::database::HasArguments;
 use sqlx::query::{Query, QueryAs};
 use sqlx::IntoArguments;
 use sqlx::Row;
-use std::cell::RefCell;
 use std::marker::PhantomData;
 
 /// An un-executed Query.
@@ -30,8 +29,16 @@ pub struct SelectBuilder<'schema, T, DB: sqlx::Database> {
     pub(crate) limit: Option<i64>,
     pub(crate) offset: Option<i64>,
     pub(crate) orderby: Vec<OrderBy>,
-    // these are needed for lifetime issues, remove if you can
-    history: RefCell<Vec<String>>,
+}
+
+impl<'schema, T, DB> Default for SelectBuilder<'schema, T, DB>
+where
+    DB: sqlx::Database,
+    T: Send + Unpin + for<'r> sqlx::FromRow<'r, DB::Row> + HasSchema,
+{
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl<'schema, 'args, T, DB> SelectBuilder<'schema, T, DB>
@@ -46,7 +53,6 @@ where
             limit: None,
             offset: None,
             orderby: Vec::default(),
-            history: Default::default(),
             exist_ins: Default::default(),
         }
     }
@@ -171,7 +177,7 @@ where
         join_sql_parts(&[
             build_head_select::<DB, <T as HasSchema>::Schema>(self_tablealias),
             build_where(&next_params, &alias, &mut args, wheres, exists_in),
-            build_tail(&self),
+            build_tail(self),
         ])
     }
 
@@ -198,19 +204,19 @@ where
         let sql = join_sql_parts(&[
             build_head_count::<DB, <T as HasSchema>::Schema>(self_tablealias),
             build_where(&next_params, &alias, &mut args, wheres, exists_in),
-            build_tail(&self),
+            build_tail(self),
         ]);
 
         // lifetime hack
         // We know the SQL string is keep around until after execution is complete.
-        let mut history = self.history.borrow_mut();
-        history.push(sql);
-        let sql = history.last().unwrap();
+        // let mut history = self.history.borrow_mut();
+        // history.push(sql);
+        // let sql = history.last().unwrap();
 
         let sql_len = sql.len();
         let sqlp = sql.as_ptr();
         let sql_hack: &[u8] = unsafe { std::slice::from_raw_parts(sqlp, sql_len) };
-        let sql: &str = std::str::from_utf8(&sql_hack).unwrap();
+        let sql: &str = std::str::from_utf8(sql_hack).unwrap();
 
         // Run the query
         let query: Query<DB, <DB as HasArguments>::Arguments> =
@@ -239,19 +245,18 @@ where
         let sql = join_sql_parts(&[
             build_head_select::<DB, <T as HasSchema>::Schema>(self_tablealias),
             build_where(&next_params, &alias, &mut args, wheres, exists_in),
-            build_tail(&self),
+            build_tail(self),
         ]);
 
         // lifetime hack
         // We know the SQL string is keep around until after execution is complete.
-        let mut history = self.history.borrow_mut();
-        history.push(sql);
-        let sql = history.last().unwrap();
-
+        // let mut history = self.history.borrow_mut();
+        // history.push(sql);
+        // let sql = history.last().unwrap();
         let sql_len = sql.len();
         let sqlp = sql.as_ptr();
         let sql_hack: &[u8] = unsafe { std::slice::from_raw_parts(sqlp, sql_len) };
-        let sql: &str = std::str::from_utf8(&sql_hack).unwrap();
+        let sql: &str = std::str::from_utf8(sql_hack).unwrap();
 
         // Run the query
         let q: QueryAs<DB, T, <DB as HasArguments>::Arguments> =
@@ -262,6 +267,7 @@ where
             .drain(..)
             .map(|d| DbState::db_loaded(d))
             .collect();
+
         Ok(data)
     }
 }
@@ -293,7 +299,7 @@ where
         if let Some(args) = args {
             clause.bind(args);
         }
-        if let Some(p) = clause.clause(&alias, &next_params) {
+        if let Some(p) = clause.clause(alias, next_params) {
             where_sql.push(p);
         }
     }
@@ -305,18 +311,18 @@ where
         }
         alias.bump();
         clause.set_outer_tablealias(&self_tablealias);
-        if let Some(p) = clause.clause(&alias, &next_params) {
+        if let Some(p) = clause.clause(alias, next_params) {
             where_sql.push(p);
         }
     }
 
-    if where_sql.len() == 0 {
+    if where_sql.is_empty() {
         return None;
     }
     Some(format!("WHERE ( {} )", where_sql.join(" AND ")))
 }
 
-fn build_tail<'schema, T, DB>(select: &SelectBuilder<'schema, T, DB>) -> Option<String>
+fn build_tail<T, DB>(select: &SelectBuilder<T, DB>) -> Option<String>
 where
     T: HasSchema,
     DB: sqlx::Database + DbLimitSkipWriter,

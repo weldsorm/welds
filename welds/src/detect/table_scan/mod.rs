@@ -23,7 +23,7 @@ impl TableScanRow {
         if self.ty == "table" {
             return DataType::Table;
         }
-        return DataType::View;
+        DataType::View
     }
 }
 

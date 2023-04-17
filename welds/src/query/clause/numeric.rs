@@ -9,7 +9,7 @@ pub struct Numeric<T> {
 }
 
 impl<T> AsFieldName for Numeric<T> {
-    fn fieldname<'a>(&'a self) -> &'a str {
+    fn fieldname(&self) -> &str {
         self.field.as_str()
     }
 }

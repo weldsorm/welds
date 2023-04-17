@@ -8,7 +8,7 @@ pub struct TextOpt<T> {
 }
 
 impl<T> AsFieldName for TextOpt<T> {
-    fn fieldname<'a>(&'a self) -> &'a str {
+    fn fieldname(&self) -> &str {
         self.field.as_str()
     }
 }

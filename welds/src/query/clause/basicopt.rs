@@ -8,7 +8,7 @@ pub struct BasicOpt<T> {
 }
 
 impl<T> AsFieldName for BasicOpt<T> {
-    fn fieldname<'a>(&'a self) -> &'a str {
+    fn fieldname(&self) -> &str {
         self.field.as_str()
     }
 }

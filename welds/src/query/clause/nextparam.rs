@@ -46,7 +46,7 @@ impl NextParam {
         let lock = self.i.clone();
         let mut i = lock.lock().unwrap();
         let p = (self.db_next)(*i);
-        *i = *i + 1;
+        *i += 1;
         p
     }
 }

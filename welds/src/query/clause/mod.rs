@@ -34,7 +34,7 @@ pub struct ClauseColVal<T> {
 }
 
 pub trait AsFieldName {
-    fn fieldname<'a>(&'a self) -> &'a str;
+    fn fieldname(&self) -> &str;
 }
 
 pub trait ClauseAdder<'args, DB: sqlx::Database> {

@@ -34,14 +34,14 @@ where
     let mut colargs = Vec::default();
 
     for col in &columns {
-        if !pks.contains(&col) {
+        if !pks.contains(col) {
             obj.bind(col.name(), &mut args)?;
             let col = col_writer.excape(col.name());
             colargs.push(ColArg(col, next_params.next()));
         }
     }
 
-    let (insert, select) = writer.write(&identifier, &colargs, &columns, &pks);
+    let (insert, select) = writer.write(identifier, &colargs, &columns, &pks);
     let has_select = select.is_some();
     *buff = format!("{}{}", insert, select.unwrap_or_default());
 

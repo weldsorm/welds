@@ -49,7 +49,7 @@ impl DbColumnWriter for sqlx::Sqlite {
 #[cfg(feature = "mysql")]
 impl DbColumnWriter for sqlx::MySql {
     fn excape(name: &str) -> String {
-        format!("{}", name)
+        name.to_string()
     }
     fn write(prefix: &str, col: &Column) -> String {
         let name = Self::excape(col.name());

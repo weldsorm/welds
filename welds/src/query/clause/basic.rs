@@ -7,7 +7,7 @@ pub struct Basic<T> {
 }
 
 impl<T> AsFieldName for Basic<T> {
-    fn fieldname<'a>(&'a self) -> &'a str {
+    fn fieldname(&self) -> &str {
         self.field.as_str()
     }
 }

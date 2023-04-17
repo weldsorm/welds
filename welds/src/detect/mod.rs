@@ -41,7 +41,7 @@ where
     let mut buckets = HashMap::new();
     for row in rows {
         let key = row.ident();
-        let bucket = buckets.entry(key).or_insert_with(|| Vec::default());
+        let bucket = buckets.entry(key).or_insert_with(Vec::default);
         bucket.push(row);
     }
 
@@ -103,14 +103,14 @@ where
     Ok(tables)
 }
 
-fn build_lookup<'a>(
-    fks: &'a [FkScanRow],
+fn build_lookup(
+    fks: &[FkScanRow],
     src: impl Fn(&FkScanRow) -> &FkScanTableCol,
-) -> HashMap<&'a TableIdent, Vec<&'a FkScanRow>> {
+) -> HashMap<&TableIdent, Vec<&FkScanRow>> {
     let mut map = HashMap::new();
     for fk in fks {
         let key = &src(fk).ident;
-        let values = map.entry(key).or_insert_with(|| Vec::default());
+        let values = map.entry(key).or_insert_with(Vec::default);
         values.push(fk);
     }
     map

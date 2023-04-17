@@ -4,6 +4,12 @@ pub struct TableAlias {
     i: Cell<u32>,
 }
 
+impl Default for TableAlias {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl TableAlias {
     pub fn new() -> Self {
         TableAlias { i: Cell::new(1) }

@@ -29,7 +29,6 @@ async fn main() -> Result<()> {
                 schema_path,
                 output_path: project_dir,
                 table,
-                ..Default::default()
             };
             weldscli_lib::generate(opt)
         }
@@ -37,7 +36,7 @@ async fn main() -> Result<()> {
     };
 
     if let Err(err) = result {
-        eprintln!("");
+        eprintln!();
         eprintln!("Error: {}", err);
         std::process::exit(1);
     }

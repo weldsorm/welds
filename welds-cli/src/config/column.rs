@@ -20,7 +20,7 @@ impl Column {
         Column {
             db_name: def.name.to_owned(),
             db_type: def.ty.to_owned(),
-            model_name: def.name.to_snake_case().to_owned(),
+            model_name: def.name.to_snake_case(),
             is_null: def.null,
             primary_key: def.primary_key,
             writeable: def.updatable,

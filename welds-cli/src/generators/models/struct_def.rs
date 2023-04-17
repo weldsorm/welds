@@ -8,7 +8,7 @@ use std::io::prelude::*;
 use std::path::PathBuf;
 
 pub(crate) fn generate(mod_path: &PathBuf, table: &Table, all: &[Table]) -> Result<()> {
-    if table.databases.len() == 0 {
+    if table.databases.is_empty() {
         return Ok(());
     }
 
@@ -18,9 +18,9 @@ pub(crate) fn generate(mod_path: &PathBuf, table: &Table, all: &[Table]) -> Resu
     let struct_name = format_ident!("{}", table.struct_name());
 
     let databases = build_welds_db(&table.databases);
-    let weldstable = build_welds_table(&table);
-    let relations = build_relations(&table, all);
-    let fields = build_fields(&table, table.databases[0]);
+    let weldstable = build_welds_table(table);
+    let relations = build_relations(table, all);
+    let fields = build_fields(table, table.databases[0]);
 
     let code = quote! {
         use welds::WeldsModel;
@@ -100,18 +100,13 @@ fn find_table<'a>(
     name: &'a str,
     all: &'a [Table],
 ) -> Option<&'a Table> {
-    for t in all {
-        if &t.name == name && &t.schema == schema {
-            return Some(t);
-        }
-    }
-    None
+    all.iter().find(|&t| t.name == name && &t.schema == schema)
 }
 
 fn build_fields(table: &Table, db: DbProvider) -> TokenStream {
     let mut list = Vec::default();
     for col in &table.columns {
-        if let Some(f) = build_field(&col, db) {
+        if let Some(f) = build_field(col, db) {
             list.push(f);
         }
     }

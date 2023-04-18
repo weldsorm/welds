@@ -11,6 +11,8 @@ use sqlx::Postgres;
 #[cfg(feature = "sqlite")]
 use sqlx::Sqlite;
 
+/// A connection to a database of any Kind
+/// This can be used when the underlying database isn't known until runtime
 pub enum AnyPool {
     #[cfg(feature = "sqlite")]
     Sqlite(Pool<Sqlite>),
@@ -52,6 +54,8 @@ impl From<Pool<Sqlite>> for AnyPool {
 
 impl AnyPool {
     #[cfg(feature = "sqlite")]
+    /// Returns a borrowed Pool if the connection is to a Sqlite database
+    /// Otherwise None
     pub fn as_sqlite<'a>(&'a self) -> Option<&'a Pool<Sqlite>> {
         match self {
             AnyPool::Sqlite(inner) => Some(inner),
@@ -60,6 +64,8 @@ impl AnyPool {
     }
 
     #[cfg(feature = "mysql")]
+    /// Returns a borrowed Pool if the connection is to a MySql database
+    /// Otherwise None
     pub fn as_mysql<'a>(&'a self) -> Option<&'a Pool<MySql>> {
         match self {
             AnyPool::MySql(inner) => Some(inner),
@@ -68,6 +74,8 @@ impl AnyPool {
     }
 
     #[cfg(feature = "mssql")]
+    /// Returns a borrowed Pool if the connection is to a Mssql database
+    /// Otherwise None
     pub fn as_mssql<'a>(&'a self) -> Option<&'a Pool<Mssql>> {
         match self {
             AnyPool::Mssql(inner) => Some(inner),
@@ -76,6 +84,8 @@ impl AnyPool {
     }
 
     #[cfg(feature = "postgres")]
+    /// Returns a borrowed Pool if the connection is to a Postgres database
+    /// Otherwise None
     pub fn as_postgres<'a>(&'a self) -> Option<&'a Pool<Postgres>> {
         match self {
             AnyPool::Postgres(inner) => Some(inner),

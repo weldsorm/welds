@@ -119,7 +119,7 @@
 //!
 //! Start a query from the struct that derived WeldsModel
 //! ```rust,ignore
-//! let conn: sqlx::PgPool = sqlx::PgPool::connect(&url).await.unwrap();
+//! let conn = welds::connection::connect_postgres(&url).await.unwrap();
 //! let sellers = Product::all()
 //!       .where_col(|product| product.price.equal(3.50))
 //!       .map_query(|product| product.seller )

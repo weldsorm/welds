@@ -133,17 +133,17 @@
 //! For more examples on how to use Welds check out the [Example Repo](https://github.com/weldsorm/welds/tree/main/welds/examples)
 //!
 
-// Make sure at least one DB provider is enabled
-#[cfg(all(
-    not(feature = "postgres"),
-    not(feature = "mssql"),
-    not(feature = "mysql"),
-    not(feature = "sqlite")
-))]
-compile_error!(
-    "one database provider is required, enable one of the following 'welds' features",
-    ["postgres", "mysql", "mssql", "sqlite"]
-);
+//// Make sure at least one DB provider is enabled
+//#[cfg(all(
+//    not(feature = "postgres"),
+//    not(feature = "mssql"),
+//    not(feature = "mysql"),
+//    not(feature = "sqlite")
+//))]
+//compile_error!(
+//    "one database provider is required, enable one of the following 'welds' features",
+//    ["postgres", "mysql", "mssql", "sqlite"]
+//);
 
 pub(crate) mod alias;
 pub mod connection;

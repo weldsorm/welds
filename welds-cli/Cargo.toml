@@ -7,7 +7,7 @@ license = "BSD-3-Clause"
 categories = ["Database interfaces", "database"]
 keywords = ["orm", "postgres", "mssql", "mysql", "sqlite"]
 readme = "README.md"
-repository = "https://github.com/weldsorm/welds/welds-cli"
+repository = "https://github.com/weldsorm/welds/tree/main/welds-cli"
 description = "An async ORM for (postgres, mssql, mysql, sqlite)"
 
 [lib]

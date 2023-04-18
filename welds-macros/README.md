@@ -38,14 +38,15 @@ pub struct Product {
 
 ### Basic Select 
 ```rust
-  let conn: sqlx::PgPool = sqlx::PgPool::connect(&url).await.unwrap();
+  let url = "postgres://postgres:password@localhost:5432";
+  let pool = welds::connection::connect_postgres(url).await.unwrap();
 
-  let products = Product::where_col(|p| p.price.equal(3.50)).run(&conn).await?;
+  let products = Product::where_col(|p| p.price.equal(3.50)).run(&pool).await?;
 ```
 
 ### Basic Filter Across tables 
 ```rust
-  let conn: sqlx::PgPool = sqlx::PgPool::connect(&url).await.unwrap();
+  let conn = welds::connection::connect_mssql(url).await.unwrap();
 
   let sellers = Product::where_col(|product| product.price.equal(3.50))
         .map_query(|product| product.seller )
@@ -55,7 +56,7 @@ pub struct Product {
 
 ### Create And Update
 ```rust
-  let conn: sqlx::PgPool = sqlx::PgPool::connect(&url).await.unwrap();
+  let conn = welds::connection::connect_sqlite(url).await.unwrap();
   
   let mut cookies = Product::new();
   cookies.name = "cookies".to_owned();

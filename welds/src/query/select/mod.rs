@@ -1,5 +1,6 @@
 use super::clause::{DbParam, NextParam};
 use crate::alias::TableAlias;
+use crate::connection::Connection;
 use crate::errors::Result;
 use crate::query::clause::exists::ExistIn;
 use crate::query::clause::{AsFieldName, ClauseAdder, OrderBy};
@@ -10,7 +11,6 @@ use crate::writers::column::{ColumnWriter, DbColumnWriter};
 use crate::writers::count::{CountWriter, DbCountWriter};
 use crate::writers::limit_skip::DbLimitSkipWriter;
 use sqlx::database::HasArguments;
-use sqlx::query::{Query, QueryAs};
 use sqlx::IntoArguments;
 use sqlx::Row;
 use std::marker::PhantomData;
@@ -184,15 +184,16 @@ where
     /// Executes a `select count(...) FROM ... `
     ///
     /// Counts the results of your query in the database.
-    pub async fn count<'q, 'e, E>(&'q self, exec: E) -> Result<u64>
+    pub async fn count<'q, 'c, C>(&'q self, exec: &'c C) -> Result<u64>
     where
         'schema: 'args,
-        E: sqlx::Executor<'e, Database = DB>,
+        C: 'schema,
+        C: Connection<DB>,
         <DB as HasArguments<'schema>>::Arguments: IntoArguments<'args, DB>,
-        i64: sqlx::Type<DB> + for<'r> sqlx::Decode<'r, DB>,
-        usize: sqlx::ColumnIndex<<DB as sqlx::Database>::Row>,
         DB: DbParam + DbColumnWriter + DbLimitSkipWriter + DbCountWriter,
         <T as HasSchema>::Schema: TableInfo + TableColumns<DB>,
+        i64: sqlx::Type<DB> + for<'r> sqlx::Decode<'r, DB>,
+        usize: sqlx::ColumnIndex<<DB as sqlx::Database>::Row>,
     {
         let mut args: Option<<DB as HasArguments>::Arguments> = Some(Default::default());
         let next_params = NextParam::new::<DB>();
@@ -207,30 +208,29 @@ where
             build_tail(self),
         ]);
 
-        // lifetime hack
-        // We know the SQL string is keep around until after execution is complete.
-        // let mut history = self.history.borrow_mut();
-        // history.push(sql);
-        // let sql = history.last().unwrap();
-
+        // lifetime hacks - Remove if you can
+        // We know the use of sql and conn do not exceed the underlying call to fetch
+        // sqlx if wants to hold the borrow for much longer than what is needed.
+        // This hack prevents the borrow from exceeding the life of this call
         let sql_len = sql.len();
         let sqlp = sql.as_ptr();
         let sql_hack: &[u8] = unsafe { std::slice::from_raw_parts(sqlp, sql_len) };
         let sql: &str = std::str::from_utf8(sql_hack).unwrap();
+        let exec_ptr: *const &C = &exec;
+        let exec_hack: &mut C = unsafe { *(exec_ptr as *mut &mut C) };
 
-        // Run the query
-        let query: Query<DB, <DB as HasArguments>::Arguments> =
-            sqlx::query_with(sql, args.unwrap());
-        let row = query.fetch_one(exec).await?;
+        let rows = exec_hack.fetch_rows(sql, args.unwrap()).await?;
+        let row = rows.get(0).unwrap();
         let count: i64 = row.try_get(0)?;
         Ok(count as u64)
     }
 
     /// Executes the query in the database returning the results
-    pub async fn run<'q, 'e, E>(&'q self, exec: E) -> Result<Vec<DbState<T>>>
+    pub async fn run<'q, 'c, C>(&'q self, exec: &'c C) -> Result<Vec<DbState<T>>>
     where
         'schema: 'args,
-        E: sqlx::Executor<'e, Database = DB>,
+        C: 'schema,
+        C: Connection<DB>,
         <DB as HasArguments<'schema>>::Arguments: IntoArguments<'args, DB>,
         DB: DbParam + DbColumnWriter + DbLimitSkipWriter,
         <T as HasSchema>::Schema: TableInfo + TableColumns<DB>,
@@ -248,21 +248,19 @@ where
             build_tail(self),
         ]);
 
-        // lifetime hack
-        // We know the SQL string is keep around until after execution is complete.
-        // let mut history = self.history.borrow_mut();
-        // history.push(sql);
-        // let sql = history.last().unwrap();
+        // lifetime hacks - Remove if you can
+        // We know the use of sql and conn do not exceed the underlying call to fetch
+        // sqlx if wants to hold the borrow for much longer than what is needed.
+        // This hack prevents the borrow from exceeding the life of this call
         let sql_len = sql.len();
         let sqlp = sql.as_ptr();
         let sql_hack: &[u8] = unsafe { std::slice::from_raw_parts(sqlp, sql_len) };
         let sql: &str = std::str::from_utf8(sql_hack).unwrap();
+        let exec_ptr: *const &C = &exec;
+        let exec_hack: &mut C = unsafe { *(exec_ptr as *mut &mut C) };
 
-        // Run the query
-        let q: QueryAs<DB, T, <DB as HasArguments>::Arguments> =
-            sqlx::query_as_with(sql, args.unwrap());
-        let data = q
-            .fetch_all(exec)
+        let data = exec_hack
+            .fetch_all(sql, args.unwrap())
             .await?
             .drain(..)
             .map(|d| DbState::db_loaded(d))

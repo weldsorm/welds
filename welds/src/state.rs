@@ -1,3 +1,4 @@
+use crate::connection::Connection;
 use crate::errors::Result;
 use crate::query::clause::DbParam;
 use crate::query::{delete, insert, update};
@@ -59,26 +60,23 @@ impl<T> DbState<T> {
 
     /// Saves the inner T to the database. Results in an insert or update if needed. If no change
     /// has been detected on the inner T, No operation will occur
-    pub async fn save<'q, 'schema, 'args, 'e, E, DB>(&'q mut self, exec: &'e mut E) -> Result<()>
+    pub async fn save<'r, 'args, C, DB>(&'r mut self, conn: &'r C) -> Result<()>
     where
-        E: 'e,
-        'q: 'args,
-        'schema: 'args,
-        T: WriteToArgs<DB> + HasSchema + for<'r> sqlx::FromRow<'r, DB::Row>,
-        &'e mut E: sqlx::Executor<'e, Database = DB>,
+        T: WriteToArgs<DB> + HasSchema + for<'fr> sqlx::FromRow<'fr, DB::Row>,
         DB: sqlx::Database + DbParam + DbInsertWriter + DbColumnWriter,
-        <DB as HasArguments<'schema>>::Arguments: IntoArguments<'args, DB>,
+        <DB as HasArguments<'r>>::Arguments: IntoArguments<'args, DB>,
         <T as HasSchema>::Schema: TableInfo + TableColumns<DB>,
+        C: Connection<DB>,
     {
         match self.status {
             DbStatus::NotModified => {}
             DbStatus::Edited => {
                 self.sql_buff = String::default();
-                update::update_one(&mut self.sql_buff, &self.inner, exec).await?;
+                update::update_one(&mut self.sql_buff, &self.inner, conn).await?;
             }
             DbStatus::NotInDatabase => {
                 self.sql_buff = String::default();
-                insert::insert_one(&mut self.sql_buff, &mut self.inner, exec).await?;
+                insert::insert_one(&mut self.sql_buff, &mut self.inner, conn).await?;
             }
         }
         self.status = DbStatus::NotModified;
@@ -86,25 +84,23 @@ impl<T> DbState<T> {
     }
 
     /// Removes the inner T from the database. If T is not in the database no operation will occur
-    pub async fn delete<'q, 'schema, 'args, 'e, E, DB>(&'q mut self, exec: &'e mut E) -> Result<()>
+    pub async fn delete<'r, 'args, C, DB>(&'r mut self, conn: &'r C) -> Result<()>
     where
-        E: 'e,
-        'q: 'args,
-        'schema: 'args,
-        T: WriteToArgs<DB> + HasSchema + for<'r> sqlx::FromRow<'r, DB::Row>,
-        &'e mut E: sqlx::Executor<'e, Database = DB>,
+        'r: 'args,
+        T: WriteToArgs<DB> + HasSchema,
         DB: sqlx::Database + DbParam + DbInsertWriter + DbColumnWriter,
-        <DB as HasArguments<'schema>>::Arguments: IntoArguments<'args, DB>,
+        C: Connection<DB>,
+        <DB as HasArguments<'r>>::Arguments: IntoArguments<'args, DB>,
         <T as HasSchema>::Schema: TableInfo + TableColumns<DB>,
     {
         match self.status {
             DbStatus::NotModified => {
                 self.sql_buff = String::default();
-                delete::delete_one(&mut self.sql_buff, &self.inner, exec).await?;
+                delete::delete_one(&mut self.sql_buff, &self.inner, conn).await?;
             }
             DbStatus::Edited => {
                 self.sql_buff = String::default();
-                delete::delete_one(&mut self.sql_buff, &self.inner, exec).await?;
+                delete::delete_one(&mut self.sql_buff, &self.inner, conn).await?;
             }
             DbStatus::NotInDatabase => {}
         }

@@ -5,26 +5,26 @@ pub mod generators;
 use crate::errors::{Result, WeldsError};
 use config::DbProvider;
 use std::path::PathBuf;
+use welds::connection::AnyPool;
 use welds::table::TableIdent;
 
 pub async fn update(schema_path: PathBuf, identifier: Option<String>) -> Result<()> {
-    use welds::database::Pool;
     use welds::detect::find_tables;
     let identifier = identifier.as_ref().map(|x| TableIdent::parse(x));
-    let unknown_pool = welds::database::connect().await?;
+    let unknown_pool = AnyPool::connect().await?;
 
     let provider = match unknown_pool {
-        Pool::Postgres(_) => DbProvider::Postgres,
-        Pool::MySql(_) => DbProvider::Mysql,
-        Pool::Mssql(_) => DbProvider::Mssql,
-        Pool::Sqlite(_) => DbProvider::Sqlite,
+        AnyPool::Postgres(_) => DbProvider::Postgres,
+        AnyPool::MySql(_) => DbProvider::Mysql,
+        AnyPool::Mssql(_) => DbProvider::Mssql,
+        AnyPool::Sqlite(_) => DbProvider::Sqlite,
     };
 
     let mut tables = match unknown_pool {
-        Pool::Postgres(conn) => find_tables(&conn).await?,
-        Pool::Mssql(conn) => find_tables(&conn).await?,
-        Pool::MySql(conn) => find_tables(&conn).await?,
-        Pool::Sqlite(conn) => find_tables(&conn).await?,
+        AnyPool::Postgres(conn) => find_tables(&conn).await?,
+        AnyPool::Mssql(conn) => find_tables(&conn).await?,
+        AnyPool::MySql(conn) => find_tables(&conn).await?,
+        AnyPool::Sqlite(conn) => find_tables(&conn).await?,
     };
 
     let mut conf_def = config::read(&schema_path).unwrap_or_default();
@@ -100,7 +100,7 @@ fn is_project_path(path: &PathBuf) -> bool {
 
 /// tests the underlying database connection set with DATABASE_URL
 pub async fn test_connection() -> Result<()> {
-    let result = welds::database::connect().await;
+    let result = AnyPool::connect().await;
     match result {
         Ok(_) => {
             println!("Database connected successfully");

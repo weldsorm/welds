@@ -2,6 +2,8 @@ use postgres_test::models::enums::Color;
 use postgres_test::models::order::Order;
 use postgres_test::models::other::Other;
 use postgres_test::models::product::Product;
+use sqlx::Postgres;
+use welds::connection::Pool;
 
 #[derive(Default, Debug, Clone, sqlx::FromRow)]
 pub struct Count {
@@ -9,14 +11,22 @@ pub struct Count {
 }
 
 #[test]
+fn should_be_able_to_connect() {
+    async_std::task::block_on(async {
+        let sqlx_conn = testlib::postgres::conn().await.unwrap();
+        let conn: Pool<Postgres> = sqlx_conn.into();
+        assert!(!conn.as_sqlx_pool().is_closed());
+    })
+}
+
+#[test]
 fn should_be_able_to_read_all_products() {
     async_std::task::block_on(async {
-        let conn = testlib::postgres::conn().await.unwrap();
-        let pool: welds::database::Pool = conn.into();
-        let conn = pool.as_postgres().unwrap();
+        let sqlx_conn = testlib::postgres::conn().await.unwrap();
+        let conn: Pool<Postgres> = sqlx_conn.into();
         let q = Product::all();
         eprintln!("SQL: {}", q.to_sql());
-        let all = q.run(conn).await.unwrap();
+        let all = q.run(&conn).await.unwrap();
         assert_eq!(all.len(), 6, "Unexpected number of rows returned");
     })
 }
@@ -24,12 +34,11 @@ fn should_be_able_to_read_all_products() {
 #[test]
 fn should_be_able_to_filter_on_equal() {
     async_std::task::block_on(async {
-        let conn = testlib::postgres::conn().await.unwrap();
-        let pool: welds::database::Pool = conn.into();
-        let conn = pool.as_postgres().unwrap();
+        let sqlx_conn = testlib::postgres::conn().await.unwrap();
+        let conn: Pool<Postgres> = sqlx_conn.into();
         let q = Product::where_col(|x| x.price_1.equal(1.10));
         eprintln!("SQL: {}", q.to_sql());
-        let just_horse = q.run(conn).await.unwrap();
+        let just_horse = q.run(&conn).await.unwrap();
         assert_eq!(
             just_horse.len(),
             1,
@@ -41,12 +50,11 @@ fn should_be_able_to_filter_on_equal() {
 #[test]
 fn should_be_able_to_filter_on_lt() {
     async_std::task::block_on(async {
-        let conn = testlib::postgres::conn().await.unwrap();
-        let pool: welds::database::Pool = conn.into();
-        let conn = pool.as_postgres().unwrap();
+        let sqlx_conn = testlib::postgres::conn().await.unwrap();
+        let conn: Pool<Postgres> = sqlx_conn.into();
         let q = Product::where_col(|x| x.price_1.lt(3.00));
         eprintln!("SQL: {}", q.to_sql());
-        let data = q.run(conn).await.unwrap();
+        let data = q.run(&conn).await.unwrap();
         assert_eq!(data.len(), 2, "Expected horse and dog",);
     })
 }
@@ -54,12 +62,11 @@ fn should_be_able_to_filter_on_lt() {
 #[test]
 fn should_be_able_to_filter_on_lte() {
     async_std::task::block_on(async {
-        let conn = testlib::postgres::conn().await.unwrap();
-        let pool: welds::database::Pool = conn.into();
-        let conn = pool.as_postgres().unwrap();
+        let sqlx_conn = testlib::postgres::conn().await.unwrap();
+        let conn: Pool<Postgres> = sqlx_conn.into();
         let q = Product::where_col(|x| x.price_1.lte(2.10));
         eprintln!("SQL: {}", q.to_sql());
-        let data = q.run(conn).await.unwrap();
+        let data = q.run(&conn).await.unwrap();
         assert_eq!(data.len(), 2, "Expected horse and dog",);
     })
 }
@@ -67,18 +74,17 @@ fn should_be_able_to_filter_on_lte() {
 #[test]
 fn should_be_able_to_filter_with_nulls() {
     async_std::task::block_on(async {
-        let conn = testlib::postgres::conn().await.unwrap();
-        let pool: welds::database::Pool = conn.into();
-        let conn = pool.as_postgres().unwrap();
+        let sqlx_conn = testlib::postgres::conn().await.unwrap();
+        let conn: Pool<Postgres> = sqlx_conn.into();
         // is null
         let q1 = Product::where_col(|x| x.price_1.equal(None));
         eprintln!("SQL_1: {}", q1.to_sql());
-        let data1 = q1.run(conn).await.unwrap();
+        let data1 = q1.run(&conn).await.unwrap();
         assert_eq!(data1.len(), 0, "Expected All",);
         // is not null
         let q1 = Product::where_col(|x| x.price_1.not_equal(None));
         eprintln!("SQL_2: {}", q1.to_sql());
-        let data1 = q1.run(conn).await.unwrap();
+        let data1 = q1.run(&conn).await.unwrap();
         assert_eq!(data1.len(), 6, "Expected All",);
     })
 }
@@ -86,12 +92,11 @@ fn should_be_able_to_filter_with_nulls() {
 #[test]
 fn should_be_able_to_count_in_sql() {
     async_std::task::block_on(async {
-        let conn = testlib::postgres::conn().await.unwrap();
-        let pool: welds::database::Pool = conn.into();
-        let conn = pool.as_postgres().unwrap();
+        let sqlx_conn = testlib::postgres::conn().await.unwrap();
+        let conn: Pool<Postgres> = sqlx_conn.into();
         let q = Product::where_col(|x| x.price_1.lte(2.10));
         eprintln!("SQL: {}", q.to_sql());
-        let count = q.count(conn).await.unwrap();
+        let count = q.count(&conn).await.unwrap();
         assert_eq!(count, 2,);
     })
 }
@@ -99,12 +104,11 @@ fn should_be_able_to_count_in_sql() {
 #[test]
 fn should_be_able_to_limit_results_in_sql() {
     async_std::task::block_on(async {
-        let conn = testlib::postgres::conn().await.unwrap();
-        let pool: welds::database::Pool = conn.into();
-        let conn = pool.as_postgres().unwrap();
+        let sqlx_conn = testlib::postgres::conn().await.unwrap();
+        let conn: Pool<Postgres> = sqlx_conn.into();
         let q = Product::all().limit(2).offset(1);
         eprintln!("SQL: {}", q.to_sql());
-        let count = q.run(conn).await.unwrap().len();
+        let count = q.run(&conn).await.unwrap().len();
         assert_eq!(count, 2);
     })
 }
@@ -112,12 +116,11 @@ fn should_be_able_to_limit_results_in_sql() {
 #[test]
 fn should_be_able_to_order_by_id() {
     async_std::task::block_on(async {
-        let conn = testlib::postgres::conn().await.unwrap();
-        let pool: welds::database::Pool = conn.into();
-        let conn = pool.as_postgres().unwrap();
+        let sqlx_conn = testlib::postgres::conn().await.unwrap();
+        let conn: Pool<Postgres> = sqlx_conn.into();
         let q = Product::all().order_by_asc(|x| x.product_id);
         eprintln!("SQL: {}", q.to_sql());
-        let all = q.run(conn).await.unwrap();
+        let all = q.run(&conn).await.unwrap();
         let ids: Vec<i32> = all.iter().map(|x| x.product_id).collect();
         let mut ids_sorted = ids.clone();
         ids_sorted.sort();
@@ -128,9 +131,8 @@ fn should_be_able_to_order_by_id() {
 #[test]
 fn should_be_able_to_update_a_product() {
     async_std::task::block_on(async {
-        let conn = testlib::postgres::conn().await.unwrap();
-        let pool: welds::database::Pool = conn.into();
-        let conn = pool.as_postgres().unwrap();
+        let sqlx_conn = testlib::postgres::conn().await.unwrap();
+        let conn: Pool<Postgres> = sqlx_conn.into();
         let mut trans = conn.begin().await.unwrap();
 
         let q = Product::all().limit(1);
@@ -151,9 +153,8 @@ fn should_be_able_to_update_a_product() {
 #[test]
 fn should_be_able_to_create_a_new_product() {
     async_std::task::block_on(async {
-        let conn = testlib::postgres::conn().await.unwrap();
-        let pool: welds::database::Pool = conn.into();
-        let conn = pool.as_postgres().unwrap();
+        let sqlx_conn = testlib::postgres::conn().await.unwrap();
+        let conn: Pool<Postgres> = sqlx_conn.into();
         let mut trans = conn.begin().await.unwrap();
 
         let mut p1 = Product::new();
@@ -175,9 +176,8 @@ fn should_be_able_to_create_a_new_product() {
 fn should_be_able_to_drop_down_to_sqlx() {
     async_std::task::block_on(async {
         //setup
-        let conn = testlib::postgres::conn().await.unwrap();
-        let pool: welds::database::Pool = conn.into();
-        let conn = pool.as_postgres().unwrap();
+        let sqlx_conn = testlib::postgres::conn().await.unwrap();
+        let conn: Pool<Postgres> = sqlx_conn.into();
         // Build some args to send to the database
         use sqlx::{postgres::PgArguments, Arguments};
         let mut args: PgArguments = Default::default();
@@ -185,7 +185,7 @@ fn should_be_able_to_drop_down_to_sqlx() {
         // Go run a query from the database.
         let sql = "SELECT * FROM products where product_id > $1";
         let all_but_one: Vec<Product> = sqlx::query_as_with(sql, args)
-            .fetch_all(conn)
+            .fetch_all(conn.as_sqlx_pool())
             .await
             .unwrap();
         assert_eq!(all_but_one.len(), 5);
@@ -196,15 +196,14 @@ fn should_be_able_to_drop_down_to_sqlx() {
 fn should_be_able_to_run_raw_sql() {
     async_std::task::block_on(async {
         //setup
-        let conn = testlib::postgres::conn().await.unwrap();
-        let pool: welds::database::Pool = conn.into();
-        let conn = pool.as_postgres().unwrap();
+        let sqlx_conn = testlib::postgres::conn().await.unwrap();
+        let conn: Pool<Postgres> = sqlx_conn.into();
 
         // Go run a query from the database.
         let sql = "SELECT * FROM products";
 
         let args = sqlx::postgres::PgArguments::default();
-        let all = Product::from_raw_sql(sql, args, conn).await.unwrap();
+        let all = Product::from_raw_sql(sql, args, &conn).await.unwrap();
 
         assert_eq!(all.len(), 6);
     })
@@ -213,9 +212,8 @@ fn should_be_able_to_run_raw_sql() {
 #[test]
 fn should_be_able_to_crud_orders() {
     async_std::task::block_on(async {
-        let conn = testlib::postgres::conn().await.unwrap();
-        let pool: welds::database::Pool = conn.into();
-        let conn = pool.as_postgres().unwrap();
+        let sqlx_conn = testlib::postgres::conn().await.unwrap();
+        let conn: Pool<Postgres> = sqlx_conn.into();
         let mut trans = conn.begin().await.unwrap();
         let mut o = Order::new();
         o.quantity = Some(9942);
@@ -236,15 +234,15 @@ fn should_be_able_to_crud_orders() {
         assert_eq!(created1.quantity, Some(9942));
         assert_eq!(o.id, created2.id);
         assert_eq!(created2.quantity, Some(9942));
+        trans.rollback().await.unwrap();
     })
 }
 
 #[test]
 fn should_be_able_to_delete_a_product() {
     async_std::task::block_on(async {
-        let conn = testlib::postgres::conn().await.unwrap();
-        let pool: welds::database::Pool = conn.into();
-        let conn = pool.as_postgres().unwrap();
+        let sqlx_conn = testlib::postgres::conn().await.unwrap();
+        let conn: Pool<Postgres> = sqlx_conn.into();
         let mut trans = conn.begin().await.unwrap();
 
         let id = 6;
@@ -261,9 +259,8 @@ fn should_be_able_to_delete_a_product() {
 #[test]
 fn should_be_able_to_find_like() {
     async_std::task::block_on(async {
-        let conn = testlib::postgres::conn().await.unwrap();
-        let pool: welds::database::Pool = conn.into();
-        let conn = pool.as_postgres().unwrap();
+        let sqlx_conn = testlib::postgres::conn().await.unwrap();
+        let conn: Pool<Postgres> = sqlx_conn.into();
         //build the queries
         let like = Product::where_col(|x| x.name.like("%Horse%"));
         let ilike = Product::where_col(|x| x.name.ilike("%Horse%"));
@@ -271,10 +268,10 @@ fn should_be_able_to_find_like() {
         let not_like = Product::where_col(|x| x.name.not_like("%Horse%"));
         let not_ilike = Product::where_col(|x| x.name.not_ilike("%Horse%"));
         //run the queries
-        let like = like.run(conn).await.unwrap();
-        let ilike = ilike.run(conn).await.unwrap();
-        let not_like = not_like.run(conn).await.unwrap();
-        let not_ilike = not_ilike.run(conn).await.unwrap();
+        let like = like.run(&conn).await.unwrap();
+        let ilike = ilike.run(&conn).await.unwrap();
+        let not_like = not_like.run(&conn).await.unwrap();
+        let not_ilike = not_ilike.run(&conn).await.unwrap();
         //validate data
         assert_eq!(like.len(), 0, "like");
         assert_eq!(ilike.len(), 1, "ilike");
@@ -286,11 +283,10 @@ fn should_be_able_to_find_like() {
 #[test]
 fn should_be_able_to_filter_on_relations() {
     async_std::task::block_on(async {
-        let conn = testlib::postgres::conn().await.unwrap();
-        let pool: welds::database::Pool = conn.into();
-        let conn = pool.as_postgres().unwrap();
+        let sqlx_conn = testlib::postgres::conn().await.unwrap();
+        let conn: Pool<Postgres> = sqlx_conn.into();
         let orders = Product::where_col(|x| x.name.like("%horse%")).map_query(|p| p.order);
-        let orders = orders.run(conn).await.unwrap();
+        let orders = orders.run(&conn).await.unwrap();
         assert_eq!(2, orders.len());
     })
 }
@@ -298,13 +294,12 @@ fn should_be_able_to_filter_on_relations() {
 #[test]
 fn should_be_able_to_filter_on_relations2() {
     async_std::task::block_on(async {
-        let conn = testlib::postgres::conn().await.unwrap();
-        let pool: welds::database::Pool = conn.into();
-        let conn = pool.as_postgres().unwrap();
+        let sqlx_conn = testlib::postgres::conn().await.unwrap();
+        let conn: Pool<Postgres> = sqlx_conn.into();
         let product_query = Order::all().map_query(|p| p.product);
         // Vec<_> would be simpler, but want to hard code to type for test.
         use welds::state::DbState;
-        let products: Vec<DbState<Product>> = product_query.run(conn).await.unwrap();
+        let products: Vec<DbState<Product>> = product_query.run(&conn).await.unwrap();
         assert_eq!(2, products.len());
     })
 }
@@ -312,15 +307,14 @@ fn should_be_able_to_filter_on_relations2() {
 #[test]
 fn should_be_able_to_filter_with_relations() {
     async_std::task::block_on(async {
-        let conn = testlib::postgres::conn().await.unwrap();
-        let pool: welds::database::Pool = conn.into();
-        let conn = pool.as_postgres().unwrap();
+        let sqlx_conn = testlib::postgres::conn().await.unwrap();
+        let conn: Pool<Postgres> = sqlx_conn.into();
         let filter1 = Product::where_col(|x| x.product_id.equal(1));
         let mut order_query = Order::all();
         order_query = order_query.where_relation(|o| o.product, filter1);
         // Vec<_> would be simpler, but want to hard code to type for test.
         use welds::state::DbState;
-        let orders: Vec<DbState<Order>> = order_query.run(conn).await.unwrap();
+        let orders: Vec<DbState<Order>> = order_query.run(&conn).await.unwrap();
         assert_eq!(2, orders.len());
     })
 }
@@ -328,15 +322,14 @@ fn should_be_able_to_filter_with_relations() {
 #[test]
 fn should_be_able_to_filter_with_relations2() {
     async_std::task::block_on(async {
-        let conn = testlib::postgres::conn().await.unwrap();
-        let pool: welds::database::Pool = conn.into();
-        let conn = pool.as_postgres().unwrap();
+        let sqlx_conn = testlib::postgres::conn().await.unwrap();
+        let conn: Pool<Postgres> = sqlx_conn.into();
         let filter1 = Order::where_col(|x| x.id.lte(3));
         let mut product_query = Product::all();
         product_query = product_query.where_relation(|p| p.order, filter1);
         // Vec<_> would be simpler, but want to hard code to type for test.
         use welds::state::DbState;
-        let orders: Vec<DbState<Product>> = product_query.run(conn).await.unwrap();
+        let orders: Vec<DbState<Product>> = product_query.run(&conn).await.unwrap();
         assert_eq!(2, orders.len());
     })
 }
@@ -344,9 +337,8 @@ fn should_be_able_to_filter_with_relations2() {
 #[test]
 fn should_be_able_to_scan_for_all_tables() {
     async_std::task::block_on(async {
-        let conn = testlib::postgres::conn().await.unwrap();
-        let pool: welds::database::Pool = conn.into();
-        let conn = pool.as_postgres().unwrap();
+        let sqlx_conn = testlib::postgres::conn().await.unwrap();
+        let conn: Pool<Postgres> = sqlx_conn.into();
         let tables = welds::detect::find_tables(&conn).await.unwrap();
         assert_eq!(3, tables.len());
     })
@@ -355,9 +347,8 @@ fn should_be_able_to_scan_for_all_tables() {
 #[test]
 fn should_be_able_to_save_load_obj_with_db_enum_type() {
     async_std::task::block_on(async {
-        let conn = testlib::postgres::conn().await.unwrap();
-        let pool: welds::database::Pool = conn.into();
-        let conn = pool.as_postgres().unwrap();
+        let sqlx_conn = testlib::postgres::conn().await.unwrap();
+        let conn: Pool<Postgres> = sqlx_conn.into();
         let mut trans = conn.begin().await.unwrap();
 
         let start_count = Other::all().count(&mut trans).await.unwrap();

@@ -1,3 +1,4 @@
+use crate::connection::Connection;
 use crate::errors::Result;
 use crate::table::{ColumnDef, RelationDef, TableDef, TableIdent};
 use sqlx::database::HasArguments;
@@ -9,22 +10,23 @@ use table_scan::{FkScanRow, FkScanTableCol, TableScan, TableScanRow};
 
 /// Returns a list of all user defined tables in the database
 /// requires feature `detect`
-pub async fn find_tables<'i, 's, 'e, 'ee, 'args, DB, E>(exec: &'ee E) -> Result<Vec<TableDef>>
+pub async fn find_tables<'c, 'args, DB, C>(conn: &'c C) -> Result<Vec<TableDef>>
 where
-    &'ee E: sqlx::Executor<'e, Database = DB>,
+    'c: 'args,
+    C: Connection<DB>,
     <DB as HasArguments<'args>>::Arguments: IntoArguments<'args, DB>,
     DB: sqlx::Database + TableScan,
-    String: sqlx::Type<DB> + for<'r> sqlx::Decode<'r, DB>,
     i32: sqlx::Type<DB> + for<'r> sqlx::Decode<'r, DB>,
-    Option<String>: sqlx::Type<DB> + for<'r> sqlx::Decode<'r, DB>,
     usize: sqlx::ColumnIndex<<DB as sqlx::Database>::Row>,
+    String: sqlx::Type<DB> + for<'r> sqlx::Decode<'r, DB>,
+    Option<String>: sqlx::Type<DB> + for<'r> sqlx::Decode<'r, DB>,
 {
     let sql = DB::table_scan_sql();
-    let q = sqlx::query(sql);
-    let rows: Vec<_> = q
-        .fetch_all(exec)
-        .await?
-        .iter()
+    let args: <DB as HasArguments>::Arguments = Default::default();
+    let mut raw_rows = conn.fetch_rows(sql, args).await?;
+
+    let rows: Vec<_> = raw_rows
+        .drain(..)
         .map(|r| TableScanRow {
             schema: r.get(0),
             table_name: r.get(1),
@@ -61,11 +63,11 @@ where
 
     // Build a list of all the FKs
     let sql = DB::fk_scan_sql();
-    let q = sqlx::query(sql);
-    let fks: Vec<_> = q
-        .fetch_all(exec)
-        .await?
-        .iter()
+    let args: <DB as HasArguments>::Arguments = Default::default();
+    let mut fks_raw = conn.fetch_rows(sql, args).await?;
+
+    let fks: Vec<_> = fks_raw
+        .drain(..)
         .map(|r| FkScanRow {
             me: FkScanTableCol::new(r.get(0), r.get(1), r.get(2)),
             other: FkScanTableCol::new(r.get(3), r.get(4), r.get(5)),

@@ -4,11 +4,22 @@
   <h3>An async ORM written in rust using the sqlx framework.</h3>
 </div>
 
+
+
 # Welds - CLI
 
 Welds is an ORM for Rust. 
-This cli is tool to help use welds.
-It is used to generate model struct definitions.
+
+This crate is a command line tool to help you use welds.
+
+It is used to generate rust code for your struct definitions.
+
+You point it at your database and out comes a bunch of rust files for all the tables in your database.
+
+# Install
+```bash
+cargo install welds-cli --version '0.1.1-alpha'
+```
 
 # How to use
 

@@ -6,21 +6,21 @@ use std::collections::HashSet;
 
 pub(crate) fn write(infos: &Info) -> TokenStream {
     let pks = infos.pks.as_slice();
-    if pks.len() == 0 {
+    if pks.is_empty() {
         return quote!();
     }
 
-    let id_params: Vec<_> = pks.iter().map(|col| id_param(col)).collect();
+    let id_params: Vec<_> = pks.iter().map(id_param).collect();
     let id_params = quote! { #(#id_params),* };
 
-    let typelist = uniq_type_list(&pks);
-    let encode_types: Vec<_> = typelist.iter().map(|col| encode_type(col)).collect();
+    let typelist = uniq_type_list(pks);
+    let encode_types: Vec<_> = typelist.iter().map(encode_type).collect();
     let encode_types = quote! {#(#encode_types),* };
 
-    let converts: Vec<_> = pks.iter().map(|col| convert(col)).collect();
+    let converts: Vec<_> = pks.iter().map(convert).collect();
     let converts = quote! {#(#converts)* };
 
-    let filters: Vec<_> = pks.iter().map(|col| filter(col)).collect();
+    let filters: Vec<_> = pks.iter().map(filter).collect();
     let filters = quote! {#(#filters)* };
 
     quote! {

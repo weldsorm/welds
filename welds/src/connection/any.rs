@@ -56,7 +56,7 @@ impl AnyPool {
     #[cfg(feature = "sqlite")]
     /// Returns a borrowed Pool if the connection is to a Sqlite database
     /// Otherwise None
-    pub fn as_sqlite<'a>(&'a self) -> Option<&'a Pool<Sqlite>> {
+    pub fn as_sqlite(&self) -> Option<&Pool<Sqlite>> {
         match self {
             AnyPool::Sqlite(inner) => Some(inner),
             _ => None,
@@ -66,7 +66,7 @@ impl AnyPool {
     #[cfg(feature = "mysql")]
     /// Returns a borrowed Pool if the connection is to a MySql database
     /// Otherwise None
-    pub fn as_mysql<'a>(&'a self) -> Option<&'a Pool<MySql>> {
+    pub fn as_mysql(&self) -> Option<&Pool<MySql>> {
         match self {
             AnyPool::MySql(inner) => Some(inner),
             _ => None,
@@ -76,7 +76,7 @@ impl AnyPool {
     #[cfg(feature = "mssql")]
     /// Returns a borrowed Pool if the connection is to a Mssql database
     /// Otherwise None
-    pub fn as_mssql<'a>(&'a self) -> Option<&'a Pool<Mssql>> {
+    pub fn as_mssql(&self) -> Option<&Pool<Mssql>> {
         match self {
             AnyPool::Mssql(inner) => Some(inner),
             _ => None,
@@ -86,7 +86,7 @@ impl AnyPool {
     #[cfg(feature = "postgres")]
     /// Returns a borrowed Pool if the connection is to a Postgres database
     /// Otherwise None
-    pub fn as_postgres<'a>(&'a self) -> Option<&'a Pool<Postgres>> {
+    pub fn as_postgres(&self) -> Option<&Pool<Postgres>> {
         match self {
             AnyPool::Postgres(inner) => Some(inner),
             _ => None,
@@ -103,25 +103,25 @@ impl AnyPool {
     pub async fn connect_with_connection_string(url: &str) -> Result<AnyPool> {
         #[cfg(feature = "postgres")]
         if url.starts_with("postgresql:") {
-            let pool = sqlx::PgPool::connect(&url).await?;
+            let pool = sqlx::PgPool::connect(url).await?;
             return Ok(AnyPool::Postgres(pool.into()));
         }
 
         #[cfg(feature = "mysql")]
         if url.starts_with("mysql:") {
-            let pool = sqlx::MySqlPool::connect(&url).await?;
+            let pool = sqlx::MySqlPool::connect(url).await?;
             return Ok(AnyPool::MySql(pool.into()));
         }
 
         #[cfg(feature = "sqlite")]
         if url.starts_with("sqlite:") {
-            let pool = sqlx::SqlitePool::connect(&url).await?;
+            let pool = sqlx::SqlitePool::connect(url).await?;
             return Ok(AnyPool::Sqlite(pool.into()));
         }
 
         #[cfg(feature = "mssql")]
         if url.starts_with("mssql:") {
-            let pool = sqlx::MssqlPool::connect(&url).await?;
+            let pool = sqlx::MssqlPool::connect(url).await?;
             return Ok(AnyPool::Mssql(pool.into()));
         }
 

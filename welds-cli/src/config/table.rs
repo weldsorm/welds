@@ -2,7 +2,7 @@ use super::{Column, DbProvider, Relation};
 use serde::{Deserialize, Serialize};
 use welds::table::{ColumnDef, DataType, TableDef, TableIdent};
 
-#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
+#[derive(Debug, Eq, PartialEq, Serialize, Deserialize, Clone)]
 pub struct Table {
     pub schema: Option<String>,     // What schema this table belongs to
     pub name: String,               // Table name

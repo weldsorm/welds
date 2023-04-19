@@ -36,7 +36,7 @@ impl Engine {
     }
 }
 
-pub(crate) const ALL: &'static [Engine] = &[
+pub(crate) const ALL: &[Engine] = &[
     #[cfg(feature = "postgres")]
     Engine::Postgres,
     #[cfg(feature = "mysql")]

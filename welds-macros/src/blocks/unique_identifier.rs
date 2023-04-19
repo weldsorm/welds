@@ -13,7 +13,7 @@ pub(crate) fn write(info: &Info) -> TokenStream {
     let parts: Vec<_> = info
         .engines_ident
         .iter()
-        .map(|db| write_for_db(info, db, &pk))
+        .map(|db| write_for_db(info, db, pk))
         .collect();
     quote! { #(#parts)* }
 }

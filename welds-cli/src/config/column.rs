@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use welds::table::ColumnDef;
 
-#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
+#[derive(Debug, Eq, PartialEq, Serialize, Deserialize, Clone)]
 pub struct Column {
     pub db_name: String,
     pub db_type: String,

@@ -14,9 +14,9 @@ impl Relation {
     pub(crate) fn new(list: &MetaList, kind: &'static str) -> Result<Self> {
         let badformat = || {
             if kind == "BelongsTo" {
-                return Err(FORMAT_ERR_BELONGS_TO.to_owned());
+                Err(FORMAT_ERR_BELONGS_TO.to_owned())
             } else {
-                return Err(FORMAT_ERR_HAS_MANY.to_owned());
+                Err(FORMAT_ERR_HAS_MANY.to_owned())
             }
         };
 
@@ -68,10 +68,10 @@ impl Relation {
     }
 }
 
-const FORMAT_ERR_HAS_MANY: &'static str = "Invalid Format For HasMany:
+const FORMAT_ERR_HAS_MANY: &str = "Invalid Format For HasMany:
 HasMany should be in for format of
 [ welds(HasMany(field, struct, foreign_key_str) )]";
 
-const FORMAT_ERR_BELONGS_TO: &'static str = "Invalid Format For BelongsTo:
+const FORMAT_ERR_BELONGS_TO: &str = "Invalid Format For BelongsTo:
 BelongsTo should be in for format of
 [ welds(BelongsTo(field, struct, foreign_key_str) )]";

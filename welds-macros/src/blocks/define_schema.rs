@@ -11,14 +11,14 @@ pub(crate) fn write(info: &Info) -> TokenStream {
         .columns
         .iter()
         .filter(|x| !x.ignore)
-        .map(|col| def_field(col))
+        .map(def_field)
         .collect();
 
     let default_fields: Vec<_> = info
         .columns
         .iter()
         .filter(|x| !x.ignore)
-        .map(|col| default_fields(col))
+        .map(default_fields)
         .collect();
 
     quote! {
@@ -52,7 +52,7 @@ fn def_field(col: &Column) -> TokenStream {
 
 fn get_clause(ty: &syn::Type, nullable: bool) -> TokenStream {
     let clasename = crate::utils::get_clause(ty, nullable);
-    let id = Ident::new(&clasename.as_str(), Span::call_site());
+    let id = Ident::new(clasename.as_str(), Span::call_site());
     quote! { #id }
 }
 

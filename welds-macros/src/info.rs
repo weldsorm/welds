@@ -19,18 +19,18 @@ pub(crate) struct Info {
 
 impl Info {
     pub fn new(ast: &syn::DeriveInput) -> Result<Self> {
-        let engines = attributes::get_engines(&ast);
-        let relations = attributes::get_relations(&ast)?;
-        let defstruct = attributes::get_scructname(&ast);
+        let engines = attributes::get_engines(ast);
+        let relations = attributes::get_relations(ast)?;
+        let defstruct = attributes::get_scructname(ast);
         let schemastruct_name = format!("{}Schema", defstruct);
         let schemastruct = Ident::new(&schemastruct_name, defstruct.span());
         let relations_struct_name = format!("{}Relation", defstruct);
         let relations_struct = Ident::new(&relations_struct_name, defstruct.span());
-        let tablename = attributes::get_tablename(&ast);
-        let schemaname = attributes::get_schemaname(&ast);
-        let columns = attributes::get_columns(&ast);
-        let pks = attributes::get_pks(&ast);
-        let readonly = attributes::get_readonly(&ast);
+        let tablename = attributes::get_tablename(ast);
+        let schemaname = attributes::get_schemaname(ast);
+        let columns = attributes::get_columns(ast);
+        let pks = attributes::get_pks(ast);
+        let readonly = attributes::get_readonly(ast);
 
         let engines_ident = engines
             .iter()

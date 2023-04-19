@@ -30,7 +30,7 @@ pub(crate) fn write(path: &PathBuf, config: &Config) -> Result<()> {
     Ok(())
 }
 
-#[derive(Debug, Default, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Default, Eq, PartialEq, Serialize, Deserialize)]
 pub struct Config {
     pub tables: Vec<Table>,
 }
@@ -59,7 +59,7 @@ impl Config {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub struct Relation {
     pub schema: Option<String>, // What schema this table belongs to
     pub tablename: String,      // Table name
@@ -76,7 +76,7 @@ impl From<&welds::table::RelationDef> for Relation {
     }
 }
 
-#[derive(Debug, PartialEq, Serialize, Deserialize, Clone, Copy)]
+#[derive(Debug, Eq, PartialEq, Serialize, Deserialize, Clone, Copy)]
 pub enum DbProvider {
     Postgres,
     Mysql,

@@ -23,7 +23,7 @@ pub(crate) fn write(info: &Info) -> TokenStream {
             .columns
             .iter()
             .filter(|x| !x.ignore)
-            .map(|col| write_col(col))
+            .map(write_col)
             .collect();
         let fields = quote! { #(#fields)* };
 
@@ -70,5 +70,4 @@ pub(crate) fn write_for_db(info: &Info, db: &Ident, matches: &TokenStream) -> To
     }
 
         }
-    .into()
 }

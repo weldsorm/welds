@@ -5,7 +5,7 @@ use quote::quote;
 pub(crate) fn write(info: &Info) -> TokenStream {
     let identifier = match &info.schemaname {
         Some(s) => format!("{}.{}", s, info.tablename),
-        None => format!("{}", info.tablename),
+        None => info.tablename.to_string(),
     };
     let schema = &info.schemastruct;
 

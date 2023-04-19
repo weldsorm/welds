@@ -50,12 +50,12 @@ pub struct Pool<DB: sqlx::Database> {
 
 impl<DB: sqlx::Database> Pool<DB> {
     /// Return the inner sqlx connection pool
-    pub fn as_sqlx_pool<'a>(&'a self) -> &'a sqlx::pool::Pool<DB> {
+    pub fn as_sqlx_pool(&self) -> &sqlx::pool::Pool<DB> {
         &self.inner
     }
 
     /// Return the inner sqlx connection pool
-    pub async fn begin<'a>(&'a self) -> Result<Transaction<'a, DB>> {
+    pub async fn begin(&self) -> Result<Transaction<DB>> {
         let inner = self.inner.begin().await?;
         let inner = RefCell::new(inner);
         Ok(self::Transaction { inner })

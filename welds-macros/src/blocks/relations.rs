@@ -6,13 +6,13 @@ pub(crate) fn write(infos: &Info) -> TokenStream {
     let defstruct = &infos.defstruct;
     let relations_struct = &infos.relations_struct;
     let relations = infos.relations.as_slice();
-    if relations.len() == 0 {
+    if relations.is_empty() {
         return quote! {};
     }
 
-    let struct_fields: Vec<_> = relations.iter().map(|r| fielddef(r)).collect();
+    let struct_fields: Vec<_> = relations.iter().map(fielddef).collect();
     let struct_fields = quote! { #(#struct_fields), * };
-    let default_fields: Vec<_> = relations.iter().map(|r| defaultdef(r)).collect();
+    let default_fields: Vec<_> = relations.iter().map(defaultdef).collect();
     let default_fields = quote! { #(#default_fields), * };
 
     quote! {

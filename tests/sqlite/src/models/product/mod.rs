@@ -8,7 +8,7 @@ use welds::WeldsModel;
 
 #[derive(Debug, sqlx::FromRow, WeldsModel)]
 #[welds(db(Sqlite))]
-#[welds(table = "products")]
+#[welds(table = "Products")]
 #[welds(HasMany(orders, super::order::Order, "product_id"))]
 pub struct Product {
     #[sqlx(rename = "product_id")]
@@ -19,4 +19,35 @@ pub struct Product {
     pub price1: Option<f32>,
     pub price2: Option<f64>,
     pub active: Option<bool>,
+}
+
+// The bad products are used to test
+// validation structs are not wired up correctly
+
+#[derive(Debug, sqlx::FromRow, WeldsModel)]
+#[welds(db(Sqlite))]
+#[welds(table = "products")]
+pub struct BadProduct1 {
+    #[sqlx(rename = "product_id")]
+    #[welds(primary_key)]
+    pub id: i32,
+    pub name: String,
+    pub description: Option<String>,
+    pub price1: Option<f32>,
+    pub price2: Option<f64>,
+    pub active: Option<bool>,
+}
+
+#[derive(Debug, sqlx::FromRow, WeldsModel)]
+#[welds(db(Sqlite))]
+#[welds(table = "Products")]
+pub struct BadProduct2 {
+    #[sqlx(rename = "product_id")]
+    #[welds(primary_key)]
+    pub id: f64,
+    pub name2: String,
+    pub description: String,
+    //pub price1: Option<f32>,
+    //pub price2: Option<f64>,
+    //pub active: Option<bool>,
 }

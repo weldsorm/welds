@@ -27,7 +27,7 @@ where
     let next_params = NextParam::new::<DB>();
     let writer = InsertWriter::new::<DB>();
 
-    let identifier = <<T as HasSchema>::Schema>::identifier();
+    let identifier = <<T as HasSchema>::Schema>::identifier().join(".");
     let columns = <<T as HasSchema>::Schema as TableColumns<DB>>::columns();
     let pks = <<T as HasSchema>::Schema as TableColumns<DB>>::primary_keys();
 
@@ -41,7 +41,7 @@ where
         }
     }
 
-    let (insert, select) = writer.write(identifier, &colargs, &columns, &pks);
+    let (insert, select) = writer.write(&identifier, &colargs, &columns, &pks);
     let has_select = select.is_some();
 
     *buff = format!("{}{}", insert, select.unwrap_or_default());

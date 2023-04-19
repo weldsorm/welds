@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use welds::table::ColumnDef;
+use welds::detect::ColumnDef;
 
 #[derive(Debug, Eq, PartialEq, Serialize, Deserialize, Clone)]
 pub struct Column {

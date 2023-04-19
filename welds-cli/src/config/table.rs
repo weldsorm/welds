@@ -1,6 +1,7 @@
 use super::{Column, DbProvider, Relation};
 use serde::{Deserialize, Serialize};
-use welds::table::{ColumnDef, DataType, TableDef, TableIdent};
+use welds::detect::{ColumnDef, DataType, TableDef};
+use welds::table::TableIdent;
 
 #[derive(Debug, Eq, PartialEq, Serialize, Deserialize, Clone)]
 pub struct Table {

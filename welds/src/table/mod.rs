@@ -4,17 +4,18 @@ use sqlx::TypeInfo;
 
 pub trait TableInfo {
     /// the unique name (schema + tablename) that identities this database object
-    fn identifier() -> &'static str;
+    fn identifier() -> &'static [&'static str];
 }
 
-#[derive(Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Column {
     name: String,
     dbtype: String,
+    nullable: bool,
 }
 
 impl Column {
-    pub fn new<DB, T>(name: impl Into<String>) -> Self
+    pub fn new<DB, T>(name: impl Into<String>, nullable: bool) -> Self
     where
         DB: sqlx::Database,
         T: sqlx::Type<DB>,
@@ -22,14 +23,17 @@ impl Column {
         Self {
             name: name.into(),
             dbtype: T::type_info().name().to_owned(),
+            nullable,
         }
     }
-
     pub fn name(&self) -> &str {
         self.name.as_str()
     }
     pub fn dbtype(&self) -> &str {
         self.dbtype.as_str()
+    }
+    pub fn nullable(&self) -> bool {
+        self.nullable
     }
 }
 
@@ -59,13 +63,22 @@ pub trait HasSchema {
 }
 
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
-#[cfg(feature = "detect")]
 pub struct TableIdent {
     pub schema: Option<String>,
     pub name: String,
 }
 
-#[cfg(feature = "detect")]
+impl std::fmt::Display for TableIdent {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if let Some(s) = &self.schema {
+            f.write_str(s)?;
+            f.write_str(".")?;
+        }
+        f.write_str(&self.name)?;
+        Ok(())
+    }
+}
+
 impl TableIdent {
     pub fn parse(raw: &str) -> Self {
         let parts: Vec<&str> = raw.split('.').collect();
@@ -80,73 +93,5 @@ impl TableIdent {
     }
     pub fn equals(&self, schema: &Option<String>, name: &str) -> bool {
         &self.schema == schema && self.name == name
-    }
-}
-
-#[cfg(feature = "detect")]
-#[derive(Debug, Clone, Hash, Eq, PartialEq)]
-pub struct ColumnDef {
-    pub name: String,
-    pub ty: String,
-    pub null: bool,
-    pub primary_key: bool,
-    pub updatable: bool,
-}
-
-#[derive(Debug, Clone, Copy, Hash, Eq, PartialEq)]
-#[cfg(feature = "detect")]
-pub enum DataType {
-    Table,
-    View,
-}
-
-#[derive(Debug, Clone, Hash, Eq, PartialEq)]
-#[cfg(feature = "detect")]
-pub struct RelationDef {
-    /// The Other side of this relationship
-    pub other_table: TableIdent,
-    /// this is the foreign_key side column regardless of which side this defines
-    pub foreign_key: String,
-    /// this is the column the fk point to, regardless of which side this defines
-    pub primary_key: String,
-}
-
-#[cfg(feature = "detect")]
-impl RelationDef {
-    pub(crate) fn new(ident: TableIdent, foreign_key: &str, primary_key: &str) -> Self {
-        Self {
-            other_table: ident,
-            foreign_key: foreign_key.to_owned(),
-            primary_key: primary_key.to_owned(),
-        }
-    }
-}
-
-#[derive(Debug, Clone, Hash, Eq, PartialEq)]
-#[cfg(feature = "detect")]
-pub struct TableDef {
-    pub(crate) ident: TableIdent,
-    pub(crate) ty: DataType,
-    pub(crate) columns: Vec<ColumnDef>, // What are the columns on this table
-    pub(crate) has_many: Vec<RelationDef>,
-    pub(crate) belongs_to: Vec<RelationDef>,
-}
-
-#[cfg(feature = "detect")]
-impl TableDef {
-    pub fn ident(&self) -> &TableIdent {
-        &self.ident
-    }
-    pub fn ty(&self) -> DataType {
-        self.ty
-    }
-    pub fn columns(&self) -> &[ColumnDef] {
-        &self.columns
-    }
-    pub fn has_many(&self) -> &[RelationDef] {
-        &self.has_many
-    }
-    pub fn belongs_to(&self) -> &[RelationDef] {
-        &self.belongs_to
     }
 }

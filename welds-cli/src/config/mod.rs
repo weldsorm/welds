@@ -36,14 +36,14 @@ pub struct Config {
 }
 
 impl Config {
-    pub(crate) fn remove_missing(&mut self, tables: &[welds::table::TableDef]) {
+    pub(crate) fn remove_missing(&mut self, tables: &[welds::detect::TableDef]) {
         let idents: Vec<_> = tables.iter().map(|x| x.ident()).collect();
         // Remove Deleted tables
         self.tables
             .retain(|x| x.manual_update || idents.contains(&&x.ident()));
     }
 
-    pub(crate) fn add_update(&mut self, tables: &[welds::table::TableDef], provider: DbProvider) {
+    pub(crate) fn add_update(&mut self, tables: &[welds::detect::TableDef], provider: DbProvider) {
         // Build a list of new columns to add.
         let mut to_add = Vec::default();
         // Add or update
@@ -66,8 +66,8 @@ pub struct Relation {
     pub foreign_key: String,    // The foreign_key column
 }
 
-impl From<&welds::table::RelationDef> for Relation {
-    fn from(value: &welds::table::RelationDef) -> Self {
+impl From<&welds::detect::RelationDef> for Relation {
+    fn from(value: &welds::detect::RelationDef) -> Self {
         Relation {
             schema: value.other_table.schema.clone(),
             tablename: value.other_table.name.to_owned(),

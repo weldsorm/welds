@@ -60,6 +60,7 @@ impl<T> DbState<T> {
 
     /// Saves the inner T to the database. Results in an insert or update if needed. If no change
     /// has been detected on the inner T, No operation will occur
+    ///
     pub async fn save<'r, 'args, C, DB>(&'r mut self, conn: &'r C) -> Result<()>
     where
         T: WriteToArgs<DB> + HasSchema + for<'fr> sqlx::FromRow<'fr, DB::Row>,

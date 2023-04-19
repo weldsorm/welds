@@ -1,4 +1,4 @@
-use mysql_test::models::product::Product;
+use mysql_test::models::product::{BadProductColumns, BadProductMissingTable, Product};
 use sqlx::MySql;
 use welds::connection::Pool;
 
@@ -192,5 +192,35 @@ fn should_be_able_to_scan_for_all_tables() {
         let conn: Pool<MySql> = sqlx_conn.into();
         let tables = welds::detect::find_tables(&conn).await.unwrap();
         assert_eq!(2, tables.len());
+    })
+}
+
+#[test]
+fn a_model_should_be_able_to_verify_its_schema_missing_table() {
+    async_std::task::block_on(async {
+        let sqlx_conn = testlib::mysql::conn().await.unwrap();
+        let conn: Pool<MySql> = sqlx_conn.into();
+        let issues = welds::check::schema::<BadProductMissingTable, _, _>(&conn)
+            .await
+            .unwrap();
+        assert_eq!(issues.len(), 1);
+        let issue = &issues[0];
+        assert_eq!(issue.kind, welds::check::Kind::MissingTable);
+    })
+}
+
+#[test]
+fn a_model_should_be_able_to_verify_its_schema_missing_column() {
+    async_std::task::block_on(async {
+        let sqlx_conn = testlib::mysql::conn().await.unwrap();
+        let conn: Pool<MySql> = sqlx_conn.into();
+        let issues = welds::check::schema::<BadProductColumns, _, _>(&conn)
+            .await
+            .unwrap();
+        // NOTE: a column name changed so it is added on the model and removed in the db giving two warnings
+        for issue in &issues {
+            eprintln!("{}", issue);
+        }
+        assert_eq!(issues.len(), 7);
     })
 }

@@ -3,6 +3,14 @@ use async_trait::async_trait;
 use sqlx::database::HasArguments;
 use std::cell::RefCell;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DbProvider {
+    MySql,
+    Mssql,
+    Postgres,
+    Sqlite,
+}
+
 #[async_trait(?Send)]
 pub trait Connection<DB: sqlx::Database> {
     async fn execute<'a>(
@@ -41,11 +49,24 @@ pub trait Connection<DB: sqlx::Database> {
         &'a self,
         statments: Vec<(&'a str, <DB as HasArguments<'a>>::Arguments)>,
     ) -> Result<Vec<<DB as sqlx::Database>::Row>>;
+
+    /// Returns what type of DB you are connected with
+    fn provider(&self) -> DbProvider;
 }
 
-#[derive(Clone)]
 pub struct Pool<DB: sqlx::Database> {
     inner: sqlx::pool::Pool<DB>,
+}
+
+impl<DB> Clone for Pool<DB>
+where
+    DB: sqlx::Database + Clone,
+{
+    fn clone(&self) -> Self {
+        Pool {
+            inner: self.inner.clone(),
+        }
+    }
 }
 
 impl<DB: sqlx::Database> Pool<DB> {

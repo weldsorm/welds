@@ -1956,9 +1956,11 @@ dependencies = [
 name = "welds"
 version = "0.1.4"
 dependencies = [
+ "anyhow",
  "async-std",
  "async-trait",
  "sqlx",
+ "thiserror",
  "welds",
  "welds-macros",
 ]

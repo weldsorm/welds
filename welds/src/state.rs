@@ -1,10 +1,10 @@
 use crate::connection::Connection;
-use crate::errors::Result;
 use crate::query::clause::DbParam;
 use crate::query::{delete, insert, update};
 use crate::table::{HasSchema, TableColumns, TableInfo, WriteToArgs};
 use crate::writers::column::DbColumnWriter;
 use crate::writers::insert::DbInsertWriter;
+use anyhow::Result;
 use sqlx::database::HasArguments;
 use sqlx::IntoArguments;
 use std::marker::PhantomData;

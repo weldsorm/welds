@@ -1,7 +1,6 @@
 use super::clause::{DbParam, NextParam};
 use crate::alias::TableAlias;
 use crate::connection::Connection;
-use crate::errors::Result;
 use crate::query::clause::exists::ExistIn;
 use crate::query::clause::{AsFieldName, ClauseAdder, OrderBy};
 use crate::relations::{HasRelations, Relationship};
@@ -10,6 +9,7 @@ use crate::table::{HasSchema, TableColumns, TableInfo, UniqueIdentifier};
 use crate::writers::column::{ColumnWriter, DbColumnWriter};
 use crate::writers::count::{CountWriter, DbCountWriter};
 use crate::writers::limit_skip::DbLimitSkipWriter;
+use anyhow::Result;
 use sqlx::database::HasArguments;
 use sqlx::IntoArguments;
 use sqlx::Row;

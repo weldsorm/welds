@@ -2,7 +2,8 @@ pub mod commands;
 pub mod config;
 pub mod errors;
 pub mod generators;
-use crate::errors::{Result, WeldsError};
+use crate::errors::WeldsError;
+use anyhow::{anyhow, Result};
 use config::DbProvider;
 use std::path::PathBuf;
 use welds::connection::AnyPool;
@@ -59,7 +60,7 @@ pub struct GenerateOption {
 
 pub fn generate(mut opt: GenerateOption) -> Result<()> {
     if !opt.schema_path.exists() {
-        return Err(WeldsError::MissingSchemaFile(opt.schema_path));
+        return Err(anyhow!(WeldsError::MissingSchemaFile(opt.schema_path)));
     }
 
     let conf_def = config::read(&opt.schema_path)?;

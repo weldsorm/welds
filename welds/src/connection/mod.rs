@@ -1,4 +1,4 @@
-use crate::errors::Result;
+use anyhow::Result;
 use async_trait::async_trait;
 use sqlx::database::HasArguments;
 use std::cell::RefCell;

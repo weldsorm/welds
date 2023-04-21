@@ -1,8 +1,8 @@
 use crate::connection::Connection;
-use crate::errors::Result;
 use crate::query::clause::{DbParam, NextParam};
 use crate::table::{HasSchema, TableColumns, TableInfo, WriteToArgs};
 use crate::writers::column::{ColumnWriter, DbColumnWriter};
+use anyhow::{anyhow, Result};
 use sqlx::database::HasArguments;
 use sqlx::IntoArguments;
 
@@ -27,7 +27,7 @@ where
 
     let pks = <<T as HasSchema>::Schema as TableColumns<DB>>::primary_keys();
     if pks.is_empty() {
-        return Err(crate::errors::WeldsError::NoPrimaryKey);
+        return Err(anyhow!(crate::errors::WeldsError::NoPrimaryKey));
     }
 
     let mut wheres = Vec::default();

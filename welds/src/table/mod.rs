@@ -1,4 +1,4 @@
-use crate::errors::Result;
+use anyhow::Result;
 use sqlx::database::HasArguments;
 use sqlx::TypeInfo;
 

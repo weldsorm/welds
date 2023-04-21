@@ -1,6 +1,6 @@
 use crate::connection::Connection;
-use crate::errors::Result;
 use crate::table::{ColumnDef, RelationDef, TableDef, TableIdent};
+use anyhow::Result;
 use sqlx::database::HasArguments;
 use sqlx::{IntoArguments, Row};
 use std::collections::HashMap;

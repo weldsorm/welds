@@ -1,5 +1,6 @@
 use super::Pool;
-use crate::errors::{Result, WeldsError::NoDatabaseUrl, WeldsError::UnsupportedDatabase};
+use crate::errors::{WeldsError::NoDatabaseUrl, WeldsError::UnsupportedDatabase};
+use anyhow::{anyhow, Result};
 use std::env;
 
 #[cfg(feature = "mssql")]
@@ -125,6 +126,6 @@ impl AnyPool {
             return Ok(AnyPool::Mssql(pool.into()));
         }
 
-        Err(UnsupportedDatabase)
+        Err(anyhow!(UnsupportedDatabase))
     }
 }

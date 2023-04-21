@@ -5,11 +5,13 @@ pub mod generators;
 use crate::errors::WeldsError;
 use anyhow::{anyhow, Result};
 use config::DbProvider;
+use log::debug;
 use std::path::PathBuf;
 use welds::connection::AnyPool;
 use welds::table::TableIdent;
 
 pub async fn update(schema_path: PathBuf, identifier: Option<String>) -> Result<()> {
+    debug!("got to update");
     use welds::detect::find_tables;
     let identifier = identifier.as_ref().map(|x| TableIdent::parse(x));
     let unknown_pool = AnyPool::connect().await?;
@@ -21,12 +23,16 @@ pub async fn update(schema_path: PathBuf, identifier: Option<String>) -> Result<
         AnyPool::Sqlite(_) => DbProvider::Sqlite,
     };
 
+    debug!("i know the pool {:?}", provider);
+
     let mut tables = match unknown_pool {
         AnyPool::Postgres(conn) => find_tables(&conn).await?,
         AnyPool::Mssql(conn) => find_tables(&conn).await?,
         AnyPool::MySql(conn) => find_tables(&conn).await?,
         AnyPool::Sqlite(conn) => find_tables(&conn).await?,
     };
+
+    debug!("i know tables {:?}", tables);
 
     let mut conf_def = config::read(&schema_path).unwrap_or_default();
 

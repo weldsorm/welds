@@ -4,6 +4,7 @@ use anyhow::Result;
 use sqlx::database::HasArguments;
 use sqlx::{IntoArguments, Row};
 use std::collections::HashMap;
+use log::debug;
 
 mod table_scan;
 use table_scan::{FkScanRow, FkScanTableCol, TableScan, TableScanRow};
@@ -23,7 +24,10 @@ where
 {
     let sql = DB::table_scan_sql();
     let args: <DB as HasArguments>::Arguments = Default::default();
+
+    debug!("i haz sql");
     let mut raw_rows = conn.fetch_rows(sql, args).await?;
+    debug!("i haz rows {:?}", raw_rows.len());
 
     let rows: Vec<_> = raw_rows
         .drain(..)
@@ -61,10 +65,13 @@ where
         });
     }
 
+    debug!("i gets fkeys");
     // Build a list of all the FKs
     let sql = DB::fk_scan_sql();
     let args: <DB as HasArguments>::Arguments = Default::default();
     let mut fks_raw = conn.fetch_rows(sql, args).await?;
+
+    debug!("i haz fkeys: {:?}", fks_raw.len());
 
     let fks: Vec<_> = fks_raw
         .drain(..)

@@ -11,6 +11,11 @@ pub struct Args {
     /// Set the path to where the generated models will be saved (defaults to the path of the schema file)
     #[arg(short, long, value_name = "project")]
     pub project_dir: Option<PathBuf>,
+
+    /// Set the DATABASE_URL which will be used in the connection
+    #[arg(short, long, value_name = "database_url")]
+    pub database_url: Option<String>,
+
     #[command(subcommand)]
     pub command: Commands,
 }

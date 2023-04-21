@@ -1,5 +1,6 @@
 use anyhow::Result;
 use clap::Parser;
+use std::env;
 use std::path::PathBuf;
 use weldscli_lib::{commands::Commands::*, GenerateOption};
 
@@ -7,6 +8,10 @@ use weldscli_lib::{commands::Commands::*, GenerateOption};
 async fn main() -> Result<()> {
     pretty_env_logger::init();
     let args = weldscli_lib::commands::Args::parse();
+
+    if let Some(uri) = args.database_url {
+        env::set_var("DATABASE_URL", uri);
+    }
 
     let mut schema_path = args
         .schema_file

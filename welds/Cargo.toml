@@ -16,6 +16,7 @@ welds-macros = { path="../welds-macros", version = "^0.1" }
 async-trait = "0.1"
 thiserror = "1.0.40"
 anyhow = "1.0.70"
+log = "0.4.17"
 
 [features]
 "default" = []

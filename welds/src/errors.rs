@@ -1,3 +1,4 @@
+pub use anyhow::Result;
 use thiserror::Error;
 
 #[derive(Debug, Error)]

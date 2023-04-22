@@ -55,14 +55,14 @@ pub(crate) fn write_for_db(info: &Info, db: &Ident, matches: &TokenStream) -> To
             &self,
             column: &str,
             args: &mut <sqlx::#db as sqlx::database::HasArguments<'args>>::Arguments,
-        ) -> Result<(), welds::errors::WeldsError> {
+        ) -> welds::errors::Result<()> {
             use sqlx::Arguments;
             match column {
                 #matches
                 _ => {
                     return Err(welds::errors::WeldsError::MissingDbColumn(
                         column.to_owned(),
-                    ))
+                    ).into())
                 }
             }
             Ok(())

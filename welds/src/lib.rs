@@ -155,7 +155,18 @@ pub mod table;
 pub mod writers;
 
 #[cfg(feature = "detect")]
+/// query the database and return schema and table information
 pub mod detect;
+
+#[cfg(feature = "check")]
+/// Get differences between your rust welds structs and what is in the database.
+/// Useful to detect when the two get out of sync
+pub mod check;
+
+#[cfg(feature = "dbtypes")]
+/// This is a set of functions and structs that are used to
+/// lookup what rust type should be used for a given database type
+pub mod dbtypes;
 
 // Re-exports
 pub use sqlx;

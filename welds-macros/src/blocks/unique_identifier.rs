@@ -22,11 +22,12 @@ pub(crate) fn write_for_db(info: &Info, db: &Ident, pk: &Column) -> TokenStream 
     let def = &info.defstruct;
     let pktype = &pk.field_type;
     let name = &pk.dbname;
+    let nullable = pk.is_option;
 
     quote! {
         impl welds::table::UniqueIdentifier<sqlx::#db> for #def {
             fn id_column() -> welds::table::Column {
-                welds::table::Column::new::<sqlx::#db, #pktype>(#name)
+                welds::table::Column::new::<sqlx::#db, #pktype>(#name, #nullable)
             }
         }
     }

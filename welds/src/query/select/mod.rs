@@ -89,7 +89,8 @@ where
     {
         let ship = relationship(Default::default());
         let out_col = ship.my_key::<DB, R, T>();
-        let inner_tn = <R as HasSchema>::Schema::identifier().to_owned();
+        let inner_tn = <R as HasSchema>::Schema::identifier();
+        let inner_tn = inner_tn.join(".");
         let inner_col = ship.their_key::<DB, R, T>();
         let exist_in = ExistIn::<'schema, DB>::new(filter, out_col, inner_tn, inner_col);
         self.exist_ins.push(exist_in);
@@ -114,7 +115,7 @@ where
         let mut sb: SelectBuilder<R, DB> = SelectBuilder::new();
 
         let out_col = ship.their_key::<DB, R, T>();
-        let inner_tn = <T as HasSchema>::Schema::identifier().to_owned();
+        let inner_tn = <T as HasSchema>::Schema::identifier().join(".");
         let inner_col = ship.my_key::<DB, R, T>();
         let exist_in = ExistIn::<'schema, DB>::new(self, out_col, inner_tn, inner_col);
 
@@ -345,7 +346,8 @@ where
     let cols = cols.join(", ");
     head.push(&cols);
     head.push("FROM");
-    let identifier = format!("{} {}", S::identifier(), tablealias);
+    let tn = S::identifier().join(".");
+    let identifier = format!("{} {}", tn, tablealias);
     head.push(&identifier);
     Some(head.join(" "))
 }
@@ -355,7 +357,8 @@ where
     DB: sqlx::Database + DbColumnWriter + DbCountWriter,
     S: TableInfo + TableColumns<DB>,
 {
-    let identifier = format!("{} {}", S::identifier(), &tablealias);
+    let tn = S::identifier().join(".");
+    let identifier = format!("{} {}", tn, &tablealias);
     let cw = CountWriter::new::<DB>();
     let count_star = cw.count(Some(&tablealias), Some("*"));
     Some(format!("SELECT {} FROM {}", count_star, identifier))

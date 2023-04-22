@@ -108,6 +108,12 @@ impl AnyPool {
             return Ok(AnyPool::Postgres(pool.into()));
         }
 
+        #[cfg(feature = "postgres")]
+        if url.starts_with("postgre:") {
+            let pool = sqlx::PgPool::connect(&url).await?;
+            return Ok(AnyPool::Postgres(pool.into()));
+        }
+
         #[cfg(feature = "mysql")]
         if url.starts_with("mysql:") {
             let pool = sqlx::MySqlPool::connect(url).await?;

@@ -1,7 +1,7 @@
 use postgres_test::models::enums::Color;
 use postgres_test::models::order::Order;
 use postgres_test::models::other::Other;
-use postgres_test::models::product::Product;
+use postgres_test::models::product::{BadProductColumns, BadProductMissingTable, Product};
 use sqlx::Postgres;
 use welds::connection::Pool;
 
@@ -349,20 +349,47 @@ fn should_be_able_to_save_load_obj_with_db_enum_type() {
     async_std::task::block_on(async {
         let sqlx_conn = testlib::postgres::conn().await.unwrap();
         let conn: Pool<Postgres> = sqlx_conn.into();
-        let mut trans = conn.begin().await.unwrap();
+        let trans = conn.begin().await.unwrap();
 
-        let start_count = Other::all().count(&mut trans).await.unwrap();
+        let start_count = Other::all().count(&trans).await.unwrap();
         let mut tmp = Other::new();
         tmp.colour = Color::Blue;
-        tmp.save(&mut trans).await.unwrap();
+        tmp.save(&trans).await.unwrap();
 
-        let count = Other::all().count(&mut trans).await.unwrap();
+        let count = Other::all().count(&trans).await.unwrap();
         assert_eq!(start_count + 1, count);
 
-        let loaded = Other::find_by_id(&mut trans, tmp.id)
-            .await
-            .unwrap()
-            .unwrap();
+        let loaded = Other::find_by_id(&trans, tmp.id).await.unwrap().unwrap();
         assert_eq!(*tmp, *loaded);
+    })
+}
+
+#[test]
+fn a_model_should_be_able_to_verify_its_schema_missing_table() {
+    async_std::task::block_on(async {
+        let sqlx_conn = testlib::postgres::conn().await.unwrap();
+        let conn: Pool<Postgres> = sqlx_conn.into();
+        let issues = welds::check::schema::<BadProductMissingTable, _, _>(&conn)
+            .await
+            .unwrap();
+        assert_eq!(issues.len(), 1);
+        let issue = &issues[0];
+        assert_eq!(issue.kind, welds::check::Kind::MissingTable);
+    })
+}
+
+#[test]
+fn a_model_should_be_able_to_verify_its_schema_missing_column() {
+    async_std::task::block_on(async {
+        let sqlx_conn = testlib::postgres::conn().await.unwrap();
+        let conn: Pool<Postgres> = sqlx_conn.into();
+        let issues = welds::check::schema::<BadProductColumns, _, _>(&conn)
+            .await
+            .unwrap();
+        // NOTE: a column name changed so it is added on the model and removed in the db giving two warnings
+        for issue in &issues {
+            eprintln!("{}", issue);
+        }
+        assert_eq!(issues.len(), 5);
     })
 }

@@ -20,3 +20,26 @@ pub struct Product {
     pub price2: Option<f64>,
     pub active: Option<bool>,
 }
+
+#[derive(Debug, sqlx::FromRow, WeldsModel)]
+#[welds(db(Mysql))]
+#[welds(schema = "bad_schema", table = "Products")]
+pub struct BadProductMissingTable {
+    #[welds(primary_key)]
+    #[sqlx(rename = "ID")]
+    pub id: i32,
+}
+
+#[derive(Debug, sqlx::FromRow, WeldsModel)]
+#[welds(db(Mysql))]
+#[welds(table = "Products")]
+pub struct BadProductColumns {
+    #[sqlx(rename = "product_id")]
+    #[welds(primary_key)]
+    pub id: i64,
+    pub name2: String,
+    pub description: String,
+    pub price1: Option<f64>,
+    //pub price2: Option<f64>,
+    //pub active: Option<bool>,
+}

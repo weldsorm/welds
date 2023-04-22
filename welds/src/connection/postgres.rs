@@ -98,6 +98,11 @@ impl Connection<DbType> for Pool<DbType> {
         }
         Ok(rows)
     }
+
+    /// Returns what type of DB you are connected with
+    fn provider(&self) -> super::DbProvider {
+        super::DbProvider::Postgres
+    }
 }
 
 #[async_trait(?Send)]
@@ -173,5 +178,10 @@ impl<'trans> Connection<DbType> for Transaction<'trans, DbType> {
             rows.append(&mut batch);
         }
         Ok(rows)
+    }
+
+    /// Returns what type of DB you are connected with
+    fn provider(&self) -> super::DbProvider {
+        super::DbProvider::Postgres
     }
 }

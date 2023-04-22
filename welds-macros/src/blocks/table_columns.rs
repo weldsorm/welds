@@ -23,11 +23,12 @@ pub(crate) fn write_cols(info: &Info) -> TokenStream {
         .map(|c| {
             let ft = &c.field_type;
             let mut ty = quote! { #ft };
-            if c.is_option {
+            let nullable = c.is_option;
+            if nullable {
                 ty = quote! { Option<#ty> };
             }
             let dbname = c.dbname.as_str();
-            quote! { Column::new::<DB, #ty>(#dbname) }
+            quote! { Column::new::<DB, #ty>(#dbname, #nullable) }
         })
         .collect();
     quote! { vec![ #(#parts),* ] }
@@ -41,11 +42,12 @@ pub(crate) fn write_pks(info: &Info) -> TokenStream {
         .map(|c| {
             let ft = &c.field_type;
             let mut ty = quote! { #ft };
-            if c.is_option {
+            let nullable = c.is_option;
+            if nullable {
                 ty = quote! { Option<#ty> };
             }
             let dbname = c.dbname.as_str();
-            quote! { Column::new::<DB, #ty>(#dbname) }
+            quote! { Column::new::<DB, #ty>(#dbname, #nullable) }
         })
         .collect();
     quote! { vec![ #(#parts),* ] }

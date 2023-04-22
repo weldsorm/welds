@@ -22,7 +22,7 @@ where
     let col_writer = ColumnWriter::new::<DB>();
     let next_params = NextParam::new::<DB>();
 
-    let identifier = <<T as HasSchema>::Schema>::identifier();
+    let identifier = <<T as HasSchema>::Schema>::identifier().join(".");
     let columns = <<T as HasSchema>::Schema as TableColumns<DB>>::columns();
     let pks = <<T as HasSchema>::Schema as TableColumns<DB>>::primary_keys();
     if pks.is_empty() {

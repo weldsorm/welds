@@ -2,8 +2,11 @@
 # Here just to help with development. 
 # If you need to jump into a DB
 
-version: "3.9"
+version: "3.4"
 services:
+
+  # can connect with
+  # export DATABASE_URL=mysql://root:welds!123@localhost:3306/weldstests
 
   db:
     build: .

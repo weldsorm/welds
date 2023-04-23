@@ -121,12 +121,13 @@ fn build_field(column: &Column, db: DbProvider) -> Option<TokenStream> {
     if !column.writeable {
         parts.push(quote! { #[welds(readonly)]});
     }
-    if column.model_name != column.db_name {
+    let mn = crate::generators::name_sanitize(&column.model_name);
+    if mn != column.db_name {
         let dbname = &column.db_name;
         parts.push(quote! { #[sqlx(rename = #dbname)] });
     }
     let span = Span::call_site();
-    let f = Ident::new(&column.model_name, span);
+    let f = Ident::new(&mn, span);
     let typeinfo = match crate::generators::db_type_lookup::get(&column.db_type, db) {
         Some(s) => s,
         None => {

@@ -24,11 +24,12 @@ impl TypeInfo {
 
 /// This is a collection of which rust types to use for a given DB type
 pub(crate) fn get(db_type: &str, db: DbProvider) -> Option<TypeInfo> {
+    let db_type = db_type.to_uppercase();
     match db {
-        DbProvider::Mysql => get_mysql(db_type),
-        DbProvider::Mssql => get_mssql(db_type),
-        DbProvider::Postgres => get_postgres(db_type),
-        DbProvider::Sqlite => get_sqlite(db_type),
+        DbProvider::Mysql => get_mysql(&db_type),
+        DbProvider::Mssql => get_mssql(&db_type),
+        DbProvider::Postgres => get_postgres(&db_type),
+        DbProvider::Sqlite => get_sqlite(&db_type),
     }
 }
 

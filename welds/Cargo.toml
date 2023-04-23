@@ -17,11 +17,12 @@ async-trait = "0.1"
 thiserror = "1.0.40"
 anyhow = "1.0.70"
 log = "0.4.17"
+colored = { version="2", optional = true }
 
 [features]
 "default" = []
 "detect" = []
-"check" = ["detect"]
+"check" = ["detect", "dep:colored"]
 "postgres" = ["sqlx/postgres", "welds-macros/postgres"]
 "mysql" = ["sqlx/mysql", "welds-macros/mysql"]
 "mssql" = ["sqlx/mssql", "welds-macros/mssql"]

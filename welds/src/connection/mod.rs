@@ -54,13 +54,17 @@ pub trait Connection<DB: sqlx::Database> {
     fn provider(&self) -> DbProvider;
 }
 
+/// A connection to a database that all welds functions can use.
+///
+/// The contents of the pool are wrapped in an Arc.
+/// Clone the pool is a lite weight operation.
 pub struct Pool<DB: sqlx::Database> {
     inner: sqlx::pool::Pool<DB>,
 }
 
 impl<DB> Clone for Pool<DB>
 where
-    DB: sqlx::Database + Clone,
+    DB: sqlx::Database,
 {
     fn clone(&self) -> Self {
         Pool {
@@ -76,7 +80,7 @@ impl<DB: sqlx::Database> Pool<DB> {
     }
 
     /// Return the inner sqlx connection pool
-    pub async fn begin(&self) -> Result<Transaction<DB>> {
+    pub async fn begin<'t>(self) -> Result<Transaction<'t, DB>> {
         let inner = self.inner.begin().await?;
         let inner = RefCell::new(inner);
         Ok(self::Transaction { inner })

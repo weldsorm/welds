@@ -2,6 +2,7 @@ use crate::{
     detect::ColumnDef,
     table::{Column, TableIdent},
 };
+use colored::Colorize;
 use std::fmt::Display;
 use std::fmt::Formatter;
 
@@ -12,6 +13,35 @@ pub struct Diff {
     pub db_nullable: bool,
     pub welds_type: String,
     pub welds_nullable: bool,
+    type_changed: bool,
+}
+
+impl Diff {
+    /// returns true if the underlying DB_TYPE and MODEL_TYPE are no longer compatible
+    pub fn type_changed(&self) -> bool {
+        self.type_changed
+    }
+}
+
+impl Display for Diff {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.write_str("The Column `")?;
+        f.write_str(&self.column)?;
+        f.write_str("` is has changed,")?;
+        if self.type_changed {
+            f.write_str(" db_type: ")?;
+            f.write_str(&self.db_type)?;
+            f.write_str(" welds_type: ")?;
+            f.write_str(&self.welds_type)?;
+        }
+        if self.db_nullable != self.welds_nullable {
+            f.write_str(" db_null: ")?;
+            Display::fmt(&self.db_nullable, f)?;
+            f.write_str(" welds_null: ")?;
+            Display::fmt(&self.welds_nullable, f)?;
+        }
+        Ok(())
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -92,8 +122,9 @@ impl Issue {
             name: tablename.to_string(),
         };
         let (db, st) = *colcol;
+        let type_changed = !super::same_types(&db.ty, st.dbtype());
 
-        let level = if super::same_types(&db.ty, st.dbtype()) {
+        let level = if !type_changed {
             Level::Medium
         } else {
             Level::High
@@ -103,6 +134,7 @@ impl Issue {
             ident,
             level,
             kind: Kind::Changed(Diff {
+                type_changed,
                 column: db.name.to_string(),
                 db_type: db.ty.to_string(),
                 db_nullable: db.null,
@@ -128,10 +160,10 @@ pub enum Level {
 impl Display for Level {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Level::Critical => f.write_str("Critical")?,
-            Level::High => f.write_str("High")?,
-            Level::Medium => f.write_str("Medium")?,
-            Level::Low => f.write_str("Low")?,
+            Level::Critical => "Critical".bright_red().fmt(f)?,
+            Level::High => "High".red().fmt(f)?,
+            Level::Medium => "Medium".yellow().fmt(f)?,
+            Level::Low => "Low".blue().fmt(f)?,
         }
         Ok(())
     }
@@ -156,6 +188,36 @@ pub enum Kind {
     Changed(Diff),
 }
 
+impl Kind {
+    pub fn as_missing_table(&self) -> Option<()> {
+        match self {
+            Kind::MissingTable => Some(()),
+            _ => None,
+        }
+    }
+
+    pub fn as_in_db_not_model(&self) -> Option<&Missing> {
+        match self {
+            Kind::InDbNotModel(missing) => Some(missing),
+            _ => None,
+        }
+    }
+
+    pub fn as_on_model_not_db(&self) -> Option<&Missing> {
+        match self {
+            Kind::OnModelNotDb(missing) => Some(missing),
+            _ => None,
+        }
+    }
+
+    pub fn as_changed(&self) -> Option<&Diff> {
+        match self {
+            Kind::Changed(diff) => Some(diff),
+            _ => None,
+        }
+    }
+}
+
 impl Display for Kind {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -172,25 +234,7 @@ impl Display for Kind {
                 f.write_str(&missing.column)?;
                 f.write_str("` was defined on the struct but not in the database")?;
             }
-            Kind::Changed(diff) => {
-                f.write_str("The Column `")?;
-                f.write_str(&diff.column)?;
-                f.write_str("` is has changed,")?;
-
-                if !super::same_types(&diff.db_type, &diff.welds_type) {
-                    f.write_str(" db_type: ")?;
-                    f.write_str(&diff.db_type)?;
-                    f.write_str(" welds_type: ")?;
-                    f.write_str(&diff.welds_type)?;
-                }
-
-                if diff.db_nullable != diff.welds_nullable {
-                    f.write_str(" db_null: ")?;
-                    Display::fmt(&diff.db_nullable, f)?;
-                    f.write_str(" welds_null: ")?;
-                    Display::fmt(&diff.welds_nullable, f)?;
-                }
-            }
+            Kind::Changed(diff) => diff.fmt(f)?,
         }
         Ok(())
     }

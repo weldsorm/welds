@@ -42,7 +42,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     pool.as_sqlx_pool().execute(schema).await?;
 
     // Create and update a Product
-    let trans = pool.begin().await?;
+    let trans = pool.clone().begin().await?;
     let product = create_and_update_products(&trans).await?;
     trans.commit().await?;
 
@@ -88,7 +88,7 @@ async fn create_orders(
         o.save(conn).await?;
     }
     let total = Order::all().count(conn).await?;
-    println!("");
+    println!();
     println!("Orders Created: {}", total);
     Ok(())
 }
@@ -106,7 +106,7 @@ async fn chain_query_together(
     let sql = order_query.to_sql();
     let orders = order_query.run(conn).await?;
 
-    println!("");
+    println!();
     println!("Some Orders SQL: {}", sql);
     println!("Some Orders: {:?}", orders);
 
@@ -125,7 +125,7 @@ async fn filter_order_using_relationships(
         .run(conn)
         .await?;
 
-    println!("");
+    println!();
     println!("Found More Orders: {}", orders.len());
     Ok(())
 }
@@ -138,7 +138,7 @@ async fn delete_the_product(
     product.delete(conn).await?;
     let count = Product::all().count(conn).await?;
 
-    println!("");
+    println!();
     println!("DELETE: {:?}", product);
     println!("NEW COUNT: {}", count);
     Ok(())

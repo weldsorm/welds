@@ -109,8 +109,8 @@ impl AnyPool {
         }
 
         #[cfg(feature = "postgres")]
-        if url.starts_with("postgre:") {
-            let pool = sqlx::PgPool::connect(&url).await?;
+        if url.starts_with("postgres:") {
+            let pool = sqlx::PgPool::connect(url).await?;
             return Ok(AnyPool::Postgres(pool.into()));
         }
 

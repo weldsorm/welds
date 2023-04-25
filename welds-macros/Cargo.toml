@@ -17,7 +17,7 @@ proc-macro = true
 syn = { version = "^1.0", features = ["extra-traits"] }
 log = "^0.4"
 sqlx = "0.6"
-quote = "^1.0.2"
+quote = "^1.0"
 proc-macro2 = "1"
 
 [features]

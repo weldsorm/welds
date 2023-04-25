@@ -14,9 +14,9 @@ description = "An async ORM for (postgres, mssql, mysql, sqlite)"
 sqlx = { version = "^0.6", features = [ "macros"] }
 welds-macros = { path="../welds-macros", version = "^0.1" }
 async-trait = "0.1"
-thiserror = "1.0.40"
-anyhow = "1.0.70"
-log = "0.4.17"
+thiserror = "1.0"
+anyhow = "1.0"
+log = "0.4"
 colored = { version="2", optional = true }
 
 [features]

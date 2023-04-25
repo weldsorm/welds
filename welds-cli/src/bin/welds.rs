@@ -31,6 +31,7 @@ async fn main() -> Result<()> {
         Update { table } => weldscli_lib::update(schema_path, table).await,
         Generate { table } => {
             let opt = GenerateOption {
+                add_unknown_types: args.unknown_types,
                 schema_path,
                 output_path: project_dir,
                 table,

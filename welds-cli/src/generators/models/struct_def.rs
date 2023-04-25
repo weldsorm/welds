@@ -1,5 +1,6 @@
 use crate::config::{Column, DbProvider, Relation, Table};
 use crate::errors::Result;
+use crate::generators::db_type_lookup::TypeInfo;
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::{format_ident, quote};
 use rust_format::{Formatter, RustFmt};
@@ -7,7 +8,12 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::path::PathBuf;
 
-pub(crate) fn generate(mod_path: &PathBuf, table: &Table, all: &[Table]) -> Result<()> {
+pub(crate) fn generate(
+    mod_path: &PathBuf,
+    table: &Table,
+    all: &[Table],
+    unknown_types: bool,
+) -> Result<()> {
     if table.databases.is_empty() {
         return Ok(());
     }
@@ -20,7 +26,7 @@ pub(crate) fn generate(mod_path: &PathBuf, table: &Table, all: &[Table]) -> Resu
     let databases = build_welds_db(&table.databases);
     let weldstable = build_welds_table(table);
     let relations = build_relations(table, all);
-    let fields = build_fields(table, table.databases[0]);
+    let fields = build_fields(table, table.databases[0], unknown_types);
 
     let code = quote! {
         use welds::WeldsModel;
@@ -103,17 +109,17 @@ fn find_table<'a>(
     all.iter().find(|&t| t.name == name && &t.schema == schema)
 }
 
-fn build_fields(table: &Table, db: DbProvider) -> TokenStream {
+fn build_fields(table: &Table, db: DbProvider, unknown_types: bool) -> TokenStream {
     let mut list = Vec::default();
     for col in &table.columns {
-        if let Some(f) = build_field(col, db) {
+        if let Some(f) = build_field(col, db, unknown_types) {
             list.push(f);
         }
     }
     quote! { #(#list), * }
 }
 
-fn build_field(column: &Column, db: DbProvider) -> Option<TokenStream> {
+fn build_field(column: &Column, db: DbProvider, unknown_types: bool) -> Option<TokenStream> {
     let mut parts = Vec::default();
     if column.primary_key {
         parts.push(quote! { #[welds(primary_key)]});
@@ -132,7 +138,16 @@ fn build_field(column: &Column, db: DbProvider) -> Option<TokenStream> {
         Some(s) => s,
         None => {
             log::warn!("NO DB TYPE FOR: {} {}", f, column.db_type);
-            return None;
+            if unknown_types {
+                let span = Span::call_site();
+                let f = Ident::new(&column.db_type, span);
+                TypeInfo {
+                    quote: quote!(#f),
+                    force_null: false,
+                }
+            } else {
+                return None;
+            }
         }
     };
 

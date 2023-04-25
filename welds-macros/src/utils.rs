@@ -20,7 +20,10 @@ fn get_clause_typegroup(_ty: &TypeGroup) -> Option<&'static str> {
 }
 
 fn get_clause_typepath(ty: &TypePath) -> Option<&'static str> {
-    let ident = ty.path.get_ident()?;
+    let ident = ty
+        .path
+        .get_ident()
+        .or(ty.path.segments.first().map(|f| &f.ident))?;
     let name = ident.to_string();
     let clause = match name.as_str() {
         "u8" => "Numeric",
@@ -34,6 +37,7 @@ fn get_clause_typepath(ty: &TypePath) -> Option<&'static str> {
         "f32" => "Numeric",
         "f64" => "Numeric",
         "String" => "Text",
+        "chrono" => "Numeric",
         "PgMoney" => "Numeric",
         _ => return None,
     };

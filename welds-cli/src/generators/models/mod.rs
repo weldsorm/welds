@@ -29,7 +29,7 @@ pub fn run(config: &Config, opt: &GenerateOption) -> Result<()> {
             let path = model_path(&opt.output_path, table);
             fs::create_dir_all(&path)?;
             init_table_mod_file(&path)?;
-            struct_def::generate(&path, table, all.as_slice())?;
+            struct_def::generate(&path, table, all.as_slice(), opt.add_unknown_types)?;
             generated.push(table);
         }
     }

@@ -18,6 +18,11 @@ pub struct Args {
 
     #[command(subcommand)]
     pub command: Commands,
+
+    /// Force add unknown types to the generated models.
+    /// NOTE: you will need to resolve compile errors.
+    #[arg(short, long, value_name = "unknown_types")]
+    pub unknown_types: bool,
 }
 
 #[derive(Debug, Subcommand)]

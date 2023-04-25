@@ -61,6 +61,7 @@ pub async fn update(schema_path: PathBuf, identifier: Option<String>) -> Result<
 pub struct GenerateOption {
     pub schema_path: PathBuf,
     pub output_path: PathBuf,
+    pub add_unknown_types: bool,
     pub table: Option<String>,
 }
 

@@ -1,7 +1,7 @@
 use super::ClauseAdder;
 use crate::query::clause::OrderBy;
 use crate::writers::limit_skip::DbLimitSkipWriter;
-use crate::{alias::TableAlias, query::select::SelectBuilder};
+use crate::{alias::TableAlias, query::builder::QueryBuilder};
 use std::cell::RefCell;
 
 /// Used to generated a SQL EXISTS clause for writing sub-queries
@@ -23,7 +23,7 @@ where
     DB: sqlx::Database + DbLimitSkipWriter,
 {
     pub(crate) fn new<T>(
-        sb: SelectBuilder<'args, T, DB>,
+        sb: QueryBuilder<'args, T, DB>,
         outer_column: String,
         inner_tablename: String,
         inner_column: String,

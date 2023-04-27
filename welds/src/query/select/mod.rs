@@ -1,11 +1,10 @@
+use super::builder::QueryBuilder;
 use super::clause::{DbParam, NextParam};
+use super::helpers::{build_tail, build_where, join_sql_parts};
 use crate::alias::TableAlias;
 use crate::connection::Connection;
-use crate::query::clause::exists::ExistIn;
-use crate::query::clause::{AsFieldName, ClauseAdder, OrderBy};
-use crate::relations::{HasRelations, Relationship};
 use crate::state::DbState;
-use crate::table::{HasSchema, TableColumns, TableInfo, UniqueIdentifier};
+use crate::table::{HasSchema, TableColumns, TableInfo};
 use crate::writers::column::{ColumnWriter, DbColumnWriter};
 use crate::writers::count::{CountWriter, DbCountWriter};
 use crate::writers::limit_skip::DbLimitSkipWriter;
@@ -13,154 +12,16 @@ use anyhow::Result;
 use sqlx::database::HasArguments;
 use sqlx::IntoArguments;
 use sqlx::Row;
-use std::marker::PhantomData;
 
-/// An un-executed Query.
-///
-/// Build out a query that can be executed on the database.
-///
-/// Can be chained with other queries to make more complex queries.
-///
-/// Can be mapped into other queries to  make more complex queries.
-pub struct SelectBuilder<'schema, T, DB: sqlx::Database> {
-    _t: PhantomData<T>,
-    pub(crate) wheres: Vec<Box<dyn ClauseAdder<'schema, DB>>>,
-    pub(crate) exist_ins: Vec<ExistIn<'schema, DB>>,
-    pub(crate) limit: Option<i64>,
-    pub(crate) offset: Option<i64>,
-    pub(crate) orderby: Vec<OrderBy>,
-}
+// ******************************************************************************************
+// This file contains all the stuff added onto the Querybuilder to allow it to run SELECTs
+// ******************************************************************************************
 
-impl<'schema, T, DB> Default for SelectBuilder<'schema, T, DB>
+impl<'schema, 'args, T, DB> QueryBuilder<'schema, T, DB>
 where
     DB: sqlx::Database,
     T: Send + Unpin + for<'r> sqlx::FromRow<'r, DB::Row> + HasSchema,
 {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl<'schema, 'args, T, DB> SelectBuilder<'schema, T, DB>
-where
-    DB: sqlx::Database,
-    T: Send + Unpin + for<'r> sqlx::FromRow<'r, DB::Row> + HasSchema,
-{
-    pub fn new() -> Self {
-        Self {
-            _t: Default::default(),
-            wheres: Vec::default(),
-            limit: None,
-            offset: None,
-            orderby: Vec::default(),
-            exist_ins: Default::default(),
-        }
-    }
-
-    /// Filter the results returned by this query.
-    /// Used when you want to filter on the columns of this table.
-    pub fn where_col(
-        mut self,
-        lam: impl Fn(<T as HasSchema>::Schema) -> Box<dyn ClauseAdder<'schema, DB>>,
-    ) -> Self
-    where
-        <T as HasSchema>::Schema: Default,
-    {
-        let qba = lam(Default::default());
-        self.wheres.push(qba);
-        self
-    }
-
-    /// Add a query to this query (JOIN on a relationship)
-    /// results on a query that is filtered using the results of both queries
-    pub fn where_relation<R, Ship>(
-        mut self,
-        relationship: impl Fn(<T as HasRelations>::Relation) -> Ship,
-        filter: SelectBuilder<'schema, R, DB>,
-    ) -> Self
-    where
-        DB: sqlx::Database + DbLimitSkipWriter,
-        T: HasRelations + UniqueIdentifier<DB>,
-        Ship: Relationship<R>,
-        R: HasSchema + UniqueIdentifier<DB>,
-        R: Send + Unpin + for<'r> sqlx::FromRow<'r, DB::Row> + HasSchema,
-        <R as HasSchema>::Schema: TableInfo + TableColumns<DB>,
-        <T as HasRelations>::Relation: Default,
-    {
-        let ship = relationship(Default::default());
-        let out_col = ship.my_key::<DB, R, T>();
-        let inner_tn = <R as HasSchema>::Schema::identifier();
-        let inner_tn = inner_tn.join(".");
-        let inner_col = ship.their_key::<DB, R, T>();
-        let exist_in = ExistIn::<'schema, DB>::new(filter, out_col, inner_tn, inner_col);
-        self.exist_ins.push(exist_in);
-        self
-    }
-
-    /// Results in a query that is mapped into the query of one of its relationships
-    pub fn map_query<R, Ship>(
-        self,
-        relationship: impl Fn(<T as HasRelations>::Relation) -> Ship,
-    ) -> SelectBuilder<'schema, R, DB>
-    where
-        DB: sqlx::Database + DbLimitSkipWriter,
-        T: HasRelations + UniqueIdentifier<DB>,
-        Ship: Relationship<R>,
-        R: HasSchema + UniqueIdentifier<DB>,
-        R: Send + Unpin + for<'r> sqlx::FromRow<'r, DB::Row> + HasSchema,
-        <R as HasSchema>::Schema: TableInfo + TableColumns<DB>,
-        <T as HasRelations>::Relation: Default,
-    {
-        let ship = relationship(Default::default());
-        let mut sb: SelectBuilder<R, DB> = SelectBuilder::new();
-
-        let out_col = ship.their_key::<DB, R, T>();
-        let inner_tn = <T as HasSchema>::Schema::identifier().join(".");
-        let inner_col = ship.my_key::<DB, R, T>();
-        let exist_in = ExistIn::<'schema, DB>::new(self, out_col, inner_tn, inner_col);
-
-        sb.exist_ins.push(exist_in);
-        sb
-    }
-
-    /// Limit the number of rows returned by this query
-    pub fn limit(mut self, x: i64) -> Self {
-        self.limit = Some(x);
-        self
-    }
-
-    /// Offset the starting point for the results returned by this query
-    pub fn offset(mut self, x: i64) -> Self {
-        self.offset = Some(x);
-        self
-    }
-
-    /// Order the results of the query by a given column
-    ///
-    /// multiple calls will result in multiple OrderBys
-    pub fn order_by_desc<FN: AsFieldName>(
-        mut self,
-        lam: impl Fn(<T as HasSchema>::Schema) -> FN,
-    ) -> Self {
-        let field = lam(Default::default());
-        let fieldname = field.fieldname();
-        self.orderby.push(OrderBy::new(fieldname, "DESC"));
-        self
-    }
-
-    /// Order the results of the query by a given column
-    ///
-    /// multiple calls will result in multiple OrderBys
-    pub fn order_by_asc<FN: AsFieldName>(
-        mut self,
-        lam: impl Fn(<T as HasSchema>::Schema) -> FN,
-    ) -> Self {
-        let field = lam(Default::default());
-        let fieldname = field.fieldname();
-        self.orderby.push(OrderBy::new(fieldname, "ASC"));
-        self
-    }
-
     /// Get a copy of the SQL that will be executed when this query runs
     pub fn to_sql(&self) -> String
     where
@@ -269,65 +130,6 @@ where
 
         Ok(data)
     }
-}
-
-fn join_sql_parts(parts: &[Option<String>]) -> String {
-    // Join al the parts into
-    let sql: Vec<&str> = parts
-        .iter()
-        .filter_map(|x| x.as_ref().map(|x| x.as_str()))
-        .collect();
-    let sql: String = sql.as_slice().join(" ");
-    sql
-}
-
-fn build_where<'schema, 'args, DB>(
-    next_params: &NextParam,
-    alias: &TableAlias,
-    args: &mut Option<<DB as HasArguments<'schema>>::Arguments>,
-    wheres: &[Box<dyn ClauseAdder<'schema, DB>>],
-    exist_ins: &[ExistIn<'schema, DB>],
-) -> Option<String>
-where
-    DB: sqlx::Database + DbLimitSkipWriter,
-    <DB as HasArguments<'schema>>::Arguments: IntoArguments<'args, DB>,
-{
-    let mut where_sql: Vec<String> = Vec::default();
-
-    for clause in wheres {
-        if let Some(args) = args {
-            clause.bind(args);
-        }
-        if let Some(p) = clause.clause(alias, next_params) {
-            where_sql.push(p);
-        }
-    }
-
-    let self_tablealias = alias.peek();
-    for clause in exist_ins {
-        if let Some(args) = args {
-            clause.bind(args);
-        }
-        alias.bump();
-        clause.set_outer_tablealias(&self_tablealias);
-        if let Some(p) = clause.clause(alias, next_params) {
-            where_sql.push(p);
-        }
-    }
-
-    if where_sql.is_empty() {
-        return None;
-    }
-    Some(format!("WHERE ( {} )", where_sql.join(" AND ")))
-}
-
-fn build_tail<T, DB>(select: &SelectBuilder<T, DB>) -> Option<String>
-where
-    T: HasSchema,
-    DB: sqlx::Database + DbLimitSkipWriter,
-    <T as HasSchema>::Schema: TableInfo + TableColumns<DB>,
-{
-    super::tail::write::<DB>(&select.limit, &select.offset, &select.orderby)
 }
 
 fn build_head_select<DB, S>(tablealias: String) -> Option<String>

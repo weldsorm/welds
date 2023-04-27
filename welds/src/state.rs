@@ -108,6 +108,12 @@ impl<T> DbState<T> {
         self.status = DbStatus::NotInDatabase;
         Ok(())
     }
+
+    /// Consumes the DbState, returning the wrapped value. the inner value is nolonger connected to
+    /// welds and can nolonger be saved/created/deleted
+    pub async fn into_inner(self) -> T {
+        self.inner
+    }
 }
 
 impl<T> Deref for DbState<T> {

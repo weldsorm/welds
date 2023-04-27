@@ -1,7 +1,10 @@
 use mssql_test::models::order::Order;
 use mssql_test::models::product::{BadProductColumns, BadProductMissingTable, Product};
-use sqlx::Mssql;
-use welds::connection::Pool;
+
+async fn get_conn() -> welds::connection::Pool<sqlx::Mssql> {
+    let sqlx_conn = testlib::mssql::conn().await.unwrap();
+    sqlx_conn.into()
+}
 
 #[derive(Default, Debug, Clone, sqlx::FromRow)]
 pub struct Test {
@@ -25,19 +28,17 @@ fn test_selecting_from_mssql() {
         let q: QueryAs<Mssql, Test, <Mssql as HasArguments>::Arguments> =
             sqlx::query_as_with(sql, args);
 
-        let sqlx_conn = testlib::mssql::conn().await.unwrap();
-        let conn: Pool<Mssql> = sqlx_conn.into();
+        let conn = get_conn().await;
         let data = q.fetch_all(conn.as_sqlx_pool()).await.unwrap();
 
-        assert!(data.len() > 0);
+        assert!(!data.is_empty());
     })
 }
 
 #[test]
 fn should_be_able_to_read_all_products() {
     async_std::task::block_on(async {
-        let sqlx_conn = testlib::mssql::conn().await.unwrap();
-        let conn: Pool<Mssql> = sqlx_conn.into();
+        let conn = get_conn().await;
         let q = Product::all();
         eprintln!("SQL: {}", q.to_sql());
         let all = q.run(&conn).await.unwrap();
@@ -49,8 +50,7 @@ fn should_be_able_to_read_all_products() {
 #[test]
 fn should_be_able_to_filter_on_equal() {
     async_std::task::block_on(async {
-        let sqlx_conn = testlib::mssql::conn().await.unwrap();
-        let conn: Pool<Mssql> = sqlx_conn.into();
+        let conn = get_conn().await;
         let q = Product::where_col(|x| x.price_1.equal(1.10));
         eprintln!("SQL: {}", q.to_sql());
         let just_horse = q.run(&conn).await.unwrap();
@@ -65,8 +65,7 @@ fn should_be_able_to_filter_on_equal() {
 #[test]
 fn should_be_able_to_filter_on_lt() {
     async_std::task::block_on(async {
-        let sqlx_conn = testlib::mssql::conn().await.unwrap();
-        let conn: Pool<Mssql> = sqlx_conn.into();
+        let conn = get_conn().await;
         let q = Product::where_col(|x| x.price_1.lt(3.00));
         eprintln!("SQL: {}", q.to_sql());
         let data = q.run(&conn).await.unwrap();
@@ -77,8 +76,7 @@ fn should_be_able_to_filter_on_lt() {
 #[test]
 fn should_be_able_to_filter_on_lte() {
     async_std::task::block_on(async {
-        let sqlx_conn = testlib::mssql::conn().await.unwrap();
-        let conn: Pool<Mssql> = sqlx_conn.into();
+        let conn = get_conn().await;
         let q = Product::where_col(|x| x.price_1.lte(2.10));
         eprintln!("SQL: {}", q.to_sql());
         let data = q.run(&conn).await.unwrap();
@@ -89,8 +87,7 @@ fn should_be_able_to_filter_on_lte() {
 #[test]
 fn should_be_able_to_count_in_sql() {
     async_std::task::block_on(async {
-        let sqlx_conn = testlib::mssql::conn().await.unwrap();
-        let conn: Pool<Mssql> = sqlx_conn.into();
+        let conn = get_conn().await;
         let q = Product::where_col(|x| x.price_1.lte(2.10));
         eprintln!("SQL: {}", q.to_sql());
         let count = q.count(&conn).await.unwrap();
@@ -101,8 +98,7 @@ fn should_be_able_to_count_in_sql() {
 #[test]
 fn should_be_able_to_limit_results_in_sql() {
     async_std::task::block_on(async {
-        let sqlx_conn = testlib::mssql::conn().await.unwrap();
-        let conn: Pool<Mssql> = sqlx_conn.into();
+        let conn = get_conn().await;
         let q = Product::all().limit(2).offset(1);
         eprintln!("SQL: {}", q.to_sql());
         let count = q.run(&conn).await.unwrap().len();
@@ -113,8 +109,7 @@ fn should_be_able_to_limit_results_in_sql() {
 #[test]
 fn should_be_able_to_create_a_new_product() {
     async_std::task::block_on(async {
-        let sqlx_conn = testlib::mssql::conn().await.unwrap();
-        let conn: Pool<Mssql> = sqlx_conn.into();
+        let conn = get_conn().await;
         let mut trans = conn.begin().await.unwrap();
 
         let mut p1 = Product::new();
@@ -136,8 +131,7 @@ fn should_be_able_to_create_a_new_product() {
 #[test]
 fn should_be_able_to_filter_on_relations() {
     async_std::task::block_on(async {
-        let sqlx_conn = testlib::mssql::conn().await.unwrap();
-        let conn: Pool<Mssql> = sqlx_conn.into();
+        let conn = get_conn().await;
         let orders = Product::where_col(|x| x.id.equal(1)).map_query(|p| p.order);
         let orders = orders.run(&conn).await.unwrap();
         assert_eq!(3, orders.len());
@@ -147,8 +141,7 @@ fn should_be_able_to_filter_on_relations() {
 #[test]
 fn should_be_able_to_filter_on_relations2() {
     async_std::task::block_on(async {
-        let sqlx_conn = testlib::mssql::conn().await.unwrap();
-        let conn: Pool<Mssql> = sqlx_conn.into();
+        let conn = get_conn().await;
         let product_query = Order::all().map_query(|p| p.product);
         // Vec<_> would be simpler, but want to hard code to type for test.
         use welds::state::DbState;
@@ -160,8 +153,7 @@ fn should_be_able_to_filter_on_relations2() {
 #[test]
 fn should_be_able_to_filter_with_relations() {
     async_std::task::block_on(async {
-        let sqlx_conn = testlib::mssql::conn().await.unwrap();
-        let conn: Pool<Mssql> = sqlx_conn.into();
+        let conn = get_conn().await;
         let filter1 = Product::where_col(|x| x.id.equal(1));
         let mut order_query = Order::all();
         order_query = order_query.where_relation(|o| o.product, filter1);
@@ -175,8 +167,7 @@ fn should_be_able_to_filter_with_relations() {
 #[test]
 fn should_be_able_to_filter_with_relations2() {
     async_std::task::block_on(async {
-        let sqlx_conn = testlib::mssql::conn().await.unwrap();
-        let conn: Pool<Mssql> = sqlx_conn.into();
+        let conn = get_conn().await;
         let filter1 = Order::where_col(|x| x.id.lte(3));
         let mut product_query = Product::all();
         product_query = product_query.where_relation(|p| p.order, filter1);
@@ -190,8 +181,7 @@ fn should_be_able_to_filter_with_relations2() {
 #[test]
 fn should_be_able_to_scan_for_all_tables() {
     async_std::task::block_on(async {
-        let sqlx_conn = testlib::mssql::conn().await.unwrap();
-        let conn: Pool<Mssql> = sqlx_conn.into();
+        let conn = get_conn().await;
         let tables = welds::detect::find_tables(&conn).await.unwrap();
         assert_eq!(4, tables.len());
     })
@@ -200,8 +190,7 @@ fn should_be_able_to_scan_for_all_tables() {
 #[test]
 fn a_model_should_be_able_to_verify_its_schema_missing_table() {
     async_std::task::block_on(async {
-        let sqlx_conn = testlib::mssql::conn().await.unwrap();
-        let conn: Pool<Mssql> = sqlx_conn.into();
+        let conn = get_conn().await;
         let issues = welds::check::schema::<BadProductMissingTable, _, _>(&conn)
             .await
             .unwrap();
@@ -214,8 +203,7 @@ fn a_model_should_be_able_to_verify_its_schema_missing_table() {
 #[test]
 fn a_model_should_be_able_to_verify_its_schema_missing_column() {
     async_std::task::block_on(async {
-        let sqlx_conn = testlib::mssql::conn().await.unwrap();
-        let conn: Pool<Mssql> = sqlx_conn.into();
+        let conn = get_conn().await;
         let issues = welds::check::schema::<BadProductColumns, _, _>(&conn)
             .await
             .unwrap();
@@ -224,5 +212,51 @@ fn a_model_should_be_able_to_verify_its_schema_missing_column() {
             eprintln!("{}", issue);
         }
         assert_eq!(issues.len(), 6);
+    })
+}
+
+#[test]
+fn should_be_able_to_bulk_delete() {
+    async_std::task::block_on(async {
+        let conn = get_conn().await;
+        let trans = conn.begin().await.unwrap();
+        let p1 = Product::all()
+            .limit(1)
+            .run(&trans)
+            .await
+            .unwrap()
+            .pop()
+            .unwrap();
+        let mut order = Order::new();
+        order.product_id = p1.id;
+        order.save(&trans).await.unwrap();
+        let q = Product::all().map_query(|p| p.order);
+        let count = q.count(&trans).await.unwrap();
+        q.delete(&trans).await.unwrap();
+        assert!(count > 0);
+        trans.rollback().await.unwrap();
+    })
+}
+
+#[test]
+fn should_be_able_to_bulk_delete2() {
+    async_std::task::block_on(async {
+        let conn = get_conn().await;
+        let trans = conn.begin().await.unwrap();
+        let p1 = Product::all()
+            .limit(1)
+            .run(&trans)
+            .await
+            .unwrap()
+            .pop()
+            .unwrap();
+        let mut order = Order::new();
+        order.product_id = p1.id;
+        order.save(&trans).await.unwrap();
+        let q = Order::all().where_col(|x| x.id.gt(0));
+        let count = q.count(&trans).await.unwrap();
+        q.delete(&trans).await.unwrap();
+        assert!(count > 0);
+        trans.rollback().await.unwrap();
     })
 }

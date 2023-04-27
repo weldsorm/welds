@@ -6,6 +6,8 @@ use anyhow::{anyhow, Result};
 use sqlx::database::HasArguments;
 use sqlx::IntoArguments;
 
+pub mod bulk;
+
 pub async fn delete_one<'r, 'args, DB, T, C>(
     buff: &'r mut String,
     obj: &T,
@@ -41,7 +43,6 @@ where
     let wheres = wheres.join(" AND ");
 
     *buff = format!("DELETE FROM {} where {}", identifier, wheres);
-    eprintln!("SQL: {}", &buff);
 
     conn.execute(buff, args).await?;
 

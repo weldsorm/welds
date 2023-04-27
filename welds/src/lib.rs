@@ -110,8 +110,8 @@
 //!
 //! - [`Model::new()`]( ./state/struct.DbState.html#method.new_uncreated ) make a new model ready to be saved to the database
 //! - `Model::find_by_id()`
-//! - [`Model::all()`](./query/select/struct.SelectBuilder.html) start a query for a Model
-//! - [`Model::where_col()`](./query/select/struct.SelectBuilder.html) start a query for a Model
+//! - [`Model::all()`](./query/builder/struct.QueryBuilder.html) start a query for a Model
+//! - [`Model::where_col()`](./query/builder/struct.QueryBuilder.html) start a query for a Model
 //! - `Model::from_raw_sql()` finds Model using raw custom SQL str
 //!
 //! Instances of your model are wrapped in a [welds::state::DbState](./state/struct.DbState.html).

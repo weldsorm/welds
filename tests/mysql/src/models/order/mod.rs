@@ -8,7 +8,7 @@ use welds::WeldsModel;
 
 #[derive(Debug, sqlx::FromRow, WeldsModel)]
 #[welds(db(Mysql))]
-#[welds(table = "Orders")]
+#[welds(schema = "mysql", table = "Orders")]
 #[welds(BelongsTo(product, super::product::Product, "product_id"))]
 pub struct Order {
     #[welds(primary_key)]

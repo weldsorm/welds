@@ -8,8 +8,11 @@ use sqlx::query::QueryAs;
 use sqlx::Postgres;
 
 type DbType = Postgres;
+fn provider() -> super::DbProvider {
+    super::DbProvider::Postgres
+}
 
-/// This file contains all the Sqlite impl for connection and transaction
+/// This file contains all the Postgres impl for connection and transaction
 
 pub async fn connect_postgres(connection_string: &str) -> Result<Pool<DbType>> {
     let sqlx_pool = sqlx::PgPool::connect(connection_string).await?;
@@ -101,7 +104,7 @@ impl Connection<DbType> for Pool<DbType> {
 
     /// Returns what type of DB you are connected with
     fn provider(&self) -> super::DbProvider {
-        super::DbProvider::Postgres
+        provider()
     }
 }
 
@@ -112,8 +115,7 @@ impl<'trans> Connection<DbType> for Transaction<'trans, DbType> {
         sql: &'a str,
         args: <DbType as HasArguments<'a>>::Arguments,
     ) -> Result<()> {
-        let mut t = self.inner.borrow_mut();
-        let trans: &mut sqlx::Transaction<DbType> = &mut t;
+        let trans = &mut *self.inner.lock().unwrap();
         let q = sqlx::query_with(sql, args);
         q.execute(trans).await?;
         Ok(())
@@ -127,8 +129,7 @@ impl<'trans> Connection<DbType> for Transaction<'trans, DbType> {
     where
         T: Send + Unpin + for<'r> sqlx::FromRow<'r, <DbType as sqlx::Database>::Row>,
     {
-        let mut t = self.inner.borrow_mut();
-        let trans: &mut sqlx::Transaction<DbType> = &mut t;
+        let trans = &mut *self.inner.lock().unwrap();
         let q: QueryAs<DbType, T, <DbType as HasArguments>::Arguments> =
             sqlx::query_as_with(sql, args);
         let rows = q.fetch_all(trans).await?;
@@ -143,8 +144,7 @@ impl<'trans> Connection<DbType> for Transaction<'trans, DbType> {
     where
         T: Send + Unpin + for<'r> sqlx::FromRow<'r, <DbType as sqlx::Database>::Row>,
     {
-        let mut t = self.inner.borrow_mut();
-        let trans: &mut sqlx::Transaction<DbType> = &mut t;
+        let trans = &mut *self.inner.lock().unwrap();
         let q: QueryAs<DbType, T, <DbType as HasArguments>::Arguments> =
             sqlx::query_as_with(sql, args);
         let row = q.fetch_optional(trans).await?;
@@ -157,8 +157,7 @@ impl<'trans> Connection<DbType> for Transaction<'trans, DbType> {
         sql: &'a str,
         args: <DbType as HasArguments<'a>>::Arguments,
     ) -> Result<Vec<<DbType as sqlx::Database>::Row>> {
-        let mut t = self.inner.borrow_mut();
-        let trans: &mut sqlx::Transaction<DbType> = &mut t;
+        let trans = &mut *self.inner.lock().unwrap();
         let query = sqlx::query_with(sql, args);
         let rows = query.fetch_all(trans).await?;
         Ok(rows)
@@ -169,8 +168,7 @@ impl<'trans> Connection<DbType> for Transaction<'trans, DbType> {
         &'a self,
         statments: Vec<(&'a str, <DbType as HasArguments<'a>>::Arguments)>,
     ) -> Result<Vec<<DbType as sqlx::Database>::Row>> {
-        let mut t = self.inner.borrow_mut();
-        let trans: &mut sqlx::Transaction<DbType> = &mut t;
+        let trans = &mut *self.inner.lock().unwrap();
         let mut rows = Vec::default();
         for (sql, args) in statments {
             let query = sqlx::query_with(sql, args);
@@ -182,6 +180,6 @@ impl<'trans> Connection<DbType> for Transaction<'trans, DbType> {
 
     /// Returns what type of DB you are connected with
     fn provider(&self) -> super::DbProvider {
-        super::DbProvider::Postgres
+        provider()
     }
 }

@@ -1,7 +1,6 @@
 use anyhow::Result;
 use async_trait::async_trait;
 use sqlx::database::HasArguments;
-use std::cell::RefCell;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DbProvider {
@@ -81,30 +80,12 @@ impl<DB: sqlx::Database> Pool<DB> {
 
     /// Return the inner sqlx connection pool
     pub async fn begin<'t>(self) -> Result<Transaction<'t, DB>> {
-        let inner = self.inner.begin().await?;
-        let inner = RefCell::new(inner);
-        Ok(self::Transaction { inner })
+        Ok(self::Transaction::new(self).await?)
     }
 }
 
-pub struct Transaction<'trans, DB: sqlx::Database> {
-    inner: RefCell<sqlx::Transaction<'trans, DB>>,
-}
-
-impl<'trans, DB: sqlx::Database> Transaction<'trans, DB> {
-    /// Rollback the transaction
-    pub async fn rollback(self) -> Result<()> {
-        let inner = self.inner.into_inner();
-        inner.rollback().await?;
-        Ok(())
-    }
-    /// Rollback the transaction
-    pub async fn commit(self) -> Result<()> {
-        let inner = self.inner.into_inner();
-        inner.commit().await?;
-        Ok(())
-    }
-}
+mod transaction;
+pub use transaction::Transaction;
 
 mod any;
 /// Used to handle a connection to an unknown-database

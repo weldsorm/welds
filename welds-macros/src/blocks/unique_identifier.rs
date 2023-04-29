@@ -19,15 +19,16 @@ pub(crate) fn write(info: &Info) -> TokenStream {
 }
 
 pub(crate) fn write_for_db(info: &Info, db: &Ident, pk: &Column) -> TokenStream {
+    let wp = &info.welds_path;
     let def = &info.defstruct;
     let pktype = &pk.field_type;
     let name = &pk.dbname;
     let nullable = pk.is_option;
 
     quote! {
-        impl welds::table::UniqueIdentifier<sqlx::#db> for #def {
-            fn id_column() -> welds::table::Column {
-                welds::table::Column::new::<sqlx::#db, #pktype>(#name, #nullable)
+        impl #wp::table::UniqueIdentifier<sqlx::#db> for #def {
+            fn id_column() -> #wp::table::Column {
+                #wp::table::Column::new::<sqlx::#db, #pktype>(#name, #nullable)
             }
         }
     }

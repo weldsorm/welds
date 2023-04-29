@@ -12,7 +12,7 @@ pub(crate) mod utils;
 
 use info::Info;
 
-#[proc_macro_derive(WeldsModel, attributes(welds))]
+#[proc_macro_derive(WeldsModel, attributes(welds, welds_path))]
 pub fn model_gen(input: TokenStream) -> TokenStream {
     match model_gen_inner(input) {
         Ok(q) => q,

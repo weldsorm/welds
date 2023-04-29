@@ -4,8 +4,9 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use std::collections::HashSet;
 
-pub(crate) fn write(infos: &Info) -> TokenStream {
-    let pks = infos.pks.as_slice();
+pub(crate) fn write(info: &Info) -> TokenStream {
+    let pks = info.pks.as_slice();
+    let wp = &info.welds_path;
     if pks.is_empty() {
         return quote!();
     }
@@ -28,17 +29,17 @@ pub(crate) fn write(infos: &Info) -> TokenStream {
     pub async fn find_by_id<'a, 'args, DB, C>(
         conn: &'a C,
         #id_params
-    ) -> welds::errors::Result<Option<welds::state::DbState<Self>>>
+    ) -> #wp::errors::Result<Option<#wp::state::DbState<Self>>>
     where
         'a: 'args,
         DB: sqlx::Database,
-        C: welds::connection::Connection<DB>,
-        <Self as welds::table::HasSchema>::Schema: welds::table::TableColumns<DB>,
+        C: #wp::connection::Connection<DB>,
+        <Self as #wp::table::HasSchema>::Schema: #wp::table::TableColumns<DB>,
         <DB as sqlx::database::HasArguments<'a>>::Arguments: sqlx::IntoArguments<'args, DB>,
         Self: Send + Unpin + for<'r> sqlx::FromRow<'r, DB::Row>,
-        DB: welds::writers::DbLimitSkipWriter,
-        DB: welds::writers::DbColumnWriter,
-        DB: welds::query::clause::DbParam,
+        DB: #wp::writers::DbLimitSkipWriter,
+        DB: #wp::writers::DbColumnWriter,
+        DB: #wp::query::clause::DbParam,
         #encode_types
     {
         #converts

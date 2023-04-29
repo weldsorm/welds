@@ -3,6 +3,7 @@ use crate::engine::Engine;
 use crate::errors::Result;
 use crate::utils::as_typepath;
 use crate::{column::Column, relation::Relation};
+use proc_macro2::{Ident, Span};
 use std::collections::HashSet;
 use syn::{Attribute, Field, Type};
 
@@ -189,6 +190,18 @@ pub(crate) fn get_schemaname(ast: &syn::DeriveInput) -> Option<String> {
         .next()
 }
 
+pub(crate) fn get_welds_path(ast: &syn::DeriveInput) -> syn::Path {
+    let metas = welds_path_meta(&ast.attrs);
+    // Read out the inner meta from [welds_path(this, and_this)]
+    let inners: Vec<&syn::Meta> = metas.iter().flat_map(as_metalist_nested_meta).collect();
+    // find the first table="name"
+    let first: Option<_> = inners.iter().map(|x| x.path()).next().cloned();
+    first.unwrap_or_else(|| {
+        let ident = Ident::new("welds", Span::call_site());
+        ident.into()
+    })
+}
+
 pub(crate) fn get_readonly(ast: &syn::DeriveInput) -> bool {
     let metas = welds_meta(&ast.attrs);
     // Read out the inner meta from [welds(this, and_this)]
@@ -243,6 +256,16 @@ fn welds_meta(attrs: &[Attribute]) -> Vec<syn::MetaList> {
         .filter_map(|a| a.parse_meta().ok())
         .filter_map(as_metalist)
         .filter(|m| m.path.is_ident("welds"))
+        .collect()
+}
+
+/// pull out all the welds_path attrs as metalists
+fn welds_path_meta(attrs: &[Attribute]) -> Vec<syn::MetaList> {
+    attrs
+        .iter()
+        .filter_map(|a| a.parse_meta().ok())
+        .filter_map(as_metalist)
+        .filter(|m| m.path.is_ident("welds_path"))
         .collect()
 }
 

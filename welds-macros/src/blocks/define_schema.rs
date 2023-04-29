@@ -11,14 +11,14 @@ pub(crate) fn write(info: &Info) -> TokenStream {
         .columns
         .iter()
         .filter(|x| !x.ignore)
-        .map(def_field)
+        .map(|x| def_field(info, x))
         .collect();
 
     let default_fields: Vec<_> = info
         .columns
         .iter()
         .filter(|x| !x.ignore)
-        .map(default_fields)
+        .map(|x| default_fields(info, x))
         .collect();
 
     quote! {
@@ -38,15 +38,16 @@ pub(crate) fn write(info: &Info) -> TokenStream {
     }
 }
 
-fn def_field(col: &Column) -> TokenStream {
+fn def_field(info: &Info, col: &Column) -> TokenStream {
     let name = &col.field;
+    let wp = &info.welds_path;
     let type_inner = &col.field_type;
     let mut ty = quote! { #type_inner };
     if col.is_option {
-        ty = quote! { welds::query::optional::Optional<#type_inner> }
+        ty = quote! { #wp::query::optional::Optional<#type_inner> }
     }
     let clause = get_clause(type_inner, col.is_option);
-    let full_type = quote! { welds::query::clause::#clause<#ty> };
+    let full_type = quote! { #wp::query::clause::#clause<#ty> };
     quote! { pub #name: #full_type }
 }
 
@@ -56,10 +57,11 @@ fn get_clause(ty: &syn::Type, nullable: bool) -> TokenStream {
     quote! { #id }
 }
 
-fn default_fields(col: &Column) -> TokenStream {
+fn default_fields(info: &Info, col: &Column) -> TokenStream {
+    let wp = &info.welds_path;
     let name = &col.field;
     let type_inner = &col.field_type;
     let clause = get_clause(type_inner, col.is_option);
     let dbname = col.dbname.as_str();
-    quote! { #name: welds::query::clause::#clause::new(#dbname) }
+    quote! { #name: #wp::query::clause::#clause::new(#dbname) }
 }

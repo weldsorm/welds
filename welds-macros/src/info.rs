@@ -15,6 +15,7 @@ pub(crate) struct Info {
     pub tablename: String,
     pub schemaname: Option<String>,
     pub readonly: bool,
+    pub welds_path: syn::Path,
 }
 
 impl Info {
@@ -31,6 +32,7 @@ impl Info {
         let columns = attributes::get_columns(ast);
         let pks = attributes::get_pks(ast);
         let readonly = attributes::get_readonly(ast);
+        let welds_path = attributes::get_welds_path(ast);
 
         let engines_ident = engines
             .iter()
@@ -49,6 +51,7 @@ impl Info {
             tablename,
             schemaname,
             readonly,
+            welds_path,
         })
     }
 }

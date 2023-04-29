@@ -2,8 +2,9 @@ use crate::info::Info;
 use proc_macro2::TokenStream;
 use quote::quote;
 
-pub(crate) fn write(infos: &Info) -> TokenStream {
-    let cols: Vec<_> = infos
+pub(crate) fn write(info: &Info) -> TokenStream {
+    let wp = &info.welds_path;
+    let cols: Vec<_> = info
         .columns
         .iter()
         .map(|c| {
@@ -15,8 +16,8 @@ pub(crate) fn write(infos: &Info) -> TokenStream {
 
     quote! {
 
-        pub fn new() -> welds::state::DbState<Self> {
-            welds::state::DbState::new_uncreated(Self {
+        pub fn new() -> #wp::state::DbState<Self> {
+            #wp::state::DbState::new_uncreated(Self {
                 #cols
             })
         }

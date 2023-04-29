@@ -2,22 +2,23 @@ use crate::{info::Info, relation::Relation};
 use proc_macro2::TokenStream;
 use quote::quote;
 
-pub(crate) fn write(infos: &Info) -> TokenStream {
-    let defstruct = &infos.defstruct;
-    let relations_struct = &infos.relations_struct;
-    let relations = infos.relations.as_slice();
+pub(crate) fn write(info: &Info) -> TokenStream {
+    let wp = &info.welds_path;
+    let defstruct = &info.defstruct;
+    let relations_struct = &info.relations_struct;
+    let relations = info.relations.as_slice();
     if relations.is_empty() {
         return quote! {};
     }
 
-    let struct_fields: Vec<_> = relations.iter().map(fielddef).collect();
+    let struct_fields: Vec<_> = relations.iter().map(|x| fielddef(info, x)).collect();
     let struct_fields = quote! { #(#struct_fields), * };
-    let default_fields: Vec<_> = relations.iter().map(defaultdef).collect();
+    let default_fields: Vec<_> = relations.iter().map(|x| defaultdef(info, x)).collect();
     let default_fields = quote! { #(#default_fields), * };
 
     quote! {
 
-        impl welds::relations::HasRelations for #defstruct {
+        impl #wp::relations::HasRelations for #defstruct {
             type Relation = #relations_struct;
         }
 
@@ -36,20 +37,22 @@ pub(crate) fn write(infos: &Info) -> TokenStream {
     }
 }
 
-fn fielddef(relation: &Relation) -> TokenStream {
+fn fielddef(info: &Info, relation: &Relation) -> TokenStream {
+    let wp = &info.welds_path;
     let kind = &relation.kind;
     let field = &relation.field;
     let other = &relation.foreign_struct;
     quote! {
-        pub #field: welds::relations::#kind<#other>
+        pub #field: #wp::relations::#kind<#other>
     }
 }
 
-fn defaultdef(relation: &Relation) -> TokenStream {
+fn defaultdef(info: &Info, relation: &Relation) -> TokenStream {
+    let wp = &info.welds_path;
     let kind = &relation.kind;
     let field = &relation.field;
     let fk = &relation.foreign_key;
     quote! {
-        #field: welds::relations::#kind::using(#fk)
+        #field: #wp::relations::#kind::using(#fk)
     }
 }

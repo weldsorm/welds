@@ -3,6 +3,7 @@ use proc_macro2::TokenStream;
 use quote::quote;
 
 pub(crate) fn write(info: &Info) -> TokenStream {
+    let wp = &info.welds_path;
     let mut parts = Vec::default();
     let tn = &info.tablename;
     parts.push(quote! { #tn });
@@ -16,7 +17,7 @@ pub(crate) fn write(info: &Info) -> TokenStream {
 
     quote! {
 
-        impl welds::table::TableInfo for #schema {
+        impl #wp::table::TableInfo for #schema {
             fn identifier() -> &'static [&'static str] {
                 &[#(#parts),*]
             }

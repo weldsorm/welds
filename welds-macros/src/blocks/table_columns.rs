@@ -59,23 +59,23 @@ pub(crate) fn write_for_db(
     pks: &TokenStream,
     columns: &TokenStream,
 ) -> TokenStream {
+    let wp = &info.welds_path;
     let def = &info.schemastruct;
 
     quote! {
 
-        impl welds::table::TableColumns<sqlx::#db> for #def {
-            fn primary_keys() -> Vec<welds::table::Column> {
+        impl #wp::table::TableColumns<sqlx::#db> for #def {
+            fn primary_keys() -> Vec<#wp::table::Column> {
                 type DB = sqlx::#db;
-                use welds::table::Column;
+                use #wp::table::Column;
                 #pks
             }
-            fn columns() -> Vec<welds::table::Column> {
+            fn columns() -> Vec<#wp::table::Column> {
                 type DB = sqlx::#db;
-                use welds::table::Column;
+                use #wp::table::Column;
                 #columns
             }
         }
 
     }
-    .into()
 }

@@ -47,20 +47,21 @@ pub(crate) fn write_col_sqlite(col: &Column) -> TokenStream {
 
 pub(crate) fn write_for_db(info: &Info, db: &Ident, matches: &TokenStream) -> TokenStream {
     let def = &info.defstruct;
+    let wp = &info.welds_path;
 
     quote! {
 
-    impl welds::table::WriteToArgs<sqlx::#db> for #def {
+    impl #wp::table::WriteToArgs<sqlx::#db> for #def {
         fn bind<'args>(
             &self,
             column: &str,
             args: &mut <sqlx::#db as sqlx::database::HasArguments<'args>>::Arguments,
-        ) -> welds::errors::Result<()> {
+        ) -> #wp::errors::Result<()> {
             use sqlx::Arguments;
             match column {
                 #matches
                 _ => {
-                    return Err(welds::errors::WeldsError::MissingDbColumn(
+                    return Err(#wp::errors::WeldsError::MissingDbColumn(
                         column.to_owned(),
                     ).into())
                 }

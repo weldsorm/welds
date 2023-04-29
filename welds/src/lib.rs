@@ -133,18 +133,6 @@
 //! For more examples on how to use Welds check out the [Example Repo](https://github.com/weldsorm/welds/tree/main/welds/examples)
 //!
 
-//// Make sure at least one DB provider is enabled
-//#[cfg(all(
-//    not(feature = "postgres"),
-//    not(feature = "mssql"),
-//    not(feature = "mysql"),
-//    not(feature = "sqlite")
-//))]
-//compile_error!(
-//    "one database provider is required, enable one of the following 'welds' features",
-//    ["postgres", "mysql", "mssql", "sqlite"]
-//);
-
 pub(crate) mod alias;
 pub mod connection;
 pub mod errors;
@@ -162,6 +150,19 @@ pub mod detect;
 /// Get differences between your rust welds structs and what is in the database.
 /// Useful to detect when the two get out of sync
 pub mod check;
+
+#[cfg(feature = "example_objects")]
+/// This is a set of example Structs that derive WeldsModel.
+///
+/// They are here so you can see what welds will create when you derive WeldsModel.
+/// In addition to the original structs, several helper structs are created. They are used for
+/// generating queries
+///
+/// For this set of example objects, We are wiring up Three database tables. The `Product` and `Order`
+/// tables have a many-to-many relationship with a join table `products_orders` in the middle
+///
+/// Viewing the source for these example objects is very useful to help understand welds.
+pub mod example_objects;
 
 // Re-exports
 pub use sqlx;

@@ -23,6 +23,7 @@ colored = { version="2", optional = true }
 "default" = []
 "detect" = []
 "check" = ["detect", "dep:colored"]
+"example_objects" = []
 "postgres" = ["sqlx/postgres", "welds-macros/postgres"]
 "mysql" = ["sqlx/mysql", "welds-macros/mysql"]
 "mssql" = ["sqlx/mssql", "welds-macros/mssql"]
@@ -36,6 +37,6 @@ opt-level = 3
 [dev-dependencies]
 async-std = { version = "1", features = ["attributes"] }
 sqlx = { version = "0.6", features = [ "runtime-async-std-rustls",  "macros"] }
-welds = { path="./", features=["postgres", "mysql", "mssql", "sqlite", "detect", "check"] }
+welds = { path="./", features=["postgres", "mysql", "mssql", "sqlite", "detect", "check", "example_objects"] }
 
 

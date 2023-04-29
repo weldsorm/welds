@@ -51,8 +51,6 @@ where
             build_tail(self),
         ]);
 
-        eprintln!("SQL: {}", sql);
-
         // lifetime hacks - Remove if you can
         // We know the use of sql and conn do not exceed the underlying call to fetch
         // sqlx if wants to hold the borrow for much longer than what is needed.

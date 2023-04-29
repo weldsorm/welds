@@ -2,8 +2,11 @@ use crate::query::clause::exists::ExistIn;
 use crate::query::clause::{AsFieldName, ClauseAdder, OrderBy};
 use crate::relations::{HasRelations, Relationship};
 use crate::table::{HasSchema, TableColumns, TableInfo, UniqueIdentifier};
+use crate::writers::column::DbColumnWriter;
 use crate::writers::limit_skip::DbLimitSkipWriter;
 use std::marker::PhantomData;
+
+use super::update::bulk::UpdateBuilder;
 
 /// An un-executed Query.
 ///
@@ -128,7 +131,7 @@ where
     /// Order the results of the query by a given column
     ///
     /// multiple calls will result in multiple OrderBys
-    pub fn order_by_desc<FN: AsFieldName>(
+    pub fn order_by_desc<V, FN: AsFieldName<V>>(
         mut self,
         lam: impl Fn(<T as HasSchema>::Schema) -> FN,
     ) -> Self {
@@ -141,7 +144,7 @@ where
     /// Order the results of the query by a given column
     ///
     /// multiple calls will result in multiple OrderBys
-    pub fn order_by_asc<FN: AsFieldName>(
+    pub fn order_by_asc<V, FN: AsFieldName<V>>(
         mut self,
         lam: impl Fn(<T as HasSchema>::Schema) -> FN,
     ) -> Self {
@@ -149,5 +152,23 @@ where
         let fieldname = field.fieldname();
         self.orderby.push(OrderBy::new(fieldname, "ASC"));
         self
+    }
+
+    /// Filter the results returned by this query.
+    /// Used when you want to filter on the columns of this table.
+    pub fn set<'v, V, FIELD>(
+        self,
+        lam: impl Fn(<T as HasSchema>::Schema) -> FIELD,
+        value: impl Into<V>,
+    ) -> UpdateBuilder<'schema, T, DB>
+    where
+        DB: DbColumnWriter,
+        <T as HasSchema>::Schema: Default,
+        FIELD: AsFieldName<V>,
+        V: for<'r> sqlx::Encode<'r, DB> + sqlx::Type<DB> + Send + Clone,
+        V: 'static,
+    {
+        let ub = UpdateBuilder::new(self);
+        ub.set(lam, value)
     }
 }

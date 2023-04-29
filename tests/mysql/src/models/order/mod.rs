@@ -14,4 +14,5 @@ pub struct Order {
     #[welds(primary_key)]
     pub id: i32,
     pub product_id: i32,
+    pub code: Option<String>,
 }

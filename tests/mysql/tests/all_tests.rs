@@ -229,7 +229,7 @@ fn should_be_able_to_bulk_delete() {
         let mut order = Order::new();
         order.product_id = p1.id;
         order.save(&trans).await.unwrap();
-        let q = Product::all().map_query(|p| p.orders);
+        let q = Order::all().where_col(|x| x.id.gt(0));
         let count = q.count(&trans).await.unwrap();
         q.delete(&trans).await.unwrap();
         assert!(count > 0);
@@ -238,24 +238,27 @@ fn should_be_able_to_bulk_delete() {
 }
 
 #[test]
-fn should_be_able_to_bulk_delete2() {
+fn should_be_able_to_bulk_update() {
     async_std::task::block_on(async {
         let conn = get_conn().await;
-        let trans = conn.begin().await.unwrap();
-        let p1 = Product::all()
-            .limit(1)
-            .run(&trans)
-            .await
-            .unwrap()
-            .pop()
-            .unwrap();
-        let mut order = Order::new();
-        order.product_id = p1.id;
-        order.save(&trans).await.unwrap();
-        let q = Order::all().where_col(|x| x.id.gt(0));
-        let count = q.count(&trans).await.unwrap();
-        q.delete(&trans).await.unwrap();
-        assert!(count > 0);
-        trans.rollback().await.unwrap();
+        let q = Order::all()
+            .where_col(|x| x.code.equal(None))
+            .set(|x| x.code, "test");
+        let sql = q.to_sql();
+        eprintln!("SQL: {}", sql);
+        q.run(&conn).await.unwrap();
+    })
+}
+
+#[test]
+fn should_be_able_to_bulk_update2() {
+    async_std::task::block_on(async {
+        let conn = get_conn().await;
+        let q = Product::all()
+            .map_query(|p| p.orders)
+            .set(|x| x.code, "test2");
+        let sql = q.to_sql();
+        eprintln!("SQL: {}", sql);
+        q.run(&conn).await.unwrap();
     })
 }

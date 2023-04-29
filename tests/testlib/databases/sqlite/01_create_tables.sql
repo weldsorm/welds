@@ -13,6 +13,7 @@ CREATE TABLE Orders (
   price REAL,
   product_id INTEGER NOT NULL,
   product_id2 INTEGER,
+  code text,
   FOREIGN KEY(product_id) REFERENCES Products(product_id),
   FOREIGN KEY(product_id2) REFERENCES Products(product_id)
 );

@@ -6,7 +6,7 @@ pub struct NumericOpt<T> {
     _t: PhantomData<T>,
 }
 
-impl<T> AsFieldName for NumericOpt<T> {
+impl<T> AsFieldName<T> for NumericOpt<T> {
     fn fieldname(&self) -> &str {
         self.field.as_str()
     }

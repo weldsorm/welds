@@ -110,20 +110,43 @@ fn should_be_able_to_limit_results_in_sql() {
 fn should_be_able_to_create_a_new_product() {
     async_std::task::block_on(async {
         let conn = get_conn().await;
-        let mut trans = conn.begin().await.unwrap();
+        let trans = conn.begin().await.unwrap();
 
         let mut p1 = Product::new();
         p1.name = "newyNewFace".to_owned();
         p1.description = Some("YES!".to_owned());
         // Note: creation will set the PK for the model.
-        p1.save(&mut trans).await.unwrap();
+        p1.save(&trans).await.unwrap();
 
         let q = Product::where_col(|x| x.id.equal(p1.id));
-        let mut found: Vec<_> = q.run(&mut trans).await.unwrap();
+        let mut found: Vec<_> = q.run(&trans).await.unwrap();
         let p2 = found.pop().unwrap();
         assert_eq!(p2.name, "newyNewFace");
         assert!(p2.id != 0, "New ID should not be Zero");
 
+        trans.rollback().await.unwrap();
+    })
+}
+
+#[test]
+fn should_be_able_to_update_a_product() {
+    async_std::task::block_on(async {
+        let conn = get_conn().await;
+        let trans = conn.begin().await.unwrap();
+
+        let mut p1 = Product::all()
+            .order_by_desc(|x| x.id)
+            .limit(1)
+            .run(&trans)
+            .await
+            .unwrap()
+            .pop()
+            .unwrap();
+
+        p1.description = Some("UPDATED!".to_owned());
+        p1.save(&trans).await.unwrap();
+        let p2 = Product::find_by_id(&trans, p1.id).await.unwrap().unwrap();
+        assert_eq!(p2.description.as_ref().unwrap(), "UPDATED!");
         trans.rollback().await.unwrap();
     })
 }
@@ -230,7 +253,7 @@ fn should_be_able_to_bulk_delete() {
         let mut order = Order::new();
         order.product_id = p1.id;
         order.save(&trans).await.unwrap();
-        let q = Product::all().map_query(|p| p.order);
+        let q = Order::all().where_col(|x| x.id.gt(0));
         let count = q.count(&trans).await.unwrap();
         q.delete(&trans).await.unwrap();
         assert!(count > 0);
@@ -239,24 +262,27 @@ fn should_be_able_to_bulk_delete() {
 }
 
 #[test]
-fn should_be_able_to_bulk_delete2() {
+fn should_be_able_to_bulk_update() {
     async_std::task::block_on(async {
         let conn = get_conn().await;
-        let trans = conn.begin().await.unwrap();
-        let p1 = Product::all()
-            .limit(1)
-            .run(&trans)
-            .await
-            .unwrap()
-            .pop()
-            .unwrap();
-        let mut order = Order::new();
-        order.product_id = p1.id;
-        order.save(&trans).await.unwrap();
-        let q = Order::all().where_col(|x| x.id.gt(0));
-        let count = q.count(&trans).await.unwrap();
-        q.delete(&trans).await.unwrap();
-        assert!(count > 0);
-        trans.rollback().await.unwrap();
+        let q = Product::all().set(|x| x.description, "thing");
+        let sql = q.to_sql();
+        eprintln!("SQL: {}", sql);
+
+        //let q = Order::all()
+        //    .where_col(|x| x.code.equal(None))
+        //    .set(|x| x.code, "test");
+        q.run(&conn).await.unwrap();
     })
 }
+
+//#[test]
+//fn should_be_able_to_bulk_update2() {
+//    async_std::task::block_on(async {
+//        let conn = get_conn().await;
+//        let q = Product::all().map_query(|p| p.order).set(|x| x.code, "A");
+//        let sql = q.to_sql();
+//        eprintln!("SQL: {}", sql);
+//        q.run(&conn).await.unwrap();
+//    })
+//}

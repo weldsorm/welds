@@ -21,6 +21,7 @@ CREATE TABLE Orders (
   product_id INT,
   product_id2 INT,
   price FLOAT,
+  code VARCHAR ( 50 ) NULL,
   PRIMARY KEY (id),
   FOREIGN KEY (product_id)  REFERENCES weldstests.Products(product_id),
   FOREIGN KEY (product_id2) REFERENCES weldstests.Products(product_id)

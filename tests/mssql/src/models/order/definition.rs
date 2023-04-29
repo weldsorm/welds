@@ -15,4 +15,5 @@ pub struct Order {
     pub product_id: i32,
     #[sqlx(rename = "product_id2")]
     pub product_id_2: Option<i32>,
+    pub code: Option<String>,
 }

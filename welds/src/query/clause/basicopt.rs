@@ -7,7 +7,7 @@ pub struct BasicOpt<T> {
     _t: PhantomData<T>,
 }
 
-impl<T> AsFieldName for BasicOpt<T> {
+impl<T> AsFieldName<T> for BasicOpt<T> {
     fn fieldname(&self) -> &str {
         self.field.as_str()
     }

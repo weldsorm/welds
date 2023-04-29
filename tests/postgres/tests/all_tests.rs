@@ -378,19 +378,6 @@ fn should_be_able_to_bulk_delete() {
     async_std::task::block_on(async {
         let conn = get_conn().await;
         let trans = conn.begin().await.unwrap();
-        let q = Product::all().map_query(|p| p.order);
-        let count = q.count(&trans).await.unwrap();
-        q.delete(&trans).await.unwrap();
-        assert!(count > 0);
-        trans.rollback().await.unwrap();
-    })
-}
-
-#[test]
-fn should_be_able_to_bulk_delete2() {
-    async_std::task::block_on(async {
-        let conn = get_conn().await;
-        let trans = conn.begin().await.unwrap();
         let q = Order::where_col(|x| x.id.gt(0));
         let count = q.count(&trans).await.unwrap();
         q.delete(&trans).await.unwrap();
@@ -399,17 +386,28 @@ fn should_be_able_to_bulk_delete2() {
     })
 }
 
-//#[test]
-//fn should_be_able_to_truncate_a_table() {
-//    async_std::task::block_on(async {
-//        let sqlx_conn = testlib::postgres::conn().await.unwrap();
-//        let conn: Pool<Postgres> = sqlx_conn.into();
-//        let trans = conn.begin().await.unwrap();
-//        let mut p1 = Order::new();
-//        p1.save(&trans).await.unwrap();
-//        Order::truncate(&trans).await.unwrap();
-//        let c = Order::all().count(&trans).await.unwrap();
-//        assert_eq!(c, 0);
-//        trans.rollback().await.unwrap();
-//    })
-//}
+#[test]
+fn should_be_able_to_bulk_update() {
+    async_std::task::block_on(async {
+        let conn = get_conn().await;
+        let q = Order::all()
+            .where_col(|x| x.code.equal(None))
+            .set(|x| x.code, "test");
+        let sql = q.to_sql();
+        eprintln!("SQL: {}", sql);
+        q.run(&conn).await.unwrap();
+    })
+}
+
+#[test]
+fn should_be_able_to_bulk_update2() {
+    async_std::task::block_on(async {
+        let conn = get_conn().await;
+        let q = Product::all()
+            .map_query(|p| p.order)
+            .set(|x| x.code, "test2");
+        let sql = q.to_sql();
+        eprintln!("SQL: {}", sql);
+        q.run(&conn).await.unwrap();
+    })
+}

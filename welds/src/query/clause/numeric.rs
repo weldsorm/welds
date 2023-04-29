@@ -8,7 +8,7 @@ pub struct Numeric<T> {
     _t: PhantomData<T>,
 }
 
-impl<T> AsFieldName for Numeric<T> {
+impl<T> AsFieldName<T> for Numeric<T> {
     fn fieldname(&self) -> &str {
         self.field.as_str()
     }

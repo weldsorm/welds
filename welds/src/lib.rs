@@ -163,11 +163,6 @@ pub mod detect;
 /// Useful to detect when the two get out of sync
 pub mod check;
 
-#[cfg(feature = "dbtypes")]
-/// This is a set of functions and structs that are used to
-/// lookup what rust type should be used for a given database type
-pub mod dbtypes;
-
 // Re-exports
 pub use sqlx;
 pub use welds_macros::WeldsModel;

@@ -4,8 +4,9 @@ use crate::errors::Result;
 use crate::query::builder::QueryBuilder;
 use crate::query::clause::AsFieldName;
 use crate::query::clause::ClauseAdder;
-use crate::query::clause::{DbParam, NextParam};
+use crate::query::clause::{wherein::WhereIn, DbParam, NextParam};
 use crate::query::helpers::{build_where, join_sql_parts};
+use crate::table::UniqueIdentifier;
 use crate::table::{HasSchema, TableColumns, TableInfo};
 use crate::writers::column::{ColumnWriter, DbColumnWriter};
 use crate::writers::count::DbCountWriter;
@@ -63,14 +64,13 @@ where
     /// Get a copy of the SQL that will be executed when this query runs
     pub fn to_sql(&self) -> String
     where
+        'schema: 'args,
         <DB as HasArguments<'schema>>::Arguments: IntoArguments<'args, DB>,
         DB: DbParam + DbColumnWriter + DbLimitSkipWriter + DbCountWriter,
-        <T as HasSchema>::Schema: TableInfo + TableColumns<DB>,
+        <T as HasSchema>::Schema: UniqueIdentifier<DB> + TableInfo + TableColumns<DB>,
     {
         let mut args: Option<<DB as HasArguments>::Arguments> = None;
         let next_params = NextParam::new::<DB>();
-        let wheres = self.query_builder.wheres.as_slice();
-        let exists_in = self.query_builder.exist_ins.as_slice();
         let sets = self.sets.as_slice();
         let alias = TableAlias::new();
         // Note: for updates we want the main table NOT to be aliased
@@ -79,7 +79,7 @@ where
 
         join_sql_parts(&[
             build_head::<DB, <T as HasSchema>::Schema>(&next_params, &alias, &mut args, sets),
-            build_where(&next_params, &alias, &mut args, wheres, exists_in),
+            build_where_update(&next_params, &alias, &mut args, &self.query_builder),
         ])
     }
 
@@ -91,12 +91,10 @@ where
         C: Connection<DB>,
         <DB as HasArguments<'schema>>::Arguments: IntoArguments<'args, DB>,
         DB: DbParam + DbColumnWriter + DbLimitSkipWriter,
-        <T as HasSchema>::Schema: TableInfo + TableColumns<DB>,
+        <T as HasSchema>::Schema: UniqueIdentifier<DB> + TableInfo + TableColumns<DB>,
     {
         let mut args: Option<<DB as HasArguments>::Arguments> = Some(Default::default());
         let next_params = NextParam::new::<DB>();
-        let wheres = self.query_builder.wheres.as_slice();
-        let exists_in = self.query_builder.exist_ins.as_slice();
         let sets = self.sets.as_slice();
         let alias = TableAlias::new();
         // Note: for updates we want the main table NOT to be aliased
@@ -105,7 +103,7 @@ where
 
         let sql = join_sql_parts(&[
             build_head::<DB, <T as HasSchema>::Schema>(&next_params, &alias, &mut args, sets),
-            build_where(&next_params, &alias, &mut args, wheres, exists_in),
+            build_where_update(&next_params, &alias, &mut args, &self.query_builder),
         ]);
 
         // lifetime hacks - Remove if you can
@@ -170,4 +168,39 @@ where
         let sql = format!("{}={}", self.col, next_params.next());
         Some(sql)
     }
+}
+
+pub(crate) fn build_where_update<'schema, 'args, DB, T>(
+    next_params: &NextParam,
+    alias: &TableAlias,
+    args: &mut Option<<DB as HasArguments<'schema>>::Arguments>,
+    qb: &QueryBuilder<'schema, T, DB>,
+) -> Option<String>
+where
+    'schema: 'args,
+    T: HasSchema,
+    <T as HasSchema>::Schema: UniqueIdentifier<DB> + TableInfo + TableColumns<DB>,
+    DB: sqlx::Database + DbLimitSkipWriter + DbColumnWriter,
+    <DB as HasArguments<'schema>>::Arguments: IntoArguments<'args, DB>,
+{
+    // If we have a limit, we need to wrap the wheres in an IN clause
+    // this is to limit the number of row to that will be updated
+    if qb.limit.is_none() {
+        let wheres = qb.wheres.as_slice();
+        let exists_in = qb.exist_ins.as_slice();
+        return build_where(next_params, alias, args, wheres, exists_in);
+    }
+
+    let mut where_sql: Vec<String> = Vec::default();
+    let w_in = WhereIn::new(qb, None);
+    if let Some(args) = args {
+        w_in.bind(args);
+    }
+    if let Some(p) = w_in.clause(alias, next_params) {
+        where_sql.push(p);
+    }
+    if where_sql.is_empty() {
+        return None;
+    }
+    Some(format!("WHERE ( {} )", where_sql.join(" AND ")))
 }

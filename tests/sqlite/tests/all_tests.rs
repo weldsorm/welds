@@ -1,6 +1,6 @@
 use sqlite_test::models::order::Order;
 use sqlite_test::models::product::{BadProduct1, BadProduct2, Product};
-use sqlite_test::models::Thing1;
+use sqlite_test::models::{Thing1, Thing2};
 
 async fn get_conn() -> welds::connection::Pool<sqlx::Sqlite> {
     let sqlx_conn = testlib::sqlite::conn().await.unwrap();
@@ -324,6 +324,33 @@ fn should_be_able_to_limit_deletes() {
             .unwrap();
         let count_after = Thing1::all().count(&trans).await.unwrap();
         assert_eq!(count_before - 1, count_after);
+        trans.rollback().await.unwrap();
+    })
+}
+
+#[test]
+fn should_only_update_limited_rows_if_limit_is_in_query() {
+    async_std::task::block_on(async {
+        let conn = get_conn().await;
+        let trans = conn.begin().await.unwrap();
+        for _ in 0..10 {
+            Thing2::new().save(&trans).await.unwrap();
+        }
+        let update_statment = Thing2::all()
+            .where_col(|x| x.id.gt(0))
+            .order_by_desc(|x| x.id)
+            .limit(1)
+            .set(|x| x.value, "HAS_VALUE");
+
+        let sql = update_statment.to_sql();
+        update_statment.run(&trans).await.unwrap();
+        eprintln!("SQL: {}", sql);
+
+        let count = Thing2::where_col(|x| x.value.equal("HAS_VALUE"))
+            .count(&trans)
+            .await
+            .unwrap();
+        assert_eq!(count, 1);
         trans.rollback().await.unwrap();
     })
 }

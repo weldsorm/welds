@@ -17,6 +17,7 @@ pub use textopt::TextOpt;
 
 // Relationships / SubQueries
 pub(crate) mod exists;
+pub(crate) mod wherein;
 
 mod nextparam;
 pub use nextparam::{DbParam, NextParam};

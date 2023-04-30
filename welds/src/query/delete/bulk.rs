@@ -1,10 +1,11 @@
 use super::super::{
     builder::QueryBuilder,
-    clause::{DbParam, NextParam},
-    helpers::{build_tail, build_where, join_sql_parts},
+    clause::{wherein::WhereIn, ClauseAdder, DbParam, NextParam},
+    helpers::{build_where, join_sql_parts},
 };
 use crate::alias::TableAlias;
 use crate::connection::Connection;
+use crate::table::UniqueIdentifier;
 use crate::table::{HasSchema, TableColumns, TableInfo};
 use crate::writers::column::DbColumnWriter;
 use crate::writers::count::DbCountWriter;
@@ -32,14 +33,12 @@ where
         C: Connection<DB>,
         <DB as HasArguments<'schema>>::Arguments: IntoArguments<'args, DB>,
         DB: DbParam + DbColumnWriter + DbLimitSkipWriter + DbCountWriter,
-        <T as HasSchema>::Schema: TableInfo + TableColumns<DB>,
+        <T as HasSchema>::Schema: TableInfo + TableColumns<DB> + UniqueIdentifier<DB>,
         i64: sqlx::Type<DB> + for<'r> sqlx::Decode<'r, DB>,
         usize: sqlx::ColumnIndex<<DB as sqlx::Database>::Row>,
     {
         let mut args: Option<<DB as HasArguments>::Arguments> = Some(Default::default());
         let next_params = NextParam::new::<DB>();
-        let wheres = self.wheres.as_slice();
-        let exists_in = self.exist_ins.as_slice();
         let alias = TableAlias::new();
         // Note: for deletes we can't alias the FROM tablename
         let fullname = <T as HasSchema>::Schema::identifier().join(".");
@@ -47,8 +46,7 @@ where
 
         let sql = join_sql_parts(&[
             build_head_delete::<DB, <T as HasSchema>::Schema>(),
-            build_where(&next_params, &alias, &mut args, wheres, exists_in),
-            build_tail(self),
+            build_where_delete(&next_params, &alias, &mut args, self),
         ]);
 
         // lifetime hacks - Remove if you can
@@ -61,6 +59,7 @@ where
         let sql: &str = std::str::from_utf8(sql_hack).unwrap();
         let exec_ptr: *const &C = &exec;
         let exec_hack: &mut C = unsafe { *(exec_ptr as *mut &mut C) };
+
         exec_hack.execute(sql, args.unwrap()).await?;
 
         Ok(())
@@ -73,6 +72,40 @@ where
     S: TableInfo + TableColumns<DB>,
 {
     let identifier = S::identifier().join(".");
-    //let identifier = format!("{} {}", tn, &tablealias);
     Some(format!("DELETE FROM {}", identifier))
+}
+
+pub(crate) fn build_where_delete<'schema, 'args, DB, T>(
+    next_params: &NextParam,
+    alias: &TableAlias,
+    args: &mut Option<<DB as HasArguments<'schema>>::Arguments>,
+    qb: &QueryBuilder<'schema, T, DB>,
+) -> Option<String>
+where
+    'schema: 'args,
+    T: HasSchema,
+    <T as HasSchema>::Schema: UniqueIdentifier<DB> + TableInfo + TableColumns<DB>,
+    DB: sqlx::Database + DbLimitSkipWriter + DbColumnWriter,
+    <DB as HasArguments<'schema>>::Arguments: IntoArguments<'args, DB>,
+{
+    // If we have a limit, we need to wrap the wheres in an IN clause to
+    // we can limit the number of row to delete
+    if qb.limit.is_none() {
+        let wheres = qb.wheres.as_slice();
+        let exists_in = qb.exist_ins.as_slice();
+        return build_where(next_params, alias, args, wheres, exists_in);
+    }
+
+    let mut where_sql: Vec<String> = Vec::default();
+    let w_in = WhereIn::new(qb, None);
+    if let Some(args) = args {
+        w_in.bind(args);
+    }
+    if let Some(p) = w_in.clause(alias, next_params) {
+        where_sql.push(p);
+    }
+    if where_sql.is_empty() {
+        return None;
+    }
+    Some(format!("WHERE ( {} )", where_sql.join(" AND ")))
 }

@@ -73,18 +73,20 @@ where
     ) -> Self
     where
         DB: sqlx::Database + DbLimitSkipWriter,
-        T: HasRelations + UniqueIdentifier<DB>,
+        T: HasRelations,
         Ship: Relationship<R>,
-        R: HasSchema + UniqueIdentifier<DB>,
+        R: HasSchema,
+        T: HasSchema,
         R: Send + Unpin + for<'r> sqlx::FromRow<'r, DB::Row> + HasSchema,
-        <R as HasSchema>::Schema: TableInfo + TableColumns<DB>,
+        <R as HasSchema>::Schema: TableInfo + TableColumns<DB> + UniqueIdentifier<DB>,
+        <T as HasSchema>::Schema: TableInfo + TableColumns<DB> + UniqueIdentifier<DB>,
         <T as HasRelations>::Relation: Default,
     {
         let ship = relationship(Default::default());
-        let out_col = ship.my_key::<DB, R, T>();
+        let out_col = ship.my_key::<DB, R::Schema, T::Schema>();
         let inner_tn = <R as HasSchema>::Schema::identifier();
         let inner_tn = inner_tn.join(".");
-        let inner_col = ship.their_key::<DB, R, T>();
+        let inner_col = ship.their_key::<DB, R::Schema, T::Schema>();
         let exist_in = ExistIn::<'schema, DB>::new(filter, out_col, inner_tn, inner_col);
         self.exist_ins.push(exist_in);
         self
@@ -97,19 +99,21 @@ where
     ) -> QueryBuilder<'schema, R, DB>
     where
         DB: sqlx::Database + DbLimitSkipWriter,
-        T: HasRelations + UniqueIdentifier<DB>,
+        T: HasRelations,
         Ship: Relationship<R>,
-        R: HasSchema + UniqueIdentifier<DB>,
+        R: HasSchema,
+        T: HasSchema,
         R: Send + Unpin + for<'r> sqlx::FromRow<'r, DB::Row> + HasSchema,
-        <R as HasSchema>::Schema: TableInfo + TableColumns<DB>,
+        <R as HasSchema>::Schema: TableInfo + TableColumns<DB> + UniqueIdentifier<DB>,
+        <T as HasSchema>::Schema: TableInfo + TableColumns<DB> + UniqueIdentifier<DB>,
         <T as HasRelations>::Relation: Default,
     {
         let ship = relationship(Default::default());
         let mut sb: QueryBuilder<R, DB> = QueryBuilder::new();
 
-        let out_col = ship.their_key::<DB, R, T>();
+        let out_col = ship.their_key::<DB, R::Schema, T::Schema>();
         let inner_tn = <T as HasSchema>::Schema::identifier().join(".");
-        let inner_col = ship.my_key::<DB, R, T>();
+        let inner_col = ship.my_key::<DB, R::Schema, T::Schema>();
         let exist_in = ExistIn::<'schema, DB>::new(self, out_col, inner_tn, inner_col);
 
         sb.exist_ins.push(exist_in);

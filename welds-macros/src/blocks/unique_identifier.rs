@@ -20,7 +20,7 @@ pub(crate) fn write(info: &Info) -> TokenStream {
 
 pub(crate) fn write_for_db(info: &Info, db: &Ident, pk: &Column) -> TokenStream {
     let wp = &info.welds_path;
-    let def = &info.defstruct;
+    let def = &info.schemastruct;
     let pktype = &pk.field_type;
     let name = &pk.dbname;
     let nullable = pk.is_option;

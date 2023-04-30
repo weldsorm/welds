@@ -1,5 +1,6 @@
 use sqlite_test::models::order::Order;
 use sqlite_test::models::product::{BadProduct1, BadProduct2, Product};
+use sqlite_test::models::Thing1;
 
 async fn get_conn() -> welds::connection::Pool<sqlx::Sqlite> {
     let sqlx_conn = testlib::sqlite::conn().await.unwrap();
@@ -202,7 +203,7 @@ fn should_be_able_to_scan_for_all_tables() {
     async_std::task::block_on(async {
         let conn = get_conn().await;
         let tables = welds::detect::find_tables(&conn).await.unwrap();
-        assert_eq!(2, tables.len());
+        assert_eq!(11, tables.len());
     })
 }
 
@@ -303,5 +304,26 @@ fn should_be_able_to_bulk_update2() {
         let sql = q.to_sql();
         eprintln!("SQL: {}", sql);
         q.run(&conn).await.unwrap();
+    })
+}
+
+#[test]
+fn should_be_able_to_limit_deletes() {
+    async_std::task::block_on(async {
+        let conn = get_conn().await;
+        let trans = conn.begin().await.unwrap();
+        for _ in 0..100 {
+            Thing1::new().save(&trans).await.unwrap();
+        }
+        let count_before = Thing1::all().count(&trans).await.unwrap();
+        Thing1::all()
+            .order_by_desc(|x| x.id)
+            .limit(1)
+            .delete(&trans)
+            .await
+            .unwrap();
+        let count_after = Thing1::all().count(&trans).await.unwrap();
+        assert_eq!(count_before - 1, count_after);
+        trans.rollback().await.unwrap();
     })
 }

@@ -24,10 +24,12 @@ impl TableAlias {
     pub fn next(&self) -> String {
         let id = format!("t{}", self.i.get());
         self.i.set(self.i.get() + 1);
-        match self.force.borrow().as_ref() {
+        let val = match self.force.borrow().as_ref() {
             Some(f) => f.clone(),
             None => id,
-        }
+        };
+        *self.force.borrow_mut() = None;
+        val
     }
 
     /// Peek what the next value will be without bumping it

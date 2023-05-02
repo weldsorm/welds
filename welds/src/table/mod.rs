@@ -49,10 +49,10 @@ pub trait UniqueIdentifier<DB> {
 }
 
 pub trait WriteToArgs<DB> {
-    fn bind<'args>(
+    fn bind(
         &self,
         column: &str,
-        args: &mut <DB as HasArguments<'args>>::Arguments,
+        args: &mut <DB as HasArguments<'_>>::Arguments,
     ) -> Result<()>
     where
         DB: sqlx::Database;

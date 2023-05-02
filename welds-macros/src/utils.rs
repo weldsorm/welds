@@ -44,7 +44,7 @@ fn get_clause_typepath(ty: &TypePath) -> Option<&'static str> {
     Some(clause)
 }
 
-pub(crate) fn as_typepath<'a>(ty: &'a syn::Type) -> Option<&'a syn::TypePath> {
+pub(crate) fn as_typepath(ty: &syn::Type) -> Option<&syn::TypePath> {
     match ty {
         syn::Type::Path(tp) => Some(tp),
         _ => None,

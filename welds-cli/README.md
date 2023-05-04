@@ -18,7 +18,7 @@ You point it at your database and out comes a bunch of rust files for all the ta
 
 # Install
 ```bash
-cargo install welds-cli --version '0.1.4-alpha'
+cargo install welds-cli --version '0.1.5-alpha'
 ```
 
 # How to use

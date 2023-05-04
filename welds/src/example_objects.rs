@@ -23,12 +23,19 @@ pub struct Product {
 /// Start off a query on this table using. [all()](#method.all) or [where_col()](#method.where_col).
 ///
 /// ```
-/// let q = Order::where_col(|o| o.id.equal(3) )
-///     .map_query(|o| o.product_orders )
-///     .map_query(|po| po.products )
-///     .where_col(|p| p.active.equal(true) )
-/// let count_product = q.count(&conn).await?
-/// let first_product = q.limit(1).run(&conn).await?
+/// use welds::example_objects::Order;
+///
+/// async fn run_query<C>(conn: &C) -> welds::errors::Result<()>
+///     where C: welds::connection::Connection<sqlx::Postgres>
+/// {
+///   let q = Order::where_col(|o| o.id.equal(3) )
+///       .map_query(|o| o.product_orders )
+///       .map_query(|po| po.product )
+///       .where_col(|p| p.active.equal(true) );
+///   let count_product = q.count(conn).await?;
+///   let first_product = q.limit(1).run(conn).await?;
+///   Ok(())
+/// }
 /// ```
 ///
 #[derive(Debug, sqlx::FromRow, WeldsModel)]

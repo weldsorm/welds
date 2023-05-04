@@ -92,7 +92,7 @@ async fn create_products(conn: &impl Connection<Sqlite>) -> Result<(), Box<dyn s
             active: true,
         })
         .collect();
-    welds::query::insert::bulk(conn, &products).await?;
+    welds::query::insert::bulk_insert(conn, &products).await?;
 
     let orders: Vec<_> = (0..1000)
         .map(|i| Order {
@@ -101,7 +101,7 @@ async fn create_products(conn: &impl Connection<Sqlite>) -> Result<(), Box<dyn s
             sell_price: None,
         })
         .collect();
-    welds::query::insert::bulk(conn, &orders).await?;
+    welds::query::insert::bulk_insert(conn, &orders).await?;
 
     let total_p = Product::all().count(conn).await?;
     let total_o = Order::all().count(conn).await?;

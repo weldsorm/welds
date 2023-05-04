@@ -1,11 +1,11 @@
-use super::exists::ExistIn;
+
 use super::ClauseAdder;
-use crate::query::clause::OrderBy;
+
 use crate::query::helpers::{build_tail, build_where, join_sql_parts};
 use crate::table::HasSchema;
 use crate::table::TableInfo;
 use crate::table::UniqueIdentifier;
-use crate::table::{Column, TableColumns};
+use crate::table::{TableColumns};
 use crate::writers::column::{ColumnWriter, DbColumnWriter};
 use crate::writers::limit_skip::DbLimitSkipWriter;
 use crate::{alias::TableAlias, query::builder::QueryBuilder};

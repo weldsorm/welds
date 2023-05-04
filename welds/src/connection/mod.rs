@@ -80,7 +80,7 @@ impl<DB: sqlx::Database> Pool<DB> {
 
     /// Return the inner sqlx connection pool
     pub async fn begin<'t>(self) -> Result<Transaction<'t, DB>> {
-        Ok(self::Transaction::new(self).await?)
+        self::Transaction::new(self).await
     }
 }
 

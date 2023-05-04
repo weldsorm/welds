@@ -36,3 +36,12 @@ CREATE TABLE alt.Others (
 );
 
 
+CREATE TABLE Thing1 ( id serial PRIMARY KEY, value text);
+CREATE TABLE Thing2 ( id serial PRIMARY KEY, value text);
+CREATE TABLE Thing3 ( id serial PRIMARY KEY, value text);
+CREATE TABLE Thing4 ( id serial PRIMARY KEY, value text);
+CREATE TABLE Thing5 ( id serial PRIMARY KEY, value text);
+CREATE TABLE Thing6 ( id serial PRIMARY KEY, value text);
+CREATE TABLE Thing7 ( id serial PRIMARY KEY, value text);
+CREATE TABLE Thing8 ( id serial PRIMARY KEY, value text);
+CREATE TABLE Thing9 ( id serial PRIMARY KEY, value text);

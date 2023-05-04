@@ -1,11 +1,15 @@
 pub trait DbParam {
     fn next(i: usize) -> String;
+    fn max_params() -> u32;
 }
 
 #[cfg(feature = "postgres")]
 impl DbParam for sqlx::Postgres {
     fn next(i: usize) -> String {
         format!("${}", i)
+    }
+    fn max_params() -> u32 {
+        65535
     }
 }
 
@@ -14,6 +18,9 @@ impl DbParam for sqlx::Sqlite {
     fn next(_i: usize) -> String {
         "?".to_string()
     }
+    fn max_params() -> u32 {
+        999
+    }
 }
 
 #[cfg(feature = "mssql")]
@@ -21,11 +28,18 @@ impl DbParam for sqlx::Mssql {
     fn next(i: usize) -> String {
         format!("@p{}", i)
     }
+    fn max_params() -> u32 {
+        60
+        //2100
+    }
 }
 #[cfg(feature = "mysql")]
 impl DbParam for sqlx::MySql {
     fn next(_i: usize) -> String {
         "?".to_string()
+    }
+    fn max_params() -> u32 {
+        64000
     }
 }
 

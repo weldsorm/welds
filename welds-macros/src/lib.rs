@@ -28,12 +28,13 @@ fn model_gen_inner(input: TokenStream) -> errors::Result<TokenStream> {
     // write all the code snipits
     let p1 = blocks::has_schema(&info);
     let p2 = blocks::write_to_args(&info);
-    let p3 = blocks::define_schema(&info);
-    let p4 = blocks::table_info(&info);
-    let p5 = blocks::table_columns(&info);
-    let p6 = blocks::relations(&info);
-    let p7 = blocks::unique_identifier(&info);
-    let p8 = blocks::impl_struct(&info);
+    let p3 = blocks::write_bulk_array_to_args(&info);
+    let p4 = blocks::define_schema(&info);
+    let p5 = blocks::table_info(&info);
+    let p6 = blocks::table_columns(&info);
+    let p7 = blocks::relations(&info);
+    let p8 = blocks::unique_identifier(&info);
+    let p9 = blocks::impl_struct(&info);
 
     let q = quote! {
         #p1
@@ -44,7 +45,17 @@ fn model_gen_inner(input: TokenStream) -> errors::Result<TokenStream> {
         #p6
         #p7
         #p8
+        #p9
     };
+
+    // Want to see what the macros generate?
+    let code = q.to_string();
+    std::fs::create_dir_all("/tmp/weldsmacro/");
+    let filename = format!(
+        "/tmp/weldsmacro/{}.rs",
+        info.defstruct.to_string().to_lowercase()
+    );
+    std::fs::write(filename, code);
 
     Ok(q.into())
 }

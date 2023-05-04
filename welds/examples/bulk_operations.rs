@@ -42,7 +42,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Create a bunch of products to play with
     create_products(&pool).await?;
-    println!();
+    //println!();
 
     // Bulk update Orders and assign to first product
     Order::all().set(|x| x.product_id, 1).run(&pool).await?;
@@ -83,15 +83,26 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 async fn create_products(conn: &impl Connection<Sqlite>) -> Result<(), Box<dyn std::error::Error>> {
-    for i in 0..1000 {
-        let mut p = Product::new();
-        p.name = format!("product #{}", i);
-        p.active = true;
-        p.save(conn).await?;
-        let mut order = Order::new();
-        order.product_id = Some(p.id);
-        order.save(conn).await?;
-    }
+    let products: Vec<_> = (0..1000)
+        .map(|i| Product {
+            id: 0,
+            name: format!("product #{}", i),
+            description: None,
+            price: None,
+            active: true,
+        })
+        .collect();
+    welds::query::insert::bulk(conn, &products).await?;
+
+    let orders: Vec<_> = (0..1000)
+        .map(|i| Order {
+            id: 0,
+            product_id: Some(i + 1),
+            sell_price: None,
+        })
+        .collect();
+    welds::query::insert::bulk(conn, &orders).await?;
+
     let total_p = Product::all().count(conn).await?;
     let total_o = Order::all().count(conn).await?;
     println!();

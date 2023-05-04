@@ -19,3 +19,12 @@ pub struct Thing2 {
     pub id: i32,
     pub value: String,
 }
+
+#[derive(Debug, sqlx::FromRow, WeldsModel)]
+#[welds(db(Sqlite))]
+#[welds(table = "Thing3")]
+pub struct Thing3 {
+    #[welds(primary_key)]
+    pub id: i32,
+    pub value: String,
+}

@@ -35,3 +35,12 @@ CREATE TABLE welds.Persons2 (
     City varchar(255)
 );
 
+CREATE TABLE welds.Thing1 ( id INT IDENTITY PRIMARY KEY, value varchar(max) );
+CREATE TABLE welds.Thing2 ( id INT IDENTITY PRIMARY KEY, value varchar(max) );
+CREATE TABLE welds.Thing3 ( id INT IDENTITY PRIMARY KEY, value varchar(max) );
+CREATE TABLE welds.Thing4 ( id INT IDENTITY PRIMARY KEY, value varchar(max) );
+CREATE TABLE welds.Thing5 ( id INT IDENTITY PRIMARY KEY, value varchar(max) );
+CREATE TABLE welds.Thing6 ( id INT IDENTITY PRIMARY KEY, value varchar(max) );
+CREATE TABLE welds.Thing7 ( id INT IDENTITY PRIMARY KEY, value varchar(max) );
+CREATE TABLE welds.Thing8 ( id INT IDENTITY PRIMARY KEY, value varchar(max) );
+CREATE TABLE welds.Thing9 ( id INT IDENTITY PRIMARY KEY, value varchar(max) );

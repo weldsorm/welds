@@ -1,6 +1,6 @@
 use sqlite_test::models::order::Order;
 use sqlite_test::models::product::{BadProduct1, BadProduct2, Product};
-use sqlite_test::models::{Thing1, Thing2};
+use sqlite_test::models::{Thing1, Thing2, Thing3};
 
 async fn get_conn() -> welds::connection::Pool<sqlx::Sqlite> {
     let sqlx_conn = testlib::sqlite::conn().await.unwrap();
@@ -351,6 +351,24 @@ fn should_only_update_limited_rows_if_limit_is_in_query() {
             .await
             .unwrap();
         assert_eq!(count, 1);
+        trans.rollback().await.unwrap();
+    })
+}
+
+#[test]
+fn should_be_able_to_bulk_insert() {
+    async_std::task::block_on(async {
+        let conn = get_conn().await;
+        let trans = conn.begin().await.unwrap();
+        let things: Vec<_> = (0..3000)
+            .map(|x| Thing3 {
+                id: 0,
+                value: format!("Bulk_Insert: {}", x),
+            })
+            .collect();
+        welds::query::insert::bulk_insert(&trans, &things)
+            .await
+            .unwrap();
         trans.rollback().await.unwrap();
     })
 }

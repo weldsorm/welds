@@ -5,6 +5,7 @@ mod relations;
 mod table_columns;
 mod table_info;
 mod unique_identifier;
+mod write_bulk_array_to_args;
 mod write_to_args;
 
 pub(crate) use define_schema::write as define_schema;
@@ -14,4 +15,5 @@ pub(crate) use relations::write as relations;
 pub(crate) use table_columns::write as table_columns;
 pub(crate) use table_info::write as table_info;
 pub(crate) use unique_identifier::write as unique_identifier;
+pub(crate) use write_bulk_array_to_args::write as write_bulk_array_to_args;
 pub(crate) use write_to_args::write as write_to_args;

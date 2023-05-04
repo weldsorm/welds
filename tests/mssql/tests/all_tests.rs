@@ -1,5 +1,6 @@
 use mssql_test::models::order::Order;
 use mssql_test::models::product::{BadProductColumns, BadProductMissingTable, Product};
+use mssql_test::models::Thing1;
 
 async fn get_conn() -> welds::connection::Pool<sqlx::Mssql> {
     let sqlx_conn = testlib::mssql::conn().await.unwrap();
@@ -206,7 +207,7 @@ fn should_be_able_to_scan_for_all_tables() {
     async_std::task::block_on(async {
         let conn = get_conn().await;
         let tables = welds::detect::find_tables(&conn).await.unwrap();
-        assert_eq!(4, tables.len());
+        assert_eq!(13, tables.len());
     })
 }
 
@@ -276,13 +277,20 @@ fn should_be_able_to_bulk_update() {
     })
 }
 
-//#[test]
-//fn should_be_able_to_bulk_update2() {
-//    async_std::task::block_on(async {
-//        let conn = get_conn().await;
-//        let q = Product::all().map_query(|p| p.order).set(|x| x.code, "A");
-//        let sql = q.to_sql();
-//        eprintln!("SQL: {}", sql);
-//        q.run(&conn).await.unwrap();
-//    })
-//}
+#[test]
+fn should_be_able_to_bulk_insert() {
+    async_std::task::block_on(async {
+        let conn = get_conn().await;
+        let trans = conn.begin().await.unwrap();
+        let things: Vec<_> = (0..3000)
+            .map(|x| Thing1 {
+                id: 0,
+                value: format!("Bulk_Insert: {}", x),
+            })
+            .collect();
+        welds::query::insert::bulk_insert(&trans, &things)
+            .await
+            .unwrap();
+        trans.rollback().await.unwrap();
+    })
+}

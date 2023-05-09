@@ -45,8 +45,9 @@ pub(crate) fn write(info: &Info) -> TokenStream {
         #converts
         let mut q = Self::all();
         #filters
-        let mut results = q.limit(1).run(conn).await?;
-        Ok(results.pop())
+        todo!()
+        //let mut results = q.limit(1).run(conn).await?;
+        //Ok(results.pop())
     }
 
     }
@@ -64,7 +65,7 @@ fn encode_type(id_type: &syn::Type) -> TokenStream {
 
 fn filter(col: &Column) -> TokenStream {
     let name = &col.field;
-    quote! { q = q.where_col(|x| x.#name.equal(#name)); }
+    quote! { q = q.where_col(|x| x.#name.equal(#name.clone())); }
 }
 
 fn convert(col: &Column) -> TokenStream {

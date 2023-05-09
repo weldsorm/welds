@@ -1965,7 +1965,7 @@ dependencies = [
 
 [[package]]
 name = "welds"
-version = "0.1.6"
+version = "0.1.7"
 dependencies = [
  "anyhow",
  "async-std",
@@ -1980,7 +1980,7 @@ dependencies = [
 
 [[package]]
 name = "welds-cli"
-version = "0.1.4-alpha"
+version = "0.1.5-alpha"
 dependencies = [
  "Inflector",
  "anyhow",
@@ -2000,7 +2000,7 @@ dependencies = [
 
 [[package]]
 name = "welds-macros"
-version = "0.1.6"
+version = "0.1.7"
 dependencies = [
  "async-std",
  "log",

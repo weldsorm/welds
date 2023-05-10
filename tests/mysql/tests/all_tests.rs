@@ -2,6 +2,7 @@ use mysql_test::models::order::Order;
 use mysql_test::models::product::{BadProductColumns, BadProductMissingTable, Product};
 use mysql_test::models::Thing1;
 
+
 async fn get_conn() -> welds::connection::Pool<sqlx::MySql> {
     let sqlx_conn = testlib::mysql::conn().await.unwrap();
     sqlx_conn.into()

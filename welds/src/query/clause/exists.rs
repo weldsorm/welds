@@ -4,7 +4,7 @@ use crate::writers::limit_skip::DbLimitSkipWriter;
 use crate::{alias::TableAlias, query::builder::QueryBuilder};
 use std::cell::RefCell;
 
-/// Used to generated a SQL EXISTS clause for writing sub-queries
+/// Used to generated a SQL EXISTS OR IN clause for writing sub-queries
 
 pub struct ExistIn<'args, DB> {
     outer_column: String,
@@ -33,7 +33,7 @@ where
             outer_tablealias: RefCell::new(None),
             inner_column,
             inner_tablename,
-            wheres: sb.wheres, //wheres: sb.wheres,
+            wheres: sb.wheres,
             inner_exists_ins: sb.exist_ins,
             limit: sb.limit,
             offset: sb.offset,
@@ -66,6 +66,22 @@ where
             self.inner_column, self.inner_tablename, inner_tablealias, inner_clauses, tails
         )
     }
+
+    fn in_clause(&self, inner_tablealias: &str, inner_clauses: &str) -> String {
+        let cell = self.outer_tablealias.borrow();
+        let outer_tablealias = cell.as_ref().unwrap();
+        let outcol = format!("{}.{}", outer_tablealias, self.outer_column);
+        let innercol = format!("{}.{}", inner_tablealias, self.inner_column);
+        let tails = self.tails();
+        let mut wheres = "".to_string();
+        if !inner_clauses.is_empty() {
+            wheres = format!("WHERE {}", inner_clauses);
+        }
+        format!(
+            " {} IN (SELECT {} FROM {} {} {} {}) ",
+            outcol, innercol, self.inner_tablename, inner_tablealias, wheres, tails
+        )
+    }
 }
 
 impl<'args, DB> ClauseAdder<'args, DB> for ExistIn<'args, DB>
@@ -82,13 +98,16 @@ where
     }
 
     fn clause(&self, alias: &TableAlias, next_params: &super::NextParam) -> Option<String> {
+        let using_in = self.limit.is_some();
         let self_tablealias = alias.peek();
         let mut inner_wheres: Vec<String> = self
             .wheres
             .iter()
             .filter_map(|w| w.clause(alias, next_params))
             .collect();
-        inner_wheres.push(self.inner_fk_equal(&self_tablealias));
+        if !using_in {
+            inner_wheres.push(self.inner_fk_equal(&self_tablealias));
+        }
 
         // exists inside this exist clause
         for ins in &self.inner_exists_ins {
@@ -100,6 +119,10 @@ where
         }
 
         let inner_clauses = inner_wheres.join(" AND ");
-        Some(self.exists_clause(&self_tablealias, &inner_clauses))
+        if using_in {
+            Some(self.in_clause(&self_tablealias, &inner_clauses))
+        } else {
+            Some(self.exists_clause(&self_tablealias, &inner_clauses))
+        }
     }
 }

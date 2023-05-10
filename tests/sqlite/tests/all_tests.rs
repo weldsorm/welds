@@ -2,7 +2,10 @@ use sqlite_test::models::order::Order;
 use sqlite_test::models::product::{BadProduct1, BadProduct2, Product};
 use sqlite_test::models::{Thing1, Thing2, Thing3};
 
-async fn get_conn() -> welds::connection::Pool<sqlx::Sqlite> {
+pub mod sub_query_tests;
+
+type Db = sqlx::Sqlite;
+async fn get_conn() -> welds::connection::Pool<Db> {
     let sqlx_conn = testlib::sqlite::conn().await.unwrap();
     sqlx_conn.into()
 }

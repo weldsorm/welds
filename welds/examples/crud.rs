@@ -106,6 +106,7 @@ async fn chain_query_together(
         .where_col(|x| x.id.lte(2));
 
     let sql = order_query.to_sql();
+
     let orders = order_query.run(conn).await?;
 
     println!();

@@ -5,6 +5,7 @@ use sqlite_test::models::{Thing1, Thing2, Thing3};
 pub mod sub_query_tests;
 pub mod bulk_delete;
 pub mod bulk_update;
+pub mod select_col;
 
 type Db = sqlx::Sqlite;
 async fn get_conn() -> welds::connection::Pool<Db> {

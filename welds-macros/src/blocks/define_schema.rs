@@ -63,5 +63,6 @@ fn default_fields(info: &Info, col: &Column) -> TokenStream {
     let type_inner = &col.field_type;
     let clause = get_clause(type_inner, col.is_option);
     let dbname = col.dbname.as_str();
-    quote! { #name: #wp::query::clause::#clause::new(#dbname) }
+    let fieldname: String = col.field.to_string();
+    quote! { #name: #wp::query::clause::#clause::new(#dbname, #fieldname) }
 }

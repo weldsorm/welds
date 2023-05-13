@@ -53,7 +53,7 @@ where
     {
         let val: V = value.into();
         let field = lam(Default::default());
-        let col_raw = field.fieldname();
+        let col_raw = field.colname();
         let col_writer = ColumnWriter::new::<DB>();
         let colname = col_writer.excape(col_raw);
         self.sets.push(Box::new(SetColVal { col: colname, val }));

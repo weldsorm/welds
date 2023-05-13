@@ -5,5 +5,6 @@ pub(crate) mod helpers;
 pub mod insert;
 pub mod optional;
 pub mod select;
+pub mod select_cols;
 pub(crate) mod tail;
 pub(crate) mod update;

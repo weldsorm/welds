@@ -57,7 +57,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let product2 = create_and_update_products(&pool).await?;
     delete_the_product(&pool, product2.id).await?;
 
-    let q = Product::all::<sqlx::Sqlite>().set(|x| x.description, "".to_string());
+    let _ = Product::all::<sqlx::Sqlite>().set(|x| x.description, "".to_string());
 
     Ok(())
 }

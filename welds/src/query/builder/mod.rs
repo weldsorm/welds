@@ -8,6 +8,7 @@ use crate::writers::limit_skip::DbLimitSkipWriter;
 use std::marker::PhantomData;
 use std::rc::Rc;
 
+use super::select_cols::SelectBuilder;
 use super::update::bulk::UpdateBuilder;
 
 /// An un-executed Query.
@@ -118,17 +119,27 @@ where
         <T as HasRelations>::Relation: Default,
     {
         let ship = relationship(Default::default());
-        let mut sb: QueryBuilder<R, DB> = QueryBuilder::new();
-        sb.alias = self.alias_asigner.next();
-        sb.alias_asigner = self.alias_asigner.clone();
+        let mut qb: QueryBuilder<R, DB> = QueryBuilder::new();
+        qb.set_aliases(&self.alias_asigner);
 
         let out_col = ship.their_key::<DB, R::Schema, T::Schema>();
         let inner_tn = <T as HasSchema>::Schema::identifier().join(".");
         let inner_col = ship.my_key::<DB, R::Schema, T::Schema>();
         let exist_in = ExistIn::<'schema, DB>::new(self, out_col, inner_tn, inner_col);
 
-        sb.exist_ins.push(exist_in);
-        sb
+        qb.exist_ins.push(exist_in);
+        qb
+    }
+
+    pub(crate) fn set_aliases(&mut self, alias_asigner: &Rc<TableAlias>)
+    where
+        DB: sqlx::Database + DbLimitSkipWriter,
+    {
+        self.alias_asigner = alias_asigner.clone();
+        self.alias = self.alias_asigner.next();
+        for sub in &mut self.exist_ins {
+            sub.set_aliases(&self.alias_asigner);
+        }
     }
 
     /// Limit the number of rows returned by this query
@@ -151,8 +162,8 @@ where
         lam: impl Fn(<T as HasSchema>::Schema) -> FN,
     ) -> Self {
         let field = lam(Default::default());
-        let fieldname = field.fieldname();
-        self.orderby.push(OrderBy::new(fieldname, "DESC"));
+        let colname = field.colname();
+        self.orderby.push(OrderBy::new(colname, "DESC"));
         self
     }
 
@@ -164,9 +175,18 @@ where
         lam: impl Fn(<T as HasSchema>::Schema) -> FN,
     ) -> Self {
         let field = lam(Default::default());
-        let fieldname = field.fieldname();
-        self.orderby.push(OrderBy::new(fieldname, "ASC"));
+        let colname = field.colname();
+        self.orderby.push(OrderBy::new(colname, "ASC"));
         self
+    }
+
+    /// Select only the specific columns
+    pub fn select<V, FN: AsFieldName<V>>(
+        self,
+        lam: impl Fn(<T as HasSchema>::Schema) -> FN,
+    ) -> SelectBuilder<'schema, T, DB> {
+        let sb = SelectBuilder::new(self);
+        sb.select(lam)
     }
 
     /// Filter the results returned by this query.

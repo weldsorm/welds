@@ -2,15 +2,15 @@ use super::ClauseAdder;
 use crate::query::clause::OrderBy;
 use crate::writers::limit_skip::DbLimitSkipWriter;
 use crate::{alias::TableAlias, query::builder::QueryBuilder};
-use std::cell::RefCell;
+use std::rc::Rc;
 
 /// Used to generated a SQL EXISTS OR IN clause for writing sub-queries
 
 pub struct ExistIn<'args, DB> {
     outer_column: String,
-    outer_tablealias: RefCell<Option<String>>,
     inner_column: String,
     inner_tablename: String,
+    pub(crate) inner_tablealias: String,
     wheres: Vec<Box<dyn ClauseAdder<'args, DB>>>,
     inner_exists_ins: Vec<Self>,
     limit: Option<i64>,
@@ -30,9 +30,9 @@ where
     ) -> Self {
         ExistIn::<'args, DB> {
             outer_column,
-            outer_tablealias: RefCell::new(None),
             inner_column,
             inner_tablename,
+            inner_tablealias: sb.alias,
             wheres: sb.wheres,
             inner_exists_ins: sb.exist_ins,
             limit: sb.limit,
@@ -41,16 +41,18 @@ where
         }
     }
 
-    pub(crate) fn set_outer_tablealias(&self, tablealias: &str) {
-        self.outer_tablealias.replace(Some(tablealias.to_owned()));
+    // re-assign all the alias and alias for sub-tables
+    pub(crate) fn set_aliases(&mut self, alias_asigner: &Rc<TableAlias>) {
+        self.inner_tablealias = alias_asigner.next();
+        for sub in &mut self.inner_exists_ins {
+            sub.set_aliases(alias_asigner);
+        }
     }
 
-    fn inner_fk_equal(&self, inner_tablealias: &str) -> String {
-        let cell = self.outer_tablealias.borrow();
-        let outer_tablealias = cell.as_ref().unwrap();
+    fn inner_fk_equal(&self, tablealias: &str) -> String {
         format!(
             "{}.{} = {}.{}",
-            inner_tablealias, self.inner_column, outer_tablealias, self.outer_column
+            self.inner_tablealias, self.inner_column, tablealias, self.outer_column
         )
     }
 
@@ -59,19 +61,17 @@ where
         tail::write::<DB>(&self.limit, &self.offset, &self.orderby).unwrap_or_default()
     }
 
-    fn exists_clause(&self, inner_tablealias: &str, inner_clauses: &str) -> String {
+    fn exists_clause(&self, _tablealias: &str, inner_clauses: &str) -> String {
         let tails = self.tails();
         format!(
             "EXISTS ( SELECT {} FROM {} {} WHERE {} {})",
-            self.inner_column, self.inner_tablename, inner_tablealias, inner_clauses, tails
+            self.inner_column, self.inner_tablename, self.inner_tablealias, inner_clauses, tails
         )
     }
 
-    fn in_clause(&self, inner_tablealias: &str, inner_clauses: &str) -> String {
-        let cell = self.outer_tablealias.borrow();
-        let outer_tablealias = cell.as_ref().unwrap();
-        let outcol = format!("{}.{}", outer_tablealias, self.outer_column);
-        let innercol = format!("{}.{}", inner_tablealias, self.inner_column);
+    fn in_clause(&self, tablealias: &str, inner_clauses: &str) -> String {
+        let outcol = format!("{}.{}", tablealias, self.outer_column);
+        let innercol = format!("{}.{}", self.inner_tablealias, self.inner_column);
         let tails = self.tails();
         let mut wheres = "".to_string();
         if !inner_clauses.is_empty() {
@@ -79,7 +79,7 @@ where
         }
         format!(
             " {} IN (SELECT {} FROM {} {} {} {}) ",
-            outcol, innercol, self.inner_tablename, inner_tablealias, wheres, tails
+            outcol, innercol, self.inner_tablename, self.inner_tablealias, wheres, tails
         )
     }
 }
@@ -97,32 +97,31 @@ where
         }
     }
 
-    fn clause(&self, alias: &TableAlias, next_params: &super::NextParam) -> Option<String> {
+    fn clause(&self, alias: &str, next_params: &super::NextParam) -> Option<String> {
         let using_in = self.limit.is_some();
-        let self_tablealias = alias.peek();
+        let self_tablealias = alias;
         let mut inner_wheres: Vec<String> = self
             .wheres
             .iter()
-            .filter_map(|w| w.clause(alias, next_params))
+            .filter_map(|w| w.clause(&self.inner_tablealias, next_params))
             .collect();
+
         if !using_in {
-            inner_wheres.push(self.inner_fk_equal(&self_tablealias));
+            inner_wheres.push(self.inner_fk_equal(self_tablealias));
         }
 
         // exists inside this exist clause
         for ins in &self.inner_exists_ins {
-            alias.bump();
-            ins.set_outer_tablealias(&self_tablealias);
-            if let Some(more) = ins.clause(alias, next_params) {
+            if let Some(more) = ins.clause(&self.inner_tablealias, next_params) {
                 inner_wheres.push(more);
             }
         }
 
         let inner_clauses = inner_wheres.join(" AND ");
         if using_in {
-            Some(self.in_clause(&self_tablealias, &inner_clauses))
+            Some(self.in_clause(self_tablealias, &inner_clauses))
         } else {
-            Some(self.exists_clause(&self_tablealias, &inner_clauses))
+            Some(self.exists_clause(self_tablealias, &inner_clauses))
         }
     }
 }

@@ -45,9 +45,8 @@ pub(crate) fn write(info: &Info) -> TokenStream {
         #converts
         let mut q = Self::all();
         #filters
-        todo!()
-        //let mut results = q.limit(1).run(conn).await?;
-        //Ok(results.pop())
+        let mut results = q.limit(1).run(conn).await?;
+        Ok(results.pop())
     }
 
     }

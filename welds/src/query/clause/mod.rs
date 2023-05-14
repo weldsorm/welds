@@ -24,8 +24,6 @@ pub use nextparam::{DbParam, NextParam};
 pub(crate) mod orderby;
 pub(crate) use orderby::OrderBy;
 
-use crate::alias::TableAlias;
-
 pub struct ClauseColVal<T> {
     pub null_clause: bool,
     pub not_clause: bool,
@@ -43,7 +41,7 @@ pub trait ClauseAdder<'args, DB: sqlx::Database> {
     fn bind(&self, args: &mut <DB as HasArguments<'args>>::Arguments);
 
     /// Returns the SQL snipit for this clause
-    fn clause(&self, alias: &TableAlias, next_params: &NextParam) -> Option<String>;
+    fn clause(&self, alias: &str, next_params: &NextParam) -> Option<String>;
 }
 
 impl<'args, T, DB> ClauseAdder<'args, DB> for ClauseColVal<T>
@@ -57,9 +55,9 @@ where
         }
     }
 
-    fn clause(&self, alias: &TableAlias, next_params: &NextParam) -> Option<String> {
+    fn clause(&self, alias: &str, next_params: &NextParam) -> Option<String> {
         // build the column name
-        let col = format!("{}.{}", alias.peek(), self.col);
+        let col = format!("{}.{}", alias, self.col);
         let mut parts = vec![col.as_str()];
 
         // handle null clones

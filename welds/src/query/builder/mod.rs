@@ -1,3 +1,4 @@
+use crate::alias::TableAlias;
 use crate::query::clause::exists::ExistIn;
 use crate::query::clause::{AsFieldName, ClauseAdder, OrderBy};
 use crate::relations::{HasRelations, Relationship};
@@ -5,6 +6,7 @@ use crate::table::{HasSchema, TableColumns, TableInfo, UniqueIdentifier};
 use crate::writers::column::DbColumnWriter;
 use crate::writers::limit_skip::DbLimitSkipWriter;
 use std::marker::PhantomData;
+use std::rc::Rc;
 
 use super::update::bulk::UpdateBuilder;
 
@@ -22,6 +24,8 @@ pub struct QueryBuilder<'schema, T, DB: sqlx::Database> {
     pub(crate) limit: Option<i64>,
     pub(crate) offset: Option<i64>,
     pub(crate) orderby: Vec<OrderBy>,
+    pub(crate) alias: String,
+    pub(crate) alias_asigner: Rc<TableAlias>,
 }
 
 impl<'schema, T, DB> Default for QueryBuilder<'schema, T, DB>
@@ -40,6 +44,8 @@ where
     T: Send + Unpin + for<'r> sqlx::FromRow<'r, DB::Row> + HasSchema,
 {
     pub fn new() -> Self {
+        let ta = TableAlias::new();
+        let alias = ta.next();
         Self {
             _t: Default::default(),
             wheres: Vec::default(),
@@ -47,6 +53,8 @@ where
             offset: None,
             orderby: Vec::default(),
             exist_ins: Default::default(),
+            alias,
+            alias_asigner: Rc::new(ta),
         }
     }
 
@@ -87,7 +95,8 @@ where
         let inner_tn = <R as HasSchema>::Schema::identifier();
         let inner_tn = inner_tn.join(".");
         let inner_col = ship.their_key::<DB, R::Schema, T::Schema>();
-        let exist_in = ExistIn::<'schema, DB>::new(filter, out_col, inner_tn, inner_col);
+        let mut exist_in = ExistIn::<'schema, DB>::new(filter, out_col, inner_tn, inner_col);
+        exist_in.set_aliases(&self.alias_asigner);
         self.exist_ins.push(exist_in);
         self
     }
@@ -110,6 +119,8 @@ where
     {
         let ship = relationship(Default::default());
         let mut sb: QueryBuilder<R, DB> = QueryBuilder::new();
+        sb.alias = self.alias_asigner.next();
+        sb.alias_asigner = self.alias_asigner.clone();
 
         let out_col = ship.their_key::<DB, R::Schema, T::Schema>();
         let inner_tn = <T as HasSchema>::Schema::identifier().join(".");

@@ -1,4 +1,3 @@
-use crate::alias::TableAlias;
 use crate::connection::Connection;
 use crate::errors::Result;
 use crate::query::builder::QueryBuilder;
@@ -69,17 +68,26 @@ where
         DB: DbParam + DbColumnWriter + DbLimitSkipWriter + DbCountWriter,
         <T as HasSchema>::Schema: UniqueIdentifier<DB> + TableInfo + TableColumns<DB>,
     {
-        let mut args: Option<<DB as HasArguments>::Arguments> = None;
+        self.sql_internal(&mut None)
+    }
+
+    fn sql_internal<'q>(
+        &'q self,
+        args: &mut Option<<DB as HasArguments<'schema>>::Arguments>,
+    ) -> String
+    where
+        'schema: 'args,
+        <DB as HasArguments<'schema>>::Arguments: IntoArguments<'args, DB>,
+        DB: DbParam + DbColumnWriter + DbLimitSkipWriter,
+        <T as HasSchema>::Schema: UniqueIdentifier<DB> + TableInfo + TableColumns<DB>,
+    {
         let next_params = NextParam::new::<DB>();
         let sets = self.sets.as_slice();
-        let alias = TableAlias::new();
-        // Note: for updates we want the main table NOT to be aliased
-        let fullname = <T as HasSchema>::Schema::identifier().join(".");
-        alias.force_next(fullname);
+        let alias = <T as HasSchema>::Schema::identifier().join(".");
 
         join_sql_parts(&[
-            build_head::<DB, <T as HasSchema>::Schema>(&next_params, &alias, &mut args, sets),
-            build_where_update(&next_params, &alias, &mut args, &self.query_builder),
+            build_head::<DB, <T as HasSchema>::Schema>(&next_params, &alias, args, sets),
+            build_where_update(&next_params, &alias, args, &self.query_builder),
         ])
     }
 
@@ -94,17 +102,7 @@ where
         <T as HasSchema>::Schema: UniqueIdentifier<DB> + TableInfo + TableColumns<DB>,
     {
         let mut args: Option<<DB as HasArguments>::Arguments> = Some(Default::default());
-        let next_params = NextParam::new::<DB>();
-        let sets = self.sets.as_slice();
-        let alias = TableAlias::new();
-        // Note: for updates we want the main table NOT to be aliased
-        let fullname = <T as HasSchema>::Schema::identifier().join(".");
-        alias.force_next(fullname);
-
-        let sql = join_sql_parts(&[
-            build_head::<DB, <T as HasSchema>::Schema>(&next_params, &alias, &mut args, sets),
-            build_where_update(&next_params, &alias, &mut args, &self.query_builder),
-        ]);
+        let sql = self.sql_internal(&mut args);
 
         // lifetime hacks - Remove if you can
         // We know the use of sql and conn do not exceed the underlying call to fetch
@@ -124,7 +122,7 @@ where
 
 fn build_head<'schema, DB, S>(
     next_params: &NextParam,
-    alias: &TableAlias,
+    alias: &str,
     args: &mut Option<<DB as HasArguments<'schema>>::Arguments>,
     sets: &[Box<dyn ClauseAdder<'schema, DB>>],
 ) -> Option<String>
@@ -164,7 +162,7 @@ where
         args.add(self.val.clone());
     }
 
-    fn clause(&self, _alias: &TableAlias, next_params: &NextParam) -> Option<String> {
+    fn clause(&self, _alias: &str, next_params: &NextParam) -> Option<String> {
         let sql = format!("{}={}", self.col, next_params.next());
         Some(sql)
     }
@@ -172,7 +170,7 @@ where
 
 pub(crate) fn build_where_update<'schema, 'args, DB, T>(
     next_params: &NextParam,
-    alias: &TableAlias,
+    alias: &str,
     args: &mut Option<<DB as HasArguments<'schema>>::Arguments>,
     qb: &QueryBuilder<'schema, T, DB>,
 ) -> Option<String>
@@ -192,13 +190,19 @@ where
     }
 
     let mut where_sql: Vec<String> = Vec::default();
-    let w_in = WhereIn::new(qb, None);
+    let w_in = WhereIn::new(qb);
     if let Some(args) = args {
         w_in.bind(args);
     }
-    if let Some(p) = w_in.clause(alias, next_params) {
+
+    // use fulltable name for alias when updating
+    let tableparts = T::Schema::identifier();
+    let outer_tablealias = tableparts.join(".");
+
+    if let Some(p) = w_in.clause(&outer_tablealias, next_params) {
         where_sql.push(p);
     }
+
     if where_sql.is_empty() {
         return None;
     }

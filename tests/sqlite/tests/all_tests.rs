@@ -3,6 +3,8 @@ use sqlite_test::models::product::{BadProduct1, BadProduct2, Product};
 use sqlite_test::models::{Thing1, Thing2, Thing3};
 
 pub mod sub_query_tests;
+pub mod bulk_delete;
+pub mod bulk_update;
 
 type Db = sqlx::Sqlite;
 async fn get_conn() -> welds::connection::Pool<Db> {

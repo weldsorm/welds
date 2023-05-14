@@ -1,6 +1,5 @@
 use super::builder::QueryBuilder;
 use super::clause::NextParam;
-use crate::alias::TableAlias;
 use crate::query::clause::exists::ExistIn;
 use crate::query::clause::ClauseAdder;
 use crate::table::{HasSchema, TableColumns, TableInfo};
@@ -20,7 +19,7 @@ pub(crate) fn join_sql_parts(parts: &[Option<String>]) -> String {
 
 pub(crate) fn build_where<'schema, 'args, DB>(
     next_params: &NextParam,
-    alias: &TableAlias,
+    alias: &str,
     args: &mut Option<<DB as HasArguments<'schema>>::Arguments>,
     wheres: &[Box<dyn ClauseAdder<'schema, DB>>],
     exist_ins: &[ExistIn<'schema, DB>],
@@ -40,13 +39,10 @@ where
         }
     }
 
-    let self_tablealias = alias.peek();
     for clause in exist_ins {
         if let Some(args) = args {
             clause.bind(args);
         }
-        alias.bump();
-        clause.set_outer_tablealias(&self_tablealias);
         if let Some(p) = clause.clause(alias, next_params) {
             where_sql.push(p);
         }

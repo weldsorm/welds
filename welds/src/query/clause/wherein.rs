@@ -15,7 +15,6 @@ use sqlx::IntoArguments;
 /// This is used when deleting and updating to be able to apply limit
 
 pub struct WhereIn<'qb, 'schema, T, DB: sqlx::Database> {
-    outer_tablealias: Option<String>,
     qb: &'qb QueryBuilder<'schema, T, DB>,
 }
 
@@ -25,26 +24,13 @@ where
     T: HasSchema,
     <T as HasSchema>::Schema: UniqueIdentifier<DB>,
 {
-    pub(crate) fn new(
-        qb: &'qb QueryBuilder<'schema, T, DB>,
-        outer_tablealias: Option<String>,
-    ) -> Self {
-        WhereIn {
-            outer_tablealias,
-            qb,
-        }
+    pub(crate) fn new(qb: &'qb QueryBuilder<'schema, T, DB>) -> Self {
+        WhereIn { qb }
     }
 
-    fn outer_tablecolumn(&self) -> String {
+    fn outer_tablecolumn(&self, outer_tablealias: &str) -> String {
         let column = T::Schema::id_column();
-        match &self.outer_tablealias {
-            Some(alias) => format!("{}.{}", alias, column.name()),
-            None => {
-                let tableparts = T::Schema::identifier();
-                let tn = tableparts.join(".");
-                format!("{}.{}", tn, column.name())
-            }
-        }
+        format!("{}.{}", outer_tablealias, column.name())
     }
 }
 
@@ -67,18 +53,17 @@ where
         }
     }
 
-    fn clause(&self, alias: &TableAlias, next_params: &super::NextParam) -> Option<String> {
+    fn clause(&self, alias: &str, next_params: &super::NextParam) -> Option<String> {
         // writes => ID IN ( SELECT ID FROM ... )
 
-        let outcol = self.outer_tablecolumn();
-        alias.next();
-        let self_tablealias = alias.peek();
+        let outcol = self.outer_tablecolumn(alias);
+        let inner_alias = &self.qb.alias;
         let mut args = None;
         let inner_sql = join_sql_parts(&[
-            build_head_select::<DB, <T as HasSchema>::Schema>(self_tablealias),
+            build_head_select::<DB, <T as HasSchema>::Schema>(inner_alias),
             build_where(
                 next_params,
-                alias,
+                inner_alias,
                 &mut args,
                 &self.qb.wheres,
                 &self.qb.exist_ins,
@@ -90,7 +75,7 @@ where
     }
 }
 
-fn build_head_select<DB, S>(tablealias: String) -> Option<String>
+fn build_head_select<DB, S>(tablealias: &str) -> Option<String>
 where
     DB: sqlx::Database + DbColumnWriter,
     S: TableInfo + UniqueIdentifier<DB>,
@@ -101,6 +86,6 @@ where
     }
     let writer = ColumnWriter::new::<DB>();
     let col_raw = S::id_column();
-    let col = writer.write(&tablealias, &col_raw);
+    let col = writer.write(tablealias, &col_raw);
     Some(format!("SELECT {} FROM {}", col, tablename))
 }

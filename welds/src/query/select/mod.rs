@@ -1,7 +1,6 @@
 use super::builder::QueryBuilder;
 use super::clause::{DbParam, NextParam};
 use super::helpers::{build_tail, build_where, join_sql_parts};
-use crate::alias::TableAlias;
 use crate::connection::Connection;
 use crate::state::DbState;
 use crate::table::{HasSchema, TableColumns, TableInfo};
@@ -22,22 +21,34 @@ where
     DB: sqlx::Database,
     T: Send + Unpin + for<'r> sqlx::FromRow<'r, DB::Row> + HasSchema,
 {
-    /// Get a copy of the SQL that will be executed when this query runs
-    pub fn to_sql(&self) -> String
+    /// Returns the SQL to count all rows in the resulting query
+    pub fn to_sql_count<'q>(&'q self) -> String
     where
+        'schema: 'args,
         <DB as HasArguments<'schema>>::Arguments: IntoArguments<'args, DB>,
         DB: DbParam + DbColumnWriter + DbLimitSkipWriter + DbCountWriter,
         <T as HasSchema>::Schema: TableInfo + TableColumns<DB>,
     {
-        let mut args: Option<<DB as HasArguments>::Arguments> = None;
+        self.sql_internal_count(&mut None)
+    }
+
+    fn sql_internal_count<'q>(
+        &'q self,
+        args: &mut Option<<DB as HasArguments<'schema>>::Arguments>,
+    ) -> String
+    where
+        'schema: 'args,
+        <DB as HasArguments<'schema>>::Arguments: IntoArguments<'args, DB>,
+        DB: DbParam + DbColumnWriter + DbLimitSkipWriter + DbCountWriter,
+        <T as HasSchema>::Schema: TableInfo + TableColumns<DB>,
+    {
         let next_params = NextParam::new::<DB>();
         let wheres = self.wheres.as_slice();
         let exists_in = self.exist_ins.as_slice();
         let alias = &self.alias;
-
         join_sql_parts(&[
-            build_head_select::<DB, <T as HasSchema>::Schema>(alias),
-            build_where(&next_params, alias, &mut args, wheres, exists_in),
+            build_head_count::<DB, <T as HasSchema>::Schema>(alias),
+            build_where(&next_params, alias, args, wheres, exists_in),
             build_tail(self),
         ])
     }
@@ -57,16 +68,7 @@ where
         usize: sqlx::ColumnIndex<<DB as sqlx::Database>::Row>,
     {
         let mut args: Option<<DB as HasArguments>::Arguments> = Some(Default::default());
-        let next_params = NextParam::new::<DB>();
-        let wheres = self.wheres.as_slice();
-        let exists_in = self.exist_ins.as_slice();
-        let alias = &self.alias;
-
-        let sql = join_sql_parts(&[
-            build_head_count::<DB, <T as HasSchema>::Schema>(alias),
-            build_where(&next_params, &alias, &mut args, wheres, exists_in),
-            build_tail(self),
-        ]);
+        let sql = self.sql_internal_count(&mut args);
 
         // lifetime hacks - Remove if you can
         // We know the use of sql and conn do not exceed the underlying call to fetch
@@ -85,6 +87,38 @@ where
         Ok(count as u64)
     }
 
+    /// Get a copy of the SQL that will be executed when this query runs
+    pub fn to_sql(&self) -> String
+    where
+        'schema: 'args,
+        <DB as HasArguments<'schema>>::Arguments: IntoArguments<'args, DB>,
+        DB: DbParam + DbColumnWriter + DbLimitSkipWriter,
+        <T as HasSchema>::Schema: TableInfo + TableColumns<DB>,
+    {
+        self.sql_internal(&mut None)
+    }
+
+    fn sql_internal<'q>(
+        &'q self,
+        args: &mut Option<<DB as HasArguments<'schema>>::Arguments>,
+    ) -> String
+    where
+        'schema: 'args,
+        <DB as HasArguments<'schema>>::Arguments: IntoArguments<'args, DB>,
+        DB: DbParam + DbColumnWriter + DbLimitSkipWriter,
+        <T as HasSchema>::Schema: TableInfo + TableColumns<DB>,
+    {
+        let next_params = NextParam::new::<DB>();
+        let wheres = self.wheres.as_slice();
+        let exists_in = self.exist_ins.as_slice();
+        let alias = &self.alias;
+        join_sql_parts(&[
+            build_head_select::<DB, <T as HasSchema>::Schema>(alias),
+            build_where(&next_params, alias, args, wheres, exists_in),
+            build_tail(self),
+        ])
+    }
+
     /// Executes the query in the database returning the results
     pub async fn run<'q, 'c, C>(&'q self, exec: &'c C) -> Result<Vec<DbState<T>>>
     where
@@ -96,16 +130,7 @@ where
         <T as HasSchema>::Schema: TableInfo + TableColumns<DB>,
     {
         let mut args: Option<<DB as HasArguments>::Arguments> = Some(Default::default());
-        let next_params = NextParam::new::<DB>();
-        let wheres = self.wheres.as_slice();
-        let exists_in = self.exist_ins.as_slice();
-        let alias = &self.alias;
-
-        let sql = join_sql_parts(&[
-            build_head_select::<DB, <T as HasSchema>::Schema>(alias),
-            build_where(&next_params, alias, &mut args, wheres, exists_in),
-            build_tail(self),
-        ]);
+        let sql = self.sql_internal(&mut args);
 
         // lifetime hacks - Remove if you can
         // We know the use of sql and conn do not exceed the underlying call to fetch

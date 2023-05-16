@@ -3,7 +3,6 @@ use super::super::{
     clause::{wherein::WhereIn, ClauseAdder, DbParam, NextParam},
     helpers::{build_where, join_sql_parts},
 };
-use crate::alias::TableAlias;
 use crate::connection::Connection;
 use crate::table::UniqueIdentifier;
 use crate::table::{HasSchema, TableColumns, TableInfo};
@@ -23,6 +22,44 @@ where
     DB: sqlx::Database,
     T: Send + Unpin + for<'r> sqlx::FromRow<'r, DB::Row> + HasSchema,
 {
+    /// The SQL to delete a `DELETE FROM ... `
+    ///
+    /// return SQL to delete all the resulting rows from the database
+    pub fn delete_sql<'q>(&'q self) -> String
+    where
+        'schema: 'args,
+        <DB as HasArguments<'schema>>::Arguments: IntoArguments<'args, DB>,
+        DB: DbParam + DbColumnWriter + DbLimitSkipWriter + DbCountWriter,
+        <T as HasSchema>::Schema: TableInfo + TableColumns<DB> + UniqueIdentifier<DB>,
+        i64: sqlx::Type<DB> + for<'r> sqlx::Decode<'r, DB>,
+        usize: sqlx::ColumnIndex<<DB as sqlx::Database>::Row>,
+    {
+        self.delete_sql_internal(&mut None)
+    }
+
+    fn delete_sql_internal<'q>(
+        &'q self,
+        args: &mut Option<<DB as HasArguments<'schema>>::Arguments>,
+    ) -> String
+    where
+        'schema: 'args,
+        <DB as HasArguments<'schema>>::Arguments: IntoArguments<'args, DB>,
+        DB: DbParam + DbColumnWriter + DbLimitSkipWriter + DbCountWriter,
+        <T as HasSchema>::Schema: TableInfo + TableColumns<DB> + UniqueIdentifier<DB>,
+        i64: sqlx::Type<DB> + for<'r> sqlx::Decode<'r, DB>,
+        usize: sqlx::ColumnIndex<<DB as sqlx::Database>::Row>,
+    {
+        let next_params = NextParam::new::<DB>();
+
+        // Note: for deletes we can't alias the FROM tablename
+        let alias = <T as HasSchema>::Schema::identifier().join(".");
+
+        join_sql_parts(&[
+            build_head_delete::<DB, <T as HasSchema>::Schema>(),
+            build_where_delete(&next_params, &alias, args, self),
+        ])
+    }
+
     /// Executes a `DELETE FROM ... `
     ///
     /// deletes all the resulting rows from the database
@@ -38,16 +75,7 @@ where
         usize: sqlx::ColumnIndex<<DB as sqlx::Database>::Row>,
     {
         let mut args: Option<<DB as HasArguments>::Arguments> = Some(Default::default());
-        let next_params = NextParam::new::<DB>();
-        let alias = TableAlias::new();
-        // Note: for deletes we can't alias the FROM tablename
-        let fullname = <T as HasSchema>::Schema::identifier().join(".");
-        alias.force_next(fullname);
-
-        let sql = join_sql_parts(&[
-            build_head_delete::<DB, <T as HasSchema>::Schema>(),
-            build_where_delete(&next_params, &alias, &mut args, self),
-        ]);
+        let sql = self.delete_sql_internal(&mut args);
 
         // lifetime hacks - Remove if you can
         // We know the use of sql and conn do not exceed the underlying call to fetch
@@ -77,7 +105,7 @@ where
 
 pub(crate) fn build_where_delete<'schema, 'args, DB, T>(
     next_params: &NextParam,
-    alias: &TableAlias,
+    alias: &str,
     args: &mut Option<<DB as HasArguments<'schema>>::Arguments>,
     qb: &QueryBuilder<'schema, T, DB>,
 ) -> Option<String>
@@ -97,7 +125,8 @@ where
     }
 
     let mut where_sql: Vec<String> = Vec::default();
-    let w_in = WhereIn::new(qb, None);
+    let w_in = WhereIn::new(qb);
+
     if let Some(args) = args {
         w_in.bind(args);
     }

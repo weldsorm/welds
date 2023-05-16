@@ -33,12 +33,11 @@ where
         let next_params = NextParam::new::<DB>();
         let wheres = self.wheres.as_slice();
         let exists_in = self.exist_ins.as_slice();
-        let alias = TableAlias::new();
-        let self_tablealias = alias.peek();
+        let alias = &self.alias;
 
         join_sql_parts(&[
-            build_head_select::<DB, <T as HasSchema>::Schema>(self_tablealias),
-            build_where(&next_params, &alias, &mut args, wheres, exists_in),
+            build_head_select::<DB, <T as HasSchema>::Schema>(alias),
+            build_where(&next_params, alias, &mut args, wheres, exists_in),
             build_tail(self),
         ])
     }
@@ -61,11 +60,10 @@ where
         let next_params = NextParam::new::<DB>();
         let wheres = self.wheres.as_slice();
         let exists_in = self.exist_ins.as_slice();
-        let alias = TableAlias::new();
-        let self_tablealias = alias.peek();
+        let alias = &self.alias;
 
         let sql = join_sql_parts(&[
-            build_head_count::<DB, <T as HasSchema>::Schema>(self_tablealias),
+            build_head_count::<DB, <T as HasSchema>::Schema>(alias),
             build_where(&next_params, &alias, &mut args, wheres, exists_in),
             build_tail(self),
         ]);
@@ -101,12 +99,11 @@ where
         let next_params = NextParam::new::<DB>();
         let wheres = self.wheres.as_slice();
         let exists_in = self.exist_ins.as_slice();
-        let alias = TableAlias::new();
-        let self_tablealias = alias.peek();
+        let alias = &self.alias;
 
         let sql = join_sql_parts(&[
-            build_head_select::<DB, <T as HasSchema>::Schema>(self_tablealias),
-            build_where(&next_params, &alias, &mut args, wheres, exists_in),
+            build_head_select::<DB, <T as HasSchema>::Schema>(alias),
+            build_where(&next_params, alias, &mut args, wheres, exists_in),
             build_tail(self),
         ]);
 
@@ -132,7 +129,7 @@ where
     }
 }
 
-fn build_head_select<DB, S>(tablealias: String) -> Option<String>
+fn build_head_select<DB, S>(tablealias: &str) -> Option<String>
 where
     DB: sqlx::Database + DbColumnWriter,
     S: TableInfo + TableColumns<DB>,
@@ -143,7 +140,7 @@ where
     let cols_info = S::columns();
     let cols: Vec<_> = cols_info
         .iter()
-        .map(|col| writer.write(&tablealias, col))
+        .map(|col| writer.write(tablealias, col))
         .collect();
     let cols = cols.join(", ");
     head.push(&cols);
@@ -154,7 +151,7 @@ where
     Some(head.join(" "))
 }
 
-fn build_head_count<DB, S>(tablealias: String) -> Option<String>
+fn build_head_count<DB, S>(tablealias: &str) -> Option<String>
 where
     DB: sqlx::Database + DbColumnWriter + DbCountWriter,
     S: TableInfo + TableColumns<DB>,
@@ -162,6 +159,6 @@ where
     let tn = S::identifier().join(".");
     let identifier = format!("{} {}", tn, &tablealias);
     let cw = CountWriter::new::<DB>();
-    let count_star = cw.count(Some(&tablealias), Some("*"));
+    let count_star = cw.count(Some(tablealias), Some("*"));
     Some(format!("SELECT {} FROM {}", count_star, identifier))
 }

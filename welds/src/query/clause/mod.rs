@@ -33,6 +33,7 @@ pub struct ClauseColVal<T> {
 }
 
 pub trait AsFieldName<T> {
+    fn colname(&self) -> &str;
     fn fieldname(&self) -> &str;
 }
 

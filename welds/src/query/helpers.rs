@@ -1,5 +1,6 @@
 use super::builder::QueryBuilder;
 use super::clause::NextParam;
+use crate::alias;
 use crate::query::clause::exists::ExistIn;
 use crate::query::clause::ClauseAdder;
 use crate::table::{HasSchema, TableColumns, TableInfo};
@@ -28,8 +29,25 @@ where
     DB: sqlx::Database + DbLimitSkipWriter,
     <DB as HasArguments<'schema>>::Arguments: IntoArguments<'args, DB>,
 {
-    let mut where_sql: Vec<String> = Vec::default();
+    let where_sql = build_where_clauses(next_params, alias, args, wheres, exist_ins);
+    if where_sql.is_empty() {
+        return None;
+    }
+    Some(format!("WHERE ( {} )", where_sql.join(" AND ")))
+}
 
+pub(crate) fn build_where_clauses<'schema, 'args, DB>(
+    next_params: &NextParam,
+    alias: &str,
+    args: &mut Option<<DB as HasArguments<'schema>>::Arguments>,
+    wheres: &[Box<dyn ClauseAdder<'schema, DB>>],
+    exist_ins: &[ExistIn<'schema, DB>],
+) -> Vec<String>
+where
+    DB: sqlx::Database + DbLimitSkipWriter,
+    <DB as HasArguments<'schema>>::Arguments: IntoArguments<'args, DB>,
+{
+    let mut where_sql: Vec<String> = Vec::default();
     for clause in wheres {
         if let Some(args) = args {
             clause.bind(args);
@@ -38,7 +56,6 @@ where
             where_sql.push(p);
         }
     }
-
     for clause in exist_ins {
         if let Some(args) = args {
             clause.bind(args);
@@ -47,11 +64,7 @@ where
             where_sql.push(p);
         }
     }
-
-    if where_sql.is_empty() {
-        return None;
-    }
-    Some(format!("WHERE ( {} )", where_sql.join(" AND ")))
+    where_sql
 }
 
 pub(crate) fn build_tail<T, DB>(select: &QueryBuilder<T, DB>) -> Option<String>

@@ -67,7 +67,14 @@ pub struct Product {
   cookies.save.await(&conn)?; 
 ```
 
-For more good examples [check out the examples](https://github.com/weldsorm/welds/tree/main/welds/examples).
+## Other Examples
+ - [Basic CRUD](https://github.com/weldsorm/welds/blob/main/welds/examples/crud.rs)
+ - [Mapping Queries / Joining](https://github.com/weldsorm/welds/blob/main/welds/examples/crud.rs)
+ - [Bulk (Create/Update/Delete)](https://github.com/weldsorm/welds/blob/main/welds/examples/bulk_operations.rs)
+ - [Select Only Specific Columns](https://github.com/weldsorm/welds/blob/main/welds/examples/manual_select_columns.rs)
+ - [Checking DB schema matches compiled structs](https://github.com/weldsorm/welds/blob/main/welds/examples/verify_tables.rs)
+
+For more good examples [check out the examples repo](https://github.com/weldsorm/welds/tree/main/welds/examples).
 
 
 

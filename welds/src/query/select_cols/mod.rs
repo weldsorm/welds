@@ -4,7 +4,8 @@ use crate::query::clause::{AsFieldName, ClauseAdder};
 use crate::relations::{HasRelations, Relationship};
 use crate::table::{HasSchema, TableColumns, TableInfo, UniqueIdentifier};
 use crate::writers::limit_skip::DbLimitSkipWriter;
-use join::{Join, JoinBuilder};
+pub use join::Join;
+use join::JoinBuilder;
 use select_column::SelectColumn;
 use std::rc::Rc;
 
@@ -86,30 +87,65 @@ where
         self
     }
 
-    /// Join the to another table to be able to select additional columns
+    /// Inner Join to another table to be able to select additional columns
     pub fn join<R, Ship>(
-        mut self,
+        self,
         relationship: impl Fn(<T as HasRelations>::Relation) -> Ship,
-        mut sb: SelectBuilder<'schema, R, DB>,
+        sb: SelectBuilder<'schema, R, DB>,
     ) -> Self
     where
-        R: 'static,
         DB: sqlx::Database + DbLimitSkipWriter,
         T: HasRelations,
         Ship: Relationship<R>,
         R: HasSchema,
-        //T: HasSchema,
         R: Send + Unpin + for<'r> sqlx::FromRow<'r, DB::Row> + HasSchema,
         <R as HasSchema>::Schema: TableInfo + TableColumns<DB> + UniqueIdentifier<DB>,
         <T as HasSchema>::Schema: TableInfo + TableColumns<DB> + UniqueIdentifier<DB>,
-        //<T as HasRelations>::Relation: Default,
+    {
+        self.join_with(relationship, sb, Join::Inner)
+    }
+
+    /// left Join to another table to be able to select additional columns
+    pub fn left_join<R, Ship>(
+        self,
+        relationship: impl Fn(<T as HasRelations>::Relation) -> Ship,
+        sb: SelectBuilder<'schema, R, DB>,
+    ) -> Self
+    where
+        DB: sqlx::Database + DbLimitSkipWriter,
+        T: HasRelations,
+        Ship: Relationship<R>,
+        R: HasSchema,
+        R: Send + Unpin + for<'r> sqlx::FromRow<'r, DB::Row> + HasSchema,
+        <R as HasSchema>::Schema: TableInfo + TableColumns<DB> + UniqueIdentifier<DB>,
+        <T as HasSchema>::Schema: TableInfo + TableColumns<DB> + UniqueIdentifier<DB>,
+    {
+        self.join_with(relationship, sb, Join::Left)
+    }
+
+    /// Join to another table to be able to select additional columns
+    /// Allow manual selection of Join Type
+    pub fn join_with<R, Ship>(
+        mut self,
+        relationship: impl Fn(<T as HasRelations>::Relation) -> Ship,
+        mut sb: SelectBuilder<'schema, R, DB>,
+        join_type: Join,
+    ) -> Self
+    where
+        DB: sqlx::Database + DbLimitSkipWriter,
+        T: HasRelations,
+        Ship: Relationship<R>,
+        R: HasSchema,
+        R: Send + Unpin + for<'r> sqlx::FromRow<'r, DB::Row> + HasSchema,
+        <R as HasSchema>::Schema: TableInfo + TableColumns<DB> + UniqueIdentifier<DB>,
+        <T as HasSchema>::Schema: TableInfo + TableColumns<DB> + UniqueIdentifier<DB>,
     {
         let ship = relationship(Default::default());
         sb.set_aliases(&self.qb.alias_asigner);
         let outer_key = ship.my_key::<DB, R::Schema, T::Schema>();
         let inner_key = ship.their_key::<DB, R::Schema, T::Schema>();
         let mut jb = JoinBuilder::new(sb, outer_key, inner_key);
-        jb.ty = Join::Inner;
+        jb.ty = join_type;
         self.joins.push(jb);
         self
     }

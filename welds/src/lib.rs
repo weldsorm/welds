@@ -132,6 +132,13 @@
 //!
 //! For more examples on how to use Welds check out the [Example Repo](https://github.com/weldsorm/welds/tree/main/welds/examples)
 //!
+//! ## Examples:
+//!  - [Basic CRUD](https://github.com/weldsorm/welds/blob/main/welds/examples/crud.rs)
+//!  - [Mapping Queries / Joining](https://github.com/weldsorm/welds/blob/main/welds/examples/crud.rs)
+//!  - [Bulk (Create/Update/Delete)](https://github.com/weldsorm/welds/blob/main/welds/examples/bulk_operations.rs)
+//!  - [Select Only Specific Columns](https://github.com/weldsorm/welds/blob/main/welds/examples/manual_select_columns.rs)
+//!  - [Checking DB schema matches compiled structs](https://github.com/weldsorm/welds/blob/main/welds/examples/verify_tables.rs)
+//!
 
 pub(crate) mod alias;
 pub mod connection;

@@ -5,7 +5,8 @@
 
 CREATE SCHEMA alt;
 
-CREATE TYPE alt.Color AS ENUM ('Red', 'Green', 'Blue', 'Yellow');
+-- SQLX only support custom type on public :(
+CREATE TYPE public.Color AS ENUM ('Red', 'Green', 'Blue', 'Yellow');
 
 CREATE TABLE Products (
   product_id serial PRIMARY KEY,
@@ -32,7 +33,7 @@ CREATE TABLE alt.Others (
   interval INTERVAL,
   range_int4 INT4RANGE,
   range_int8 INT8RANGE,
-  colour alt.Color
+  colour public.Color
 );
 
 

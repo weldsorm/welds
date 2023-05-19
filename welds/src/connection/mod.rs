@@ -94,9 +94,9 @@ impl<DB: sqlx::Database> Pool<DB> {
 mod transaction;
 pub use transaction::Transaction;
 
-mod any;
-/// Used to handle a connection to an unknown-database
-pub use any::AnyPool;
+//mod any;
+///// Used to handle a connection to an unknown-database
+//pub use any::AnyPool;
 
 #[cfg(feature = "sqlite")]
 mod sqlite;

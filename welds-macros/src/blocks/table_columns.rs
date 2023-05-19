@@ -1,14 +1,13 @@
 use crate::info::Info;
 use proc_macro2::TokenStream;
 use quote::quote;
-use syn::Ident;
 
 pub(crate) fn write(info: &Info) -> TokenStream {
     let columns = write_cols(info);
     let pks = write_pks(info);
 
     let parts: Vec<_> = info
-        .engines_ident
+        .engines_path
         .iter()
         .map(|db| write_for_db(info, db, &pks, &columns))
         .collect();
@@ -55,7 +54,7 @@ pub(crate) fn write_pks(info: &Info) -> TokenStream {
 
 pub(crate) fn write_for_db(
     info: &Info,
-    db: &Ident,
+    db: &syn::Path,
     pks: &TokenStream,
     columns: &TokenStream,
 ) -> TokenStream {
@@ -64,14 +63,14 @@ pub(crate) fn write_for_db(
 
     quote! {
 
-        impl #wp::table::TableColumns<sqlx::#db> for #def {
+        impl #wp::table::TableColumns<#db> for #def {
             fn primary_keys() -> Vec<#wp::table::Column> {
-                type DB = sqlx::#db;
+                type DB = #db;
                 use #wp::table::Column;
                 #pks
             }
             fn columns() -> Vec<#wp::table::Column> {
-                type DB = sqlx::#db;
+                type DB = #db;
                 use #wp::table::Column;
                 #columns
             }

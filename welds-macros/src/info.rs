@@ -1,5 +1,6 @@
 use crate::attributes;
 use crate::column::Column;
+use crate::engine::Engine;
 use crate::errors::Result;
 use crate::relation::Relation;
 use syn::Ident;
@@ -7,7 +8,7 @@ use syn::Ident;
 pub(crate) struct Info {
     pub defstruct: Ident,
     pub schemastruct: Ident,
-    pub engines_ident: Vec<Ident>,
+    pub engines_path: Vec<syn::Path>,
     pub columns: Vec<Column>,
     pub pks: Vec<Column>,
     pub relations: Vec<Relation>,
@@ -34,14 +35,13 @@ impl Info {
         let readonly = attributes::get_readonly(ast);
         let welds_path = attributes::get_welds_path(ast);
 
-        let engines_ident = engines
+        let engines_path = engines
             .iter()
-            .map(|e| Ident::new(e.as_str(), defstruct.span()))
+            .map(|eng| build_engine_path(eng, &welds_path))
             .collect();
 
         Ok(Self {
-            //engines,
-            engines_ident,
+            engines_path,
             columns,
             pks,
             defstruct,
@@ -54,4 +54,17 @@ impl Info {
             welds_path,
         })
     }
+}
+
+fn build_engine_path(engine: &Engine, wp: &syn::Path) -> syn::Path {
+    use quote::quote;
+
+    let q = match engine {
+        Engine::Postgres => quote!(sqlx::Postgres),
+        Engine::Mssql => quote!(#wp::Mssql),
+        Engine::Mysql => quote!(sqlx::MySql),
+        Engine::Sqlite => quote!(sqlx::Sqlite),
+    };
+
+    syn::parse(q.into()).unwrap()
 }

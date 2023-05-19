@@ -24,7 +24,7 @@ impl DbParam for sqlx::Sqlite {
 }
 
 #[cfg(feature = "mssql")]
-impl DbParam for sqlx::Mssql {
+impl DbParam for crate::Mssql {
     fn next(i: usize) -> String {
         format!("@p{}", i)
     }

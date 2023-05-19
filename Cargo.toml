@@ -1,6 +1,9 @@
 [workspace]
-default-members = ["welds-cli", "welds", "welds-macros"]
-members = ["welds-cli", "welds", "welds-macros"]
+#default-members = ["welds-cli", "welds", "welds-macros"]
+#members = ["welds-cli", "welds", "welds-macros"]
+
+default-members = ["welds", "welds-macros"]
+members = ["welds", "welds-macros"]
 
 [profile.dev.package.sqlx-macros]
 opt-level = 3

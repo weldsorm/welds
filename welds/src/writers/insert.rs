@@ -94,7 +94,7 @@ impl DbInsertWriter for sqlx::MySql {
 }
 
 #[cfg(feature = "mssql")]
-impl DbInsertWriter for sqlx::Mssql {
+impl DbInsertWriter for crate::Mssql {
     fn write(identifier: &str, colargs: &[ColArg], columns: &[Column], _pks: &[Column]) -> Sql {
         let cols: Vec<_> = colargs.iter().map(|x| x.0.as_str()).collect();
         let args: Vec<_> = colargs.iter().map(|x| x.1.as_str()).collect();
@@ -102,7 +102,7 @@ impl DbInsertWriter for sqlx::Mssql {
         let arg_group = args.join(", ");
 
         // write the column select that will be returned
-        let col_write = ColumnWriter::new::<sqlx::Mssql>();
+        let col_write = ColumnWriter::new::<crate::Mssql>();
         let return_col: Vec<String> = columns
             .iter()
             .map(|c| col_write.write("Inserted", c))

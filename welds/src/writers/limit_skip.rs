@@ -42,7 +42,7 @@ impl DbLimitSkipWriter for sqlx::Sqlite {
 }
 
 #[cfg(feature = "mssql")]
-impl DbLimitSkipWriter for sqlx::Mssql {
+impl DbLimitSkipWriter for crate::Mssql {
     fn skiplimit(s: &Option<i64>, l: &Option<i64>) -> Option<String> {
         if s.is_none() && l.is_none() {
             return None;

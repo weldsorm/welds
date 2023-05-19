@@ -1,8 +1,9 @@
 use mssql_test::models::order::Order;
 use mssql_test::models::product::{BadProductColumns, BadProductMissingTable, Product};
 use mssql_test::models::Thing1;
+use welds::Mssql;
 
-async fn get_conn() -> welds::connection::Pool<sqlx::Mssql> {
+async fn get_conn() -> welds::connection::Pool<welds::Mssql> {
     let sqlx_conn = testlib::mssql::conn().await.unwrap();
     sqlx_conn.into()
 }
@@ -13,12 +14,19 @@ pub struct Test {
 }
 
 #[test]
+fn should_be_able_to_connect() {
+    async_std::task::block_on(async {
+        let conn = get_conn().await;
+        assert!(true);
+    })
+}
+
+#[test]
 fn test_selecting_from_mssql() {
     async_std::task::block_on(async {
         use sqlx::database::HasArguments;
         use sqlx::query::QueryAs;
         use sqlx::Arguments;
-        use sqlx::Mssql;
 
         let sql = "SELECT id FROM welds.products where id != @p1 AND id != @p2";
 
@@ -43,7 +51,6 @@ fn should_be_able_to_read_all_products() {
         let q = Product::all();
         eprintln!("SQL: {}", q.to_sql());
         let all = q.run(&conn).await.unwrap();
-
         assert_eq!(all.len(), 6, "Unexpected number of rows returned");
     })
 }

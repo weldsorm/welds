@@ -58,7 +58,7 @@ impl DbColumnWriter for sqlx::MySql {
 }
 
 #[cfg(feature = "mssql")]
-impl DbColumnWriter for sqlx::Mssql {
+impl DbColumnWriter for crate::Mssql {
     fn excape(name: &str) -> String {
         format!("\"{}\"", name)
     }

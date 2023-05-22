@@ -14,9 +14,6 @@ impl Engine {
         if meta.path().is_ident("Mysql") {
             return Some(Engine::Mysql);
         }
-        if meta.path().is_ident("MySql") {
-            return Some(Engine::Mysql);
-        }
         if meta.path().is_ident("Mssql") {
             return Some(Engine::Mssql);
         }

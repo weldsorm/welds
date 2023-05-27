@@ -32,7 +32,7 @@ pub(crate) fn write(info: &Info) -> TokenStream {
     ) -> #wp::errors::Result<Option<#wp::state::DbState<Self>>>
     where
         'a: 'args,
-        DB: sqlx::Database,
+        DB: #wp::connection::Database,
         C: #wp::connection::Connection<DB>,
         <Self as #wp::table::HasSchema>::Schema: #wp::table::TableColumns<DB>,
         <DB as sqlx::database::HasArguments<'a>>::Arguments: sqlx::IntoArguments<'args, DB>,

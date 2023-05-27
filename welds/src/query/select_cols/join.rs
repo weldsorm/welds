@@ -1,11 +1,11 @@
 use super::SelectBuilder;
 use super::SelectColumn;
 use crate::alias::TableAlias;
+use crate::connection::Database;
 use crate::query::clause::ClauseAdder;
 use crate::query::clause::NextParam;
 use crate::table::{HasSchema, TableInfo};
 use crate::writers::column::{ColumnWriter, DbColumnWriter};
-use crate::writers::DbLimitSkipWriter;
 use sqlx::database::HasArguments;
 use sqlx::IntoArguments;
 use std::rc::Rc;
@@ -96,7 +96,7 @@ impl<'schema, DB: sqlx::Database> JoinBuilder<'schema, DB> {
         next_params: &NextParam,
         args: &mut Option<<DB as HasArguments<'schema>>::Arguments>,
     ) where
-        DB: sqlx::Database + DbLimitSkipWriter + DbColumnWriter,
+        DB: Database,
         <DB as HasArguments<'schema>>::Arguments: IntoArguments<'args, DB>,
     {
         for clause in &self.wheres {
@@ -118,7 +118,7 @@ impl<'schema, DB: sqlx::Database> JoinBuilder<'schema, DB> {
         inner_key: String,
     ) -> JoinBuilder<'schema, DB>
     where
-        DB: sqlx::Database,
+        DB: Database,
         T: Send + Unpin + for<'r> sqlx::FromRow<'r, DB::Row> + HasSchema,
         <T as HasSchema>::Schema: TableInfo,
     {

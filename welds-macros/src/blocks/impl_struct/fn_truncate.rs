@@ -9,7 +9,7 @@ pub(crate) fn write(info: &Info) -> TokenStream {
     pub async fn truncate<C, DB>(conn: &C) -> #wp::errors::Result<()>
     where
         C: #wp::connection::Connection<DB>,
-        DB: sqlx::Database,
+        DB: #wp::connection::Database,
     {
         let nameparts =
             <<Self as #wp::table::HasSchema>::Schema as #wp::table::TableInfo>::identifier();

@@ -1,4 +1,5 @@
 use crate::alias::TableAlias;
+use crate::connection::Database;
 use crate::query::clause::exists::ExistIn;
 use crate::query::clause::{AsFieldName, ClauseAdder, OrderBy};
 use crate::relations::{HasRelations, Relationship};
@@ -18,7 +19,7 @@ use super::update::bulk::UpdateBuilder;
 /// Can be chained with other queries to make more complex queries.
 ///
 /// Can be mapped into other queries to  make more complex queries.
-pub struct QueryBuilder<'schema, T, DB: sqlx::Database> {
+pub struct QueryBuilder<'schema, T, DB: Database> {
     _t: PhantomData<T>,
     pub(crate) wheres: Vec<Box<dyn ClauseAdder<'schema, DB>>>,
     pub(crate) exist_ins: Vec<ExistIn<'schema, DB>>,
@@ -31,7 +32,7 @@ pub struct QueryBuilder<'schema, T, DB: sqlx::Database> {
 
 impl<'schema, T, DB> Default for QueryBuilder<'schema, T, DB>
 where
-    DB: sqlx::Database,
+    DB: Database,
     T: Send + Unpin + for<'r> sqlx::FromRow<'r, DB::Row> + HasSchema,
 {
     fn default() -> Self {
@@ -41,7 +42,7 @@ where
 
 impl<'schema, T, DB> QueryBuilder<'schema, T, DB>
 where
-    DB: sqlx::Database,
+    DB: Database,
     T: Send + Unpin + for<'r> sqlx::FromRow<'r, DB::Row> + HasSchema,
 {
     pub fn new() -> Self {

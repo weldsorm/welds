@@ -1,4 +1,5 @@
 use crate::connection::Connection;
+use crate::connection::Database;
 use crate::query::clause::{DbParam, NextParam};
 use crate::table::{HasSchema, TableColumns, TableInfo, WriteToArgs};
 use crate::writers::column::{ColumnWriter, DbColumnWriter};
@@ -12,7 +13,7 @@ pub async fn update_one<'r, 'args, DB, T, C>(
     conn: &'r C,
 ) -> Result<()>
 where
-    DB: sqlx::Database + DbParam + DbColumnWriter,
+    DB: Database,
     T: WriteToArgs<DB> + HasSchema,
     <T as HasSchema>::Schema: TableInfo + TableColumns<DB>,
     C: Connection<DB>,

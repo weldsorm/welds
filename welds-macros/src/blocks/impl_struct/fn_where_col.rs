@@ -14,7 +14,7 @@ pub(crate) fn write(info: &Info) -> TokenStream {
         lam: impl Fn(#schema) -> Box<dyn #wp::query::clause::ClauseAdder<'args, DB>>,
     ) -> #wp::query::builder::QueryBuilder<'args, Self, DB>
     where
-        DB: sqlx::Database,
+        DB: #wp::connection::Database,
         #schema: #wp::table::TableColumns<DB>,
         Self: Send + Unpin + for<'r> sqlx::FromRow<'r, DB::Row>,
     {

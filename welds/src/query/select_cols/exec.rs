@@ -1,4 +1,5 @@
 use crate::connection::Connection;
+use crate::connection::Database;
 use crate::query::clause::{DbParam, NextParam};
 use crate::query::helpers::{build_tail, build_where_clauses, join_sql_parts};
 use crate::query::select_cols::SelectBuilder;
@@ -15,7 +16,7 @@ use sqlx::IntoArguments;
 
 impl<'schema, 'args, T, DB> SelectBuilder<'schema, T, DB>
 where
-    DB: sqlx::Database,
+    DB: Database,
     T: Send + Unpin + for<'r> sqlx::FromRow<'r, DB::Row> + HasSchema,
 {
     fn sql_internal<'q>(
@@ -96,7 +97,7 @@ where
 fn build_head_select<T, DB>(sb: &SelectBuilder<T, DB>) -> Option<String>
 where
     T: HasSchema,
-    DB: sqlx::Database + DbColumnWriter,
+    DB: Database,
     <T as HasSchema>::Schema: TableInfo + TableColumns<DB>,
 {
     let writer = ColumnWriter::new::<DB>();
@@ -137,7 +138,7 @@ where
 fn build_joins<T, DB>(sb: &SelectBuilder<T, DB>) -> Option<String>
 where
     T: HasSchema,
-    DB: sqlx::Database + DbColumnWriter,
+    DB: Database,
     <T as HasSchema>::Schema: TableInfo + TableColumns<DB>,
 {
     let mut list = Vec::default();

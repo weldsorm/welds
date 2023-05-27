@@ -1,4 +1,5 @@
 use crate::connection::Connection;
+use crate::connection::Database;
 use crate::errors::WeldsError::InsertFailed;
 use crate::query::clause::{DbParam, NextParam};
 use crate::table::{HasSchema, TableColumns, TableInfo, WriteToArgs};
@@ -15,7 +16,7 @@ pub async fn insert_one<'r, 'args, DB, T, C>(
     conn: &'r C,
 ) -> Result<()>
 where
-    DB: sqlx::Database + DbParam + DbInsertWriter + DbColumnWriter,
+    DB: Database,
     T: WriteToArgs<DB> + HasSchema + for<'fr> sqlx::FromRow<'fr, DB::Row>,
     <T as HasSchema>::Schema: TableInfo + TableColumns<DB>,
     C: Connection<DB>,

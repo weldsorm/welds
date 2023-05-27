@@ -4,6 +4,7 @@ use super::super::{
     helpers::{build_where, join_sql_parts},
 };
 use crate::connection::Connection;
+use crate::connection::Database;
 use crate::table::UniqueIdentifier;
 use crate::table::{HasSchema, TableColumns, TableInfo};
 use crate::writers::column::DbColumnWriter;
@@ -19,7 +20,7 @@ use sqlx::IntoArguments;
 
 impl<'schema, 'args, T, DB> QueryBuilder<'schema, T, DB>
 where
-    DB: sqlx::Database,
+    DB: Database,
     T: Send + Unpin + for<'r> sqlx::FromRow<'r, DB::Row> + HasSchema,
 {
     /// The SQL to delete a `DELETE FROM ... `
@@ -113,7 +114,7 @@ where
     'schema: 'args,
     T: HasSchema,
     <T as HasSchema>::Schema: UniqueIdentifier<DB> + TableInfo + TableColumns<DB>,
-    DB: sqlx::Database + DbLimitSkipWriter + DbColumnWriter,
+    DB: Database,
     <DB as HasArguments<'schema>>::Arguments: IntoArguments<'args, DB>,
 {
     // If we have a limit, we need to wrap the wheres in an IN clause to

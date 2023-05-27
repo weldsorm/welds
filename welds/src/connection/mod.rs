@@ -1,6 +1,8 @@
 use anyhow::Result;
 use async_trait::async_trait;
 use sqlx::database::HasArguments;
+mod database;
+pub use database::Database;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DbProvider {
@@ -11,7 +13,7 @@ pub enum DbProvider {
 }
 
 #[async_trait(?Send)]
-pub trait Connection<DB: sqlx::Database> {
+pub trait Connection<DB: Database> {
     async fn execute<'a>(
         &'a self,
         sql: &'a str,

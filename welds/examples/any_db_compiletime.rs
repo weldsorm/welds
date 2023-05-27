@@ -17,7 +17,6 @@ type DB = sqlx::Sqlite;
 #[derive(Debug, sqlx::FromRow, WeldsModel)]
 #[welds(db(Sqlite, Postgres))]
 #[welds(table = "products")]
-#[welds(HasMany(orders, Order, "product_id"))]
 pub struct Product {
     #[welds(primary_key)]
     #[sqlx(rename = "product_id")]
@@ -27,19 +26,6 @@ pub struct Product {
     #[sqlx(rename = "price1")]
     pub price: Option<f32>,
     pub active: bool,
-}
-
-/// Define a Struct the maps to the Orders table in the databases
-#[derive(Debug, sqlx::FromRow, WeldsModel)]
-#[welds(db(Sqlite, Postgres))]
-#[welds(table = "orders")]
-#[welds(BelongsTo(product, Product, "product_id"))]
-pub struct Order {
-    #[welds(primary_key)]
-    pub id: i32,
-    pub product_id: Option<i32>,
-    #[sqlx(rename = "price")]
-    pub sell_price: Option<f32>,
 }
 
 #[async_std::main]

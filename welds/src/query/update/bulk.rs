@@ -1,4 +1,5 @@
 use crate::connection::Connection;
+use crate::connection::Database;
 use crate::errors::Result;
 use crate::query::builder::QueryBuilder;
 use crate::query::clause::AsFieldName;
@@ -18,7 +19,7 @@ use std::marker::PhantomData;
 ///
 /// Build out a sql statement that will update the database in bulk
 
-pub struct UpdateBuilder<'schema, T, DB: sqlx::Database> {
+pub struct UpdateBuilder<'schema, T, DB: Database> {
     _t: PhantomData<T>,
     pub(crate) query_builder: QueryBuilder<'schema, T, DB>,
     pub(crate) sets: Vec<Box<dyn ClauseAdder<'schema, DB>>>,
@@ -26,7 +27,7 @@ pub struct UpdateBuilder<'schema, T, DB: sqlx::Database> {
 
 impl<'schema, 'args, T, DB> UpdateBuilder<'schema, T, DB>
 where
-    DB: sqlx::Database,
+    DB: Database,
     T: Send + Unpin + for<'r> sqlx::FromRow<'r, DB::Row> + HasSchema,
 {
     pub(crate) fn new(query_builder: QueryBuilder<'schema, T, DB>) -> Self {
@@ -178,7 +179,7 @@ where
     'schema: 'args,
     T: HasSchema,
     <T as HasSchema>::Schema: UniqueIdentifier<DB> + TableInfo + TableColumns<DB>,
-    DB: sqlx::Database + DbLimitSkipWriter + DbColumnWriter,
+    DB: Database,
     <DB as HasArguments<'schema>>::Arguments: IntoArguments<'args, DB>,
 {
     // If we have a limit, we need to wrap the wheres in an IN clause

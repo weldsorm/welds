@@ -2,6 +2,7 @@ use super::builder::QueryBuilder;
 use super::clause::{DbParam, NextParam};
 use super::helpers::{build_tail, build_where, join_sql_parts};
 use crate::connection::Connection;
+use crate::connection::Database;
 use crate::state::DbState;
 use crate::table::{HasSchema, TableColumns, TableInfo};
 use crate::writers::column::{ColumnWriter, DbColumnWriter};
@@ -18,7 +19,7 @@ use sqlx::Row;
 
 impl<'schema, 'args, T, DB> QueryBuilder<'schema, T, DB>
 where
-    DB: sqlx::Database,
+    DB: Database,
     T: Send + Unpin + for<'r> sqlx::FromRow<'r, DB::Row> + HasSchema,
 {
     /// Returns the SQL to count all rows in the resulting query
@@ -26,7 +27,6 @@ where
     where
         'schema: 'args,
         <DB as HasArguments<'schema>>::Arguments: IntoArguments<'args, DB>,
-        DB: DbParam + DbColumnWriter + DbLimitSkipWriter + DbCountWriter,
         <T as HasSchema>::Schema: TableInfo + TableColumns<DB>,
     {
         self.sql_internal_count(&mut None)
@@ -39,7 +39,6 @@ where
     where
         'schema: 'args,
         <DB as HasArguments<'schema>>::Arguments: IntoArguments<'args, DB>,
-        DB: DbParam + DbColumnWriter + DbLimitSkipWriter + DbCountWriter,
         <T as HasSchema>::Schema: TableInfo + TableColumns<DB>,
     {
         let next_params = NextParam::new::<DB>();
@@ -62,7 +61,6 @@ where
         C: 'schema,
         C: Connection<DB>,
         <DB as HasArguments<'schema>>::Arguments: IntoArguments<'args, DB>,
-        DB: DbParam + DbColumnWriter + DbLimitSkipWriter + DbCountWriter,
         <T as HasSchema>::Schema: TableInfo + TableColumns<DB>,
         i64: sqlx::Type<DB> + for<'r> sqlx::Decode<'r, DB>,
         usize: sqlx::ColumnIndex<<DB as sqlx::Database>::Row>,
@@ -92,7 +90,6 @@ where
     where
         'schema: 'args,
         <DB as HasArguments<'schema>>::Arguments: IntoArguments<'args, DB>,
-        DB: DbParam + DbColumnWriter + DbLimitSkipWriter,
         <T as HasSchema>::Schema: TableInfo + TableColumns<DB>,
     {
         self.sql_internal(&mut None)
@@ -126,7 +123,6 @@ where
         C: 'schema,
         C: Connection<DB>,
         <DB as HasArguments<'schema>>::Arguments: IntoArguments<'args, DB>,
-        DB: DbParam + DbColumnWriter + DbLimitSkipWriter,
         <T as HasSchema>::Schema: TableInfo + TableColumns<DB>,
     {
         let mut args: Option<<DB as HasArguments>::Arguments> = Some(Default::default());
@@ -156,8 +152,8 @@ where
 
 fn build_head_select<DB, S>(tablealias: &str) -> Option<String>
 where
-    DB: sqlx::Database + DbColumnWriter,
     S: TableInfo + TableColumns<DB>,
+    DB: Database,
 {
     let writer = ColumnWriter::new::<DB>();
     let mut head: Vec<&str> = Vec::default();
@@ -178,8 +174,8 @@ where
 
 fn build_head_count<DB, S>(tablealias: &str) -> Option<String>
 where
-    DB: sqlx::Database + DbColumnWriter + DbCountWriter,
     S: TableInfo + TableColumns<DB>,
+    DB: Database,
 {
     let tn = S::identifier().join(".");
     let identifier = format!("{} {}", tn, &tablealias);

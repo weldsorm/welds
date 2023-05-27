@@ -1,9 +1,7 @@
 use crate::connection::Connection;
-use crate::query::clause::DbParam;
+use crate::connection::Database;
 use crate::query::{delete, insert, update};
 use crate::table::{HasSchema, TableColumns, TableInfo, WriteToArgs};
-use crate::writers::column::DbColumnWriter;
-use crate::writers::insert::DbInsertWriter;
 use anyhow::Result;
 use sqlx::database::HasArguments;
 use sqlx::IntoArguments;
@@ -63,11 +61,11 @@ impl<T> DbState<T> {
     ///
     pub async fn save<'r, 'args, C, DB>(&'r mut self, conn: &'r C) -> Result<()>
     where
-        T: WriteToArgs<DB> + HasSchema + for<'fr> sqlx::FromRow<'fr, DB::Row>,
-        DB: sqlx::Database + DbParam + DbInsertWriter + DbColumnWriter,
-        <DB as HasArguments<'r>>::Arguments: IntoArguments<'args, DB>,
-        <T as HasSchema>::Schema: TableInfo + TableColumns<DB>,
         C: Connection<DB>,
+        DB: Database,
+        <DB as HasArguments<'r>>::Arguments: IntoArguments<'args, DB>,
+        T: WriteToArgs<DB> + HasSchema + for<'fr> sqlx::FromRow<'fr, DB::Row>,
+        <T as HasSchema>::Schema: TableInfo + TableColumns<DB>,
     {
         match self.status {
             DbStatus::NotModified => {}
@@ -89,7 +87,7 @@ impl<T> DbState<T> {
     where
         'r: 'args,
         T: WriteToArgs<DB> + HasSchema,
-        DB: sqlx::Database + DbParam + DbInsertWriter + DbColumnWriter,
+        DB: Database,
         C: Connection<DB>,
         <DB as HasArguments<'r>>::Arguments: IntoArguments<'args, DB>,
         <T as HasSchema>::Schema: TableInfo + TableColumns<DB>,

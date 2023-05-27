@@ -22,7 +22,7 @@ where
     <DB as HasArguments<'args>>::Arguments: IntoArguments<'args, DB>,
     T: Send + Unpin + for<'r> sqlx::FromRow<'r, DB::Row> + HasSchema,
     <T as HasSchema>::Schema: TableInfo + TableColumns<DB>,
-    DB: sqlx::Database + TableScan,
+    DB: crate::connection::Database + TableScan,
     usize: sqlx::ColumnIndex<<DB as sqlx::Database>::Row>,
     i32: sqlx::Type<DB> + for<'r> sqlx::Decode<'r, DB>,
     String: sqlx::Type<DB> + for<'r> sqlx::Decode<'r, DB>,
@@ -61,7 +61,7 @@ where
 fn unwrap_to_default_namespace<C, DB>(ns: Option<&'static str>, conn: &C) -> Option<&'static str>
 where
     C: Connection<DB>,
-    DB: sqlx::Database,
+    DB: crate::connection::Database,
 {
     if ns.is_some() {
         return ns;

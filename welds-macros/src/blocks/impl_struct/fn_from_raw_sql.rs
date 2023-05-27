@@ -13,7 +13,7 @@ pub(crate) fn write(info: &Info) -> TokenStream {
     ) -> #wp::errors::Result<Vec<#wp::state::DbState<Self>>>
     where
         'c: 'a,
-        DB: sqlx::Database,
+        DB: #wp::connection::Database,
         C: #wp::connection::Connection<DB>,
         Self: Send + Unpin + for<'r> sqlx::FromRow<'r, DB::Row>,
     {

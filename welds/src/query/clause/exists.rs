@@ -1,6 +1,6 @@
 use super::ClauseAdder;
+use crate::connection::Database;
 use crate::query::clause::OrderBy;
-use crate::writers::limit_skip::DbLimitSkipWriter;
 use crate::{alias::TableAlias, query::builder::QueryBuilder};
 use std::rc::Rc;
 
@@ -20,7 +20,7 @@ pub struct ExistIn<'args, DB> {
 
 impl<'args, DB> ExistIn<'args, DB>
 where
-    DB: sqlx::Database + DbLimitSkipWriter,
+    DB: Database,
 {
     pub(crate) fn new<T>(
         sb: QueryBuilder<'args, T, DB>,
@@ -86,7 +86,7 @@ where
 
 impl<'args, DB> ClauseAdder<'args, DB> for ExistIn<'args, DB>
 where
-    DB: sqlx::Database + DbLimitSkipWriter,
+    DB: Database,
 {
     fn bind(&self, args: &mut <DB as sqlx::database::HasArguments<'args>>::Arguments) {
         for w in &self.wheres {

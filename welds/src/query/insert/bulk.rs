@@ -1,4 +1,5 @@
 use crate::connection::Connection;
+use crate::connection::Database;
 use crate::errors::Result;
 use crate::query::clause::{DbParam, NextParam};
 use crate::table::{HasSchema, TableColumns, TableInfo, WriteBulkArrayToArgs, WriteToArgs};
@@ -10,7 +11,7 @@ use sqlx::IntoArguments;
 pub async fn run<'c, 'r, 'args, T, C, DB>(conn: &'c C, data: &[T]) -> Result<()>
 where
     'c: 'r,
-    DB: sqlx::Database + DbParam + DbColumnWriter,
+    DB: Database,
     T: WriteToArgs<DB> + HasSchema + for<'fr> sqlx::FromRow<'fr, DB::Row>,
     <T as HasSchema>::Schema: TableInfo + TableColumns<DB>,
     <DB as HasArguments<'r>>::Arguments: IntoArguments<'args, DB>,
@@ -71,7 +72,7 @@ where
 pub async fn run_fast<'c, 'r, 'args, T, C, DB>(conn: &'c C, data: &[T]) -> Result<()>
 where
     'c: 'r,
-    DB: sqlx::Database + DbParam + DbColumnWriter,
+    DB: Database,
     T: WriteBulkArrayToArgs<DB> + HasSchema,
     <T as HasSchema>::Schema: TableInfo + TableColumns<DB>,
     <DB as HasArguments<'r>>::Arguments: IntoArguments<'args, DB>,

@@ -12,7 +12,7 @@ pub(crate) fn write(info: &Info) -> TokenStream {
             lam: impl Fn(<Self as #wp::table::HasSchema>::Schema) -> FN,
         ) -> #wp::query::select_cols::SelectBuilder<'args, Self, DB>
         where
-            DB: sqlx::Database,
+            DB: #wp::connection::Database,
             #schema: #wp::table::TableColumns<DB>,
             Self: Send + Unpin + for<'r> sqlx::FromRow<'r, DB::Row>,
         {

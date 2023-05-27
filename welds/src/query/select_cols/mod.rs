@@ -1,4 +1,5 @@
 use crate::alias::TableAlias;
+use crate::connection::Database;
 use crate::query::builder::QueryBuilder;
 use crate::query::clause::{AsFieldName, ClauseAdder};
 use crate::relations::{HasRelations, Relationship};
@@ -20,7 +21,7 @@ mod select_column;
 /// Can be chained with other queries to make more complex queries.
 ///
 /// Can be mapped into other queries to make more complex queries.
-pub struct SelectBuilder<'schema, T, DB: sqlx::Database> {
+pub struct SelectBuilder<'schema, T, DB: Database> {
     qb: QueryBuilder<'schema, T, DB>,
     selects: Vec<SelectColumn>,
     joins: Vec<JoinBuilder<'schema, DB>>,
@@ -28,7 +29,7 @@ pub struct SelectBuilder<'schema, T, DB: sqlx::Database> {
 
 impl<'schema, T, DB> SelectBuilder<'schema, T, DB>
 where
-    DB: sqlx::Database,
+    DB: Database,
     T: Send + Unpin + for<'r> sqlx::FromRow<'r, DB::Row> + HasSchema,
 {
     pub fn new(qb: QueryBuilder<'schema, T, DB>) -> Self {

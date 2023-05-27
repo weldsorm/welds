@@ -1,5 +1,6 @@
 use super::ClauseAdder;
 
+use crate::connection::Database;
 use crate::query::builder::QueryBuilder;
 use crate::query::helpers::{build_tail, build_where, join_sql_parts};
 use crate::table::HasSchema;
@@ -7,20 +8,19 @@ use crate::table::TableColumns;
 use crate::table::TableInfo;
 use crate::table::UniqueIdentifier;
 use crate::writers::column::{ColumnWriter, DbColumnWriter};
-use crate::writers::limit_skip::DbLimitSkipWriter;
 use sqlx::database::HasArguments;
 use sqlx::IntoArguments;
 
 /// Used to generated a SQL IN clause.
 /// This is used when deleting and updating to be able to apply limit
 
-pub struct WhereIn<'qb, 'schema, T, DB: sqlx::Database> {
+pub struct WhereIn<'qb, 'schema, T, DB: Database> {
     qb: &'qb QueryBuilder<'schema, T, DB>,
 }
 
 impl<'qb, 'schema, DB, T> WhereIn<'qb, 'schema, T, DB>
 where
-    DB: sqlx::Database + DbLimitSkipWriter + DbColumnWriter,
+    DB: Database,
     T: HasSchema,
     <T as HasSchema>::Schema: UniqueIdentifier<DB>,
 {
@@ -40,7 +40,7 @@ where
     'cd: 'schema,
     'schema: 'cd,
     <DB as HasArguments<'schema>>::Arguments: IntoArguments<'args, DB>,
-    DB: sqlx::Database + DbLimitSkipWriter + DbColumnWriter,
+    DB: Database,
     T: HasSchema,
     <T as HasSchema>::Schema: UniqueIdentifier<DB> + TableInfo + TableColumns<DB>,
 {
@@ -77,7 +77,7 @@ where
 
 fn build_head_select<DB, S>(tablealias: &str) -> Option<String>
 where
-    DB: sqlx::Database + DbColumnWriter,
+    DB: Database,
     S: TableInfo + UniqueIdentifier<DB>,
 {
     let mut tablename = S::identifier().join(".");

@@ -1,4 +1,5 @@
 use crate::connection::Connection;
+use crate::connection::Database;
 use crate::connection::DbProvider;
 use crate::table::TableIdent;
 use anyhow::Result;
@@ -25,7 +26,7 @@ where
     'c: 'args,
     C: Connection<DB>,
     <DB as HasArguments<'args>>::Arguments: IntoArguments<'args, DB>,
-    DB: sqlx::Database + TableScan,
+    DB: Database + TableScan,
     i32: sqlx::Type<DB> + for<'r> sqlx::Decode<'r, DB>,
     usize: sqlx::ColumnIndex<<DB as sqlx::Database>::Row>,
     String: sqlx::Type<DB> + for<'r> sqlx::Decode<'r, DB>,
@@ -65,7 +66,7 @@ where
     'c: 'args1,
     C: Connection<DB>,
     <DB as HasArguments<'args1>>::Arguments: IntoArguments<'args2, DB>,
-    DB: sqlx::Database + TableScan,
+    DB: Database + TableScan,
     usize: sqlx::ColumnIndex<<DB as sqlx::Database>::Row>,
     i32: sqlx::Type<DB> + for<'r> sqlx::Decode<'r, DB>,
     String: sqlx::Type<DB> + for<'r> sqlx::Decode<'r, DB>,

@@ -1,10 +1,9 @@
 use super::builder::QueryBuilder;
 use super::clause::NextParam;
-use crate::alias;
+use crate::connection::Database;
 use crate::query::clause::exists::ExistIn;
 use crate::query::clause::ClauseAdder;
 use crate::table::{HasSchema, TableColumns, TableInfo};
-use crate::writers::limit_skip::DbLimitSkipWriter;
 use sqlx::database::HasArguments;
 use sqlx::IntoArguments;
 
@@ -26,7 +25,7 @@ pub(crate) fn build_where<'schema, 'args, DB>(
     exist_ins: &[ExistIn<'schema, DB>],
 ) -> Option<String>
 where
-    DB: sqlx::Database + DbLimitSkipWriter,
+    DB: Database,
     <DB as HasArguments<'schema>>::Arguments: IntoArguments<'args, DB>,
 {
     let where_sql = build_where_clauses(next_params, alias, args, wheres, exist_ins);
@@ -44,7 +43,7 @@ pub(crate) fn build_where_clauses<'schema, 'args, DB>(
     exist_ins: &[ExistIn<'schema, DB>],
 ) -> Vec<String>
 where
-    DB: sqlx::Database + DbLimitSkipWriter,
+    DB: Database,
     <DB as HasArguments<'schema>>::Arguments: IntoArguments<'args, DB>,
 {
     let mut where_sql: Vec<String> = Vec::default();
@@ -70,7 +69,7 @@ where
 pub(crate) fn build_tail<T, DB>(select: &QueryBuilder<T, DB>) -> Option<String>
 where
     T: HasSchema,
-    DB: sqlx::Database + DbLimitSkipWriter,
+    DB: Database,
     <T as HasSchema>::Schema: TableInfo + TableColumns<DB>,
 {
     super::tail::write::<DB>(&select.limit, &select.offset, &select.orderby)

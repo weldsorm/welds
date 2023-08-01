@@ -75,6 +75,11 @@ where
 }
 
 impl<DB: sqlx::Database> Pool<DB> {
+    /// Build a new welds connection pool from a sqlx pool
+    pub fn new(sqlx_pool: sqlx::Pool<DB>) -> Self {
+        Pool { inner: sqlx_pool }
+    }
+
     /// Return the inner sqlx connection pool
     pub fn as_sqlx_pool(&self) -> &sqlx::pool::Pool<DB> {
         &self.inner

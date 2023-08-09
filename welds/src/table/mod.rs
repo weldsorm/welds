@@ -26,6 +26,18 @@ impl Column {
             nullable,
         }
     }
+
+    /// forcefully create a Column struct.
+    /// You should avoid, use new if you can
+    /// useful for testing.
+    pub fn new_unsafe(name: impl Into<String>, dbtype: impl Into<String>, nullable: bool) -> Self {
+        Self {
+            name: name.into(),
+            dbtype: dbtype.into(),
+            nullable,
+        }
+    }
+
     pub fn name(&self) -> &str {
         self.name.as_str()
     }

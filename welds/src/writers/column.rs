@@ -70,9 +70,10 @@ impl DbColumnWriter for sqlx::Mssql {
 }
 
 fn mssql_type_overrides(dbtype: &str) -> &str {
-    match dbtype {
+    match dbtype.to_lowercase().as_str() {
         //
-        "BitN" => "BIT",
+        "bit" => "tinyint",
+        "bitn" => "tinyint",
         _ => dbtype,
     }
 }

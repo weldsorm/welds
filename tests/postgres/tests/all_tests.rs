@@ -323,7 +323,21 @@ fn should_be_able_to_scan_for_all_tables() {
     async_std::task::block_on(async {
         let conn = get_conn().await;
         let tables = welds::detect::find_tables(&conn).await.unwrap();
-        assert_eq!(12, tables.len());
+        assert_eq!(13, tables.len());
+    })
+}
+
+#[test]
+fn should_be_able_to_scan_for_views() {
+    async_std::task::block_on(async {
+        let conn = get_conn().await;
+        let mut tables_and_view = welds::detect::find_tables(&conn).await.unwrap();
+        use welds::detect::DataType::View;
+        let views: Vec<_> = tables_and_view
+            .drain(..)
+            .filter(|x| x.ty() == View)
+            .collect();
+        assert_eq!(1, views.len());
     })
 }
 

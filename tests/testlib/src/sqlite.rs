@@ -20,6 +20,10 @@ pub async fn conn() -> Result<sqlx::SqlitePool, sqlx::Error> {
     let schema = include_str!("../databases/sqlite/02_add_test_data.sql");
     let _r = pool.clone().execute(schema).await.unwrap();
 
+    // Add Views
+    let schema = include_str!("../databases/sqlite/03_create_views.sql");
+    let _r = pool.clone().execute(schema).await.unwrap();
+
     Ok(pool)
 }
 

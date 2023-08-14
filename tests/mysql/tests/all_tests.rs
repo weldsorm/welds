@@ -2,7 +2,6 @@ use mysql_test::models::order::Order;
 use mysql_test::models::product::{BadProductColumns, BadProductMissingTable, Product};
 use mysql_test::models::Thing1;
 
-
 async fn get_conn() -> welds::connection::Pool<sqlx::MySql> {
     let sqlx_conn = testlib::mysql::conn().await.unwrap();
     sqlx_conn.into()
@@ -184,7 +183,7 @@ fn should_be_able_to_scan_for_all_tables() {
     async_std::task::block_on(async {
         let conn = get_conn().await;
         let tables = welds::detect::find_tables(&conn).await.unwrap();
-        assert_eq!(11, tables.len());
+        assert_eq!(12, tables.len());
     })
 }
 

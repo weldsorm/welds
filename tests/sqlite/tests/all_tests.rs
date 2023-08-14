@@ -2,10 +2,10 @@ use sqlite_test::models::order::Order;
 use sqlite_test::models::product::{BadProduct1, BadProduct2, Product};
 use sqlite_test::models::{Thing1, Thing2, Thing3};
 
-pub mod sub_query_tests;
 pub mod bulk_delete;
 pub mod bulk_update;
 pub mod select_col;
+pub mod sub_query_tests;
 
 type Db = sqlx::Sqlite;
 async fn get_conn() -> welds::connection::Pool<Db> {
@@ -209,7 +209,7 @@ fn should_be_able_to_scan_for_all_tables() {
     async_std::task::block_on(async {
         let conn = get_conn().await;
         let tables = welds::detect::find_tables(&conn).await.unwrap();
-        assert_eq!(11, tables.len());
+        assert_eq!(12, tables.len());
     })
 }
 

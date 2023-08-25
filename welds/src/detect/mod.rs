@@ -3,7 +3,6 @@ use crate::connection::Database;
 use crate::connection::DbProvider;
 use crate::table::TableIdent;
 use anyhow::Result;
-use log::debug;
 use sqlx::database::HasArguments;
 use sqlx::Arguments;
 use sqlx::IntoArguments;
@@ -35,14 +34,11 @@ where
     let sql = DB::table_scan_sql();
     let args: <DB as HasArguments>::Arguments = Default::default();
 
-    debug!("i haz sql");
     let mut raw_rows = conn.fetch_rows(sql, args).await?;
-    debug!("i haz rows {:?}", raw_rows.len());
 
     let rows: Vec<TableScanRow> = raw_rows.drain(..).map(|r| r.into()).collect();
     let mut tables = build_table_defs(rows);
 
-    debug!("i gets fkeys");
     // Build a list of all the FKs
     let sql = DB::fk_scan_sql();
     let args: <DB as HasArguments>::Arguments = Default::default();

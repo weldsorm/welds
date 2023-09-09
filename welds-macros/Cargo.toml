@@ -1,7 +1,7 @@
 [package]
 name = "welds-macros"
 authors = ["Lex Childs <lexchilds@gmail.com>"]
-version = "0.1.9"
+version = "0.2.0"
 edition = "2021"
 license = "BSD-3-Clause"
 categories = ["Database interfaces", "database"]
@@ -16,8 +16,8 @@ proc-macro = true
 [dependencies]
 syn = { version = "^1.0", features = ["extra-traits"] }
 log = "^0.4"
-welds-sqlx-mssql = { path="../../welds-sqlx-mssql", version = "0.7.0-alpha.3", optional=true }
-sqlx = { version = "0.7.0-alpha.3" }
+welds-sqlx-mssql = { path="../../welds-sqlx-mssql", version = "1.7", optional=true }
+sqlx = { version = "0.7" }
 quote = "^1.0"
 proc-macro2 = "1"
 
@@ -30,7 +30,7 @@ proc-macro2 = "1"
 
 [dev-dependencies]
 async-std = { version = "1", features = ["attributes"] }
-sqlx = { version = "0.7.0-alpha.3", features = [ "runtime-async-std", "tls-rustls", "macros"] }
+sqlx = { version = "0.7", features = [ "runtime-async-std", "tls-rustls", "macros"] }
 welds-macros = { path="./", features=["postgres", "mysql",  "sqlite"] }
 
 

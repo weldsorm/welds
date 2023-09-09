@@ -12,7 +12,7 @@ description = "An async ORM for (postgres, mssql, mysql, sqlite)"
 
 [dependencies]
 sqlx = { version = "0.7", features = [ "macros"] }
-welds-macros = { path="../welds-macros", version = "^0.1" }
+welds-macros = { path="../welds-macros", version = "^0.2" }
 welds-sqlx-mssql = { path="../../welds-sqlx-mssql", version = "1.7", optional=true }
 async-trait = "0.1"
 thiserror = "1.0"

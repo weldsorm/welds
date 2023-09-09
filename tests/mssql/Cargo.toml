@@ -9,6 +9,6 @@ edition = "2021"
 testlib = { path = "../testlib" }
 welds = { path = "../../welds", features = [ 'mssql', 'detect', 'check']  }
 async-std = { version = "1", features = ["attributes"] }
-sqlx = { version = "0.7.0-alpha.3", features = [ "runtime-async-std", "tls-rustls", "macros"] }
-welds-sqlx-mssql = { path="../../../welds-sqlx-mssql", version = "0.7.0-alpha.3" }
+sqlx = { version = "0.7", features = [ "runtime-async-std", "tls-rustls", "macros"] }
+welds-sqlx-mssql = { path="../../../welds-sqlx-mssql", version = "1.7" }
 

@@ -2040,7 +2040,7 @@ dependencies = [
 
 [[package]]
 name = "welds"
-version = "0.1.9"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -2054,7 +2054,7 @@ dependencies = [
 
 [[package]]
 name = "welds-macros"
-version = "0.1.9"
+version = "0.2.0"
 dependencies = [
  "log",
  "proc-macro2",
@@ -2065,7 +2065,7 @@ dependencies = [
 
 [[package]]
 name = "welds-sqlx-mssql"
-version = "0.7.0-alpha.3"
+version = "1.7.0"
 dependencies = [
  "atoi",
  "base64",

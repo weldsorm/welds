@@ -1,11 +1,11 @@
 use super::Connection;
 use super::Pool;
 use super::Transaction;
+use crate::Mssql;
 use anyhow::Result;
 use async_trait::async_trait;
 use sqlx::database::HasArguments;
 use sqlx::query::QueryAs;
-use sqlx::Mssql;
 
 type DbType = Mssql;
 fn provider() -> super::DbProvider {
@@ -15,7 +15,7 @@ fn provider() -> super::DbProvider {
 /// This file contains all the Mssql impl for connection and transaction
 
 pub async fn connect_mssql(connection_string: &str) -> Result<Pool<DbType>> {
-    let sqlx_pool = sqlx::MssqlPool::connect(connection_string).await?;
+    let sqlx_pool = welds_sqlx_mssql::MssqlPool::connect(connection_string).await?;
     Ok(sqlx_pool.into())
 }
 
@@ -40,8 +40,9 @@ impl Connection<DbType> for Pool<DbType> {
         args: <DbType as HasArguments<'a>>::Arguments,
     ) -> Result<()> {
         let mut x = self.inner.acquire().await?;
+        let x = &mut *x;
         let q = sqlx::query_with(sql, args);
-        q.execute(&mut x).await?;
+        q.execute(x).await?;
         Ok(())
     }
 
@@ -54,9 +55,10 @@ impl Connection<DbType> for Pool<DbType> {
         T: Send + Unpin + for<'r> sqlx::FromRow<'r, <DbType as sqlx::Database>::Row>,
     {
         let mut x = self.inner.acquire().await?;
+        let x = &mut *x;
         let q: QueryAs<DbType, T, <DbType as HasArguments>::Arguments> =
             sqlx::query_as_with(sql, args);
-        let rows = q.fetch_all(&mut x).await?;
+        let rows = q.fetch_all(x).await?;
         Ok(rows)
     }
 
@@ -69,9 +71,10 @@ impl Connection<DbType> for Pool<DbType> {
         T: Send + Unpin + for<'r> sqlx::FromRow<'r, <DbType as sqlx::Database>::Row>,
     {
         let mut x = self.inner.acquire().await?;
+        let x = &mut *x;
         let q: QueryAs<DbType, T, <DbType as HasArguments>::Arguments> =
             sqlx::query_as_with(sql, args);
-        let row = q.fetch_optional(&mut x).await?;
+        let row = q.fetch_optional(x).await?;
         Ok(row)
     }
 
@@ -82,8 +85,9 @@ impl Connection<DbType> for Pool<DbType> {
         args: <DbType as HasArguments<'a>>::Arguments,
     ) -> Result<Vec<<DbType as sqlx::Database>::Row>> {
         let mut x = self.inner.acquire().await?;
+        let x = &mut *x;
         let query = sqlx::query_with(sql, args);
-        let rows = query.fetch_all(&mut x).await?;
+        let rows = query.fetch_all(x).await?;
         Ok(rows)
     }
 
@@ -92,11 +96,12 @@ impl Connection<DbType> for Pool<DbType> {
         &'a self,
         statments: Vec<(&'a str, <DbType as HasArguments<'a>>::Arguments)>,
     ) -> Result<Vec<<DbType as sqlx::Database>::Row>> {
-        let mut x = self.inner.acquire().await?;
+        let mut pc = self.inner.acquire().await?;
         let mut rows = Vec::default();
         for (sql, args) in statments {
+            let x = &mut *pc;
             let query = sqlx::query_with(sql, args);
-            let mut batch = query.fetch_all(&mut x).await?;
+            let mut batch = query.fetch_all(x).await?;
             rows.append(&mut batch);
         }
         Ok(rows)
@@ -116,8 +121,9 @@ impl<'trans> Connection<DbType> for Transaction<'trans, DbType> {
         args: <DbType as HasArguments<'a>>::Arguments,
     ) -> Result<()> {
         let trans = &mut *self.inner.lock().unwrap();
+        let x: &mut <DbType as sqlx::Database>::Connection = &mut *trans;
         let q = sqlx::query_with(sql, args);
-        q.execute(trans).await?;
+        q.execute(x).await?;
         Ok(())
     }
 
@@ -130,9 +136,10 @@ impl<'trans> Connection<DbType> for Transaction<'trans, DbType> {
         T: Send + Unpin + for<'r> sqlx::FromRow<'r, <DbType as sqlx::Database>::Row>,
     {
         let trans = &mut *self.inner.lock().unwrap();
+        let x: &mut <DbType as sqlx::Database>::Connection = &mut *trans;
         let q: QueryAs<DbType, T, <DbType as HasArguments>::Arguments> =
             sqlx::query_as_with(sql, args);
-        let rows = q.fetch_all(trans).await?;
+        let rows = q.fetch_all(x).await?;
         Ok(rows)
     }
 
@@ -145,9 +152,10 @@ impl<'trans> Connection<DbType> for Transaction<'trans, DbType> {
         T: Send + Unpin + for<'r> sqlx::FromRow<'r, <DbType as sqlx::Database>::Row>,
     {
         let trans = &mut *self.inner.lock().unwrap();
+        let x: &mut <DbType as sqlx::Database>::Connection = &mut *trans;
         let q: QueryAs<DbType, T, <DbType as HasArguments>::Arguments> =
             sqlx::query_as_with(sql, args);
-        let row = q.fetch_optional(trans).await?;
+        let row = q.fetch_optional(x).await?;
         Ok(row)
     }
 
@@ -158,8 +166,9 @@ impl<'trans> Connection<DbType> for Transaction<'trans, DbType> {
         args: <DbType as HasArguments<'a>>::Arguments,
     ) -> Result<Vec<<DbType as sqlx::Database>::Row>> {
         let trans = &mut *self.inner.lock().unwrap();
+        let x: &mut <DbType as sqlx::Database>::Connection = &mut *trans;
         let query = sqlx::query_with(sql, args);
-        let rows = query.fetch_all(trans).await?;
+        let rows = query.fetch_all(x).await?;
         Ok(rows)
     }
 
@@ -171,8 +180,9 @@ impl<'trans> Connection<DbType> for Transaction<'trans, DbType> {
         let trans = &mut *self.inner.lock().unwrap();
         let mut rows = Vec::default();
         for (sql, args) in statments {
+            let x: &mut <DbType as sqlx::Database>::Connection = &mut *trans;
             let query = sqlx::query_with(sql, args);
-            let mut batch = query.fetch_all(&mut *trans).await?;
+            let mut batch = query.fetch_all(x).await?;
             rows.append(&mut batch);
         }
         Ok(rows)

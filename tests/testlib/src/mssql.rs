@@ -2,17 +2,18 @@ use rand::{distributions::Alphanumeric, Rng};
 use static_init::dynamic;
 use std::process::{Command, Stdio};
 use std::thread::sleep; // 0.8
+use welds_sqlx_mssql::MssqlPool;
 
 #[dynamic(drop, lazy)]
 static mut MSSQL: Mssql = Mssql::new();
 
 /// A shared connection to the testing Mssql database.
 /// Automatically booted and drop as needed
-pub async fn conn() -> Result<sqlx::MssqlPool, sqlx::Error> {
+pub async fn conn() -> Result<MssqlPool, sqlx::Error> {
     let db = &MSSQL;
     let _ = db.read().wait_for_ready();
     let url = db.read().connection_string();
-    sqlx::MssqlPool::connect(&url).await
+    MssqlPool::connect(&url).await
 }
 
 /// A shared connection to the testing Mssql database.
@@ -55,7 +56,7 @@ impl Mssql {
             container_id: String::default(),
             port,
             password,
-            ready: std::cell::Cell::new(false)
+            ready: std::cell::Cell::new(false),
         };
         eprintln!("Booting Mssql test Environment");
         db.boot().unwrap();

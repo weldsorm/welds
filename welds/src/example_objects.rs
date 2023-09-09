@@ -6,7 +6,7 @@ use super::WeldsModel;
 ///
 #[derive(Debug, sqlx::FromRow, WeldsModel)]
 #[welds_path(crate)]
-#[welds(db(Postgres, Mssql, Mysql, Sqlite))]
+#[welds(db(Postgres, Mysql, Sqlite))]
 #[welds(schema = "examples", table = "products")]
 #[welds(HasMany(product_orders, super::example_objects::ProductOrders, "product_id"))]
 pub struct Product {
@@ -40,7 +40,7 @@ pub struct Product {
 ///
 #[derive(Debug, sqlx::FromRow, WeldsModel)]
 #[welds_path(crate)]
-#[welds(db(Postgres, Mssql, Mysql, Sqlite))]
+#[welds(db(Postgres, Mysql, Sqlite))]
 #[welds(schema = "examples", table = "orders")]
 #[welds(HasMany(product_orders, super::example_objects::ProductOrders, "order_id"))]
 pub struct Order {
@@ -57,7 +57,7 @@ pub struct Order {
 ///
 #[derive(Debug, sqlx::FromRow, WeldsModel)]
 #[welds_path(crate)]
-#[welds(db(Postgres, Mssql, Mysql, Sqlite))]
+#[welds(db(Postgres, Mysql, Sqlite))]
 #[welds(schema = "examples", table = "products_orders")]
 #[welds(BelongsTo(order, super::example_objects::Order, "order_id"))]
 #[welds(BelongsTo(product, super::example_objects::Product, "product_id"))]

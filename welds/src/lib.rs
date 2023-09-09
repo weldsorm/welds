@@ -174,3 +174,6 @@ pub mod example_objects;
 // Re-exports
 pub use sqlx;
 pub use welds_macros::WeldsModel;
+
+#[cfg(feature = "mssql")]
+pub use welds_sqlx_mssql::Mssql;

@@ -35,7 +35,7 @@ impl DbCountWriter for sqlx::Sqlite {
 }
 
 #[cfg(feature = "mssql")]
-impl DbCountWriter for sqlx::Mssql {
+impl DbCountWriter for crate::Mssql {
     fn count(_prefix: Option<&str>, x: Option<&str>) -> String {
         let x = x.unwrap_or("*");
         format!("CAST( COUNT({}) as BIGINT )", x)

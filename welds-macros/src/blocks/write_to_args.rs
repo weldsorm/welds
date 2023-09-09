@@ -2,7 +2,6 @@ use crate::column::Column;
 use crate::info::Info;
 use proc_macro2::TokenStream;
 use quote::quote;
-use syn::Ident;
 
 pub(crate) fn write(info: &Info) -> TokenStream {
     // If this is a readonly model it should NOT impl WriteToArgs
@@ -12,8 +11,9 @@ pub(crate) fn write(info: &Info) -> TokenStream {
 
     let mut blocks = Vec::default();
 
-    for db in &info.engines_ident {
-        let write_col = if db.to_string().as_str() == "Sqlite" {
+    for db in &info.engines_path {
+        let db_path_str = quote!(#db).to_string();
+        let write_col = if db_path_str.ends_with("Sqlite") {
             write_col_sqlite
         } else {
             write_col_normal
@@ -45,17 +45,17 @@ pub(crate) fn write_col_sqlite(col: &Column) -> TokenStream {
     quote! { #dbname => args.add(self.#field.clone()), }
 }
 
-pub(crate) fn write_for_db(info: &Info, db: &Ident, matches: &TokenStream) -> TokenStream {
+pub(crate) fn write_for_db(info: &Info, db: &syn::Path, matches: &TokenStream) -> TokenStream {
     let def = &info.defstruct;
     let wp = &info.welds_path;
 
     quote! {
 
-    impl #wp::table::WriteToArgs<sqlx::#db> for #def {
+    impl #wp::table::WriteToArgs<#db> for #def {
         fn bind<'args>(
             &self,
             column: &str,
-            args: &mut <sqlx::#db as sqlx::database::HasArguments<'args>>::Arguments,
+            args: &mut <#db as sqlx::database::HasArguments<'args>>::Arguments,
         ) -> #wp::errors::Result<()> {
             use sqlx::Arguments;
             match column {

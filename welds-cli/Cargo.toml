@@ -1,7 +1,7 @@
 [package]
 name = "welds-cli"
 authors = ["Lex Childs <lexchilds@gmail.com>"]
-version = "0.1.6-alpha"
+version = "0.1.7-alpha"
 edition = "2021"
 license = "BSD-3-Clause"
 categories = ["Database interfaces", "database"]
@@ -16,7 +16,7 @@ path = "src/lib.rs"
 
 [dependencies]
 async-std = { version = "1", features = ["attributes"] }
-sqlx = { version = "0.6", features = [ "runtime-async-std-rustls",  "macros"] }
+sqlx = { version = "0.7", features = [ "runtime-async-std-rustls",  "macros"] }
 clap = { version = "4.0", features = ["derive"] }
 serde = { version = "1", features = ["derive"] }
 serde_yaml = "0.9"
@@ -28,7 +28,7 @@ anyhow = "1.0"
 log = "0.4"
 pretty_env_logger = "0.4"
 futures = "0.3.25"
-welds = { path = "../welds", version = '^0.1', features=["postgres", "mssql", "mysql", "sqlite", "detect"] }
+welds = { path = "../welds", version = '^0.2', features=["postgres", "mssql", "mysql", "sqlite", "detect"] }
 
 [profile.dev.package.sqlx-macros]
 opt-level = 3

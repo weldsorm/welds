@@ -33,7 +33,7 @@ impl TableScan for sqlx::MySql {
 }
 
 #[cfg(feature = "mssql")]
-impl TableScan for sqlx::Mssql {
+impl TableScan for crate::Mssql {
     fn table_scan_sql() -> &'static str {
         include_str!("./mssql.sql")
     }

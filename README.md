@@ -14,6 +14,12 @@
 - Written for ease of development. Features aren't hidden behind traits. Code should be simple to write, and simple to read.
 - sqlx always available when you need to drop down to something lower level
 
+
+## Version Compatibility with sqlx
+- The 0.2.x series of Welds is compatible with sqlx 0.7 
+- The 0.1.x series of Welds is compatible with sqlx 0.6 
+
+
 ## Example Setup
 
 ```rust

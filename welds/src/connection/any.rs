@@ -4,7 +4,7 @@ use anyhow::{anyhow, Result};
 use std::env;
 
 #[cfg(feature = "mssql")]
-use sqlx::Mssql;
+use crate::Mssql;
 #[cfg(feature = "mysql")]
 use sqlx::MySql;
 #[cfg(feature = "postgres")]
@@ -128,7 +128,7 @@ impl AnyPool {
 
         #[cfg(feature = "mssql")]
         if url.starts_with("mssql:") {
-            let pool = sqlx::MssqlPool::connect(url).await?;
+            let pool = welds_sqlx_mssql::MssqlPool::connect(url).await?;
             return Ok(AnyPool::Mssql(pool.into()));
         }
 

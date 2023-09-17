@@ -76,7 +76,7 @@ fn pg_should_use_dollar_signs_with_numbers() {
 
 #[test]
 fn mssql_should_use_at_signs_with_numbers() {
-    let p = NextParam::new::<sqlx::Mssql>();
+    let p = NextParam::new::<crate::Mssql>();
     assert_eq!(p.next(), "@p1");
     assert_eq!(p.next(), "@p2");
     assert_eq!(p.next(), "@p3");

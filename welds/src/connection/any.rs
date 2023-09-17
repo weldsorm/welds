@@ -26,26 +26,48 @@ pub enum AnyPool {
 }
 
 #[cfg(feature = "postgres")]
+impl From<sqlx::Pool<Postgres>> for AnyPool {
+    fn from(inner: sqlx::Pool<Postgres>) -> Self {
+        AnyPool::Postgres(Pool::new(inner))
+    }
+}
+#[cfg(feature = "mssql")]
+impl From<sqlx::Pool<Mssql>> for AnyPool {
+    fn from(inner: sqlx::Pool<Mssql>) -> Self {
+        AnyPool::Mssql(Pool::new(inner))
+    }
+}
+#[cfg(feature = "mysql")]
+impl From<sqlx::Pool<MySql>> for AnyPool {
+    fn from(inner: sqlx::Pool<MySql>) -> Self {
+        AnyPool::MySql(Pool::new(inner))
+    }
+}
+#[cfg(feature = "sqlite")]
+impl From<sqlx::Pool<Sqlite>> for AnyPool {
+    fn from(inner: sqlx::Pool<Sqlite>) -> Self {
+        AnyPool::Sqlite(Pool::new(inner))
+    }
+}
+
+#[cfg(feature = "postgres")]
 impl From<Pool<Postgres>> for AnyPool {
     fn from(inner: Pool<Postgres>) -> Self {
         AnyPool::Postgres(inner)
     }
 }
-
 #[cfg(feature = "mssql")]
 impl From<Pool<Mssql>> for AnyPool {
     fn from(inner: Pool<Mssql>) -> Self {
         AnyPool::Mssql(inner)
     }
 }
-
 #[cfg(feature = "mysql")]
 impl From<Pool<MySql>> for AnyPool {
     fn from(inner: Pool<MySql>) -> Self {
         AnyPool::MySql(inner)
     }
 }
-
 #[cfg(feature = "sqlite")]
 impl From<Pool<Sqlite>> for AnyPool {
     fn from(inner: Pool<Sqlite>) -> Self {

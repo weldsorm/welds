@@ -2,6 +2,7 @@ use postgres_test::models::enums::Color;
 use postgres_test::models::order::Order;
 use postgres_test::models::other::Other;
 use postgres_test::models::product::{BadProductColumns, BadProductMissingTable, Product};
+use postgres_test::models::table_with_array::TableWithArray;
 use postgres_test::models::Thing1;
 
 async fn get_conn() -> welds::connection::Pool<sqlx::Postgres> {
@@ -323,7 +324,7 @@ fn should_be_able_to_scan_for_all_tables() {
     async_std::task::block_on(async {
         let conn = get_conn().await;
         let tables = welds::detect::find_tables(&conn).await.unwrap();
-        assert_eq!(13, tables.len());
+        assert_eq!(14, tables.len());
     })
 }
 
@@ -459,6 +460,36 @@ fn should_be_able_to_bulk_insert_2() {
         welds::query::insert::bulk_insert_fast(&trans, &things)
             .await
             .unwrap();
+        trans.rollback().await.unwrap();
+    })
+}
+
+#[test]
+fn should_be_able_to_crud_table_with_arrays() {
+    async_std::task::block_on(async {
+        let conn = get_conn().await;
+        let trans = conn.begin().await.unwrap();
+
+        let mut obj = TableWithArray::new();
+        obj.save(&trans).await.unwrap();
+
+        let loaded1 = TableWithArray::find_by_id(&trans, obj.id)
+            .await
+            .unwrap()
+            .unwrap();
+
+        assert!(loaded1.numbers.is_empty());
+
+        let nums = vec![1, 2, 3, 4];
+        obj.numbers = nums.clone();
+        obj.save(&trans).await.unwrap();
+
+        let loaded2 = TableWithArray::find_by_id(&trans, obj.id)
+            .await
+            .unwrap()
+            .unwrap();
+        assert_eq!(loaded2.numbers, nums);
+
         trans.rollback().await.unwrap();
     })
 }

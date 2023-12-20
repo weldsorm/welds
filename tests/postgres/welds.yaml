@@ -1,99 +1,4 @@
 tables:
-- schema: alt
-  name: others
-  manual_update: false
-  model: null
-  type: table
-  columns:
-  - db_name: id
-    db_type: int4
-    model_name: id
-    is_null: false
-    primary_key: true
-    writeable: true
-  - db_name: interval
-    db_type: interval
-    model_name: interval
-    is_null: true
-    primary_key: false
-    writeable: true
-  - db_name: range_int4
-    db_type: int4range
-    model_name: range_int_4
-    is_null: true
-    primary_key: false
-    writeable: true
-  - db_name: range_int8
-    db_type: int8range
-    model_name: range_int_8
-    is_null: true
-    primary_key: false
-    writeable: true
-  belongs_to: []
-  has_many: []
-  databasees:
-  - Postgres
-- schema: public
-  name: products
-  manual_update: false
-  model: null
-  type: table
-  columns:
-  - db_name: product_id
-    db_type: int4
-    model_name: product_id
-    is_null: false
-    primary_key: true
-    writeable: true
-  - db_name: active
-    db_type: bool
-    model_name: active
-    is_null: true
-    primary_key: false
-    writeable: true
-  - db_name: barcode
-    db_type: bytea
-    model_name: barcode
-    is_null: true
-    primary_key: false
-    writeable: true
-  - db_name: description
-    db_type: text
-    model_name: description
-    is_null: true
-    primary_key: false
-    writeable: true
-  - db_name: name
-    db_type: varchar
-    model_name: name
-    is_null: false
-    primary_key: false
-    writeable: true
-  - db_name: price1
-    db_type: float4
-    model_name: price_1
-    is_null: true
-    primary_key: false
-    writeable: true
-  - db_name: price2
-    db_type: float8
-    model_name: price_2
-    is_null: true
-    primary_key: false
-    writeable: true
-  - db_name: price3
-    db_type: money
-    model_name: price_3
-    is_null: true
-    primary_key: false
-    writeable: true
-  belongs_to: []
-  has_many:
-  - schema: public
-    tablename: orders
-    foreign_key: product_id
-  databasees:
-  - Postgres
 - schema: public
   name: orders
   manual_update: false
@@ -101,31 +6,31 @@ tables:
   type: table
   columns:
   - db_name: id
-    db_type: int8
+    db_type: INT8
     model_name: id
     is_null: false
     primary_key: true
     writeable: true
   - db_name: SoldFor
-    db_type: float8
+    db_type: FLOAT8
     model_name: sold_for
     is_null: true
     primary_key: false
     writeable: true
   - db_name: code
-    db_type: text
+    db_type: TEXT
     model_name: code
     is_null: true
     primary_key: false
     writeable: true
   - db_name: product_id
-    db_type: int4
+    db_type: INT4
     model_name: product_id
     is_null: true
     primary_key: false
     writeable: true
   - db_name: quantity
-    db_type: int2
+    db_type: INT2
     model_name: quantity
     is_null: true
     primary_key: false
@@ -135,5 +40,342 @@ tables:
     tablename: products
     foreign_key: product_id
   has_many: []
-  databasees:
+  databases:
+  - Postgres
+- schema: public
+  name: thing2
+  manual_update: false
+  model: null
+  type: table
+  columns:
+  - db_name: id
+    db_type: INT4
+    model_name: id
+    is_null: false
+    primary_key: true
+    writeable: true
+  - db_name: value
+    db_type: TEXT
+    model_name: value
+    is_null: true
+    primary_key: false
+    writeable: true
+  belongs_to: []
+  has_many: []
+  databases:
+  - Postgres
+- schema: public
+  name: productidview
+  manual_update: false
+  model: null
+  type: view
+  columns:
+  - db_name: id
+    db_type: INT4
+    model_name: id
+    is_null: true
+    primary_key: false
+    writeable: true
+  belongs_to: []
+  has_many: []
+  databases:
+  - Postgres
+- schema: public
+  name: thing8
+  manual_update: false
+  model: null
+  type: table
+  columns:
+  - db_name: id
+    db_type: INT4
+    model_name: id
+    is_null: false
+    primary_key: true
+    writeable: true
+  - db_name: value
+    db_type: TEXT
+    model_name: value
+    is_null: true
+    primary_key: false
+    writeable: true
+  belongs_to: []
+  has_many: []
+  databases:
+  - Postgres
+- schema: alt
+  name: others
+  manual_update: false
+  model: null
+  type: table
+  columns:
+  - db_name: id
+    db_type: INT4
+    model_name: id
+    is_null: false
+    primary_key: true
+    writeable: true
+  - db_name: colour
+    db_type: COLOR
+    model_name: colour
+    is_null: true
+    primary_key: false
+    writeable: true
+  - db_name: interval
+    db_type: INTERVAL
+    model_name: interval
+    is_null: true
+    primary_key: false
+    writeable: true
+  - db_name: range_int4
+    db_type: INT4RANGE
+    model_name: range_int_4
+    is_null: true
+    primary_key: false
+    writeable: true
+  - db_name: range_int8
+    db_type: INT8RANGE
+    model_name: range_int_8
+    is_null: true
+    primary_key: false
+    writeable: true
+  belongs_to: []
+  has_many: []
+  databases:
+  - Postgres
+- schema: public
+  name: products
+  manual_update: false
+  model: null
+  type: table
+  columns:
+  - db_name: product_id
+    db_type: INT4
+    model_name: product_id
+    is_null: false
+    primary_key: true
+    writeable: true
+  - db_name: active
+    db_type: BOOL
+    model_name: active
+    is_null: true
+    primary_key: false
+    writeable: true
+  - db_name: barcode
+    db_type: BYTEA
+    model_name: barcode
+    is_null: true
+    primary_key: false
+    writeable: true
+  - db_name: description
+    db_type: TEXT
+    model_name: description
+    is_null: true
+    primary_key: false
+    writeable: true
+  - db_name: name
+    db_type: VARCHAR
+    model_name: name
+    is_null: false
+    primary_key: false
+    writeable: true
+  - db_name: price1
+    db_type: FLOAT4
+    model_name: price_1
+    is_null: true
+    primary_key: false
+    writeable: true
+  - db_name: price2
+    db_type: FLOAT8
+    model_name: price_2
+    is_null: true
+    primary_key: false
+    writeable: true
+  - db_name: price3
+    db_type: MONEY
+    model_name: price_3
+    is_null: true
+    primary_key: false
+    writeable: true
+  belongs_to: []
+  has_many:
+  - schema: public
+    tablename: orders
+    foreign_key: product_id
+  databases:
+  - Postgres
+- schema: public
+  name: thing5
+  manual_update: false
+  model: null
+  type: table
+  columns:
+  - db_name: id
+    db_type: INT4
+    model_name: id
+    is_null: false
+    primary_key: true
+    writeable: true
+  - db_name: value
+    db_type: TEXT
+    model_name: value
+    is_null: true
+    primary_key: false
+    writeable: true
+  belongs_to: []
+  has_many: []
+  databases:
+  - Postgres
+- schema: public
+  name: thing6
+  manual_update: false
+  model: null
+  type: table
+  columns:
+  - db_name: id
+    db_type: INT4
+    model_name: id
+    is_null: false
+    primary_key: true
+    writeable: true
+  - db_name: value
+    db_type: TEXT
+    model_name: value
+    is_null: true
+    primary_key: false
+    writeable: true
+  belongs_to: []
+  has_many: []
+  databases:
+  - Postgres
+- schema: public
+  name: thing3
+  manual_update: false
+  model: null
+  type: table
+  columns:
+  - db_name: id
+    db_type: INT4
+    model_name: id
+    is_null: false
+    primary_key: true
+    writeable: true
+  - db_name: value
+    db_type: TEXT
+    model_name: value
+    is_null: true
+    primary_key: false
+    writeable: true
+  belongs_to: []
+  has_many: []
+  databases:
+  - Postgres
+- schema: public
+  name: thing7
+  manual_update: false
+  model: null
+  type: table
+  columns:
+  - db_name: id
+    db_type: INT4
+    model_name: id
+    is_null: false
+    primary_key: true
+    writeable: true
+  - db_name: value
+    db_type: TEXT
+    model_name: value
+    is_null: true
+    primary_key: false
+    writeable: true
+  belongs_to: []
+  has_many: []
+  databases:
+  - Postgres
+- schema: public
+  name: thing9
+  manual_update: false
+  model: null
+  type: table
+  columns:
+  - db_name: id
+    db_type: INT4
+    model_name: id
+    is_null: false
+    primary_key: true
+    writeable: true
+  - db_name: value
+    db_type: TEXT
+    model_name: value
+    is_null: true
+    primary_key: false
+    writeable: true
+  belongs_to: []
+  has_many: []
+  databases:
+  - Postgres
+- schema: public
+  name: thing1
+  manual_update: false
+  model: null
+  type: table
+  columns:
+  - db_name: id
+    db_type: INT4
+    model_name: id
+    is_null: false
+    primary_key: true
+    writeable: true
+  - db_name: value
+    db_type: TEXT
+    model_name: value
+    is_null: true
+    primary_key: false
+    writeable: true
+  belongs_to: []
+  has_many: []
+  databases:
+  - Postgres
+- schema: alt
+  name: table_with_arrays
+  manual_update: false
+  model: null
+  type: table
+  columns:
+  - db_name: id
+    db_type: INT4
+    model_name: id
+    is_null: false
+    primary_key: true
+    writeable: true
+  - db_name: numbers
+    db_type: _INT4
+    model_name: numbers
+    is_null: true
+    primary_key: false
+    writeable: true
+  belongs_to: []
+  has_many: []
+  databases:
+  - Postgres
+- schema: public
+  name: thing4
+  manual_update: false
+  model: null
+  type: table
+  columns:
+  - db_name: id
+    db_type: INT4
+    model_name: id
+    is_null: false
+    primary_key: true
+    writeable: true
+  - db_name: value
+    db_type: TEXT
+    model_name: value
+    is_null: true
+    primary_key: false
+    writeable: true
+  belongs_to: []
+  has_many: []
+  databases:
   - Postgres

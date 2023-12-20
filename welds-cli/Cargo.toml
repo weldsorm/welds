@@ -14,6 +14,8 @@ description = "An async ORM for (postgres, mssql, mysql, sqlite)"
 name = "weldscli_lib"
 path = "src/lib.rs"
 
+[workspace]
+
 [dependencies]
 async-std = { version = "1", features = ["attributes"] }
 sqlx = { version = "0.7", features = [ "runtime-async-std-rustls",  "macros"] }
@@ -29,6 +31,7 @@ log = "0.4"
 pretty_env_logger = "0.4"
 futures = "0.3.25"
 welds = { path = "../welds", version = '^0.2', features=["postgres", "mssql", "mysql", "sqlite", "detect"] }
+
 
 [profile.dev.package.sqlx-macros]
 opt-level = 3

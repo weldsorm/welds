@@ -19,7 +19,7 @@ impl<T> AsFieldName<T> for BasicOpt<T> {
 
 impl<T> BasicOpt<T>
 where
-    T: 'static + HasSomeNone + Clone + Send,
+    T: 'static + HasSomeNone + Clone + Send + Sync,
 {
     pub fn new(col: impl Into<String>, field: impl Into<String>) -> Self {
         Self {

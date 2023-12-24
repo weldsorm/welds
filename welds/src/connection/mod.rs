@@ -12,7 +12,7 @@ pub enum DbProvider {
     Sqlite,
 }
 
-#[async_trait(?Send)]
+#[async_trait]
 pub trait Connection<DB: Database> {
     async fn execute<'a>(
         &'a self,

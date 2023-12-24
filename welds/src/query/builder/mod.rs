@@ -7,7 +7,7 @@ use crate::table::{HasSchema, TableColumns, TableInfo, UniqueIdentifier};
 use crate::writers::column::DbColumnWriter;
 use crate::writers::limit_skip::DbLimitSkipWriter;
 use std::marker::PhantomData;
-use std::rc::Rc;
+use std::sync::Arc;
 
 use super::select_cols::SelectBuilder;
 use super::update::bulk::UpdateBuilder;
@@ -27,7 +27,7 @@ pub struct QueryBuilder<'schema, T, DB: Database> {
     pub(crate) offset: Option<i64>,
     pub(crate) orderby: Vec<OrderBy>,
     pub(crate) alias: String,
-    pub(crate) alias_asigner: Rc<TableAlias>,
+    pub(crate) alias_asigner: Arc<TableAlias>,
 }
 
 impl<'schema, T, DB> Default for QueryBuilder<'schema, T, DB>
@@ -56,7 +56,7 @@ where
             orderby: Vec::default(),
             exist_ins: Default::default(),
             alias,
-            alias_asigner: Rc::new(ta),
+            alias_asigner: Arc::new(ta),
         }
     }
 
@@ -132,7 +132,7 @@ where
         qb
     }
 
-    pub(crate) fn set_aliases(&mut self, alias_asigner: &Rc<TableAlias>)
+    pub(crate) fn set_aliases(&mut self, alias_asigner: &Arc<TableAlias>)
     where
         DB: sqlx::Database + DbLimitSkipWriter,
     {
@@ -202,7 +202,7 @@ where
         <T as HasSchema>::Schema: Default,
         FIELD: AsFieldName<V>,
         V: for<'r> sqlx::Encode<'r, DB> + sqlx::Type<DB> + Send + Clone,
-        V: 'static,
+        V: 'static + Sync + Send,
     {
         let ub = UpdateBuilder::new(self);
         ub.set(lam, value)

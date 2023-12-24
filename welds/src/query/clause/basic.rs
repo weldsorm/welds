@@ -18,7 +18,7 @@ impl<T> AsFieldName<T> for Basic<T> {
 
 impl<T> Basic<T>
 where
-    T: 'static + Clone + Send,
+    T: 'static + Clone + Send + Sync,
 {
     pub fn new(col: impl Into<String>, field: impl Into<String>) -> Self {
         Self {

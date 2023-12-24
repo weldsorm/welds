@@ -19,7 +19,7 @@ impl<T> AsFieldName<T> for NumericOpt<T> {
 use crate::query::optional::HasSomeNone;
 impl<T> NumericOpt<T>
 where
-    T: 'static + HasSomeNone + Clone + Send, //T: 'static + HasSomeNone + Clone + Send + sqlx::Type<DB> + sqlx::Encode<'args, DB>,
+    T: 'static + HasSomeNone + Clone + Send + Sync, //T: 'static + HasSomeNone + Clone + Send + sqlx::Type<DB> + sqlx::Encode<'args, DB>,
 {
     pub fn new(col: impl Into<String>, field: impl Into<String>) -> Self {
         Self {

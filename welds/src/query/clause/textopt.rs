@@ -19,7 +19,7 @@ impl<T> AsFieldName<T> for TextOpt<T> {
 
 impl<T> TextOpt<T>
 where
-    T: 'static + HasSomeNone + Clone + Send,
+    T: 'static + HasSomeNone + Clone + Send + Sync,
 {
     pub fn new(col: impl Into<String>, field: impl Into<String>) -> Self {
         Self {

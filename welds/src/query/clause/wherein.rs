@@ -41,7 +41,7 @@ where
     'schema: 'cd,
     <DB as HasArguments<'schema>>::Arguments: IntoArguments<'args, DB>,
     DB: Database,
-    T: HasSchema,
+    T: HasSchema + Sync + Send,
     <T as HasSchema>::Schema: UniqueIdentifier<DB> + TableInfo + TableColumns<DB>,
 {
     fn bind(&self, args: &mut <DB as sqlx::database::HasArguments<'cd>>::Arguments) {

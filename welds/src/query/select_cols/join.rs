@@ -8,10 +8,10 @@ use crate::table::{HasSchema, TableInfo};
 use crate::writers::column::{ColumnWriter, DbColumnWriter};
 use sqlx::database::HasArguments;
 use sqlx::IntoArguments;
-use std::rc::Rc;
+use std::sync::Arc;
 
 pub(crate) struct JoinBuilder<'schema, DB: sqlx::Database> {
-    pub(crate) alias_asigner: Rc<TableAlias>,
+    pub(crate) alias_asigner: Arc<TableAlias>,
     pub(crate) outer_key: String,
     pub(crate) inner_alias: String,
     pub(crate) inner_table: String,
@@ -42,7 +42,7 @@ impl Join {
 }
 
 impl<'schema, DB: sqlx::Database> JoinBuilder<'schema, DB> {
-    pub(crate) fn set_aliases(&mut self, alias_asigner: &Rc<TableAlias>) {
+    pub(crate) fn set_aliases(&mut self, alias_asigner: &Arc<TableAlias>) {
         self.alias_asigner = alias_asigner.clone();
         self.inner_alias = self.alias_asigner.next();
     }

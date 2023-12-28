@@ -39,7 +39,7 @@ impl<T> DbState<T> {
     /// Returns a DbState<T> that assumes its inner T does not exist in the database
     pub fn new_uncreated(inner: T) -> DbState<T> {
         DbState {
-            _t: PhantomData::default(),
+            _t: PhantomData,
             inner,
             status: DbStatus::NotInDatabase,
             sql_buff: String::default(),
@@ -49,7 +49,7 @@ impl<T> DbState<T> {
     /// Returns a DbState<T> that assumes its inner T already exist in the database
     pub fn db_loaded(inner: T) -> DbState<T> {
         DbState {
-            _t: PhantomData::default(),
+            _t: PhantomData,
             inner,
             status: DbStatus::NotModified,
             sql_buff: String::default(),

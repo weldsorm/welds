@@ -1,10 +1,10 @@
 use crate::connection::Connection;
 use crate::connection::Database;
 use crate::errors::WeldsError::InsertFailed;
-use crate::query::clause::{DbParam, NextParam};
+use crate::query::clause::NextParam;
 use crate::table::{HasSchema, TableColumns, TableInfo, WriteToArgs};
-use crate::writers::column::{ColumnWriter, DbColumnWriter};
-use crate::writers::insert::{ColArg, DbInsertWriter, InsertWriter};
+use crate::writers::column::ColumnWriter;
+use crate::writers::insert::{ColArg, InsertWriter};
 use anyhow::Result;
 use sqlx::database::HasArguments;
 use sqlx::IntoArguments;

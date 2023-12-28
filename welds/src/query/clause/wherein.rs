@@ -1,5 +1,4 @@
 use super::ClauseAdder;
-
 use crate::connection::Database;
 use crate::query::builder::QueryBuilder;
 use crate::query::helpers::{build_tail, build_where, join_sql_parts};
@@ -7,7 +6,7 @@ use crate::table::HasSchema;
 use crate::table::TableColumns;
 use crate::table::TableInfo;
 use crate::table::UniqueIdentifier;
-use crate::writers::column::{ColumnWriter, DbColumnWriter};
+use crate::writers::column::ColumnWriter;
 use sqlx::database::HasArguments;
 use sqlx::IntoArguments;
 

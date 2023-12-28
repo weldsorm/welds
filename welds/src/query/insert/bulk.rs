@@ -1,9 +1,9 @@
 use crate::connection::Connection;
 use crate::connection::Database;
 use crate::errors::Result;
-use crate::query::clause::{DbParam, NextParam};
+use crate::query::clause::NextParam;
 use crate::table::{HasSchema, TableColumns, TableInfo, WriteBulkArrayToArgs, WriteToArgs};
-use crate::writers::column::{ColumnWriter, DbColumnWriter};
+use crate::writers::column::ColumnWriter;
 use sqlx::database::HasArguments;
 use sqlx::IntoArguments;
 

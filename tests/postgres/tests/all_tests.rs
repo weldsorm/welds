@@ -471,6 +471,7 @@ fn should_be_able_to_crud_table_with_arrays() {
         let trans = conn.begin().await.unwrap();
 
         let mut obj = TableWithArray::new();
+        obj.numbers = Some(vec![]);
         obj.save(&trans).await.unwrap();
 
         let loaded1 = TableWithArray::find_by_id(&trans, obj.id)
@@ -478,18 +479,52 @@ fn should_be_able_to_crud_table_with_arrays() {
             .unwrap()
             .unwrap();
 
-        assert!(loaded1.numbers.is_empty());
+        assert!(loaded1.numbers.as_ref().unwrap().is_empty());
 
         let nums = vec![1, 2, 3, 4];
-        obj.numbers = nums.clone();
+        obj.numbers = Some(nums.clone());
         obj.save(&trans).await.unwrap();
 
         let loaded2 = TableWithArray::find_by_id(&trans, obj.id)
             .await
             .unwrap()
             .unwrap();
-        assert_eq!(loaded2.numbers, nums);
+        assert_eq!(loaded2.numbers.as_ref().unwrap(), &nums);
 
         trans.rollback().await.unwrap();
+    })
+}
+
+#[test]
+fn array_table_should_detect_array_type_as_array() {
+    async_std::task::block_on(async {
+        let conn = get_conn().await;
+        // Get the table def
+        let tabledef = welds::detect::find_table(Some("alt"), "table_with_arrays", &conn)
+            .await
+            .unwrap()
+            .unwrap();
+        // Get the column def
+        let array_column = tabledef
+            .columns()
+            .iter()
+            .find(|c| c.name == "numbers")
+            .unwrap();
+        // make sure we are reporting the array type as an array
+        assert_eq!(array_column.ty, "INT4[]");
+    })
+}
+
+#[test]
+fn should_be_able_to_check_the_schema() {
+    async_std::task::block_on(async {
+        let conn = get_conn().await;
+
+        use postgres_test::models::*;
+
+        let issues = welds::check::schema::<table_with_array::TableWithArray, _, _>(&conn)
+            .await
+            .unwrap();
+        assert!(issues.is_empty(), "{:?}", issues);
     })
 }

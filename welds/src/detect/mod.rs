@@ -158,12 +158,20 @@ fn build_lookup(
 
 fn build_cols(mut rows: Vec<TableScanRow>) -> Vec<ColumnDef> {
     rows.drain(..)
-        .map(|r| ColumnDef {
-            name: r.column_name,
-            ty: r.column_type.to_uppercase(),
-            null: r.is_nullable > 0,
-            primary_key: r.is_primary_key > 0,
-            updatable: r.is_updatable > 0,
+        .map(|r| {
+            // NOTE: we get _TYPE back for types that are TYPE[]. doing this type swap back to normal here.
+            let mut ty: String = r.column_type.to_uppercase();
+            if ty.starts_with('_') {
+                ty = format!("{}[]", &ty[1..]);
+            }
+
+            ColumnDef {
+                name: r.column_name,
+                ty,
+                null: r.is_nullable > 0,
+                primary_key: r.is_primary_key > 0,
+                updatable: r.is_updatable > 0,
+            }
         })
         .collect()
 }

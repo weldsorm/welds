@@ -8,13 +8,20 @@ pub(crate) struct TypeInfo {
 }
 
 impl TypeInfo {
-    fn new(quote: TokenStream) -> TypeInfo {
+    fn new(mut quote: TokenStream, array: bool) -> TypeInfo {
+        if array {
+            quote = quote!(Vec<#quote>);
+        }
         TypeInfo {
             quote,
             force_null: false,
         }
     }
-    fn force_null(quote: TokenStream) -> TypeInfo {
+
+    fn force_null(mut quote: TokenStream, array: bool) -> TypeInfo {
+        if array {
+            quote = quote!(Vec<#quote>);
+        }
         TypeInfo {
             quote,
             force_null: true,
@@ -33,13 +40,19 @@ pub(crate) fn get(db_type: &str, db: DbProvider) -> Option<TypeInfo> {
     }
 }
 
-fn get_mssql(db_type: &str) -> Option<TypeInfo> {
+fn get_mssql(mut db_type: &str) -> Option<TypeInfo> {
+    let mut array = false;
+    if db_type.ends_with("[]") {
+        array = true;
+        db_type = &db_type[..db_type.len() - 2];
+    }
+
     let ty = match db_type {
-        "BIT" => TypeInfo::new(quote!(i32)),
-        "INT" => TypeInfo::new(quote!(i32)),
-        "BIGINT" => TypeInfo::new(quote!(i64)),
-        "REAL" => TypeInfo::new(quote!(f32)),
-        "VARCHAR" => TypeInfo::new(quote!(String)),
+        "BIT" => TypeInfo::new(quote!(i32), array),
+        "INT" => TypeInfo::new(quote!(i32), array),
+        "BIGINT" => TypeInfo::new(quote!(i64), array),
+        "REAL" => TypeInfo::new(quote!(f32), array),
+        "VARCHAR" => TypeInfo::new(quote!(String), array),
         _ => return None,
     };
     Some(ty)
@@ -47,84 +60,102 @@ fn get_mssql(db_type: &str) -> Option<TypeInfo> {
     // TODO: make this a full list
 }
 
-fn get_mysql(db_type: &str) -> Option<TypeInfo> {
+fn get_mysql(mut db_type: &str) -> Option<TypeInfo> {
+    let mut array = false;
+    if db_type.ends_with("[]") {
+        array = true;
+        db_type = &db_type[..db_type.len() - 2];
+    }
+
     let ty = match db_type {
-        "TINYINT(1)" => TypeInfo::new(quote!(bool)),
-        "BOOLEAN" => TypeInfo::new(quote!(bool)),
-        "TINYINT" => TypeInfo::new(quote!(i8)),
-        "SMALLINT" => TypeInfo::new(quote!(i16)),
-        "INT" => TypeInfo::new(quote!(i32)),
-        "BIGINT" => TypeInfo::new(quote!(i64)),
-        "TINYINT UNSIGNED" => TypeInfo::new(quote!(u8)),
-        "SMALLINT UNSIGNED" => TypeInfo::new(quote!(u16)),
-        "INT UNSIGNED" => TypeInfo::new(quote!(u32)),
-        "BIGINT UNSIGNED" => TypeInfo::new(quote!(u64)),
-        "FLOAT" => TypeInfo::new(quote!(f32)),
-        "DOUBLE" => TypeInfo::new(quote!(f64)),
-        "VARCHAR" => TypeInfo::new(quote!(String)),
-        "CHAR " => TypeInfo::new(quote!(String)),
-        "TEXT" => TypeInfo::new(quote!(String)),
-        "VARBINARY" => TypeInfo::new(quote!(Vec<u8>)),
-        "BINARY" => TypeInfo::new(quote!(Vec<u8>)),
-        "BLOB" => TypeInfo::new(quote!(Vec<u8>)),
-        "TIMESTAMP" => TypeInfo::new(quote!(chrono::DateTime<chrono::Utc>)),
-        "DATETIME" => TypeInfo::new(quote!(chrono::NaiveDateTime)),
-        "DATE" => TypeInfo::new(quote!(chrono::NaiveDate)),
-        "TIME" => TypeInfo::new(quote!(chrono::NaiveTime)),
+        "TINYINT(1)" => TypeInfo::new(quote!(bool), array),
+        "BOOLEAN" => TypeInfo::new(quote!(bool), array),
+        "TINYINT" => TypeInfo::new(quote!(i8), array),
+        "SMALLINT" => TypeInfo::new(quote!(i16), array),
+        "INT" => TypeInfo::new(quote!(i32), array),
+        "BIGINT" => TypeInfo::new(quote!(i64), array),
+        "TINYINT UNSIGNED" => TypeInfo::new(quote!(u8), array),
+        "SMALLINT UNSIGNED" => TypeInfo::new(quote!(u16), array),
+        "INT UNSIGNED" => TypeInfo::new(quote!(u32), array),
+        "BIGINT UNSIGNED" => TypeInfo::new(quote!(u64), array),
+        "FLOAT" => TypeInfo::new(quote!(f32), array),
+        "DOUBLE" => TypeInfo::new(quote!(f64), array),
+        "VARCHAR" => TypeInfo::new(quote!(String), array),
+        "CHAR " => TypeInfo::new(quote!(String), array),
+        "TEXT" => TypeInfo::new(quote!(String), array),
+        "VARBINARY" => TypeInfo::new(quote!(Vec<u8>), array),
+        "BINARY" => TypeInfo::new(quote!(Vec<u8>), array),
+        "BLOB" => TypeInfo::new(quote!(Vec<u8>), array),
+        "TIMESTAMP" => TypeInfo::new(quote!(chrono::DateTime<chrono::Utc>), array),
+        "DATETIME" => TypeInfo::new(quote!(chrono::NaiveDateTime), array),
+        "DATE" => TypeInfo::new(quote!(chrono::NaiveDate), array),
+        "TIME" => TypeInfo::new(quote!(chrono::NaiveTime), array),
         _ => return None,
     };
     Some(ty)
 }
 
-fn get_sqlite(db_type: &str) -> Option<TypeInfo> {
+fn get_sqlite(mut db_type: &str) -> Option<TypeInfo> {
+    let mut array = false;
+    if db_type.ends_with("[]") {
+        array = true;
+        db_type = &db_type[..db_type.len() - 2];
+    }
+
     let ty = match db_type {
-        "BOOLEAN" => TypeInfo::new(quote!(bool)),
-        "INTEGER" => TypeInfo::new(quote!(i32)),
-        "BIGINT" => TypeInfo::new(quote!(i64)),
-        "INT8" => TypeInfo::new(quote!(i64)),
-        "REAL" => TypeInfo::new(quote!(f64)),
-        "TEXT" => TypeInfo::new(quote!(String)),
-        "BLOB" => TypeInfo::new(quote!(Vec<u8>)),
-        "DATETIME" => TypeInfo::new(quote!(chrono::DateTime<chrono::Utc>)),
-        "DATE" => TypeInfo::new(quote!(chrono::NaiveDate)),
-        "TIME" => TypeInfo::new(quote!(chrono::NaiveTime)),
+        "BOOLEAN" => TypeInfo::new(quote!(bool), array),
+        "INTEGER" => TypeInfo::new(quote!(i32), array),
+        "BIGINT" => TypeInfo::new(quote!(i64), array),
+        "INT8" => TypeInfo::new(quote!(i64), array),
+        "REAL" => TypeInfo::new(quote!(f64), array),
+        "TEXT" => TypeInfo::new(quote!(String), array),
+        "BLOB" => TypeInfo::new(quote!(Vec<u8>), array),
+        "DATETIME" => TypeInfo::new(quote!(chrono::DateTime<chrono::Utc>), array),
+        "DATE" => TypeInfo::new(quote!(chrono::NaiveDate), array),
+        "TIME" => TypeInfo::new(quote!(chrono::NaiveTime), array),
         _ => return None,
     };
     Some(ty)
 }
 
-fn get_postgres(db_type: &str) -> Option<TypeInfo> {
+fn get_postgres(mut db_type: &str) -> Option<TypeInfo> {
+    let mut array = false;
+    if db_type.ends_with("[]") {
+        array = true;
+        db_type = &db_type[..db_type.len() - 2];
+    }
+
     let ty = match db_type {
-        "BOOL" => TypeInfo::new(quote!(bool)),
-        "CHAR" => TypeInfo::new(quote!(i8)),
-        "INT2" => TypeInfo::new(quote!(i16)),
-        "SMALLINT" => TypeInfo::new(quote!(i16)),
-        "SMALLSERIAL" => TypeInfo::new(quote!(i16)),
-        "INT4" => TypeInfo::new(quote!(i32)),
-        "SERIAL" => TypeInfo::new(quote!(i32)),
-        "INT" => TypeInfo::new(quote!(i32)),
-        "BIGINT" => TypeInfo::new(quote!(i64)),
-        "INT8" => TypeInfo::new(quote!(i64)),
-        "BIGSERIAL" => TypeInfo::new(quote!(i64)),
-        "REAL" => TypeInfo::new(quote!(f32)),
-        "FLOAT4" => TypeInfo::new(quote!(f32)),
-        "DOUBLE PRECISION" => TypeInfo::new(quote!(f64)),
-        "FLOAT8" => TypeInfo::new(quote!(f64)),
-        "VARCHAR" => TypeInfo::new(quote!(String)),
-        "CHAR(N)" => TypeInfo::new(quote!(String)),
-        "TEXT" => TypeInfo::new(quote!(String)),
-        "NAME" => TypeInfo::new(quote!(String)),
-        "BYTEA" => TypeInfo::new(quote!(Vec<u8>)),
-        "BLOB" => TypeInfo::new(quote!(Vec<u8>)),
-        "INTERVAL" => TypeInfo::force_null(quote!(sqlx::postgres::types::PgInterval)),
-        "MONEY" => TypeInfo::force_null(quote!(sqlx::postgres::types::PgMoney)),
-        "INT4RANGE" => TypeInfo::force_null(quote!(sqlx::postgres::types::PgRange<i32>)),
-        "INT8RANGE" => TypeInfo::force_null(quote!(sqlx::postgres::types::PgRange<i64>)),
-        "TIMESTAMPTZ" => TypeInfo::force_null(quote!(chrono::DateTime<chrono::Utc>)),
-        "TIMESTAMP" => TypeInfo::force_null(quote!(chrono::NaiveDateTime)),
-        "DATE" => TypeInfo::force_null(quote!(chrono::NaiveDate)),
-        "TIME" => TypeInfo::force_null(quote!(chrono::NaiveTime)),
-        "TIMETZ" => TypeInfo::force_null(quote!(sqlx::postgres::types::PgTimeTz)),
+        "BOOL" => TypeInfo::new(quote!(bool), array),
+        "CHAR" => TypeInfo::new(quote!(i8), array),
+        "INT2" => TypeInfo::new(quote!(i16), array),
+        "SMALLINT" => TypeInfo::new(quote!(i16), array),
+        "SMALLSERIAL" => TypeInfo::new(quote!(i16), array),
+        "INT4" => TypeInfo::new(quote!(i32), array),
+        "SERIAL" => TypeInfo::new(quote!(i32), array),
+        "INT" => TypeInfo::new(quote!(i32), array),
+        "BIGINT" => TypeInfo::new(quote!(i64), array),
+        "INT8" => TypeInfo::new(quote!(i64), array),
+        "BIGSERIAL" => TypeInfo::new(quote!(i64), array),
+        "REAL" => TypeInfo::new(quote!(f32), array),
+        "FLOAT4" => TypeInfo::new(quote!(f32), array),
+        "DOUBLE PRECISION" => TypeInfo::new(quote!(f64), array),
+        "FLOAT8" => TypeInfo::new(quote!(f64), array),
+        "VARCHAR" => TypeInfo::new(quote!(String), array),
+        "CHAR(N)" => TypeInfo::new(quote!(String), array),
+        "TEXT" => TypeInfo::new(quote!(String), array),
+        "NAME" => TypeInfo::new(quote!(String), array),
+        "BYTEA" => TypeInfo::new(quote!(Vec<u8>), array),
+        "BLOB" => TypeInfo::new(quote!(Vec<u8>), array),
+        "INTERVAL" => TypeInfo::force_null(quote!(sqlx::postgres::types::PgInterval), array),
+        "MONEY" => TypeInfo::force_null(quote!(sqlx::postgres::types::PgMoney), array),
+        "INT4RANGE" => TypeInfo::force_null(quote!(sqlx::postgres::types::PgRange<i32>), array),
+        "INT8RANGE" => TypeInfo::force_null(quote!(sqlx::postgres::types::PgRange<i64>), array),
+        "TIMESTAMPTZ" => TypeInfo::force_null(quote!(chrono::DateTime<chrono::Utc>), array),
+        "TIMESTAMP" => TypeInfo::force_null(quote!(chrono::NaiveDateTime), array),
+        "DATE" => TypeInfo::force_null(quote!(chrono::NaiveDate), array),
+        "TIME" => TypeInfo::force_null(quote!(chrono::NaiveTime), array),
+        "TIMETZ" => TypeInfo::force_null(quote!(sqlx::postgres::types::PgTimeTz), array),
 
         _ => return None,
     };

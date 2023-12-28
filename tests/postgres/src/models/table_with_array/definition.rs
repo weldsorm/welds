@@ -13,5 +13,5 @@ use welds::WeldsModel;
 pub struct TableWithArray {
     #[welds(primary_key)]
     pub id: i32,
-    pub numbers: Vec<i32>,
+    pub numbers: Option<Vec<i32>>,
 }

@@ -20,7 +20,7 @@ impl<T> AsFieldName<T> for Numeric<T> {
 
 impl<T> Numeric<T>
 where
-    T: 'static + Clone + Send, //T: 'static + Clone + Send + sqlx::Type<DB> + sqlx::Encode<'args, DB>,
+    T: 'static + Clone + Send + Sync, //T: 'static + Clone + Send + sqlx::Type<DB> + sqlx::Encode<'args, DB>,
 {
     pub fn new(col: impl Into<String>, field: impl Into<String>) -> Self {
         Self {

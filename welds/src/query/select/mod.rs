@@ -6,7 +6,7 @@ use crate::connection::Database;
 use crate::state::DbState;
 use crate::table::{HasSchema, TableColumns, TableInfo};
 use crate::writers::column::{ColumnWriter, DbColumnWriter};
-use crate::writers::count::{CountWriter, DbCountWriter};
+use crate::writers::count::CountWriter;
 use crate::writers::limit_skip::DbLimitSkipWriter;
 use anyhow::Result;
 use sqlx::database::HasArguments;

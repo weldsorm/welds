@@ -50,7 +50,7 @@ where
         <T as HasSchema>::Schema: Default,
         FIELD: AsFieldName<V>,
         V: for<'r> sqlx::Encode<'r, DB> + sqlx::Type<DB> + Send + Clone,
-        V: 'static,
+        V: 'static + Sync + Send,
     {
         let val: V = value.into();
         let field = lam(Default::default());
@@ -156,7 +156,7 @@ pub struct SetColVal<T> {
 impl<'args, T, DB> ClauseAdder<'args, DB> for SetColVal<T>
 where
     DB: sqlx::Database,
-    T: 'args + Clone + Send + sqlx::Type<DB> + sqlx::Encode<'args, DB>,
+    T: 'args + Clone + Send + Sync + sqlx::Type<DB> + sqlx::Encode<'args, DB>,
 {
     fn bind(&self, args: &mut <DB as HasArguments<'args>>::Arguments) {
         use sqlx::Arguments;

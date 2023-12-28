@@ -2,7 +2,7 @@ use super::ClauseAdder;
 use crate::connection::Database;
 use crate::query::clause::OrderBy;
 use crate::{alias::TableAlias, query::builder::QueryBuilder};
-use std::rc::Rc;
+use std::sync::Arc;
 
 /// Used to generated a SQL EXISTS OR IN clause for writing sub-queries
 
@@ -42,7 +42,7 @@ where
     }
 
     // re-assign all the alias and alias for sub-tables
-    pub(crate) fn set_aliases(&mut self, alias_asigner: &Rc<TableAlias>) {
+    pub(crate) fn set_aliases(&mut self, alias_asigner: &Arc<TableAlias>) {
         self.inner_tablealias = alias_asigner.next();
         for sub in &mut self.inner_exists_ins {
             sub.set_aliases(alias_asigner);

@@ -37,7 +37,7 @@ pub trait AsFieldName<T> {
     fn fieldname(&self) -> &str;
 }
 
-pub trait ClauseAdder<'args, DB: sqlx::Database> {
+pub trait ClauseAdder<'args, DB: sqlx::Database>: Send + Sync {
     /// Add the argument to the list of Arguments to send to the database
     fn bind(&self, args: &mut <DB as HasArguments<'args>>::Arguments);
 
@@ -48,7 +48,7 @@ pub trait ClauseAdder<'args, DB: sqlx::Database> {
 impl<'args, T, DB> ClauseAdder<'args, DB> for ClauseColVal<T>
 where
     DB: sqlx::Database,
-    T: 'args + Clone + Send + sqlx::Type<DB> + sqlx::Encode<'args, DB>,
+    T: 'args + Clone + Send + Sync + sqlx::Type<DB> + sqlx::Encode<'args, DB>,
 {
     fn bind(&self, args: &mut <DB as HasArguments<'args>>::Arguments) {
         if !self.null_clause {

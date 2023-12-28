@@ -8,7 +8,7 @@ use crate::writers::limit_skip::DbLimitSkipWriter;
 pub use join::Join;
 use join::JoinBuilder;
 use select_column::SelectColumn;
-use std::rc::Rc;
+use std::sync::Arc;
 
 mod exec;
 mod join;
@@ -185,7 +185,7 @@ where
         self
     }
 
-    pub(crate) fn set_aliases(&mut self, alias_asigner: &Rc<TableAlias>)
+    pub(crate) fn set_aliases(&mut self, alias_asigner: &Arc<TableAlias>)
     where
         DB: sqlx::Database + DbLimitSkipWriter,
     {

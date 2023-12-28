@@ -76,7 +76,7 @@ pub trait WriteBulkArrayToArgs<DB> {
         DB: sqlx::Database;
 }
 
-pub trait HasSchema {
+pub trait HasSchema: Sync + Send {
     type Schema: Default + TableInfo;
 }
 

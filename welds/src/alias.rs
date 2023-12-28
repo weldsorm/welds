@@ -1,7 +1,7 @@
-use std::cell::Cell;
+use std::sync::Mutex;
 
 pub struct TableAlias {
-    i: Cell<u32>,
+    i: Mutex<u32>,
 }
 
 impl Default for TableAlias {
@@ -12,13 +12,14 @@ impl Default for TableAlias {
 
 impl TableAlias {
     pub fn new() -> Self {
-        TableAlias { i: Cell::new(1) }
+        TableAlias { i: Mutex::new(1) }
     }
 
     /// Get the next Alias and bump it
     pub fn next(&self) -> String {
-        let id = format!("t{}", self.i.get());
-        self.i.set(self.i.get() + 1);
+        let mut i = self.i.lock().unwrap();
+        let id = format!("t{}", *i);
+        *i += 1;
         id
     }
 }

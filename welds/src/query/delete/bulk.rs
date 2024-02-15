@@ -1,18 +1,14 @@
 use super::super::{
     builder::QueryBuilder,
-    clause::{wherein::WhereIn, ClauseAdder, DbParam, NextParam},
+    clause::{wherein::WhereIn, ClauseAdder},
     helpers::{build_where, join_sql_parts},
 };
-use crate::connection::Connection;
-use crate::connection::Database;
-use crate::table::UniqueIdentifier;
-use crate::table::{HasSchema, TableColumns, TableInfo};
-use crate::writers::column::DbColumnWriter;
-use crate::writers::count::DbCountWriter;
-use crate::writers::limit_skip::DbLimitSkipWriter;
-use anyhow::Result;
-use sqlx::database::HasArguments;
-use sqlx::IntoArguments;
+use crate::model_traits::UniqueIdentifier;
+use crate::model_traits::{HasSchema, TableColumns, TableInfo};
+use crate::writers::ColumnWriter;
+use crate::writers::CountWriter;
+use crate::writers::LimitSkipWriter;
+use crate::writers::NextParam;
 
 // ******************************************************************************************
 // This file contains code on a Query builder to allow it to bulk delete

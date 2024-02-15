@@ -1,5 +1,8 @@
-use sqlx::database::HasArguments;
-use sqlx::Arguments;
+use crate::writers::NextParam;
+use crate::Syntax;
+use welds_connections::Param;
+
+pub(crate) type ParamArgs<'a> = Vec<&'a (dyn Param + Sync)>;
 
 // Concrete Types
 mod basic;
@@ -15,12 +18,10 @@ pub use text::Text;
 mod textopt;
 pub use textopt::TextOpt;
 
-// Relationships / SubQueries
-pub(crate) mod exists;
-pub(crate) mod wherein;
+//// Relationships / SubQueries
+//pub(crate) mod exists;
+//pub(crate) mod wherein;
 
-mod nextparam;
-pub use nextparam::{DbParam, NextParam};
 pub(crate) mod orderby;
 pub(crate) use orderby::OrderBy;
 
@@ -29,7 +30,7 @@ pub struct ClauseColVal<T> {
     pub not_clause: bool,
     pub col: String,
     pub operator: &'static str,
-    pub val: T,
+    pub val: Option<T>,
 }
 
 pub trait AsFieldName<T> {
@@ -37,26 +38,33 @@ pub trait AsFieldName<T> {
     fn fieldname(&self) -> &str;
 }
 
-pub trait ClauseAdder<'args, DB: sqlx::Database>: Send + Sync {
+pub trait ClauseAdder: Send + Sync {
     /// Add the argument to the list of Arguments to send to the database
-    fn bind(&self, args: &mut <DB as HasArguments<'args>>::Arguments);
+    fn bind<'lam, 'args, 'p>(&'lam self, args: &'args mut ParamArgs<'p>)
+    where
+        'lam: 'p;
 
     /// Returns the SQL snipit for this clause
-    fn clause(&self, alias: &str, next_params: &NextParam) -> Option<String>;
+    fn clause(&self, syntax: Syntax, alias: &str, next_params: &NextParam) -> Option<String>;
 }
 
-impl<'args, T, DB> ClauseAdder<'args, DB> for ClauseColVal<T>
+impl<T> ClauseAdder for ClauseColVal<T>
 where
-    DB: sqlx::Database,
-    T: 'args + Clone + Send + Sync + sqlx::Type<DB> + sqlx::Encode<'args, DB>,
+    //DB: sqlx::Database,
+    T: Clone + Send + Sync + Param, //+ sqlx::Type<DB> + sqlx::Encode<'args, DB>,
 {
-    fn bind(&self, args: &mut <DB as HasArguments<'args>>::Arguments) {
+    fn bind<'lam, 'args, 'p>(&'lam self, args: &'args mut ParamArgs<'p>)
+    where
+        'lam: 'p,
+    {
         if !self.null_clause {
-            args.add(self.val.clone());
+            if let Some(val) = &self.val {
+                args.push(val);
+            }
         }
     }
 
-    fn clause(&self, alias: &str, next_params: &NextParam) -> Option<String> {
+    fn clause(&self, syntax: Syntax, alias: &str, next_params: &NextParam) -> Option<String> {
         // build the column name
         let col = format!("{}.{}", alias, self.col);
         let mut parts = vec![col.as_str()];

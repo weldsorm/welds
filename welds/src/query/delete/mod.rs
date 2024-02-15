@@ -1,38 +1,30 @@
-use crate::connection::Connection;
-use crate::connection::Database;
-use crate::query::clause::NextParam;
-use crate::table::{HasSchema, TableColumns, TableInfo, WriteToArgs};
-use crate::writers::column::ColumnWriter;
-use anyhow::{anyhow, Result};
-use sqlx::database::HasArguments;
-use sqlx::IntoArguments;
+use crate::errors::Result;
+use crate::errors::WeldsError;
+use crate::model_traits::{HasSchema, TableColumns, TableInfo, WriteToArgs};
+use crate::query::clause::ParamArgs;
+use crate::writers::ColumnWriter;
+use crate::writers::NextParam;
+use welds_connections::Client;
 
-pub mod bulk;
+//pub mod bulk;
 
-pub async fn delete_one<'r, 'args, DB, T, C>(
-    buff: &'r mut String,
-    obj: &T,
-    conn: &'r C,
-) -> Result<()>
+pub async fn delete_one<T, C>(obj: &T, client: &C) -> Result<()>
 where
-    'r: 'args,
-    DB: Database,
-    T: WriteToArgs<DB> + HasSchema,
-    <T as HasSchema>::Schema: TableInfo + TableColumns<DB>,
-    C: Connection<DB>,
-    <DB as HasArguments<'r>>::Arguments: IntoArguments<'args, DB>,
+    C: Client,
+    T: HasSchema + WriteToArgs,
+    <T as HasSchema>::Schema: TableInfo + TableColumns,
 {
-    let mut args: <DB as HasArguments>::Arguments = Default::default();
-    let col_writer = ColumnWriter::new::<DB>();
-    let next_params = NextParam::new::<DB>();
-
+    let syntax = client.syntax();
+    let col_writer = ColumnWriter::new(syntax);
+    let next_params = NextParam::new(syntax);
     let identifier = <<T as HasSchema>::Schema>::identifier().join(".");
 
-    let pks = <<T as HasSchema>::Schema as TableColumns<DB>>::primary_keys();
+    let pks = <<T as HasSchema>::Schema as TableColumns>::primary_keys();
     if pks.is_empty() {
-        return Err(anyhow!(crate::errors::WeldsError::NoPrimaryKey));
+        return Err(WeldsError::NoPrimaryKey);
     }
 
+    let mut args: ParamArgs = Vec::default();
     let mut wheres = Vec::default();
     for col in pks {
         obj.bind(col.name(), &mut args)?;
@@ -43,9 +35,12 @@ where
 
     let wheres = wheres.join(" AND ");
 
-    *buff = format!("DELETE FROM {} where {}", identifier, wheres);
+    let sql = format!("DELETE FROM {} where {}", identifier, wheres);
 
-    conn.execute(buff, args).await?;
+    client.execute(&sql, &args).await?;
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests;

@@ -1,18 +1,17 @@
 use crate::query::clause::orderby;
 use crate::query::clause::OrderBy;
-use crate::writers::limit_skip::{DbLimitSkipWriter, LimitSkipWriter};
+use crate::writers::limit_skip::LimitSkipWriter;
+use crate::Syntax;
 use std::collections::VecDeque;
 
 /// writes the Limit Skip OrderBy of a statement
-pub(crate) fn write<DB>(
+pub(crate) fn write(
+    syntax: Syntax,
     limit: &Option<i64>,
     offset: &Option<i64>,
     orders: &[OrderBy],
-) -> Option<String>
-where
-    DB: sqlx::Database + DbLimitSkipWriter,
-{
-    let w = LimitSkipWriter::new::<DB>();
+) -> Option<String> {
+    let w = LimitSkipWriter::new(syntax);
     let mut parts = VecDeque::default();
 
     if let Some(skiplimit) = w.skiplimit(offset, limit) {

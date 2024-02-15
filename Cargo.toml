@@ -2,8 +2,10 @@
 #default-members = ["welds-cli", "welds", "welds-macros"]
 #members = ["welds-cli", "welds", "welds-macros"]
 
-default-members = ["welds", "welds-macros"]
-members = ["welds", "welds-macros"]
+#default-members = ["welds", "welds-macros"]
+#members = ["welds", "welds-macros"]
+default-members = ["welds", "welds-connections"]
+members = ["welds", "welds-connections"]
 workspace.resolver = "2"
 
 [profile.dev.package.sqlx-macros]

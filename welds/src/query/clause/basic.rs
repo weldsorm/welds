@@ -1,5 +1,6 @@
 use super::{AsFieldName, ClauseAdder, ClauseColVal};
 use std::marker::PhantomData;
+use welds_connections::Param;
 
 pub struct Basic<T> {
     col: String,
@@ -28,32 +29,30 @@ where
         }
     }
 
-    pub fn equal<'args, DB>(self, v: impl Into<T>) -> Box<dyn ClauseAdder<'args, DB>>
+    pub fn equal(self, v: impl Into<T>) -> Box<dyn ClauseAdder>
     where
-        DB: sqlx::Database,
-        T: sqlx::Type<DB> + sqlx::Encode<'args, DB>,
+        T: Param,
     {
         let cv = ClauseColVal::<T> {
             null_clause: false,
             not_clause: false,
             col: self.col,
             operator: "=",
-            val: v.into(),
+            val: Some(v.into()),
         };
         Box::new(cv)
     }
 
-    pub fn not_equal<'args, DB>(self, v: impl Into<T>) -> Box<dyn ClauseAdder<'args, DB>>
+    pub fn not_equal(self, v: impl Into<T>) -> Box<dyn ClauseAdder>
     where
-        DB: sqlx::Database,
-        T: sqlx::Type<DB> + sqlx::Encode<'args, DB>,
+        T: Param,
     {
         let cv = ClauseColVal::<T> {
             null_clause: false,
             not_clause: true,
             col: self.col,
             operator: "!=",
-            val: v.into(),
+            val: Some(v.into()),
         };
         Box::new(cv)
     }

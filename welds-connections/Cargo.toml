@@ -1,0 +1,37 @@
+[package]
+name = "welds-connections"
+version = "1.0.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+
+
+[features]
+"default" = []
+"postgres" = ["sqlx/postgres"]
+"mysql" = ["sqlx/mysql"]
+"sqlite" = ["sqlx/sqlite"]
+"mssql" = ["tokio", "tokio-util", "futures-util", "bb8-tiberius", "bb8", "futures"]
+"noop" = []
+"full" = ["postgres", "mysql", "sqlite", "mssql", "noop"]
+
+
+[dependencies]
+async-trait = "0.1"
+bb8 = { version="0.8", optional=true }
+bb8-tiberius = { version="0.15", optional=true }
+futures = {version= "0.3", optional=true }
+futures-util = { version= "0.3", optional=true }
+log = "0.4"
+sqlx = { version = "0.7", features = [], optional = true}
+thiserror = "1.0.57"
+tiberius = { version = "0.12", features = ["tokio"] }
+tokio = { version = "1", features = [], optional = true }
+tokio-util = { version = "0.7", features = ["full"], optional = true }
+
+[dev-dependencies]
+welds-connections = { path="./", features = ["full"] }
+sqlx = { version = "0.7", features = ["runtime-tokio"] }
+tokio = { version = "1", features = ["full"] }
+pretty_env_logger = "0.5"

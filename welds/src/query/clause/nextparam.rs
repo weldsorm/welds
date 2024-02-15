@@ -1,10 +1,12 @@
-pub trait DbParam {
-    fn next(i: usize) -> String;
-    fn max_params() -> u32;
-}
+//pub trait DbParam {
+//    fn next(i: usize) -> String;
+//    fn max_params() -> u32;
+//}
 
 #[cfg(feature = "postgres")]
-impl DbParam for sqlx::Postgres {
+struct Postgres;
+#[cfg(feature = "postgres")]
+impl Postgres {
     fn next(i: usize) -> String {
         format!("${}", i)
     }
@@ -14,7 +16,9 @@ impl DbParam for sqlx::Postgres {
 }
 
 #[cfg(feature = "sqlite")]
-impl DbParam for sqlx::Sqlite {
+struct Sqlite;
+#[cfg(feature = "sqlite")]
+impl Sqlite {
     fn next(_i: usize) -> String {
         "?".to_string()
     }
@@ -24,7 +28,9 @@ impl DbParam for sqlx::Sqlite {
 }
 
 #[cfg(feature = "mssql")]
-impl DbParam for crate::Mssql {
+struct Mssql;
+#[cfg(feature = "mssql")]
+impl Mssql {
     fn next(i: usize) -> String {
         format!("@p{}", i)
     }
@@ -33,8 +39,11 @@ impl DbParam for crate::Mssql {
         //2100
     }
 }
+
 #[cfg(feature = "mysql")]
-impl DbParam for sqlx::MySql {
+struct MySql;
+#[cfg(feature = "mysql")]
+impl MySql {
     fn next(_i: usize) -> String {
         "?".to_string()
     }
@@ -43,15 +52,19 @@ impl DbParam for sqlx::MySql {
     }
 }
 
+use crate::Syntax;
 use std::sync::{Arc, Mutex};
 
 pub struct NextParam {
+    syntax: Syntax,
     i: Arc<Mutex<usize>>,
     db_next: fn(usize) -> String,
 }
+
 impl NextParam {
-    pub fn new<T: DbParam>() -> Self {
+    pub fn new(syntax: Syntax) -> Self {
         Self {
+            syntax,
             i: Arc::new(Mutex::new(1)),
             db_next: T::next,
         }

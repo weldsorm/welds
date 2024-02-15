@@ -1,5 +1,6 @@
 use super::{AsFieldName, ClauseAdder, ClauseColVal};
 use std::marker::PhantomData;
+use welds_connections::Param;
 
 // Clauses for numeric types such as int, float, etc
 
@@ -30,91 +31,85 @@ where
         }
     }
 
-    pub fn equal<'args, DB>(self, v: impl Into<T>) -> Box<dyn ClauseAdder<'args, DB>>
+    pub fn equal(self, v: impl Into<T>) -> Box<dyn ClauseAdder>
     where
-        DB: sqlx::Database,
-        T: sqlx::Type<DB> + sqlx::Encode<'args, DB>,
+        T: Param,
     {
         let cv = ClauseColVal::<T> {
             null_clause: false,
             not_clause: false,
             col: self.col,
             operator: "=",
-            val: v.into(),
+            val: Some(v.into()),
         };
         Box::new(cv)
     }
 
-    pub fn not_equal<'args, DB>(self, v: impl Into<T>) -> Box<dyn ClauseAdder<'args, DB>>
+    pub fn not_equal(self, v: impl Into<T>) -> Box<dyn ClauseAdder>
     where
-        DB: sqlx::Database,
-        T: sqlx::Type<DB> + sqlx::Encode<'args, DB>,
+        T: Param,
     {
         let cv = ClauseColVal::<T> {
             null_clause: false,
             not_clause: true,
             col: self.col,
             operator: "!=",
-            val: v.into(),
+            val: Some(v.into()),
         };
         Box::new(cv)
     }
 
-    pub fn gt<'args, DB>(self, v: impl Into<T>) -> Box<dyn ClauseAdder<'args, DB>>
+    pub fn gt(self, v: impl Into<T>) -> Box<dyn ClauseAdder>
     where
-        DB: sqlx::Database,
-        T: sqlx::Type<DB> + sqlx::Encode<'args, DB>,
+        T: Param,
     {
         let cv = ClauseColVal::<T> {
             null_clause: false,
             not_clause: false,
             col: self.col,
             operator: ">",
-            val: v.into(),
+            val: Some(v.into()),
         };
         Box::new(cv)
     }
-    pub fn lt<'args, DB>(self, v: impl Into<T>) -> Box<dyn ClauseAdder<'args, DB>>
+    pub fn lt(self, v: impl Into<T>) -> Box<dyn ClauseAdder>
     where
-        DB: sqlx::Database,
-        T: sqlx::Type<DB> + sqlx::Encode<'args, DB>,
+        T: Param,
     {
         let cv = ClauseColVal::<T> {
             null_clause: false,
             not_clause: false,
             col: self.col,
             operator: "<",
-            val: v.into(),
+            val: Some(v.into()),
         };
         Box::new(cv)
     }
 
-    pub fn gte<'args, DB>(self, v: impl Into<T>) -> Box<dyn ClauseAdder<'args, DB>>
+    pub fn gte(self, v: impl Into<T>) -> Box<dyn ClauseAdder>
     where
-        DB: sqlx::Database,
-        T: sqlx::Type<DB> + sqlx::Encode<'args, DB>,
+        T: Param,
     {
         let cv = ClauseColVal::<T> {
             null_clause: false,
             not_clause: false,
             col: self.col,
             operator: ">=",
-            val: v.into(),
+            val: Some(v.into()),
         };
         Box::new(cv)
     }
 
-    pub fn lte<'args, DB>(self, v: impl Into<T>) -> Box<dyn ClauseAdder<'args, DB>>
+    pub fn lte(self, v: impl Into<T>) -> Box<dyn ClauseAdder>
     where
-        DB: sqlx::Database,
-        T: sqlx::Type<DB> + sqlx::Encode<'args, DB>,
+        T: Param,
     {
         let cv = ClauseColVal::<T> {
             null_clause: false,
             not_clause: false,
             col: self.col,
             operator: "<=",
-            val: v.into(),
+            val: Some(v.into()),
         };
         Box::new(cv)
     }

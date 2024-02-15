@@ -1,12 +1,14 @@
-use crate::connection::Connection;
-use crate::connection::Database;
-use crate::query::{delete, insert, update};
-use crate::table::{HasSchema, TableColumns, TableInfo, WriteToArgs};
-use anyhow::Result;
-use sqlx::database::HasArguments;
-use sqlx::IntoArguments;
+//use crate::query::{delete, insert, update};
+use crate::errors::Result;
+use crate::errors::WeldsError;
+use crate::model_traits::{HasSchema, TableColumns, TableInfo, WriteToArgs};
+use crate::query::delete;
+use crate::query::insert;
+use crate::query::update;
 use std::marker::PhantomData;
 use std::ops::{Deref, DerefMut};
+use welds_connections::Client;
+use welds_connections::Row;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub(crate) enum DbStatus {
@@ -23,7 +25,6 @@ pub struct DbState<T> {
     _t: PhantomData<T>,
     inner: T,
     status: DbStatus,
-    sql_buff: String,
 }
 
 impl<T> std::fmt::Debug for DbState<T>
@@ -42,7 +43,6 @@ impl<T> DbState<T> {
             _t: PhantomData,
             inner,
             status: DbStatus::NotInDatabase,
-            sql_buff: String::default(),
         }
     }
 
@@ -52,30 +52,27 @@ impl<T> DbState<T> {
             _t: PhantomData,
             inner,
             status: DbStatus::NotModified,
-            sql_buff: String::default(),
         }
     }
 
     /// Saves the inner T to the database. Results in an insert or update if needed. If no change
     /// has been detected on the inner T, No operation will occur
     ///
-    pub async fn save<'r, 'args, C, DB>(&'r mut self, conn: &'r C) -> Result<()>
+    pub async fn save<C>(&mut self, client: &C) -> Result<()>
     where
-        C: Connection<DB>,
-        DB: Database,
-        <DB as HasArguments<'r>>::Arguments: IntoArguments<'args, DB>,
-        T: WriteToArgs<DB> + HasSchema + for<'fr> sqlx::FromRow<'fr, DB::Row>,
-        <T as HasSchema>::Schema: TableInfo + TableColumns<DB>,
+        C: Client,
+        T: HasSchema + WriteToArgs,
+        <T as HasSchema>::Schema: TableInfo + TableColumns,
+        T: TryFrom<Row>,
+        WeldsError: From<<T as TryFrom<Row>>::Error>,
     {
         match self.status {
             DbStatus::NotModified => {}
             DbStatus::Edited => {
-                self.sql_buff = String::default();
-                update::update_one(&mut self.sql_buff, &self.inner, conn).await?;
+                update::update_one(&mut self.inner, client).await?;
             }
             DbStatus::NotInDatabase => {
-                self.sql_buff = String::default();
-                insert::insert_one(&mut self.sql_buff, &mut self.inner, conn).await?;
+                insert::insert_one(&mut self.inner, client).await?;
             }
         }
         self.status = DbStatus::NotModified;
@@ -83,23 +80,20 @@ impl<T> DbState<T> {
     }
 
     /// Removes the inner T from the database. If T is not in the database no operation will occur
-    pub async fn delete<'r, 'args, C, DB>(&'r mut self, conn: &'r C) -> Result<()>
+    pub async fn delete<C>(&mut self, client: &C) -> Result<()>
     where
-        'r: 'args,
-        T: WriteToArgs<DB> + HasSchema,
-        DB: Database,
-        C: Connection<DB>,
-        <DB as HasArguments<'r>>::Arguments: IntoArguments<'args, DB>,
-        <T as HasSchema>::Schema: TableInfo + TableColumns<DB>,
+        C: Client,
+        T: HasSchema + WriteToArgs,
+        <T as HasSchema>::Schema: TableInfo + TableColumns,
+        T: TryFrom<Row>,
+        WeldsError: From<<T as TryFrom<Row>>::Error>,
     {
         match self.status {
             DbStatus::NotModified => {
-                self.sql_buff = String::default();
-                delete::delete_one(&mut self.sql_buff, &self.inner, conn).await?;
+                delete::delete_one(&self.inner, client).await?;
             }
             DbStatus::Edited => {
-                self.sql_buff = String::default();
-                delete::delete_one(&mut self.sql_buff, &self.inner, conn).await?;
+                delete::delete_one(&self.inner, client).await?;
             }
             DbStatus::NotInDatabase => {}
         }

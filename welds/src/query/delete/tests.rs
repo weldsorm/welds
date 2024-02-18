@@ -4,6 +4,7 @@ use crate::model_traits::Column;
 use crate::model_traits::HasSchema;
 use crate::model_traits::TableColumns;
 use crate::model_traits::TableInfo;
+use crate::model_traits::UniqueIdentifier;
 use crate::model_traits::WriteToArgs;
 use crate::query::clause::Numeric;
 use crate::query::clause::NumericOpt;
@@ -74,6 +75,12 @@ impl HasSchema for Product {
     type Schema = ProductSchema;
 }
 
+impl UniqueIdentifier for ProductSchema {
+    fn id_column() -> Column {
+        Column::mock("id", false)
+    }
+}
+
 // Tests
 
 #[test]
@@ -86,5 +93,36 @@ fn should_be_able_to_delete_simple_object() {
         let ran_sql = client.last_sql().unwrap();
         let expected = "DELETE FROM nums where id=?";
         assert_eq!(expected, &ran_sql);
+    });
+}
+
+#[test]
+fn should_be_able_to_write_delete_query() {
+    futures::executor::block_on(async move {
+        use crate::query::builder::QueryBuilder;
+        let q = QueryBuilder::<Product>::new().where_col(|c| c.a.gt(1));
+        let client = welds_connections::noop::build(Syntax::Mysql);
+        let _ = q.delete(&client).await;
+        let ran_sql = client.last_sql().unwrap();
+        let expected = "DELETE FROM nums WHERE ( nums.a > ? )";
+        assert_eq!(expected, &ran_sql);
+    });
+}
+
+#[test]
+fn should_be_able_to_write_delete_query_with_limit() {
+    futures::executor::block_on(async move {
+        use crate::query::builder::QueryBuilder;
+        let q = QueryBuilder::<Product>::new()
+            .where_col(|c| c.a.gt(1))
+            .limit(10);
+        let client = welds_connections::noop::build(Syntax::Mysql);
+        let _ = q.delete(&client).await;
+        let ran_sql = client.last_sql().unwrap();
+        let expected = "DELETE FROM nums WHERE (  nums.id IN (SELECT t1.id FROM nums t1 WHERE ( t1.a > ? ) ORDER BY 1 LIMIT 0, 10)  )";
+        assert_eq!(expected, &ran_sql);
+
+        let args_count = client.args_count().unwrap();
+        assert_eq!(args_count, 1);
     });
 }

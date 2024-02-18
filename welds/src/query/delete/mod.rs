@@ -6,7 +6,7 @@ use crate::writers::ColumnWriter;
 use crate::writers::NextParam;
 use welds_connections::Client;
 
-//pub mod bulk;
+pub mod bulk;
 
 pub async fn delete_one<T, C>(obj: &T, client: &C) -> Result<()>
 where

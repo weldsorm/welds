@@ -1,7 +1,7 @@
 
 <div align="center">
   <img src="https://raw.githubusercontent.com/weldsorm/welds/main/page/src/assets/images/banner.png"/>
-  <h3>An async ORM written in rust using the sqlx and tiberius.</h3>
+  <h3>An async ORM written in rust using sqlx and tiberius.</h3>
 </div>
 
 # Welds Connections

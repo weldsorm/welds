@@ -7,7 +7,7 @@
 # Welds Next
 # WARNING: This branch is the working version of the next version of welds
 
-Objectives
+Objectives of next version
 - Connections should be simple to use across databases
 - writing SQL without a connection
 - better info/reporting about database types

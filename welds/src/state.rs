@@ -1,14 +1,12 @@
 //use crate::query::{delete, insert, update};
 use crate::errors::Result;
-use crate::errors::WeldsError;
-use crate::model_traits::{HasSchema, TableColumns, TableInfo, WriteToArgs};
+use crate::model_traits::{HasSchema, TableColumns, TableInfo, UpdateFromRow, WriteToArgs};
 use crate::query::delete;
 use crate::query::insert;
 use crate::query::update;
 use std::marker::PhantomData;
 use std::ops::{Deref, DerefMut};
 use welds_connections::Client;
-use welds_connections::Row;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub(crate) enum DbStatus {
@@ -63,8 +61,7 @@ impl<T> DbState<T> {
         C: Client,
         T: HasSchema + WriteToArgs,
         <T as HasSchema>::Schema: TableInfo + TableColumns,
-        T: TryFrom<Row>,
-        WeldsError: From<<T as TryFrom<Row>>::Error>,
+        T: UpdateFromRow,
     {
         match self.status {
             DbStatus::NotModified => {}
@@ -85,8 +82,6 @@ impl<T> DbState<T> {
         C: Client,
         T: HasSchema + WriteToArgs,
         <T as HasSchema>::Schema: TableInfo + TableColumns,
-        T: TryFrom<Row>,
-        WeldsError: From<<T as TryFrom<Row>>::Error>,
     {
         match self.status {
             DbStatus::NotModified => {

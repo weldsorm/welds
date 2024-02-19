@@ -2,7 +2,7 @@ use crate::writers::NextParam;
 use crate::Syntax;
 use welds_connections::Param;
 
-pub(crate) type ParamArgs<'a> = Vec<&'a (dyn Param + Sync)>;
+pub type ParamArgs<'a> = Vec<&'a (dyn Param + Sync)>;
 
 // Concrete Types
 mod basic;

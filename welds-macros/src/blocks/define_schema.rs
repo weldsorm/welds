@@ -42,10 +42,7 @@ fn def_field(info: &Info, col: &Column) -> TokenStream {
     let name = &col.field;
     let wp = &info.welds_path;
     let type_inner = &col.field_type;
-    let mut ty = quote! { #type_inner };
-    if col.is_option {
-        ty = quote! { #wp::query::optional::Optional<#type_inner> }
-    }
+    let ty = quote! { #type_inner };
     let clause = get_clause(type_inner, col.is_option);
     let full_type = quote! { #wp::query::clause::#clause<#ty> };
     quote! { pub #name: #full_type }
@@ -65,4 +62,35 @@ fn default_fields(info: &Info, col: &Column) -> TokenStream {
     let dbname = col.dbname.as_str();
     let fieldname: String = col.field.to_string();
     quote! { #name: #wp::query::clause::#clause::new(#dbname, #fieldname) }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn should_write_basic_schemamodel_def() {
+        let info = Info::mock().add_pk("id", "i64");
+        let ts = write(&info);
+        let code = ts.to_string();
+
+        let expected: &str = r#"
+            pub struct MockSchema {
+                pub id: welds::query::clause::Numeric<i64>
+            }
+            impl Default for MockSchema {
+                fn default() -> Self {
+                    Self {
+                        id: welds::query::clause::Numeric::new("id", "id")
+                    }
+                }
+            }
+        "#;
+
+        assert_eq!(cleaned(&code), cleaned(expected));
+    }
+
+    fn cleaned(input: &str) -> String {
+        input.chars().filter(|c| !c.is_whitespace()).collect()
+    }
 }

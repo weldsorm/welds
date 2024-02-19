@@ -16,8 +16,8 @@ async-trait = "0.1"
 log = "0.4"
 colored = { version="2", optional = true }
 thiserror = "1.0.57"
+welds-macros = { path="../welds-macros", version = "^1.0" }
 #sqlx = { version = "0.7", features = [ "macros"] }
-#welds-macros = { path="../welds-macros", version = "^0.2" }
 #welds-sqlx-mssql = { path="../../welds-sqlx-mssql", version = "1.7", optional=true }
 #thiserror = "1.0"
 #anyhow = "1.0"

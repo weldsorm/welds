@@ -1,54 +1,14 @@
 use super::*;
-use crate::model_traits::Column;
-use crate::model_traits::HasSchema;
-use crate::model_traits::TableColumns;
-use crate::model_traits::TableInfo;
-use crate::query::clause::Basic;
 
 // Test Object that can be used to write SQL
-//
+use crate::WeldsModel;
+
+#[derive(Debug, WeldsModel)]
+#[welds(schema = "da_schemaname", table = "da_tablename")]
+#[welds_path(crate)] // needed only within the welds crate.
 struct Product {
+    #[welds(rename = "dbname")]
     pub name: String,
-}
-
-impl TryFrom<Row> for Product {
-    type Error = crate::WeldsError;
-    fn try_from(value: Row) -> std::result::Result<Self, Self::Error> {
-        Ok(Product {
-            name: String::default(),
-        })
-    }
-}
-
-pub struct ProductSchema {
-    name: Basic<String>,
-}
-
-impl Default for ProductSchema {
-    fn default() -> Self {
-        Self {
-            name: Basic::new("dbname", "name"),
-        }
-    }
-}
-
-impl TableInfo for ProductSchema {
-    fn identifier() -> &'static [&'static str] {
-        &["da_schemaname", "da_tablename"]
-    }
-}
-
-impl TableColumns for ProductSchema {
-    fn columns() -> Vec<Column> {
-        vec![Column::mock("dbname", false)]
-    }
-    fn primary_keys() -> Vec<Column> {
-        vec![]
-    }
-}
-
-impl HasSchema for Product {
-    type Schema = ProductSchema;
 }
 
 // Tests

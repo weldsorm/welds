@@ -1,28 +1,23 @@
 use crate::errors::Result;
-use crate::errors::WeldsError;
 use crate::errors::WeldsError::InsertFailed;
+use crate::model_traits::UpdateFromRow;
 use crate::model_traits::{HasSchema, TableColumns, TableInfo, WriteToArgs};
 use crate::query::clause::ParamArgs;
 use crate::writers::column::ColumnWriter;
 use crate::writers::insert::{ColArg, InsertWriter};
 use crate::writers::NextParam;
-use std::mem::swap;
 use welds_connections::Client;
-use welds_connections::Row;
 
 pub async fn insert_one<T, C>(obj: &mut T, client: &C) -> Result<()>
 where
     T: WriteToArgs + HasSchema,
     <T as HasSchema>::Schema: TableInfo + TableColumns,
-    T: TryFrom<Row>,
-    WeldsError: From<<T as TryFrom<Row>>::Error>,
+    T: UpdateFromRow,
     C: Client,
 {
     let syntax = client.syntax();
     let mut args: ParamArgs = Vec::default();
     let args2: ParamArgs = Vec::default();
-    //let mut args: <DB as HasArguments>::Arguments = Default::default();
-    //let args2: <DB as HasArguments>::Arguments = Default::default();
 
     let col_writer = ColumnWriter::new(syntax);
     let next_params = NextParam::new(syntax);
@@ -62,9 +57,8 @@ where
     }
 
     let row = rows.pop();
-    let row = row.ok_or_else(|| InsertFailed(format!("{:?}", sql)))?;
-    let mut t: T = T::try_from(row)?;
-    swap(&mut t, obj);
+    let mut row = row.ok_or_else(|| InsertFailed(format!("{:?}", sql)))?;
+    UpdateFromRow::update_from_row(obj, &mut row)?;
 
     Ok(())
 }

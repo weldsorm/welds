@@ -15,6 +15,8 @@ pub enum WeldsError {
     //Tiberius(tiberius::error::Error),
     //Bb8(&'static str),
     //InvalidDatabaseUrl,
+    #[error("The Database column is not present: {0}")]
+    MissingDbColumn(String),
     #[error("Failed to Insert {0}")]
     InsertFailed(String),
     #[error("Expected Row from DB, Found none")]

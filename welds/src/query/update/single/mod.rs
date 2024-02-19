@@ -1,17 +1,15 @@
 use crate::errors::{Result, WeldsError};
-use crate::model_traits::{HasSchema, TableColumns, TableInfo, WriteToArgs};
+use crate::model_traits::{HasSchema, TableColumns, TableInfo, UpdateFromRow, WriteToArgs};
 use crate::query::clause::ParamArgs;
 use crate::writers::ColumnWriter;
 use crate::writers::NextParam;
 use welds_connections::Client;
-use welds_connections::Row;
 
 pub async fn update_one<T, C>(obj: &mut T, client: &C) -> Result<()>
 where
     T: WriteToArgs + HasSchema,
     <T as HasSchema>::Schema: TableInfo + TableColumns,
-    T: TryFrom<Row>,
-    WeldsError: From<<T as TryFrom<Row>>::Error>,
+    T: UpdateFromRow,
     C: Client,
 {
     let syntax = client.syntax();
@@ -35,6 +33,7 @@ where
             sets.push(format!("{}={}", colname, p));
         }
     }
+
     if sets.is_empty() {
         return Ok(());
     }

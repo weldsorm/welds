@@ -27,7 +27,7 @@ impl Column {
 }
 
 impl Column {
-    pub fn new<T>(name: impl Into<String>, nullable: bool) -> Self {
+    pub fn new(name: impl Into<String>, nullable: bool) -> Self {
         Self {
             name: name.into(),
             nullable,
@@ -63,14 +63,14 @@ use crate::errors::Result;
 use crate::query::clause::ParamArgs;
 
 pub trait WriteToArgs {
-    fn bind<'s, 'c, 'a>(&'s self, column: &'c str, args: &'s mut ParamArgs<'a>) -> Result<()>;
+    fn bind<'s, 'c, 'a, 'p>(&'s self, column: &'c str, args: &'a mut ParamArgs<'p>) -> Result<()>
+    where
+        's: 'p;
 }
 
-//pub trait WriteToArgs<DB> {
-//    fn bind(&self, column: &str, args: &mut <DB as HasArguments<'_>>::Arguments) -> Result<()>
-//    where
-//        DB: sqlx::Database;
-//}
+pub trait UpdateFromRow {
+    fn update_from_row(&mut self, row: &mut crate::Row) -> crate::errors::Result<()>;
+}
 
 //pub trait WriteBulkArrayToArgs<DB> {
 //    fn bind(

@@ -1,84 +1,19 @@
-//use super::*;
-use crate::errors::Result;
-use crate::model_traits::Column;
-use crate::model_traits::HasSchema;
-use crate::model_traits::TableColumns;
-use crate::model_traits::TableInfo;
-use crate::model_traits::UniqueIdentifier;
-use crate::model_traits::WriteToArgs;
-use crate::query::clause::Numeric;
-use crate::query::clause::NumericOpt;
-use crate::query::clause::ParamArgs;
 use crate::state::DbState;
 use crate::Syntax;
 use welds_connections::Row;
 
 // Testing that the tail end of the SQL is correct
 // Limits / skips / orders
+use crate::WeldsModel;
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, WeldsModel)]
+#[welds(table = "nums")]
+#[welds_path(crate)] // needed only within the welds crate.
 struct Product {
+    #[welds(primary_key)]
     pub id: i32,
     pub a: i32,
     pub b: i32,
-}
-
-impl TryFrom<Row> for Product {
-    type Error = crate::WeldsError;
-    fn try_from(value: Row) -> std::result::Result<Self, Self::Error> {
-        Ok(Product { id: 1, a: 0, b: 0 })
-    }
-}
-
-pub struct ProductSchema {
-    id: Numeric<i32>,
-    a: Numeric<i32>,
-    b: NumericOpt<i32>,
-}
-
-impl Default for ProductSchema {
-    fn default() -> Self {
-        Self {
-            id: Numeric::new("id", "id"),
-            a: Numeric::new("a", "a"),
-            b: NumericOpt::new("b", "b"),
-        }
-    }
-}
-
-impl WriteToArgs for Product {
-    fn bind<'s, 'c, 'a>(&'s self, column: &'c str, args: &'s mut ParamArgs<'a>) -> Result<()> {
-        Ok(())
-    }
-}
-
-impl TableInfo for ProductSchema {
-    fn identifier() -> &'static [&'static str] {
-        &["nums"]
-    }
-}
-
-impl TableColumns for ProductSchema {
-    fn columns() -> Vec<Column> {
-        vec![
-            Column::mock("id", false),
-            Column::mock("a", false),
-            Column::mock("b", true),
-        ]
-    }
-    fn primary_keys() -> Vec<Column> {
-        vec![Column::mock("id", false)]
-    }
-}
-
-impl HasSchema for Product {
-    type Schema = ProductSchema;
-}
-
-impl UniqueIdentifier for ProductSchema {
-    fn id_column() -> Column {
-        Column::mock("id", false)
-    }
 }
 
 // Tests

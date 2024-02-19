@@ -8,7 +8,7 @@
 
 #### This is the common interface used by welds for all Databases.
 
-It allows you to talk to all sqlx and tiberius over a trait in a simple common way.
+It allows you to talk to sqlx and tiberius over traits in a simple common way.
 
 ## Features
 - async for all. 

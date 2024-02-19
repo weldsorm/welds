@@ -4,6 +4,15 @@
   <h3>An async ORM written in rust using the sqlx framework.</h3>
 </div>
 
+# Welds Next
+# WARNING: This branch is the working version of the next version of welds
+
+Objectives
+- Connections should be simple to use across databases
+- writing SQL without a connection
+- better info/reporting about database types
+- Migrations
+
 # Welds
 
 #### Welds is an async ORM written in rust using the sqlx framework. 
@@ -13,6 +22,12 @@
 - Support for multiple SQL databases (Mssql, MySql, Postgres, Sqlite)
 - Written for ease of development. Features aren't hidden behind traits. Code should be simple to write, and simple to read.
 - sqlx always available when you need to drop down to something lower level
+
+
+## Version Compatibility with sqlx
+- The 0.2.x series of Welds is compatible with sqlx 0.7 
+- The 0.1.x series of Welds is compatible with sqlx 0.6 
+
 
 ## Example Setup
 

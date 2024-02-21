@@ -7,6 +7,7 @@ pub mod query;
 pub mod state;
 pub mod writers;
 
+pub use welds_connections as connections;
 /// Re-export welds_connections
 pub use welds_connections::{Client, Row, Syntax, TransactStart};
 

@@ -8,11 +8,10 @@ pub(crate) fn write(info: &Info) -> TokenStream {
 
     quote! {
 
-        pub fn all<'args, DB>() -> #wp::query::builder::QueryBuilder<'args, Self, DB>
+        pub fn all() -> #wp::query::builder::QueryBuilder<Self>
             where
-            DB: #wp::connection::Database,
-            #schema: #wp::table::TableColumns<DB>,
-            Self: Send + Unpin + for<'r> sqlx::FromRow<'r, DB::Row>,
+            #schema: #wp::model_traits::TableColumns,
+            Self: Send
             {
                 #wp::query::builder::QueryBuilder::new()
             }

@@ -30,6 +30,20 @@ pub async fn get_conn(url: &str) -> Result<MysqlClient> {
     })
 }
 
+impl From<sqlx::MySqlPool> for MysqlClient {
+    fn from(pool: sqlx::MySqlPool) -> MysqlClient {
+        MysqlClient {
+            pool: Arc::new(pool),
+        }
+    }
+}
+
+impl MysqlClient {
+    pub fn as_sqlx_pool(&self) -> &MySqlPool {
+        &self.pool
+    }
+}
+
 use sqlx::encode::Encode;
 use sqlx::types::Type;
 

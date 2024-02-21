@@ -32,6 +32,12 @@ pub async fn get_conn(cs: &str) -> Result<MssqlClient> {
     Ok(MssqlClient { pool })
 }
 
+impl From<Pool<ConnectionManager>> for MssqlClient {
+    fn from(pool: Pool<ConnectionManager>) -> MssqlClient {
+        MssqlClient { pool }
+    }
+}
+
 #[async_trait]
 impl Client for MssqlClient {
     async fn execute(&self, sql: &str, params: &[&(dyn Param + Sync)]) -> Result<ExecuteResult> {

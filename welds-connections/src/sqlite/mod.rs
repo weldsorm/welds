@@ -30,6 +30,20 @@ pub async fn get_conn(url: &str) -> Result<SqliteClient> {
     })
 }
 
+impl From<sqlx::SqlitePool> for SqliteClient {
+    fn from(pool: sqlx::SqlitePool) -> SqliteClient {
+        SqliteClient {
+            pool: Arc::new(pool),
+        }
+    }
+}
+
+impl SqliteClient {
+    pub fn as_sqlx_pool(&self) -> &SqlitePool {
+        &self.pool
+    }
+}
+
 use sqlx::encode::Encode;
 use sqlx::types::Type;
 

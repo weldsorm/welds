@@ -30,6 +30,20 @@ pub async fn get_conn(url: &str) -> Result<PostgresClient> {
     })
 }
 
+impl From<sqlx::PgPool> for PostgresClient {
+    fn from(pool: sqlx::PgPool) -> PostgresClient {
+        PostgresClient {
+            pool: Arc::new(pool),
+        }
+    }
+}
+
+impl PostgresClient {
+    pub fn as_sqlx_pool(&self) -> &PgPool {
+        &self.pool
+    }
+}
+
 use sqlx::encode::Encode;
 use sqlx::types::Type;
 

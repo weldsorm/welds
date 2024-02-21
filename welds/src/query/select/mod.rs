@@ -69,7 +69,7 @@ where
         let args = args.unwrap();
         let rows = client.fetch_rows(&sql, &args).await?;
         let row = rows.first().ok_or(WeldsError::RowNowFound)?;
-        let count: i64 = row.get_by_position(1)?;
+        let count: i64 = row.get_by_position(0)?;
         Ok(count as u64)
     }
 

@@ -21,22 +21,16 @@ impl InsertWriter {
         pks: &[Column],
     ) -> Sql {
         match self.syntax {
-            #[cfg(feature = "mysql")]
             Syntax::Mysql => MySql::write(identifier, colargs, columns, pks),
-            #[cfg(feature = "postgres")]
             Syntax::Postgres => Postgres::write(identifier, colargs, columns, pks),
-            #[cfg(feature = "sqlite")]
             Syntax::Sqlite => Sqlite::write(identifier, colargs, columns, pks),
-            #[cfg(feature = "mssql")]
             Syntax::Mssql => Mssql::write(identifier, colargs, columns, pks),
         }
     }
 }
 
-#[cfg(feature = "postgres")]
 struct Postgres;
 
-#[cfg(feature = "postgres")]
 impl Postgres {
     fn write(identifier: &str, colargs: &[ColArg], _columns: &[Column], _pks: &[Column]) -> Sql {
         let cols: Vec<_> = colargs.iter().map(|x| x.0.as_str()).collect();
@@ -53,10 +47,8 @@ impl Postgres {
     }
 }
 
-#[cfg(feature = "sqlite")]
 struct Sqlite;
 
-#[cfg(feature = "sqlite")]
 impl Sqlite {
     fn write(identifier: &str, colargs: &[ColArg], _columns: &[Column], pks: &[Column]) -> Sql {
         assert!(
@@ -80,10 +72,8 @@ impl Sqlite {
     }
 }
 
-#[cfg(feature = "mysql")]
 struct MySql;
 
-#[cfg(feature = "mysql")]
 impl MySql {
     fn write(identifier: &str, colargs: &[ColArg], _columns: &[Column], pks: &[Column]) -> Sql {
         assert!(
@@ -107,10 +97,8 @@ impl MySql {
     }
 }
 
-#[cfg(feature = "mssql")]
 struct Mssql;
 
-#[cfg(feature = "mssql")]
 impl Mssql {
     fn write(identifier: &str, colargs: &[ColArg], columns: &[Column], _pks: &[Column]) -> Sql {
         let cols: Vec<_> = colargs.iter().map(|x| x.0.as_str()).collect();

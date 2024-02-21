@@ -10,21 +10,15 @@ impl LimitSkipWriter {
     }
     pub fn skiplimit(&self, s: &Option<i64>, l: &Option<i64>) -> Option<String> {
         match self.syntax {
-            #[cfg(feature = "mysql")]
             Syntax::Mysql => MySql::skiplimit(s, l),
-            #[cfg(feature = "postgres")]
             Syntax::Postgres => Postgres::skiplimit(s, l),
-            #[cfg(feature = "sqlite")]
             Syntax::Sqlite => Sqlite::skiplimit(s, l),
-            #[cfg(feature = "mssql")]
             Syntax::Mssql => Mssql::skiplimit(s, l),
         }
     }
 }
 
-#[cfg(feature = "postgres")]
 struct Postgres;
-#[cfg(feature = "postgres")]
 impl Postgres {
     fn skiplimit(s: &Option<i64>, l: &Option<i64>) -> Option<String> {
         if s.is_none() && l.is_none() {
@@ -36,9 +30,7 @@ impl Postgres {
     }
 }
 
-#[cfg(feature = "sqlite")]
 struct Sqlite;
-#[cfg(feature = "sqlite")]
 impl Sqlite {
     fn skiplimit(s: &Option<i64>, l: &Option<i64>) -> Option<String> {
         if s.is_none() && l.is_none() {
@@ -50,9 +42,7 @@ impl Sqlite {
     }
 }
 
-#[cfg(feature = "mssql")]
 struct Mssql;
-#[cfg(feature = "mssql")]
 impl Mssql {
     fn skiplimit(s: &Option<i64>, l: &Option<i64>) -> Option<String> {
         if s.is_none() && l.is_none() {
@@ -64,9 +54,7 @@ impl Mssql {
     }
 }
 
-#[cfg(feature = "mysql")]
 struct MySql;
-#[cfg(feature = "mysql")]
 impl MySql {
     fn skiplimit(s: &Option<i64>, l: &Option<i64>) -> Option<String> {
         if s.is_none() && l.is_none() {

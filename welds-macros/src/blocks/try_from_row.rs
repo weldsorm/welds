@@ -43,9 +43,9 @@ pub(crate) fn write_for_db(
 
     quote! {
 
-    impl TryFrom<crate::Row> for #def {
+    impl TryFrom<#wp::Row> for #def {
         type Error = #wp::WeldsError;
-        fn try_from(row: Row) -> std::result::Result<Self, Self::Error> {
+        fn try_from(row: #wp::Row) -> std::result::Result<Self, Self::Error> {
             Ok(#def {
                   #fieldsets
                   #defaults
@@ -69,9 +69,9 @@ mod tests {
         let code = ts.to_string();
 
         let expected: &str = r#"
-            impl TryFrom<crate::Row> for Mock {
+            impl TryFrom<welds::Row> for Mock {
                 type Error = welds::WeldsError;
-                fn try_from(row: Row) -> std::result::Result<Self, Self::Error> {
+                fn try_from(row: welds::Row) -> std::result::Result<Self, Self::Error> {
                     Ok(Mock {
                         id: row.get("id")?,
                         name: row.get("name")?,

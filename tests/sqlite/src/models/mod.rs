@@ -2,7 +2,7 @@ pub mod order;
 pub mod product;
 use welds::WeldsModel;
 
-#[derive(Debug, sqlx::FromRow, WeldsModel)]
+#[derive(Debug, WeldsModel)]
 #[welds(db(Sqlite))]
 #[welds(table = "Thing1")]
 pub struct Thing1 {
@@ -11,7 +11,7 @@ pub struct Thing1 {
     pub value: String,
 }
 
-#[derive(Debug, sqlx::FromRow, WeldsModel)]
+#[derive(Debug, WeldsModel)]
 #[welds(db(Sqlite))]
 #[welds(table = "Thing2")]
 pub struct Thing2 {
@@ -20,7 +20,7 @@ pub struct Thing2 {
     pub value: String,
 }
 
-#[derive(Debug, sqlx::FromRow, WeldsModel)]
+#[derive(Debug, WeldsModel)]
 #[welds(db(Sqlite))]
 #[welds(table = "Thing3")]
 pub struct Thing3 {

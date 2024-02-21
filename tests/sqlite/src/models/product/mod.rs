@@ -6,12 +6,11 @@ use welds::WeldsModel;
  * The this model is here for the purpose of testing core itself
  * */
 
-#[derive(Debug, sqlx::FromRow, WeldsModel)]
-#[welds(db(Sqlite))]
+#[derive(Debug, WeldsModel)]
 #[welds(table = "Products")]
 #[welds(HasMany(orders, super::order::Order, "product_id"))]
 pub struct Product {
-    #[sqlx(rename = "product_id")]
+    #[welds(rename = "product_id")]
     #[welds(primary_key)]
     pub id: i32,
     pub name: String,
@@ -24,11 +23,10 @@ pub struct Product {
 // The bad products are used to test
 // validation structs are not wired up correctly
 
-#[derive(Debug, sqlx::FromRow, WeldsModel)]
-#[welds(db(Sqlite))]
+#[derive(Debug, WeldsModel)]
 #[welds(table = "products")]
 pub struct BadProduct1 {
-    #[sqlx(rename = "product_id")]
+    #[welds(rename = "product_id")]
     #[welds(primary_key)]
     pub id: i32,
     pub name: String,
@@ -38,11 +36,10 @@ pub struct BadProduct1 {
     pub active: Option<bool>,
 }
 
-#[derive(Debug, sqlx::FromRow, WeldsModel)]
-#[welds(db(Sqlite))]
+#[derive(Debug, WeldsModel)]
 #[welds(table = "Products")]
 pub struct BadProduct2 {
-    #[sqlx(rename = "product_id")]
+    #[welds(rename = "product_id")]
     #[welds(primary_key)]
     pub id: f64,
     pub name2: String,

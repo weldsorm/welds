@@ -10,24 +10,16 @@ pub struct NextParam {
 impl NextParam {
     pub fn new(syntax: Syntax) -> Self {
         let next_fn_ptr = match syntax {
-            #[cfg(feature = "mysql")]
             Syntax::Mysql => MySql::next,
-            #[cfg(feature = "postgres")]
             Syntax::Postgres => Postgres::next,
-            #[cfg(feature = "mssql")]
             Syntax::Mssql => Mssql::next,
-            #[cfg(feature = "sqlite")]
             Syntax::Sqlite => Sqlite::next,
         };
 
         let max_fn_ptr = match syntax {
-            #[cfg(feature = "mysql")]
             Syntax::Mysql => MySql::max_params,
-            #[cfg(feature = "postgres")]
             Syntax::Postgres => Postgres::max_params,
-            #[cfg(feature = "mssql")]
             Syntax::Mssql => Mssql::max_params,
-            #[cfg(feature = "sqlite")]
             Syntax::Sqlite => Sqlite::max_params,
         };
 
@@ -51,9 +43,7 @@ impl NextParam {
     }
 }
 
-#[cfg(feature = "postgres")]
 struct Postgres;
-#[cfg(feature = "postgres")]
 impl Postgres {
     fn next(i: usize) -> String {
         format!("${}", i)
@@ -63,9 +53,7 @@ impl Postgres {
     }
 }
 
-#[cfg(feature = "sqlite")]
 struct Sqlite;
-#[cfg(feature = "sqlite")]
 impl Sqlite {
     fn next(_i: usize) -> String {
         "?".to_string()
@@ -75,9 +63,7 @@ impl Sqlite {
     }
 }
 
-#[cfg(feature = "mssql")]
 struct Mssql;
-#[cfg(feature = "mssql")]
 impl Mssql {
     fn next(i: usize) -> String {
         format!("@p{}", i)
@@ -88,9 +74,7 @@ impl Mssql {
     }
 }
 
-#[cfg(feature = "mysql")]
 struct MySql;
-#[cfg(feature = "mysql")]
 impl MySql {
     fn next(_i: usize) -> String {
         "?".to_string()

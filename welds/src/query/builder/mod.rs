@@ -1,6 +1,8 @@
+use welds_connections::Param;
+
 use crate::alias::TableAlias;
 //use crate::connection::Database;
-//use crate::query::clause::exists::ExistIn;
+use crate::query::clause::exists::ExistIn;
 use crate::query::clause::{AsFieldName, ClauseAdder, OrderBy};
 //use crate::relations::{HasRelations, Relationship};
 use crate::model_traits::HasSchema;
@@ -11,7 +13,7 @@ use std::marker::PhantomData;
 use std::sync::Arc;
 
 //use super::select_cols::SelectBuilder;
-//use super::update::bulk::UpdateBuilder;
+use super::update::bulk::UpdateBuilder;
 
 /// An un-executed Query.
 ///
@@ -23,7 +25,7 @@ use std::sync::Arc;
 pub struct QueryBuilder<T> {
     _t: PhantomData<T>,
     pub(crate) wheres: Vec<Box<dyn ClauseAdder>>,
-    //pub(crate) exist_ins: Vec<ExistIn<'schema, DB>>,
+    pub(crate) exist_ins: Vec<ExistIn>,
     pub(crate) limit: Option<i64>,
     pub(crate) offset: Option<i64>,
     pub(crate) orderby: Vec<OrderBy>,
@@ -31,15 +33,14 @@ pub struct QueryBuilder<T> {
     pub(crate) alias_asigner: Arc<TableAlias>,
 }
 
-//impl<'schema, T, DB> Default for QueryBuilder<'schema, T, DB>
-//where
-//    DB: Database,
-//    T: Send + Unpin + for<'r> sqlx::FromRow<'r, DB::Row> + HasSchema,
-//{
-//    fn default() -> Self {
-//        Self::new()
-//    }
-//}
+impl<T> Default for QueryBuilder<T>
+where
+    T: Send + HasSchema,
+{
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl<T> QueryBuilder<T>
 where
@@ -54,7 +55,7 @@ where
             limit: None,
             offset: None,
             orderby: Vec::default(),
-            //exist_ins: Default::default(),
+            exist_ins: Default::default(),
             alias,
             alias_asigner: Arc::new(ta),
         }
@@ -190,21 +191,25 @@ where
     //    sb.select(lam)
     //}
 
-    ///// Filter the results returned by this query.
-    ///// Used when you want to filter on the columns of this table.
-    //pub fn set<'v, V, FIELD>(
-    //    self,
-    //    lam: impl Fn(<T as HasSchema>::Schema) -> FIELD,
-    //    value: impl Into<V>,
-    //) -> UpdateBuilder<'schema, T, DB>
-    //where
-    //    DB: DbColumnWriter,
-    //    <T as HasSchema>::Schema: Default,
-    //    FIELD: AsFieldName<V>,
-    //    V: for<'r> sqlx::Encode<'r, DB> + sqlx::Type<DB> + Send + Clone,
-    //    V: 'static + Sync + Send,
-    //{
-    //    let ub = UpdateBuilder::new(self);
-    //    ub.set(lam, value)
-    //}
+    /// Filter the results returned by this query.
+    /// Used when you want to filter on the columns of this table.
+    pub fn set<V, FIELD>(
+        self,
+        lam: impl Fn(<T as HasSchema>::Schema) -> FIELD,
+        value: impl Into<V>,
+    ) -> UpdateBuilder<T>
+    where
+        <T as HasSchema>::Schema: Default,
+        FIELD: AsFieldName<V>,
+        V: 'static + Sync + Send + Clone + Param,
+        //
+        //DB: DbColumnWriter,
+        //<T as HasSchema>::Schema: Default,
+        //FIELD: AsFieldName<V>,
+        //V: for<'r> sqlx::Encode<'r, DB> + sqlx::Type<DB> + Send + Clone,
+        //V: 'static + Sync + Send,
+    {
+        let ub = UpdateBuilder::new(self);
+        ub.set(lam, value)
+    }
 }

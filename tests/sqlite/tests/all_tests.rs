@@ -298,14 +298,13 @@ fn should_be_able_to_bulk_delete2() {
 #[test]
 fn should_be_able_to_bulk_update() {
     async_std::task::block_on(async {
-        assert!(false)
-        //let conn = get_conn().await;
-        //let q = Order::all()
-        //    .where_col(|x| x.code.equal(None))
-        //    .set(|x| x.code, "test");
-        //let sql = q.to_sql(Syntax::Sqlite);
-        //eprintln!("SQL: {}", sql);
-        //q.run(&conn).await.unwrap();
+        let conn = get_conn().await;
+        let q = Order::all()
+            .where_col(|x| x.code.equal(None))
+            .set(|x| x.code, "test");
+        let sql = q.to_sql(Syntax::Sqlite);
+        eprintln!("SQL: {}", sql);
+        q.run(&conn).await.unwrap();
     })
 }
 
@@ -347,28 +346,27 @@ fn should_be_able_to_limit_deletes() {
 #[test]
 fn should_only_update_limited_rows_if_limit_is_in_query() {
     async_std::task::block_on(async {
-        assert!(false)
-        //let conn = get_conn().await;
-        //let trans = conn.begin().await.unwrap();
-        //for _ in 0..10 {
-        //    Thing2::new().save(&trans).await.unwrap();
-        //}
-        //let update_statment = Thing2::all()
-        //    .where_col(|x| x.id.gt(0))
-        //    .order_by_desc(|x| x.id)
-        //    .limit(1)
-        //    .set(|x| x.value, "HAS_VALUE");
+        let conn = get_conn().await;
+        let trans = conn.begin().await.unwrap();
+        for _ in 0..10 {
+            Thing2::new().save(&trans).await.unwrap();
+        }
+        let update_statment = Thing2::all()
+            .where_col(|x| x.id.gt(0))
+            .order_by_desc(|x| x.id)
+            .limit(1)
+            .set(|x| x.value, "HAS_VALUE");
 
-        //let sql = update_statment.to_sql(Syntax::Sqlite);
-        //update_statment.run(&trans).await.unwrap();
-        //eprintln!("SQL: {}", sql);
+        let sql = update_statment.to_sql(Syntax::Sqlite);
+        update_statment.run(&trans).await.unwrap();
+        eprintln!("SQL: {}", sql);
 
-        //let count = Thing2::where_col(|x| x.value.equal("HAS_VALUE"))
-        //    .count(&trans)
-        //    .await
-        //    .unwrap();
-        //assert_eq!(count, 1);
-        //trans.rollback().await.unwrap();
+        let count = Thing2::where_col(|x| x.value.equal("HAS_VALUE"))
+            .count(&trans)
+            .await
+            .unwrap();
+        assert_eq!(count, 1);
+        trans.rollback().await.unwrap();
     })
 }
 

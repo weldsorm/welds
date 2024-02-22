@@ -19,7 +19,7 @@ mod textopt;
 pub use textopt::TextOpt;
 
 //// Relationships / SubQueries
-//pub(crate) mod exists;
+pub(crate) mod exists;
 pub(crate) mod wherein;
 
 pub(crate) mod orderby;

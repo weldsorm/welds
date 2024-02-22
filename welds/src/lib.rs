@@ -7,6 +7,12 @@ pub mod relations;
 pub mod state;
 pub mod writers;
 
+#[cfg(feature = "detect")]
+pub mod detect;
+
+#[cfg(feature = "check")]
+pub mod check;
+
 pub use welds_connections as connections;
 /// Re-export welds_connections
 pub use welds_connections::{Client, Row, Syntax, TransactStart};

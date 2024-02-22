@@ -15,9 +15,9 @@ pub(crate) fn write(infos: &Info) -> TokenStream {
     let p1 = fn_new::write(infos);
     let p2 = fn_all::write(infos);
     let p3 = fn_where_col::write(infos);
-    //let p4 = fn_find_by_id::write(infos);
+    let p4 = fn_find_by_id::write(infos);
     //let p5 = fn_from_raw_sql::write(infos);
-    //let p6 = fn_select::write(infos);
+    let p6 = fn_select::write(infos);
 
     quote! {
 
@@ -25,9 +25,9 @@ pub(crate) fn write(infos: &Info) -> TokenStream {
             #p1
             #p2
             #p3
-            //#p4
+            #p4
             //#p5
-            //#p6
+            #p6
         }
 
     }

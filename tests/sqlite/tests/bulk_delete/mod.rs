@@ -1,7 +1,7 @@
 use welds::Syntax;
 use welds::WeldsModel;
 
-#[derive(Debug, sqlx::FromRow, WeldsModel)]
+#[derive(Debug, WeldsModel)]
 #[welds(db(Sqlite))]
 #[welds(table = "orders")]
 #[welds(BelongsTo(product, Product2, "product_id"))]
@@ -10,7 +10,7 @@ pub struct Order2 {
     pub oid: i32,
     pub product_id: i32,
 }
-#[derive(Debug, sqlx::FromRow, WeldsModel)]
+#[derive(Debug, WeldsModel)]
 #[welds(db(Sqlite))]
 #[welds(table = "Products")]
 #[welds(HasMany(orders, Order2, "product_id"))]

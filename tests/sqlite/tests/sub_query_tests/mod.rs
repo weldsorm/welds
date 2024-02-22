@@ -2,7 +2,7 @@ type Db = sqlx::Sqlite;
 use welds::Syntax;
 use welds::WeldsModel;
 
-#[derive(Debug, sqlx::FromRow, WeldsModel)]
+#[derive(Debug, WeldsModel)]
 #[welds(db(Sqlite))]
 #[welds(table = "orders")]
 #[welds(BelongsTo(product, Product2, "product_id"))]

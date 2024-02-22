@@ -7,10 +7,9 @@ use welds::Syntax;
 
 pub mod bulk_delete;
 pub mod bulk_update;
-//pub mod select_col;
+pub mod select_col;
 pub mod sub_query_tests;
 
-type Db = sqlx::Sqlite;
 async fn get_conn() -> SqliteClient {
     let sqlx_conn = testlib::sqlite::conn().await.unwrap();
     let client: SqliteClient = sqlx_conn.into();
@@ -211,10 +210,9 @@ fn should_be_able_to_create_a_new_product() {
 #[test]
 fn should_be_able_to_scan_for_all_tables() {
     async_std::task::block_on(async {
-        assert!(false)
-        //let conn = get_conn().await;
-        //let tables = welds::detect::find_tables(&conn).await.unwrap();
-        //assert_eq!(12, tables.len());
+        let conn = get_conn().await;
+        let tables = welds::detect::find_tables(&conn).await.unwrap();
+        assert_eq!(12, tables.len());
     })
 }
 
@@ -371,18 +369,17 @@ fn should_only_update_limited_rows_if_limit_is_in_query() {
 #[test]
 fn should_be_able_to_bulk_insert() {
     async_std::task::block_on(async {
-        assert!(false)
-        //let conn = get_conn().await;
-        //let trans = conn.begin().await.unwrap();
-        //let things: Vec<_> = (0..3000)
-        //    .map(|x| Thing3 {
-        //        id: 0,
-        //        value: format!("Bulk_Insert: {}", x),
-        //    })
-        //    .collect();
-        //welds::query::insert::bulk_insert(&trans, &things)
-        //    .await
-        //    .unwrap();
-        //trans.rollback().await.unwrap();
+        let conn = get_conn().await;
+        let trans = conn.begin().await.unwrap();
+        let things: Vec<_> = (0..3000)
+            .map(|x| Thing3 {
+                id: 0,
+                value: format!("Bulk_Insert: {}", x),
+            })
+            .collect();
+        welds::query::insert::bulk_insert(&trans, &things)
+            .await
+            .unwrap();
+        trans.rollback().await.unwrap();
     })
 }

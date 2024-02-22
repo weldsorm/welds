@@ -8,7 +8,7 @@ use crate::relations::{HasRelations, Relationship};
 use std::marker::PhantomData;
 use std::sync::Arc;
 
-//use super::select_cols::SelectBuilder;
+use super::select_cols::SelectBuilder;
 use super::update::bulk::UpdateBuilder;
 
 /// An un-executed Query.
@@ -171,14 +171,14 @@ where
         self
     }
 
-    ///// Select only the specific columns
-    //pub fn select<V, FN: AsFieldName<V>>(
-    //    self,
-    //    lam: impl Fn(<T as HasSchema>::Schema) -> FN,
-    //) -> SelectBuilder<'schema, T, DB> {
-    //    let sb = SelectBuilder::new(self);
-    //    sb.select(lam)
-    //}
+    /// Select only the specific columns
+    pub fn select<V, FN: AsFieldName<V>>(
+        self,
+        lam: impl Fn(<T as HasSchema>::Schema) -> FN,
+    ) -> SelectBuilder<T> {
+        let sb = SelectBuilder::new(self);
+        sb.select(lam)
+    }
 
     /// Filter the results returned by this query.
     /// Used when you want to filter on the columns of this table.

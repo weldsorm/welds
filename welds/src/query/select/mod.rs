@@ -11,11 +11,6 @@ use crate::{Syntax, WeldsError};
 use welds_connections::Client;
 use welds_connections::Row;
 
-//use anyhow::Result;
-//use sqlx::database::HasArguments;
-//use sqlx::IntoArguments;
-//use sqlx::Row;
-
 // ******************************************************************************************
 // This file contains all the stuff added onto the Querybuilder to allow it to run SELECTs
 // ******************************************************************************************
@@ -25,7 +20,7 @@ where
     T: Send + HasSchema,
 {
     /// Returns the SQL to count all rows in the resulting query
-    pub fn to_sql_count<'s>(&'s self, syntax: Syntax) -> String
+    pub fn to_sql_count(&self, syntax: Syntax) -> String
     where
         <T as HasSchema>::Schema: TableInfo + TableColumns,
     {
@@ -73,7 +68,7 @@ where
     }
 
     /// Get a copy of the SQL that will be executed when this query runs
-    pub fn to_sql<'s>(&'s self, syntax: Syntax) -> String
+    pub fn to_sql(&self, syntax: Syntax) -> String
     where
         <T as HasSchema>::Schema: TableInfo + TableColumns,
     {

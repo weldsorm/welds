@@ -5,8 +5,7 @@
 
 use welds::WeldsModel;
 
-#[derive(Debug, sqlx :: FromRow, WeldsModel)]
-#[welds(db(Postgres))]
+#[derive(Debug, WeldsModel)]
 #[welds(schema = "public", table = "Products")]
 #[welds(HasMany(order, super::super::order::Order, "product_id"))]
 pub struct Product {
@@ -26,8 +25,7 @@ pub struct Product {
 
 // Used to test finding table/model diffs
 
-#[derive(Debug, sqlx::FromRow, WeldsModel)]
-#[welds(db(Postgres))]
+#[derive(Debug, WeldsModel)]
 #[welds(schema = "bad_schema_name", table = "products")]
 #[welds(HasMany(order, super::super::order::Order, "product_id"))]
 pub struct BadProductMissingTable {

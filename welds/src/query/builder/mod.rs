@@ -1,14 +1,10 @@
 use welds_connections::Param;
 
 use crate::alias::TableAlias;
-//use crate::connection::Database;
+use crate::model_traits::{HasSchema, TableColumns, TableInfo, UniqueIdentifier};
 use crate::query::clause::exists::ExistIn;
 use crate::query::clause::{AsFieldName, ClauseAdder, OrderBy};
-//use crate::relations::{HasRelations, Relationship};
-use crate::model_traits::HasSchema;
-//use crate::table::{HasSchema, TableColumns, TableInfo, UniqueIdentifier};
-//use crate::writers::column::DbColumnWriter;
-//use crate::writers::limit_skip::DbLimitSkipWriter;
+use crate::relations::{HasRelations, Relationship};
 use std::marker::PhantomData;
 use std::sync::Arc;
 
@@ -75,74 +71,67 @@ where
         self
     }
 
-    ///// Add a query to this query (JOIN on a relationship)
-    ///// results on a query that is filtered using the results of both queries
-    //pub fn where_relation<R, Ship>(
-    //    mut self,
-    //    relationship: impl Fn(<T as HasRelations>::Relation) -> Ship,
-    //    filter: QueryBuilder<'schema, R, DB>,
-    //) -> Self
-    //where
-    //    DB: sqlx::Database + DbLimitSkipWriter,
-    //    T: HasRelations,
-    //    Ship: Relationship<R>,
-    //    R: HasSchema,
-    //    T: HasSchema,
-    //    R: Send + Unpin + for<'r> sqlx::FromRow<'r, DB::Row> + HasSchema,
-    //    <R as HasSchema>::Schema: TableInfo + TableColumns<DB> + UniqueIdentifier<DB>,
-    //    <T as HasSchema>::Schema: TableInfo + TableColumns<DB> + UniqueIdentifier<DB>,
-    //    <T as HasRelations>::Relation: Default,
-    //{
-    //    let ship = relationship(Default::default());
-    //    let out_col = ship.my_key::<DB, R::Schema, T::Schema>();
-    //    let inner_tn = <R as HasSchema>::Schema::identifier();
-    //    let inner_tn = inner_tn.join(".");
-    //    let inner_col = ship.their_key::<DB, R::Schema, T::Schema>();
-    //    let mut exist_in = ExistIn::<'schema, DB>::new(filter, out_col, inner_tn, inner_col);
-    //    exist_in.set_aliases(&self.alias_asigner);
-    //    self.exist_ins.push(exist_in);
-    //    self
-    //}
+    /// Add a query to this query (JOIN on a relationship)
+    /// results on a query that is filtered using the results of both queries
+    pub fn where_relation<R, Ship>(
+        mut self,
+        relationship: impl Fn(<T as HasRelations>::Relation) -> Ship,
+        filter: QueryBuilder<R>,
+    ) -> Self
+    where
+        T: HasRelations,
+        Ship: Relationship<R>,
+        R: HasSchema,
+        R: Send + Sync + HasSchema,
+        <R as HasSchema>::Schema: TableInfo + TableColumns + UniqueIdentifier,
+        <T as HasSchema>::Schema: TableInfo + TableColumns + UniqueIdentifier,
+        <T as HasRelations>::Relation: Default,
+    {
+        let ship = relationship(Default::default());
+        let out_col = ship.my_key::<R::Schema, T::Schema>();
+        let inner_tn = <R as HasSchema>::Schema::identifier();
+        let inner_tn = inner_tn.join(".");
+        let inner_col = ship.their_key::<R::Schema, T::Schema>();
+        let mut exist_in = ExistIn::new(filter, out_col, inner_tn, inner_col);
+        exist_in.set_aliases(&self.alias_asigner);
+        self.exist_ins.push(exist_in);
+        self
+    }
 
-    ///// Results in a query that is mapped into the query of one of its relationships
-    //pub fn map_query<R, Ship>(
-    //    self,
-    //    relationship: impl Fn(<T as HasRelations>::Relation) -> Ship,
-    //) -> QueryBuilder<'schema, R, DB>
-    //where
-    //    DB: sqlx::Database + DbLimitSkipWriter,
-    //    T: HasRelations,
-    //    Ship: Relationship<R>,
-    //    R: HasSchema,
-    //    T: HasSchema,
-    //    R: Send + Unpin + for<'r> sqlx::FromRow<'r, DB::Row> + HasSchema,
-    //    <R as HasSchema>::Schema: TableInfo + TableColumns<DB> + UniqueIdentifier<DB>,
-    //    <T as HasSchema>::Schema: TableInfo + TableColumns<DB> + UniqueIdentifier<DB>,
-    //    <T as HasRelations>::Relation: Default,
-    //{
-    //    let ship = relationship(Default::default());
-    //    let mut qb: QueryBuilder<R, DB> = QueryBuilder::new();
-    //    qb.set_aliases(&self.alias_asigner);
+    /// Results in a query that is mapped into the query of one of its relationships
+    pub fn map_query<R, Ship>(
+        self,
+        relationship: impl Fn(<T as HasRelations>::Relation) -> Ship,
+    ) -> QueryBuilder<R>
+    where
+        T: HasRelations,
+        Ship: Relationship<R>,
+        T: HasSchema,
+        R: Send + Sync + HasSchema,
+        <R as HasSchema>::Schema: TableInfo + TableColumns + UniqueIdentifier,
+        <T as HasSchema>::Schema: TableInfo + TableColumns + UniqueIdentifier,
+        <T as HasRelations>::Relation: Default,
+    {
+        let ship = relationship(Default::default());
+        let mut qb: QueryBuilder<R> = QueryBuilder::new();
+        qb.set_aliases(&self.alias_asigner);
 
-    //    let out_col = ship.their_key::<DB, R::Schema, T::Schema>();
-    //    let inner_tn = <T as HasSchema>::Schema::identifier().join(".");
-    //    let inner_col = ship.my_key::<DB, R::Schema, T::Schema>();
-    //    let exist_in = ExistIn::<'schema, DB>::new(self, out_col, inner_tn, inner_col);
+        let out_col = ship.their_key::<R::Schema, T::Schema>();
+        let inner_tn = <T as HasSchema>::Schema::identifier().join(".");
+        let inner_col = ship.my_key::<R::Schema, T::Schema>();
+        let exist_in = ExistIn::new(self, out_col, inner_tn, inner_col);
 
-    //    qb.exist_ins.push(exist_in);
-    //    qb
-    //}
+        qb.exist_ins.push(exist_in);
+        qb
+    }
 
-    //pub(crate) fn set_aliases(&mut self, alias_asigner: &Arc<TableAlias>)
-    //where
-    //    DB: sqlx::Database + DbLimitSkipWriter,
-    //{
-    //    self.alias_asigner = alias_asigner.clone();
-    //    self.alias = self.alias_asigner.next();
-    //    for sub in &mut self.exist_ins {
-    //        sub.set_aliases(&self.alias_asigner);
-    //    }
-    //}
+    pub(crate) fn set_aliases(&mut self, alias_asigner: &Arc<TableAlias>) {
+        self.alias_asigner = alias_asigner.clone();
+        self.alias = self.alias_asigner.next();
+        for sub in &mut self.exist_ins {
+            sub.set_aliases(&self.alias_asigner);
+        }
+    }
 
     /// Limit the number of rows returned by this query
     pub fn limit(mut self, x: i64) -> Self {
@@ -202,12 +191,6 @@ where
         <T as HasSchema>::Schema: Default,
         FIELD: AsFieldName<V>,
         V: 'static + Sync + Send + Clone + Param,
-        //
-        //DB: DbColumnWriter,
-        //<T as HasSchema>::Schema: Default,
-        //FIELD: AsFieldName<V>,
-        //V: for<'r> sqlx::Encode<'r, DB> + sqlx::Type<DB> + Send + Clone,
-        //V: 'static + Sync + Send,
     {
         let ub = UpdateBuilder::new(self);
         ub.set(lam, value)

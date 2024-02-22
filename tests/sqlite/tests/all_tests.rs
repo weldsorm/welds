@@ -6,9 +6,9 @@ use welds::connections::TransactStart;
 use welds::Syntax;
 
 pub mod bulk_delete;
-//pub mod bulk_update;
+pub mod bulk_update;
 //pub mod select_col;
-//pub mod sub_query_tests;
+pub mod sub_query_tests;
 
 type Db = sqlx::Sqlite;
 async fn get_conn() -> SqliteClient {
@@ -251,24 +251,23 @@ fn a_model_should_be_able_to_verify_its_schema_missing_column() {
 #[test]
 fn should_be_able_to_bulk_delete() {
     async_std::task::block_on(async {
-        assert!(false)
-        //let conn = get_conn().await;
-        //let trans = conn.begin().await.unwrap();
-        //let p1 = Product::all()
-        //    .limit(1)
-        //    .run(&trans)
-        //    .await
-        //    .unwrap()
-        //    .pop()
-        //    .unwrap();
-        //let mut order = Order::new();
-        //order.product_id = p1.id;
-        //order.save(&trans).await.unwrap();
-        //let q = Product::all().map_query(|p| p.orders);
-        //let count = q.count(&trans).await.unwrap();
-        //q.delete(&trans).await.unwrap();
-        //assert!(count > 0);
-        //trans.rollback().await.unwrap();
+        let conn = get_conn().await;
+        let trans = conn.begin().await.unwrap();
+        let p1 = Product::all()
+            .limit(1)
+            .run(&trans)
+            .await
+            .unwrap()
+            .pop()
+            .unwrap();
+        let mut order = Order::new();
+        order.product_id = p1.id;
+        order.save(&trans).await.unwrap();
+        let q = Product::all().map_query(|p| p.orders);
+        let count = q.count(&trans).await.unwrap();
+        q.delete(&trans).await.unwrap();
+        assert!(count > 0);
+        trans.rollback().await.unwrap();
     })
 }
 
@@ -311,14 +310,13 @@ fn should_be_able_to_bulk_update() {
 #[test]
 fn should_be_able_to_bulk_update2() {
     async_std::task::block_on(async {
-        assert!(false)
-        //let conn = get_conn().await;
-        //let q = Product::all()
-        //    .map_query(|p| p.orders)
-        //    .set(|x| x.code, "test2");
-        //let sql = q.to_sql(Syntax::Sqlite);
-        //eprintln!("SQL: {}", sql);
-        //q.run(&conn).await.unwrap();
+        let conn = get_conn().await;
+        let q = Product::all()
+            .map_query(|p| p.orders)
+            .set(|x| x.code, "test2");
+        let sql = q.to_sql(Syntax::Sqlite);
+        eprintln!("SQL: {}", sql);
+        q.run(&conn).await.unwrap();
     })
 }
 

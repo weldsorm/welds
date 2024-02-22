@@ -1,4 +1,3 @@
-type Db = sqlx::Sqlite;
 use welds::Syntax;
 use welds::WeldsModel;
 
@@ -53,22 +52,20 @@ fn should_be_able_to_delete_with_limit() {
 #[test]
 fn should_be_able_to_delete_with_existsin() {
     async_std::task::block_on(async {
-        assert!(false)
-        //let q = Product2::where_col(|p| p.pid.gt(1))
-        //    .map_query(|p| p.orders)
-        //    .delete_sql();
-        //assert_eq!(q, "DELETE FROM orders WHERE ( EXISTS ( SELECT pid FROM Products t1 WHERE t1.pid > ? AND t1.pid = orders.product_id ) )" );
+        let q = Product2::where_col(|p| p.pid.gt(1))
+            .map_query(|p| p.orders)
+            .delete_sql(Syntax::Sqlite);
+        assert_eq!(q, "DELETE FROM orders WHERE ( EXISTS ( SELECT pid FROM Products t1 WHERE t1.pid > ? AND t1.pid = orders.product_id ) )" );
     })
 }
 
 #[test]
 fn should_be_able_to_delete_with_wherein_with_limit() {
     async_std::task::block_on(async {
-        assert!(false)
-        //let q = Product2::where_col(|p| p.pid.gt(1))
-        //    .limit(1)
-        //    .map_query(|p| p.orders)
-        //    .delete_sql();
-        //assert_eq!(q, "DELETE FROM orders WHERE (  orders.product_id IN (SELECT t1.pid FROM Products t1 WHERE t1.pid > ? ORDER BY 1 LIMIT 1 OFFSET 0 )  )" );
+        let q = Product2::where_col(|p| p.pid.gt(1))
+            .limit(1)
+            .map_query(|p| p.orders)
+            .delete_sql(Syntax::Sqlite);
+        assert_eq!(q, "DELETE FROM orders WHERE (  orders.product_id IN (SELECT t1.pid FROM Products t1 WHERE t1.pid > ? ORDER BY 1 LIMIT 1 OFFSET 0 )  )" );
     })
 }

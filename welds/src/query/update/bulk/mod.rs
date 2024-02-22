@@ -181,9 +181,8 @@ where
     // this is to limit the number of row to that will be updated
     if qb.limit.is_none() {
         let wheres = qb.wheres.as_slice();
-        //let exists_in = qb.exist_ins.as_slice();
-        return build_where(syntax, next_params, alias, wheres, args);
-        //return build_where(syntax, next_params, alias, wheres, args, exists_in);
+        let exists_in = qb.exist_ins.as_slice();
+        return build_where(syntax, next_params, alias, wheres, args, exists_in);
     }
 
     let mut where_sql: Vec<String> = Vec::default();

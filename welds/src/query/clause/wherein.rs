@@ -44,9 +44,9 @@ where
         for w in &self.qb.wheres {
             w.bind(args);
         }
-        //for w in &self.qb.exist_ins {
-        //    w.bind(args);
-        //}
+        for w in &self.qb.exist_ins {
+            w.bind(args);
+        }
     }
 
     fn clause(&self, syntax: Syntax, alias: &str, next_params: &NextParam) -> Option<String> {
@@ -63,7 +63,7 @@ where
                 inner_alias,
                 &self.qb.wheres,
                 &mut args,
-                //&self.qb.exist_ins,
+                &self.qb.exist_ins,
             ),
             build_tail(syntax, self.qb),
         ]);

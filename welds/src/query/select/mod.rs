@@ -43,12 +43,11 @@ where
     {
         let next_params = NextParam::new(syntax);
         let wheres = self.wheres.as_slice();
-        //let exists_in = self.exist_ins.as_slice();
+        let exists_in = self.exist_ins.as_slice();
         let alias = &self.alias;
         join_sql_parts(&[
             build_head_count::<<T as HasSchema>::Schema>(alias, syntax),
-            //build_where(&next_params, alias, args, wheres, exists_in),
-            build_where(syntax, &next_params, alias, wheres, args),
+            build_where(syntax, &next_params, alias, wheres, args, exists_in),
             build_tail(syntax, self),
         ])
     }
@@ -92,12 +91,11 @@ where
     {
         let next_params = NextParam::new(syntax);
         let wheres = self.wheres.as_slice();
-        //let exists_in = self.exist_ins.as_slice();
+        let exists_in = self.exist_ins.as_slice();
         let alias = &self.alias;
         join_sql_parts(&[
             build_head_select::<<T as HasSchema>::Schema>(alias, syntax),
-            build_where(syntax, &next_params, alias, wheres, args),
-            //build_where(&next_params, alias, args, wheres, exists_in),
+            build_where(syntax, &next_params, alias, wheres, args, exists_in),
             build_tail(syntax, self),
         ])
     }

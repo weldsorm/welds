@@ -31,7 +31,7 @@ fn model_gen_inner(input: TokenStream) -> errors::Result<TokenStream> {
     let p4 = blocks::define_schema(&info);
     let p5 = blocks::table_info(&info);
     let p6 = blocks::table_columns(&info);
-    //let p7 = blocks::relations(&info);
+    let p7 = blocks::relations(&info);
     let p8 = blocks::unique_identifier(&info);
     let p9 = blocks::impl_struct(&info);
     let p10 = blocks::try_from_row(&info);
@@ -44,7 +44,7 @@ fn model_gen_inner(input: TokenStream) -> errors::Result<TokenStream> {
         #p4
         #p5
         #p6
-        //#p7
+        #p7
         #p8
         #p9
         #p10

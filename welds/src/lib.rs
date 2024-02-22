@@ -1,9 +1,9 @@
-pub(crate) mod alias;
 pub mod errors;
 pub use errors::WeldsError;
-
+pub(crate) mod alias;
 pub mod model_traits;
 pub mod query;
+pub mod relations;
 pub mod state;
 pub mod writers;
 

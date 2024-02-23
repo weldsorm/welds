@@ -13,23 +13,17 @@ pub trait TableInfo {
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Column {
     name: String,
+    rust_type: String,
     nullable: bool,
 }
 
-#[cfg(test)]
 impl Column {
-    pub fn mock(name: impl Into<String>, nullable: bool) -> Column {
-        Column {
-            name: name.into(),
-            nullable,
-        }
-    }
-}
-
-impl Column {
-    pub fn new(name: impl Into<String>, nullable: bool) -> Self {
+    pub fn new(name: impl Into<String>, rust_type: impl Into<String>, nullable: bool) -> Self {
+        let rust_type = rust_type.into();
+        let rust_type: String = rust_type.chars().filter(|c| !c.is_whitespace()).collect();
         Self {
             name: name.into(),
+            rust_type,
             nullable,
         }
     }
@@ -41,6 +35,10 @@ impl Column {
     /// used to know if you can query for None/Some
     pub fn nullable(&self) -> bool {
         self.nullable
+    }
+    /// The name of the column in the database
+    pub fn rust_type(&self) -> &str {
+        self.rust_type.as_str()
     }
 }
 

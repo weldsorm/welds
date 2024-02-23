@@ -194,30 +194,28 @@ fn should_be_able_to_scan_for_all_tables() {
 #[test]
 fn a_model_should_be_able_to_verify_its_schema_missing_table() {
     async_std::task::block_on(async {
-        assert!(false)
-        //let conn = get_conn().await;
-        //let issues = welds::check::schema::<BadProductMissingTable, _, _>(&conn)
-        //    .await
-        //    .unwrap();
-        //assert_eq!(issues.len(), 1);
-        //let issue = &issues[0];
-        //assert_eq!(issue.kind, welds::check::Kind::MissingTable);
+        let conn = get_conn().await;
+        let issues = welds::check::schema::<BadProductMissingTable, _>(&conn)
+            .await
+            .unwrap();
+        assert_eq!(issues.len(), 1);
+        let issue = &issues[0];
+        assert_eq!(issue.kind, welds::check::Kind::MissingTable);
     })
 }
 
 #[test]
 fn a_model_should_be_able_to_verify_its_schema_missing_column() {
     async_std::task::block_on(async {
-        assert!(false)
-        //let conn = get_conn().await;
-        //let issues = welds::check::schema::<BadProductColumns, _, _>(&conn)
-        //    .await
-        //    .unwrap();
-        //// NOTE: a column name changed so it is added on the model and removed in the db giving two warnings
-        //for issue in &issues {
-        //    eprintln!("{}", issue);
-        //}
-        //assert_eq!(issues.len(), 7);
+        let conn = get_conn().await;
+        let issues = welds::check::schema::<BadProductColumns, _>(&conn)
+            .await
+            .unwrap();
+        // NOTE: a column name changed so it is added on the model and removed in the db giving two warnings
+        for issue in &issues {
+            eprintln!("{}", issue);
+        }
+        assert_eq!(issues.len(), 7);
     })
 }
 

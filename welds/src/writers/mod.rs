@@ -3,6 +3,7 @@ pub(crate) mod count;
 pub(crate) mod insert;
 pub(crate) mod limit_skip;
 pub(crate) mod nextparam;
+pub mod types;
 
 pub use column::ColumnWriter;
 pub use count::CountWriter;

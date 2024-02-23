@@ -199,11 +199,10 @@ fn should_be_able_to_run_raw_sql() {
         // Go run a query from the database.
         let sql = "SELECT * FROM products";
 
-        let args = sqlx::postgres::PgArguments::default();
-        //let all = Product::from_raw_sql(sql, args, &conn).await.unwrap();
-        assert!(false);
+        let args = Vec::default();
+        let all = Product::from_raw_sql(sql, &args, &conn).await.unwrap();
 
-        //assert_eq!(all.len(), 6);
+        assert_eq!(all.len(), 6);
     })
 }
 
@@ -370,30 +369,28 @@ fn should_be_able_to_save_load_obj_with_db_enum_type() {
 #[test]
 fn a_model_should_be_able_to_verify_its_schema_missing_table() {
     async_std::task::block_on(async {
-        assert!(false);
-        //let conn = get_conn().await;
-        //let issues = welds::check::schema::<BadProductMissingTable, _, _>(&conn)
-        //    .await
-        //    .unwrap();
-        //assert_eq!(issues.len(), 1);
-        //let issue = &issues[0];
-        //assert_eq!(issue.kind, welds::check::Kind::MissingTable);
+        let conn = get_conn().await;
+        let issues = welds::check::schema::<BadProductMissingTable, _>(&conn)
+            .await
+            .unwrap();
+        assert_eq!(issues.len(), 1);
+        let issue = &issues[0];
+        assert_eq!(issue.kind, welds::check::Kind::MissingTable);
     })
 }
 
 #[test]
 fn a_model_should_be_able_to_verify_its_schema_missing_column() {
     async_std::task::block_on(async {
-        assert!(false)
-        //let conn = get_conn().await;
-        //let issues = welds::check::schema::<BadProductColumns, _, _>(&conn)
-        //    .await
-        //    .unwrap();
-        //// NOTE: a column name changed so it is added on the model and removed in the db giving two warnings
-        //for issue in &issues {
-        //    eprintln!("{}", issue);
-        //}
-        //assert_eq!(issues.len(), 5);
+        let conn = get_conn().await;
+        let issues = welds::check::schema::<BadProductColumns, _>(&conn)
+            .await
+            .unwrap();
+        // NOTE: a column name changed so it is added on the model and removed in the db giving two warnings
+        for issue in &issues {
+            eprintln!("{}", issue);
+        }
+        assert_eq!(issues.len(), 5);
     })
 }
 
@@ -508,14 +505,16 @@ fn array_table_should_detect_array_type_as_array() {
 #[test]
 fn should_be_able_to_check_the_schema() {
     async_std::task::block_on(async {
-        assert!(false)
-        //let conn = get_conn().await;
+        let conn = get_conn().await;
 
-        //use postgres_test::models::*;
+        use postgres_test::models::*;
 
-        //let issues = welds::check::schema::<table_with_array::TableWithArray, _, _>(&conn)
-        //    .await
-        //    .unwrap();
-        //assert!(issues.is_empty(), "{:?}", issues);
+        let issues = welds::check::schema::<table_with_array::TableWithArray, _>(&conn)
+            .await
+            .unwrap();
+        for issue in &issues {
+            eprintln!("{}", issue);
+        }
+        assert!(issues.is_empty(), "{:?}", issues);
     })
 }

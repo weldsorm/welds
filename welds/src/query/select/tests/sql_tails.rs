@@ -43,7 +43,10 @@ impl TableInfo for ProductSchema {
 
 impl TableColumns for ProductSchema {
     fn columns() -> Vec<Column> {
-        vec![Column::mock("a", false), Column::mock("b", true)]
+        vec![
+            Column::new("a", "i32", false),
+            Column::new("b", "i32", true),
+        ]
     }
     fn primary_keys() -> Vec<Column> {
         vec![]

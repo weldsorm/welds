@@ -17,11 +17,14 @@ pub(crate) fn write_for_db(info: &Info, pk: &Column) -> TokenStream {
     let def = &info.schemastruct;
     let name = &pk.dbname;
     let nullable = pk.is_option;
+    let ft = &pk.field_type;
+    let ty = quote! { #ft };
+    let rust_type = ty.to_string();
 
     quote! {
         impl #wp::model_traits::UniqueIdentifier for #def {
             fn id_column() -> #wp::model_traits::Column {
-                #wp::model_traits::Column::new(#name, #nullable)
+                #wp::model_traits::Column::new(#name, #rust_type, #nullable)
             }
         }
     }
@@ -39,7 +42,7 @@ mod tests {
         let expected: &str = r#"
             impl welds::model_traits::UniqueIdentifier for MockSchema {
                 fn id_column() -> welds::model_traits::Column {
-                    welds::model_traits::Column::new("id", false)
+                    welds::model_traits::Column::new("id", "i64" ,false)
                 }
             }
         "#;

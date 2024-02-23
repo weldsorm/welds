@@ -12,7 +12,6 @@ pub(crate) fn write(info: &Info) -> TokenStream {
 
     pub fn where_col(
         lam: impl Fn(#schema) -> Box<dyn #wp::query::clause::ClauseAdder>,
-        //lam: impl Fn(<T as HasSchema>::Schema) -> Box<dyn ClauseAdder>,
     ) -> #wp::query::builder::QueryBuilder<Self>
     where
         #schema: #wp::model_traits::TableColumns,

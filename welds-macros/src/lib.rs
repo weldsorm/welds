@@ -51,14 +51,14 @@ fn model_gen_inner(input: TokenStream) -> errors::Result<TokenStream> {
         #p11
     };
 
-    //// Want to see what the macros generate?
-    //let code = q.to_string();
-    //std::fs::create_dir_all("/tmp/weldsmacro/");
-    //let filename = format!(
-    //    "/tmp/weldsmacro/{}.rs",
-    //    info.defstruct.to_string().to_lowercase()
-    //);
-    //std::fs::write(filename, code);
+    // Want to see what the macros generate?
+    let code = q.to_string();
+    std::fs::create_dir_all("/tmp/weldsmacro/");
+    let filename = format!(
+        "/tmp/weldsmacro/{}.rs",
+        info.defstruct.to_string().to_lowercase()
+    );
+    std::fs::write(filename, code);
 
     Ok(q.into())
 }

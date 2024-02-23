@@ -42,7 +42,7 @@ impl TableInfo for Product2Schema {
 
 impl TableColumns for Product2Schema {
     fn columns() -> Vec<Column> {
-        vec![Column::mock("dbname", false)]
+        vec![Column::new("dbname", "String", true)]
     }
     fn primary_keys() -> Vec<Column> {
         vec![]

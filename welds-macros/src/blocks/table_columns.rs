@@ -15,13 +15,14 @@ pub(crate) fn write_cols(info: &Info) -> TokenStream {
         .filter(|x| !x.ignore)
         .map(|c| {
             let ft = &c.field_type;
-            let mut ty = quote! { #ft };
+            let ty = quote! { #ft };
             let nullable = c.is_option;
-            if nullable {
-                ty = quote! { Option<#ty> };
-            }
+            //if nullable {
+            //    ty = quote! { Option<#ty> };
+            //}
             let dbname = c.dbname.as_str();
-            quote! { Column::new(#dbname, #nullable) }
+            let rust_type = ty.to_string();
+            quote! { Column::new(#dbname, #rust_type, #nullable) }
         })
         .collect();
     quote! { vec![ #(#parts),* ] }
@@ -34,13 +35,11 @@ pub(crate) fn write_pks(info: &Info) -> TokenStream {
         .filter(|x| !x.ignore)
         .map(|c| {
             let ft = &c.field_type;
-            let mut ty = quote! { #ft };
+            let ty = quote! { #ft };
             let nullable = c.is_option;
-            if nullable {
-                ty = quote! { Option<#ty> };
-            }
             let dbname = c.dbname.as_str();
-            quote! { Column::new(#dbname, #nullable) }
+            let rust_type = ty.to_string();
+            quote! { Column::new(#dbname, #rust_type, #nullable) }
         })
         .collect();
     quote! { vec![ #(#parts),* ] }
@@ -82,11 +81,11 @@ mod tests {
             impl welds::model_traits::TableColumns for MockSchema {
                 fn primary_keys() -> Vec<welds::model_traits::Column> {
                     use welds::model_traits::Column;
-                    vec![Column::new("id", false)]
+                    vec![Column::new("id", "i64" , false)]
                 }
                 fn columns() -> Vec<welds::model_traits::Column> {
                     use welds::model_traits::Column;
-                    vec![Column::new("id", false), Column::new("num", true)]
+                    vec![Column::new("id", "i64", false), Column::new("num", "f32",  true)]
                 }
             }
         "#;

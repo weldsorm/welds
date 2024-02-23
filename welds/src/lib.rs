@@ -13,6 +13,9 @@ pub mod detect;
 #[cfg(feature = "check")]
 pub mod check;
 
+//#[cfg(feature = "migrations")]
+//pub mod migrations;
+
 pub use welds_connections as connections;
 /// Re-export welds_connections
 pub use welds_connections::{Client, Row, Syntax, TransactStart};

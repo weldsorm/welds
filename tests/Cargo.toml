@@ -1,6 +1,6 @@
 [workspace]
-default-members = ["testlib", "sqlite"]
-members = ["testlib", "sqlite"]
+default-members = ["testlib", "sqlite", "postgres"]
+members = ["testlib", "sqlite", "postgres"]
 #default-members = ["mssql", "mysql", "postgres", "testlib", "sqlite"]
 #members = ["mssql", "mysql", "postgres", "testlib", "sqlite"]
 

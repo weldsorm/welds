@@ -5,7 +5,7 @@
 
 use welds::WeldsModel;
 
-#[derive(Debug, WeldsModel)]
+#[derive(Debug, sqlx::FromRow, WeldsModel)]
 #[welds(schema = "public", table = "Products")]
 #[welds(HasMany(order, super::super::order::Order, "product_id"))]
 pub struct Product {
@@ -15,10 +15,13 @@ pub struct Product {
     pub barcode: Option<Vec<u8>>,
     pub description: Option<String>,
     pub name: String,
+    #[welds(rename = "price1")]
     #[sqlx(rename = "price1")]
     pub price_1: Option<f32>,
+    #[welds(rename = "price2")]
     #[sqlx(rename = "price2")]
     pub price_2: Option<f64>,
+    #[welds(rename = "price3")]
     #[sqlx(rename = "price3")]
     pub price_3: Option<sqlx::postgres::types::PgMoney>,
 }
@@ -35,11 +38,11 @@ pub struct BadProductMissingTable {
     pub barcode: Option<Vec<u8>>,
     pub description: Option<String>,
     pub name: String,
-    #[sqlx(rename = "price1")]
+    #[welds(rename = "price1")]
     pub price_1: Option<f32>,
-    #[sqlx(rename = "price2")]
+    #[welds(rename = "price2")]
     pub price_2: Option<f64>,
-    #[sqlx(rename = "price3")]
+    #[welds(rename = "price3")]
     pub price_3: Option<sqlx::postgres::types::PgMoney>,
 }
 
@@ -54,10 +57,10 @@ pub struct BadProductColumns {
     pub barcode: Option<Vec<u8>>,
     pub description2: Option<String>,
     pub name: Option<String>,
-    #[sqlx(rename = "price1")]
+    #[welds(rename = "price1")]
     pub price_1: Option<f32>,
-    #[sqlx(rename = "price2")]
+    #[welds(rename = "price2")]
     pub price_2: Option<f64>,
-    #[sqlx(rename = "price3")]
+    #[welds(rename = "price3")]
     pub price_3: Option<sqlx::postgres::types::PgMoney>,
 }

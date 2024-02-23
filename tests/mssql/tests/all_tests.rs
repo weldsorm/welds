@@ -1,14 +1,17 @@
 use mssql_test::models::order::Order;
 use mssql_test::models::product::{BadProductColumns, BadProductMissingTable, Product};
 use mssql_test::models::Thing1;
-use welds::Mssql;
+use welds::connections::mssql::MssqlClient;
+use welds::TransactStart;
 
-async fn get_conn() -> welds::connection::Pool<welds::Mssql> {
-    let sqlx_conn = testlib::mssql::conn().await.unwrap();
-    sqlx_conn.into()
+async fn get_conn() -> MssqlClient {
+    //let sqlx_conn = testlib::mssql::conn().await.unwrap();
+    //let client: MssqlClient = sqlx_conn.into();
+    //client
+    todo!()
 }
 
-#[derive(Default, Debug, Clone, sqlx::FromRow)]
+#[derive(Default, Debug, Clone)]
 pub struct Test {
     pub id: i32,
 }

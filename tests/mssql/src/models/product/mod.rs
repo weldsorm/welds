@@ -3,24 +3,22 @@ pub use definition::*;
 
 use welds::WeldsModel;
 
-#[derive(Debug, sqlx::FromRow, WeldsModel)]
-#[welds(db(Mssql))]
+#[derive(Debug, WeldsModel)]
 #[welds(schema = "dbo", table = "Products")]
 pub struct BadProductMissingTable {
     #[welds(primary_key)]
-    #[sqlx(rename = "ID")]
+    #[welds(rename = "ID")]
     pub id: i32,
 }
 
-#[derive(Debug, sqlx :: FromRow, WeldsModel)]
-#[welds(db(Mssql))]
+#[derive(Debug, WeldsModel)]
 #[welds(schema = "welds", table = "Products")]
 pub struct BadProductColumns {
     #[welds(primary_key)]
-    #[sqlx(rename = "id")]
+    #[welds(rename = "id")]
     pub id: i32,
     pub active: i64,
-    #[sqlx(rename = "Description")]
+    #[welds(rename = "Description")]
     pub description: Option<String>,
     //pub name: String,
     //#[sqlx(rename = "price1")]

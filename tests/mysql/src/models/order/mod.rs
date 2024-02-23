@@ -6,8 +6,7 @@ use welds::WeldsModel;
  * The this model is here for the purpose of testing core itself
  * */
 
-#[derive(Debug, sqlx::FromRow, WeldsModel)]
-#[welds(db(Mysql))]
+#[derive(Debug, WeldsModel)]
 #[welds(schema = "mysql", table = "Orders")]
 #[welds(BelongsTo(product, super::product::Product, "product_id"))]
 pub struct Order {

@@ -1,10 +1,14 @@
 use mysql_test::models::order::Order;
 use mysql_test::models::product::{BadProductColumns, BadProductMissingTable, Product};
 use mysql_test::models::Thing1;
+use welds::connections::mysql::MysqlClient;
+use welds::Syntax;
+use welds::TransactStart;
 
-async fn get_conn() -> welds::connection::Pool<sqlx::MySql> {
+async fn get_conn() -> MysqlClient {
     let sqlx_conn = testlib::mysql::conn().await.unwrap();
-    sqlx_conn.into()
+    let client: MysqlClient = sqlx_conn.into();
+    client
 }
 
 #[derive(Default, Debug, Clone, sqlx::FromRow)]
@@ -25,7 +29,7 @@ fn should_be_able_to_read_all_products() {
     async_std::task::block_on(async {
         let conn = get_conn().await;
         let q = Product::all();
-        eprintln!("SQL: {}", q.to_sql());
+        eprintln!("SQL: {}", q.to_sql(Syntax::Mysql));
         let all = q.run(&conn).await.unwrap();
         assert_eq!(all.len(), 6, "Unexpected number of rows returned");
     })
@@ -36,7 +40,7 @@ fn should_be_able_to_filter_on_id() {
     async_std::task::block_on(async {
         let conn = get_conn().await;
         let q = Product::where_col(|x| x.id.equal(1));
-        eprintln!("SQL: {}", q.to_sql());
+        eprintln!("SQL: {}", q.to_sql(Syntax::Mysql));
         let just_horse = q.run(&conn).await.unwrap();
         assert_eq!(
             just_horse.len(),
@@ -51,7 +55,7 @@ fn should_be_able_to_filter_on_equal() {
     async_std::task::block_on(async {
         let conn = get_conn().await;
         let q = Product::where_col(|x| x.price1.equal(1.10));
-        eprintln!("SQL: {}", q.to_sql());
+        eprintln!("SQL: {}", q.to_sql(Syntax::Mysql));
         let just_horse = q.run(&conn).await.unwrap();
         assert_eq!(
             just_horse.len(),
@@ -66,7 +70,7 @@ fn should_be_able_to_filter_on_lt() {
     async_std::task::block_on(async {
         let conn = get_conn().await;
         let q = Product::where_col(|x| x.price1.lt(3.00));
-        eprintln!("SQL: {}", q.to_sql());
+        eprintln!("SQL: {}", q.to_sql(Syntax::Mysql));
         let data = q.run(&conn).await.unwrap();
         assert_eq!(data.len(), 2, "Expected horse and dog",);
     })
@@ -77,7 +81,7 @@ fn should_be_able_to_filter_on_lte() {
     async_std::task::block_on(async {
         let conn = get_conn().await;
         let q = Product::where_col(|x| x.price1.lte(2.10));
-        eprintln!("SQL: {}", q.to_sql());
+        eprintln!("SQL: {}", q.to_sql(Syntax::Mysql));
         let data = q.run(&conn).await.unwrap();
         assert_eq!(data.len(), 2, "Expected horse and dog",);
     })
@@ -89,12 +93,12 @@ fn should_be_able_to_filter_with_nulls() {
         let conn = get_conn().await;
         // is null
         let q1 = Product::where_col(|x| x.price1.equal(None));
-        eprintln!("SQL_1: {}", q1.to_sql());
+        eprintln!("SQL_1: {}", q1.to_sql(Syntax::Mysql));
         let data1 = q1.run(&conn).await.unwrap();
         assert_eq!(data1.len(), 0, "Expected All",);
         // is not null
         let q1 = Product::where_col(|x| x.price1.not_equal(None));
-        eprintln!("SQL_2: {}", q1.to_sql());
+        eprintln!("SQL_2: {}", q1.to_sql(Syntax::Mysql));
         let data1 = q1.run(&conn).await.unwrap();
         assert_eq!(data1.len(), 6, "Expected All",);
     })
@@ -105,7 +109,7 @@ fn should_be_able_to_count_in_sql() {
     async_std::task::block_on(async {
         let conn = get_conn().await;
         let q = Product::where_col(|x| x.price1.lte(2.10));
-        eprintln!("SQL: {}", q.to_sql());
+        eprintln!("SQL: {}", q.to_sql(Syntax::Mysql));
         let count = q.count(&conn).await.unwrap();
         assert_eq!(count, 2,);
     })
@@ -116,7 +120,7 @@ fn should_be_able_to_limit_results_in_sql() {
     async_std::task::block_on(async {
         let conn = get_conn().await;
         let q = Product::all().limit(2).offset(1);
-        eprintln!("SQL: {}", q.to_sql());
+        eprintln!("SQL: {}", q.to_sql(Syntax::Mysql));
         let count = q.run(&conn).await.unwrap().len();
         assert_eq!(count, 2);
     })
@@ -127,7 +131,7 @@ fn should_be_able_to_order_by_id() {
     async_std::task::block_on(async {
         let conn = get_conn().await;
         let q = Product::all().order_by_asc(|x| x.id);
-        eprintln!("SQL: {}", q.to_sql());
+        eprintln!("SQL: {}", q.to_sql(Syntax::Mysql));
         let all = q.run(&conn).await.unwrap();
         let ids: Vec<i32> = all.iter().map(|x| x.id).collect();
         let mut ids_sorted = ids.clone();
@@ -190,28 +194,30 @@ fn should_be_able_to_scan_for_all_tables() {
 #[test]
 fn a_model_should_be_able_to_verify_its_schema_missing_table() {
     async_std::task::block_on(async {
-        let conn = get_conn().await;
-        let issues = welds::check::schema::<BadProductMissingTable, _, _>(&conn)
-            .await
-            .unwrap();
-        assert_eq!(issues.len(), 1);
-        let issue = &issues[0];
-        assert_eq!(issue.kind, welds::check::Kind::MissingTable);
+        assert!(false)
+        //let conn = get_conn().await;
+        //let issues = welds::check::schema::<BadProductMissingTable, _, _>(&conn)
+        //    .await
+        //    .unwrap();
+        //assert_eq!(issues.len(), 1);
+        //let issue = &issues[0];
+        //assert_eq!(issue.kind, welds::check::Kind::MissingTable);
     })
 }
 
 #[test]
 fn a_model_should_be_able_to_verify_its_schema_missing_column() {
     async_std::task::block_on(async {
-        let conn = get_conn().await;
-        let issues = welds::check::schema::<BadProductColumns, _, _>(&conn)
-            .await
-            .unwrap();
-        // NOTE: a column name changed so it is added on the model and removed in the db giving two warnings
-        for issue in &issues {
-            eprintln!("{}", issue);
-        }
-        assert_eq!(issues.len(), 7);
+        assert!(false)
+        //let conn = get_conn().await;
+        //let issues = welds::check::schema::<BadProductColumns, _, _>(&conn)
+        //    .await
+        //    .unwrap();
+        //// NOTE: a column name changed so it is added on the model and removed in the db giving two warnings
+        //for issue in &issues {
+        //    eprintln!("{}", issue);
+        //}
+        //assert_eq!(issues.len(), 7);
     })
 }
 
@@ -245,7 +251,7 @@ fn should_be_able_to_bulk_update() {
         let q = Order::all()
             .where_col(|x| x.code.equal(None))
             .set(|x| x.code, "test");
-        let sql = q.to_sql();
+        let sql = q.to_sql(Syntax::Mysql);
         eprintln!("SQL: {}", sql);
         q.run(&conn).await.unwrap();
     })
@@ -258,7 +264,7 @@ fn should_be_able_to_bulk_update2() {
         let q = Product::all()
             .map_query(|p| p.orders)
             .set(|x| x.code, "test2");
-        let sql = q.to_sql();
+        let sql = q.to_sql(Syntax::Mysql);
         eprintln!("SQL: {}", sql);
         q.run(&conn).await.unwrap();
     })

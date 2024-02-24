@@ -1,8 +1,8 @@
-use crate::alias::TableAlias;
 use crate::model_traits::{HasSchema, TableColumns, TableInfo, UniqueIdentifier};
 use crate::query::builder::QueryBuilder;
 use crate::query::clause::{AsFieldName, ClauseAdder};
 use crate::relations::{HasRelations, Relationship};
+use crate::writers::alias::TableAlias;
 pub use join::Join;
 use join::JoinBuilder;
 use select_column::SelectColumn;

@@ -1,3 +1,4 @@
+pub(crate) mod alias;
 pub(crate) mod column;
 pub(crate) mod count;
 pub(crate) mod insert;

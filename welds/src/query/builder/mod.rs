@@ -1,10 +1,10 @@
 use welds_connections::Param;
 
-use crate::alias::TableAlias;
 use crate::model_traits::{HasSchema, TableColumns, TableInfo, UniqueIdentifier};
 use crate::query::clause::exists::ExistIn;
 use crate::query::clause::{AsFieldName, ClauseAdder, OrderBy};
 use crate::relations::{HasRelations, Relationship};
+use crate::writers::alias::TableAlias;
 use std::marker::PhantomData;
 use std::sync::Arc;
 

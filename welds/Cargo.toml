@@ -25,9 +25,9 @@ welds-macros = { path="../welds-macros", version = "^1.0" }
 "mssql" = ["welds-connections/mssql"]
 "sqlite" = ["welds-connections/sqlite"]
 "full" = ["postgres", "mysql", "mssql", "sqlite", "check", "detect", "migrations" ]
-"check" = ["colored"]
 "detect" = []
-"migrations" = []
+"check" = ["detect", "colored"]
+"migrations" = ["detect"]
 
 #"detect" = []
 #"check" = ["detect", "dep:colored"]

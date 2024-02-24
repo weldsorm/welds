@@ -1,5 +1,5 @@
 use super::types::{IdType, Index, Type};
-use crate::table::TableIdent;
+use crate::model_traits::TableIdent;
 
 mod sqlite_writer;
 

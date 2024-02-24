@@ -1,7 +1,19 @@
-use super::types::{IdType, Index, Type};
+use super::types::{Index, Type};
+use crate::migrations::writers;
+use crate::migrations::MigrationWriter;
 use crate::model_traits::TableIdent;
+use crate::Syntax;
 
-mod sqlite_writer;
+impl MigrationWriter for TableBuilder {
+    fn down_sql(&self, _syntax: Syntax) -> Vec<String> {
+        let table = &self.ident;
+        vec![writers::drop_table(table)]
+    }
+
+    fn up_sql(&self, syntax: Syntax) -> Vec<String> {
+        writers::create_table::from_builder(syntax, self)
+    }
+}
 
 pub fn create_table(name: impl Into<String>) -> TableBuilder {
     let name: String = name.into();
@@ -14,14 +26,14 @@ pub fn create_table(name: impl Into<String>) -> TableBuilder {
 }
 
 pub struct TableBuilder {
-    ident: TableIdent,
-    pk: IdBuilder,
-    columns: Vec<ColumnBuilder>,
+    pub(crate) ident: TableIdent,
+    pub(crate) pk: IdBuilder,
+    pub(crate) columns: Vec<ColumnBuilder>,
 }
 
 impl TableBuilder {
-    pub fn id(mut self, lam: fn(fn(&str, IdType) -> IdBuilder) -> IdBuilder) -> Self {
-        let builder = |name: &str, ty: IdType| -> IdBuilder {
+    pub fn id(mut self, lam: fn(fn(&str, Type) -> IdBuilder) -> IdBuilder) -> Self {
+        let builder = |name: &str, ty: Type| -> IdBuilder {
             IdBuilder {
                 name: name.to_string(),
                 ty,
@@ -49,11 +61,11 @@ impl TableBuilder {
 }
 
 pub struct ColumnBuilder {
-    name: String,
-    ty: Type,
-    nullable: bool,
-    index: Option<Index>,
-    index_name: Option<String>,
+    pub(crate) name: String,
+    pub(crate) ty: Type,
+    pub(crate) nullable: bool,
+    pub(crate) index: Option<Index>,
+    pub(crate) index_name: Option<String>,
 }
 
 impl ColumnBuilder {
@@ -83,15 +95,18 @@ impl ColumnBuilder {
 }
 
 pub struct IdBuilder {
-    name: String,
-    ty: IdType,
+    pub(crate) name: String,
+    pub(crate) ty: Type,
 }
 
 impl Default for IdBuilder {
     fn default() -> Self {
         Self {
             name: "id".to_string(),
-            ty: IdType::Int,
+            ty: Type::Int,
         }
     }
 }
+
+#[cfg(test)]
+mod tests;

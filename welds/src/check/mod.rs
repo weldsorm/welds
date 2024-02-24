@@ -2,7 +2,7 @@ use crate::detect::ColumnDef;
 use crate::errors::Result;
 use crate::model_traits::Column;
 use crate::model_traits::{HasSchema, TableColumns, TableInfo};
-use crate::writers::types::{get_pairs, Pair};
+use crate::writers::types::{are_equivalent_types, get_pairs, Pair};
 use crate::Client;
 use crate::Syntax;
 
@@ -100,6 +100,14 @@ fn zip_by_name<'a>(
 /// returns true if this db column and model field do not line up
 fn build_diff(pairs: &[Pair], dbcol: &ColumnDef, field: &Column) -> Option<Diff> {
     let type_changed = !are_equivalent_types(pairs, &dbcol.ty, field.rust_type());
+
+    //eprintln!(
+    //    "DB: {}\t\tR: {}\t{:?}",
+    //    dbcol.ty,
+    //    field.rust_type(),
+    //    type_changed
+    //);
+
     let nullable_chagned = dbcol.null != field.nullable();
     if type_changed || nullable_chagned {
         return Some(Diff {
@@ -112,17 +120,6 @@ fn build_diff(pairs: &[Pair], dbcol: &ColumnDef, field: &Column) -> Option<Diff>
         });
     }
     None
-}
-
-fn are_equivalent_types(pairs: &[Pair], db: &str, rust: &str) -> bool {
-    let db = db.trim().to_uppercase();
-    eprintln!("DB: {}\t\tR: {}", db, rust);
-    for pair in pairs {
-        if pair.matches(&db, rust) {
-            return true;
-        }
-    }
-    false
 }
 
 fn build_diffs<'a>(

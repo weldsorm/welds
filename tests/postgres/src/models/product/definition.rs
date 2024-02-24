@@ -52,11 +52,11 @@ pub struct BadProductMissingTable {
 #[welds(HasMany(order, super::super::order::Order, "product_id"))]
 pub struct BadProductColumns {
     #[welds(primary_key)]
-    pub product_id: i64,
-    pub active: bool,
+    pub product_id: i64, // type should be i32
+    pub active: bool, // null was removed
     pub barcode: Option<Vec<u8>>,
-    pub description2: Option<String>,
-    pub name: Option<String>,
+    pub description2: Option<String>, // column name is wrong
+    pub name: Option<String>,         // null was added
     #[welds(rename = "price1")]
     pub price_1: Option<f32>,
     #[welds(rename = "price2")]

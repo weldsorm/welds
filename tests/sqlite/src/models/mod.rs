@@ -25,6 +25,7 @@ pub struct Thing2 {
 #[welds(table = "Thing3")]
 pub struct Thing3 {
     #[welds(primary_key)]
-    pub id: i32,
+    // we should still be able to use the table with a small type
+    pub id: i16,
     pub value: String,
 }

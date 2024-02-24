@@ -9,7 +9,7 @@ use std::sync::Mutex;
 use crate::mssql::transaction::MssqlTransaction;
 
 pub struct Transaction<'t> {
-    inner: Mutex<TransT<'t>>,
+    inner: Mutex<Option<TransT<'t>>>,
     syntax: crate::Syntax,
 }
 
@@ -28,19 +28,44 @@ impl<'t> Transaction<'t> {
 
         Self {
             syntax,
-            inner: Mutex::new(inner),
+            inner: Mutex::new(Some(inner)),
         }
     }
 
     pub async fn rollback(self) -> Result<()> {
-        let inner = self.inner.into_inner().unwrap();
+        let inner = self.take_conn();
         inner.rollback().await?;
         Ok(())
     }
     pub async fn commit(self) -> Result<()> {
-        let inner = self.inner.into_inner().unwrap();
-        inner.commit().await?;
+        let inner = self.take_conn();
+        inner.commit().await;
         Ok(())
+    }
+}
+
+impl<'t> Transaction<'t> {
+    // HACK - CODE SMELL:
+    // we need a &mut conn for the connection pool
+    // this (take_conn/return_conn) acts like a CellRef
+    // It will panic if you try to the conn more one at at time
+    //
+    fn take_conn(&self) -> TransT<'t> {
+        let mut placeholder = None;
+        let mut m = self.inner.lock().unwrap();
+        let inner: &mut Option<TransT<'t>> = &mut m;
+        // Panic if the conn is already taken
+        assert!(inner.is_some(), "Pool was already taken");
+        std::mem::swap(&mut placeholder, inner);
+        placeholder.unwrap()
+    }
+    fn return_conn(&self, conn: TransT<'t>) {
+        let mut placeholder = Some(conn);
+        let mut m = self.inner.lock().unwrap();
+        let inner: &mut Option<TransT<'t>> = &mut m;
+        // Panic if we already have a the conn
+        assert!(inner.is_none(), "Overriding existing pool");
+        std::mem::swap(&mut placeholder, inner);
     }
 }
 
@@ -84,29 +109,6 @@ impl<'t> TransT<'t> {
     }
 }
 
-impl<'t> Transaction<'t> {
-    /// HACK: returns a mut ref to the trans to run the queries with.
-    #[allow(clippy::mut_from_ref)]
-    fn as_inner_mut<'a>(&'a self) -> &'a mut TransT<'a> {
-        // HACK: remove if you can
-        // we need a &mut to send to sqlx
-        // sqlx need the trans to be mut so it can rollback/commit.
-        // we need a mut ref so we can run the queries we send to sqlx
-        //
-        // This hack should be safe in that the code that calls is NOT allowed to rollback or
-        // commit.
-        //
-        // rollback and commit should only be allowed using the two pub methods
-        let lock = self.inner.lock().unwrap();
-        let b: &TransT = &lock;
-        let ptr: *const TransT = b;
-        unsafe {
-            let ptr_mut = ptr as *mut TransT;
-            &mut *ptr_mut
-        }
-    }
-}
-
 #[cfg(feature = "mysql")]
 use super::mysql::MysqlParam;
 #[cfg(feature = "postgres")]
@@ -121,93 +123,113 @@ impl<'t> Client for Transaction<'t> {
     }
 
     async fn execute(&self, sql: &str, params: &[&(dyn Param + Sync)]) -> Result<ExecuteResult> {
-        let mut inner = self.as_inner_mut();
-        match &mut inner {
-            #[cfg(feature = "sqlite")]
-            TransT::Sqlite(t) => {
-                let x: &mut <sqlx::Sqlite as sqlx::Database>::Connection = t;
-                let mut query = sqlx::query::<sqlx::Sqlite>(sql);
-                for param in params {
-                    query = SqliteParam::add_param(*param, query)
-                }
-                let t = query.execute(x).await?;
-                Ok(ExecuteResult {
-                    rows_affected: t.rows_affected(),
-                })
-            }
-
-            #[cfg(feature = "postgres")]
-            TransT::Postgres(t) => {
-                let x: &mut <sqlx::Postgres as sqlx::Database>::Connection = t;
-                let mut query = sqlx::query::<sqlx::Postgres>(sql);
-                for param in params {
-                    query = PostgresParam::add_param(*param, query)
-                }
-                let t = query.execute(x).await?;
-                Ok(ExecuteResult {
-                    rows_affected: t.rows_affected(),
-                })
-            }
-
-            #[cfg(feature = "mysql")]
-            TransT::Mysql(t) => {
-                let x: &mut <sqlx::MySql as sqlx::Database>::Connection = t;
-                let mut query = sqlx::query::<sqlx::MySql>(sql);
-                for param in params {
-                    query = MysqlParam::add_param(*param, query)
-                }
-                let t = query.execute(x).await?;
-                Ok(ExecuteResult {
-                    rows_affected: t.rows_affected(),
-                })
-            }
-
-            #[cfg(feature = "mssql")]
-            TransT::Mssql(inner) => inner.execute(sql, params).await,
-        }
+        let mut inner = self.take_conn();
+        let results = execute_inner(&mut inner, sql, params).await;
+        self.return_conn(inner);
+        results
     }
 
     async fn fetch_rows(&self, sql: &str, params: &[&(dyn Param + Sync)]) -> Result<Vec<Row>> {
-        let mut inner = self.as_inner_mut();
-        match &mut inner {
-            #[cfg(feature = "sqlite")]
-            TransT::Sqlite(t) => {
-                let x: &mut <sqlx::Sqlite as sqlx::Database>::Connection = t;
-                let mut query = sqlx::query::<sqlx::Sqlite>(sql);
-                for param in params {
-                    query = SqliteParam::add_param(*param, query)
-                }
-                let mut raw_rows = query.fetch_all(x).await?;
-                let rows: Vec<Row> = raw_rows.drain(..).map(Row::from).collect();
-                Ok(rows)
-            }
+        let mut inner = self.take_conn();
+        let results = fetch_rows_inner(&mut inner, sql, params).await;
+        self.return_conn(inner);
+        results
+    }
+}
 
-            #[cfg(feature = "postgres")]
-            TransT::Postgres(t) => {
-                let x: &mut <sqlx::Postgres as sqlx::Database>::Connection = t;
-                let mut query = sqlx::query::<sqlx::Postgres>(sql);
-                for param in params {
-                    query = PostgresParam::add_param(*param, query)
-                }
-                let mut raw_rows = query.fetch_all(x).await?;
-                let rows: Vec<Row> = raw_rows.drain(..).map(Row::from).collect();
-                Ok(rows)
+async fn execute_inner<'t>(
+    inner: &mut TransT<'t>,
+    sql: &str,
+    params: &[&(dyn Param + Sync)],
+) -> Result<ExecuteResult> {
+    match inner {
+        #[cfg(feature = "sqlite")]
+        TransT::Sqlite(t) => {
+            let x: &mut <sqlx::Sqlite as sqlx::Database>::Connection = t;
+            let mut query = sqlx::query::<sqlx::Sqlite>(sql);
+            for param in params {
+                query = SqliteParam::add_param(*param, query)
             }
-
-            #[cfg(feature = "mysql")]
-            TransT::Mysql(t) => {
-                let x: &mut <sqlx::MySql as sqlx::Database>::Connection = t;
-                let mut query = sqlx::query::<sqlx::MySql>(sql);
-                for param in params {
-                    query = MysqlParam::add_param(*param, query)
-                }
-                let mut raw_rows = query.fetch_all(x).await?;
-                let rows: Vec<Row> = raw_rows.drain(..).map(Row::from).collect();
-                Ok(rows)
-            }
-
-            #[cfg(feature = "mssql")]
-            TransT::Mssql(inner) => Ok(inner.fetch_rows(sql, params).await?),
+            let t = query.execute(x).await?;
+            Ok(ExecuteResult {
+                rows_affected: t.rows_affected(),
+            })
         }
+
+        #[cfg(feature = "postgres")]
+        TransT::Postgres(t) => {
+            let x: &mut <sqlx::Postgres as sqlx::Database>::Connection = t;
+            let mut query = sqlx::query::<sqlx::Postgres>(sql);
+            for param in params {
+                query = PostgresParam::add_param(*param, query)
+            }
+            let t = query.execute(x).await?;
+            Ok(ExecuteResult {
+                rows_affected: t.rows_affected(),
+            })
+        }
+
+        #[cfg(feature = "mysql")]
+        TransT::Mysql(t) => {
+            let x: &mut <sqlx::MySql as sqlx::Database>::Connection = t;
+            let mut query = sqlx::query::<sqlx::MySql>(sql);
+            for param in params {
+                query = MysqlParam::add_param(*param, query)
+            }
+            let t = query.execute(x).await?;
+            Ok(ExecuteResult {
+                rows_affected: t.rows_affected(),
+            })
+        }
+
+        #[cfg(feature = "mssql")]
+        TransT::Mssql(inner) => inner.execute(sql, params).await,
+    }
+}
+
+async fn fetch_rows_inner<'t>(
+    inner: &mut TransT<'t>,
+    sql: &str,
+    params: &[&(dyn Param + Sync)],
+) -> Result<Vec<Row>> {
+    match inner {
+        #[cfg(feature = "sqlite")]
+        TransT::Sqlite(t) => {
+            let x: &mut <sqlx::Sqlite as sqlx::Database>::Connection = t;
+            let mut query = sqlx::query::<sqlx::Sqlite>(sql);
+            for param in params {
+                query = SqliteParam::add_param(*param, query)
+            }
+            let mut raw_rows = query.fetch_all(x).await?;
+            let rows: Vec<Row> = raw_rows.drain(..).map(Row::from).collect();
+            Ok(rows)
+        }
+
+        #[cfg(feature = "postgres")]
+        TransT::Postgres(t) => {
+            let x: &mut <sqlx::Postgres as sqlx::Database>::Connection = t;
+            let mut query = sqlx::query::<sqlx::Postgres>(sql);
+            for param in params {
+                query = PostgresParam::add_param(*param, query)
+            }
+            let mut raw_rows = query.fetch_all(x).await?;
+            let rows: Vec<Row> = raw_rows.drain(..).map(Row::from).collect();
+            Ok(rows)
+        }
+
+        #[cfg(feature = "mysql")]
+        TransT::Mysql(t) => {
+            let x: &mut <sqlx::MySql as sqlx::Database>::Connection = t;
+            let mut query = sqlx::query::<sqlx::MySql>(sql);
+            for param in params {
+                query = MysqlParam::add_param(*param, query)
+            }
+            let mut raw_rows = query.fetch_all(x).await?;
+            let rows: Vec<Row> = raw_rows.drain(..).map(Row::from).collect();
+            Ok(rows)
+        }
+
+        #[cfg(feature = "mssql")]
+        TransT::Mssql(inner) => Ok(inner.fetch_rows(sql, params).await?),
     }
 }

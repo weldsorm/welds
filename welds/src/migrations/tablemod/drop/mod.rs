@@ -1,6 +1,20 @@
 use crate::detect::TableDef;
+use crate::migrations::writers;
+use crate::migrations::MigrationWriter;
+use crate::Syntax;
 
-mod sqlite_writer;
+impl MigrationWriter for Drop {
+    fn down_sql(&self, syntax: Syntax) -> Vec<String> {
+        writers::create_table::from_def(syntax, &self.tabledef)
+    }
+
+    fn up_sql(&self, _syntax: Syntax) -> Vec<String> {
+        let tablename = self.tabledef.ident();
+        vec![writers::drop_table(&tablename)]
+    }
+}
+
+mod writer;
 
 pub struct Drop {
     pub(super) tabledef: TableDef,

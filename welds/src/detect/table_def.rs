@@ -103,3 +103,78 @@ impl RelationDef {
         }
     }
 }
+
+#[cfg(test)]
+/// This module allows you to mock TableDef
+/// useful while testing
+pub mod mock {
+    use super::*;
+
+    pub struct MockTableDef(TableDef);
+
+    impl MockTableDef {
+        pub fn new(syntax: Syntax, name: impl Into<String>) -> MockTableDef {
+            let name: String = name.into();
+            let ident = TableIdent::parse(&name);
+            MockTableDef(TableDef {
+                syntax,
+                ident,
+                ty: DataType::Table,
+                columns: Vec::default(),
+                has_many: Vec::default(),
+                belongs_to: Vec::default(),
+            })
+        }
+
+        pub fn as_view(mut self) -> Self {
+            self.0.ty = DataType::View;
+            self
+        }
+
+        pub fn as_table(mut self) -> Self {
+            self.0.ty = DataType::Table;
+            self
+        }
+
+        pub fn with_pk(mut self, name: impl Into<String>, ty: impl Into<String>) -> Self {
+            self.0.columns.push(ColumnDef {
+                name: name.into(),
+                ty: ty.into(),
+                null: false,
+                primary_key: true,
+                updatable: true,
+            });
+            self
+        }
+
+        pub fn with_column(mut self, name: impl Into<String>, ty: impl Into<String>) -> Self {
+            self.0.columns.push(ColumnDef {
+                name: name.into(),
+                ty: ty.into(),
+                null: false,
+                primary_key: false,
+                updatable: true,
+            });
+            self
+        }
+
+        pub fn with_nullable_column(
+            mut self,
+            name: impl Into<String>,
+            ty: impl Into<String>,
+        ) -> Self {
+            self.0.columns.push(ColumnDef {
+                name: name.into(),
+                ty: ty.into(),
+                null: true,
+                primary_key: false,
+                updatable: true,
+            });
+            self
+        }
+
+        pub fn build(self) -> TableDef {
+            self.0
+        }
+    }
+}

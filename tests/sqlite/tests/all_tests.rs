@@ -1,4 +1,4 @@
-use sqlite_test::models::order::Order;
+use sqlite_test::models::order::{Order, SmallOrder};
 use sqlite_test::models::product::{BadProduct1, BadProduct2, Product};
 use sqlite_test::models::{Thing1, Thing2, Thing3};
 use welds::connections::sqlite::SqliteClient;
@@ -141,6 +141,38 @@ fn should_be_able_to_limit_results_in_sql() {
         eprintln!("SQL: {}", q.to_sql(Syntax::Sqlite));
         let count = q.run(&conn).await.unwrap().len();
         assert_eq!(count, 2);
+    })
+}
+
+#[test]
+fn should_be_able_to_crud_with_small_int() {
+    async_std::task::block_on(async {
+        let client = get_conn().await;
+        let trans = client.begin().await.unwrap();
+
+        let mut p1 = Product::new();
+        p1.save(&trans).await.unwrap();
+        let mut p2 = Product::new();
+        p2.save(&trans).await.unwrap();
+        assert!(p1.id != 0);
+        assert!(p2.id != 0);
+
+        let mut s = SmallOrder::new();
+        s.product_id = p1.id;
+        s.save(&trans).await.unwrap();
+        let s = SmallOrder::find_by_id(&trans, s.id).await.expect("db err");
+        let mut s = s.expect("new SmallOrder not found");
+        assert_eq!(s.product_id, p1.id);
+        s.product_id = p2.id;
+        s.save(&trans).await.unwrap();
+        let s = SmallOrder::find_by_id(&trans, s.id).await.expect("db err");
+        let mut s = s.expect("new SmallOrder not found");
+        assert_eq!(s.product_id, p2.id);
+        s.delete(&trans).await.expect("delete db err");
+        let s_none = SmallOrder::find_by_id(&trans, s.id).await.expect("db err");
+        assert!(s_none.is_none());
+
+        trans.rollback().await.unwrap();
     })
 }
 

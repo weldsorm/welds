@@ -4,15 +4,17 @@ use crate::Client;
 use crate::Syntax;
 use crate::TransactStart;
 
-pub mod types;
+// object => strings
+pub mod writers;
 
 mod create_table;
+pub mod types;
 pub use create_table::create_table;
+mod tablemod;
 
-//mod tablemod;
 //pub use tablemod::{alter_table, Table};
 
-type MigrationFn<DB> = fn(state: &TableState) -> Result<Box<dyn MigrationWriter>>;
+type MigrationFn = fn(state: &TableState) -> Result<Box<dyn MigrationWriter>>;
 
 //  /// Call to migrate your database to the latest schema you have defined
 //  pub async fn migrate_up<'c, 'args, C, DB>(conn: &C, migrations: &[MigrationFn<DB>]) -> Result<()>

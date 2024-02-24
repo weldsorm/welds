@@ -1,3 +1,4 @@
+use crate::model_traits::TableIdent;
 use thiserror::Error;
 use welds_connections::Error as ConnError;
 
@@ -15,6 +16,8 @@ pub enum WeldsError {
     //Tiberius(tiberius::error::Error),
     //Bb8(&'static str),
     //InvalidDatabaseUrl,
+    #[error("Could not find tablebase table {0}")]
+    MissingTable(TableIdent),
     #[error("The Database column is not present: {0}")]
     MissingDbColumn(String),
     #[error("Failed to Insert {0}")]

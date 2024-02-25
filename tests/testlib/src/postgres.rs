@@ -55,7 +55,7 @@ impl Postgres {
             container_id: String::default(),
             port,
             password,
-            ready: std::cell::Cell::new(false)
+            ready: std::cell::Cell::new(false),
         };
         eprintln!("Booting Postgres test Environment");
         pg.boot().unwrap();

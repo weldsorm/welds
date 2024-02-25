@@ -1,8 +1,10 @@
+use bb8::Pool;
+use bb8_tiberius::ConnectionManager;
 use rand::{distributions::Alphanumeric, Rng};
 use static_init::dynamic;
 use std::process::{Command, Stdio};
 use std::thread::sleep; // 0.8
-use welds_sqlx_mssql::MssqlPool;
+type MssqlPool = Pool<ConnectionManager>;
 
 #[dynamic(drop, lazy)]
 static mut MSSQL: Mssql = Mssql::new();
@@ -12,8 +14,14 @@ static mut MSSQL: Mssql = Mssql::new();
 pub async fn conn() -> Result<MssqlPool, sqlx::Error> {
     let db = &MSSQL;
     let _ = db.read().wait_for_ready();
-    let url = db.read().connection_string();
-    MssqlPool::connect(&url).await
+    let cs = db.read().connection_string();
+
+    let mgr = bb8_tiberius::ConnectionManager::build(cs.as_str()).unwrap();
+    let pool = bb8::Pool::builder().max_size(2).build(mgr).await.unwrap();
+
+    Ok(pool)
+
+    //MssqlPool::connect(&url).await
 }
 
 /// A shared connection to the testing Mssql database.
@@ -64,7 +72,10 @@ impl Mssql {
     }
 
     fn connection_string(&self) -> String {
-        format!("mssql://sa:{}@127.0.0.1:{}/", self.password, self.port)
+        format!(
+            "server=127.0.0.1,{};user id=sa;password={};TrustServerCertificate=true;",
+            self.port, self.password
+        )
     }
 
     fn boot(&mut self) -> Result<(), String> {

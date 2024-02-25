@@ -38,6 +38,14 @@ impl From<Pool<ConnectionManager>> for MssqlClient {
     }
 }
 
+impl MssqlClient {
+    /// Returns a reference to the underlying tiberius connection
+    /// useful when you want to access the database yourself without welds
+    pub fn as_tiberius_pool(&mut self) -> &mut Pool<ConnectionManager> {
+        &mut self.pool
+    }
+}
+
 #[async_trait]
 impl Client for MssqlClient {
     async fn execute(&self, sql: &str, params: &[&(dyn Param + Sync)]) -> Result<ExecuteResult> {

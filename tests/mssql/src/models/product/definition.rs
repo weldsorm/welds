@@ -12,7 +12,7 @@ pub struct Product {
     #[welds(primary_key)]
     #[welds(rename = "ID")]
     pub id: i32,
-    pub active: Option<i32>,
+    pub active: Option<bool>,
     #[welds(rename = "Description")]
     pub description: Option<String>,
     pub name: String,

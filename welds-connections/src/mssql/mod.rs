@@ -80,6 +80,33 @@ impl Client for MssqlClient {
         Ok(all)
     }
 
+    async fn fetch_many<'s, 'args, 't>(
+        &self,
+        args: &[crate::Fetch<'s, 'args, 't>],
+    ) -> Result<Vec<Vec<Row>>> {
+        let mut resultset = Vec::default();
+        let mut conn = self.pool.get().await?;
+        for fetch in args {
+            let sql = fetch.sql;
+            let params = fetch.params;
+            let mut args: Vec<&dyn ToSql> = Vec::new();
+            for &p in params {
+                args = MssqlParam::add_param(p, args);
+            }
+            log::debug!("MSSQL_QUERY: {}", sql);
+            let stream = conn.query(sql, &args).await?;
+            let mssql_rows = stream.into_results().await?;
+            let mut all = Vec::default();
+            for batch in mssql_rows {
+                for r in batch {
+                    all.push(Row::from(r))
+                }
+            }
+            resultset.push(all)
+        }
+        Ok(resultset)
+    }
+
     fn syntax(&self) -> crate::Syntax {
         crate::Syntax::Mssql
     }

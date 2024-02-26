@@ -46,7 +46,7 @@ pub struct BadProductMissingTable {
     pub price_3: Option<sqlx::postgres::types::PgMoney>,
 }
 
-#[derive(Debug, sqlx::FromRow, WeldsModel)]
+#[derive(Debug, WeldsModel)]
 #[welds(db(Postgres))]
 #[welds(schema = "public", table = "Products")]
 #[welds(HasMany(order, super::super::order::Order, "product_id"))]

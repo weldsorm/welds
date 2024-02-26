@@ -11,12 +11,12 @@ pub mod select_col;
 pub mod sub_query_tests;
 
 async fn get_conn() -> SqliteClient {
-    let sqlx_conn = testlib::sqlite::conn().await.unwrap();
-    let client: SqliteClient = sqlx_conn.into();
+    let conn = testlib::sqlite::conn().await.unwrap();
+    let client: SqliteClient = conn.into();
     client
 }
 
-#[derive(Default, Debug, Clone, sqlx::FromRow)]
+#[derive(Default, Debug, Clone)]
 pub struct Count {
     pub count: i32,
 }
@@ -252,7 +252,7 @@ fn should_be_able_to_scan_for_all_tables() {
 fn a_model_should_be_able_to_verify_its_schema_missing_table() {
     async_std::task::block_on(async {
         let conn = get_conn().await;
-        let issues = welds::check::schema::<BadProduct1, _>(&conn).await.unwrap();
+        let issues = welds::check::schema::<BadProduct1>(&conn).await.unwrap();
         assert_eq!(issues.len(), 1);
         let issue = &issues[0];
         assert_eq!(issue.kind, welds::check::Kind::MissingTable);
@@ -263,7 +263,7 @@ fn a_model_should_be_able_to_verify_its_schema_missing_table() {
 fn a_model_should_be_able_to_verify_its_schema_missing_column() {
     async_std::task::block_on(async {
         let conn = get_conn().await;
-        let issues = welds::check::schema::<BadProduct2, _>(&conn).await.unwrap();
+        let issues = welds::check::schema::<BadProduct2>(&conn).await.unwrap();
         // NOTE: a column name changed so it is added on the model and removed in the db giving two warnings
         for issue in &issues {
             eprintln!("{}", issue);

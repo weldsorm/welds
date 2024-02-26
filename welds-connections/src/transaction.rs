@@ -135,6 +135,28 @@ impl<'t> Client for Transaction<'t> {
         self.return_conn(inner);
         results
     }
+
+    async fn fetch_many<'s, 'args, 'i>(
+        &self,
+        fetches: &[crate::Fetch<'s, 'args, 'i>],
+    ) -> Result<Vec<Vec<Row>>> {
+        // transactions are already locked to a single connection.
+        // Just run the batch of fetches
+        let mut datasets = Vec::default();
+        let mut inner = self.take_conn();
+        for fetch in fetches {
+            let sql = fetch.sql;
+            let params = fetch.params;
+            let r = fetch_rows_inner(&mut inner, sql, params).await;
+            let is_err = r.is_err();
+            datasets.push(r);
+            if is_err {
+                break;
+            }
+        }
+        self.return_conn(inner);
+        datasets.drain(..).collect()
+    }
 }
 
 async fn execute_inner<'t>(

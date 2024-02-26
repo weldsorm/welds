@@ -6,14 +6,15 @@ use crate::query::clause::ParamArgs;
 use crate::writers::column::ColumnWriter;
 use crate::writers::insert::{ColArg, InsertWriter};
 use crate::writers::NextParam;
+use crate::Row;
 use welds_connections::Client;
+use welds_connections::Fetch;
 
-pub async fn insert_one<T, C>(obj: &mut T, client: &C) -> Result<()>
+pub async fn insert_one<T>(obj: &mut T, client: &dyn Client) -> Result<()>
 where
     T: WriteToArgs + HasSchema,
     <T as HasSchema>::Schema: TableInfo + TableColumns,
     T: UpdateFromRow,
-    C: Client,
 {
     let syntax = client.syntax();
     let mut args: ParamArgs = Vec::default();
@@ -38,26 +39,31 @@ where
     }
 
     let (insert, select) = writer.write(&identifier, &colargs, &columns, &pks);
-    let has_select = select.is_some();
 
-    let sql = format!("{}{}", insert, select.unwrap_or_default());
-    let sql1 = &sql[..insert.len()];
-    let sql2 = &sql[insert.len()..];
-    let mut stamts = vec![(sql1, args)];
+    let mut statements = vec![Fetch {
+        sql: &insert,
+        params: &args,
+    }];
 
-    if has_select {
-        stamts.push((sql2, args2));
+    // If this insert needs a second select command to get the id, add it to the vec of sql to run
+    let sql2: String;
+    if let Some(select) = select {
+        sql2 = select.to_owned();
+        statements.push(Fetch {
+            sql: &sql2,
+            params: &args2,
+        })
     }
 
-    let mut rows = Vec::default();
-
-    for (statement, args) in stamts {
-        let mut out = client.fetch_rows(statement, &args).await?;
-        rows.append(&mut out);
-    }
+    // WARNING: these statements MUST be ran on the same DB connection in the pool
+    // If this isn't done, you will not get back the last_id.
+    // That is why we are using fetch_many
+    let mut datasets = client.fetch_many(&statements).await?;
+    let mut rows: Vec<Row> = datasets.drain(..).flatten().collect();
 
     let row = rows.pop();
-    let mut row = row.ok_or_else(|| InsertFailed(format!("{:?}", sql)))?;
+    let mut row =
+        row.ok_or_else(|| InsertFailed("Insert didn't return inserted ID/Row".to_owned()))?;
     UpdateFromRow::update_from_row(obj, &mut row)?;
 
     Ok(())

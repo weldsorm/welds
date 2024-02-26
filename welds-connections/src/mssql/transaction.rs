@@ -101,6 +101,27 @@ impl<'t> Client for MssqlTransaction<'t> {
         Ok(rows)
     }
 
+    async fn fetch_many<'s, 'args, 'i>(
+        &self,
+        fetches: &[crate::Fetch<'s, 'args, 'i>],
+    ) -> Result<Vec<Vec<Row>>> {
+        assert_eq!(self.state, State::Open);
+        let mut conn = self.take_conn();
+        let mut results = Vec::default();
+        for fetch in fetches {
+            let sql = fetch.sql;
+            let params = fetch.params;
+            let r = fetch_rows_inner(&mut conn, sql, params).await;
+            let is_err = r.is_err();
+            results.push(r);
+            if is_err {
+                break;
+            }
+        }
+        self.return_conn(conn);
+        results.drain(..).collect()
+    }
+
     fn syntax(&self) -> crate::Syntax {
         crate::Syntax::Mssql
     }

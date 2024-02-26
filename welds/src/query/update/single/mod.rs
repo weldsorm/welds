@@ -5,12 +5,11 @@ use crate::writers::ColumnWriter;
 use crate::writers::NextParam;
 use welds_connections::Client;
 
-pub async fn update_one<T, C>(obj: &mut T, client: &C) -> Result<()>
+pub async fn update_one<T>(obj: &mut T, client: &dyn Client) -> Result<()>
 where
     T: WriteToArgs + HasSchema,
     <T as HasSchema>::Schema: TableInfo + TableColumns,
     T: UpdateFromRow,
-    C: Client,
 {
     let syntax = client.syntax();
     let mut args: ParamArgs = Vec::default();

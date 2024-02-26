@@ -61,10 +61,9 @@ where
     /// Executes a `DELETE FROM ... `
     ///
     /// deletes all the resulting rows from the database
-    pub async fn delete<'s, 'c, C>(&'s self, client: &'c C) -> Result<()>
+    pub async fn delete<'s, 'c>(&'s self, client: &'c dyn Client) -> Result<()>
     where
         <T as HasSchema>::Schema: UniqueIdentifier + TableInfo + TableColumns,
-        C: Client,
     {
         // we are wrapping this query in a where in clause.
         // This is needed if the user has a limit

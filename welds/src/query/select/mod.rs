@@ -50,9 +50,8 @@ where
     /// Executes a `select count(...) FROM ... `
     ///
     /// Counts the results of your query in the database.
-    pub async fn count<'q, 'c, C>(&'q self, client: &'c C) -> Result<u64>
+    pub async fn count<'q, 'c>(&'q self, client: &'c dyn Client) -> Result<u64>
     where
-        C: Client,
         'q: 'c,
         <T as HasSchema>::Schema: TableInfo + TableColumns,
     {
@@ -96,9 +95,8 @@ where
     }
 
     /// Executes the query in the database returning the results
-    pub async fn run<'q, 'c, C>(&'q self, client: &'c C) -> Result<Vec<DbState<T>>>
+    pub async fn run<'q, 'c>(&'q self, client: &'c dyn Client) -> Result<Vec<DbState<T>>>
     where
-        C: Client,
         'q: 'c,
         <T as HasSchema>::Schema: TableInfo + TableColumns,
         T: TryFrom<Row>,

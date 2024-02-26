@@ -1,7 +1,7 @@
 //!
 //! <div align="center">
 //!   <img src="https://raw.githubusercontent.com/weldsorm/welds/main/page/src/assets/images/banner.png"/>
-//!   <h3>An async ORM written in rust using the sqlx framework.</h3>
+//!   <h3>An async ORM written in rust using sqlx and/or Tiberius.</h3>
 //! </div>
 //!
 //! # What is Welds
@@ -11,7 +11,7 @@
 //!
 //! # Macros - Setup your structs
 //!
-//! To add welds to your struct you will need to derive `sqlx::FromRow` and `welds::WeldsModel`
+//! To add welds to your struct you will need to derive `welds::WeldsModel`
 //! ```rust,ignore
 //! #[derive(welds::WeldsModel)]
 //! ```

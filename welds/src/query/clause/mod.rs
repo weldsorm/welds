@@ -50,8 +50,7 @@ pub trait ClauseAdder: Send + Sync {
 
 impl<T> ClauseAdder for ClauseColVal<T>
 where
-    //DB: sqlx::Database,
-    T: Clone + Send + Sync + Param, //+ sqlx::Type<DB> + sqlx::Encode<'args, DB>,
+    T: Clone + Send + Sync + Param,
 {
     fn bind<'lam, 'args, 'p>(&'lam self, args: &'args mut ParamArgs<'p>)
     where
@@ -64,7 +63,7 @@ where
         }
     }
 
-    fn clause(&self, syntax: Syntax, alias: &str, next_params: &NextParam) -> Option<String> {
+    fn clause(&self, _syntax: Syntax, alias: &str, next_params: &NextParam) -> Option<String> {
         // build the column name
         let col = format!("{}.{}", alias, self.col);
         let mut parts = vec![col.as_str()];

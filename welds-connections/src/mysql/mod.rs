@@ -70,6 +70,26 @@ impl Client for MysqlClient {
         Ok(rows)
     }
 
+    async fn fetch_many<'s, 'args, 't>(
+        &self,
+        fetches: &[crate::Fetch<'s, 'args, 't>],
+    ) -> Result<Vec<Vec<Row>>> {
+        let mut datasets = Vec::default();
+        let mut conn = self.pool.acquire().await?;
+        for fetch in fetches {
+            let sql = fetch.sql;
+            let params = fetch.params;
+            let mut query = sqlx::query::<MySql>(sql);
+            for param in params {
+                query = MysqlParam::add_param(*param, query);
+            }
+            let mut raw_rows = query.fetch_all(&mut *conn).await?;
+            let rows: Vec<Row> = raw_rows.drain(..).map(Row::from).collect();
+            datasets.push(rows);
+        }
+        Ok(datasets)
+    }
+
     fn syntax(&self) -> crate::Syntax {
         crate::Syntax::Mysql
     }

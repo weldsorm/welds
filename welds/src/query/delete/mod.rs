@@ -8,9 +8,8 @@ use welds_connections::Client;
 
 pub mod bulk;
 
-pub async fn delete_one<T, C>(obj: &T, client: &C) -> Result<()>
+pub async fn delete_one<T>(obj: &T, client: &dyn Client) -> Result<()>
 where
-    C: Client,
     T: HasSchema + WriteToArgs,
     <T as HasSchema>::Schema: TableInfo + TableColumns,
 {

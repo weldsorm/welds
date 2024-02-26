@@ -17,7 +17,6 @@ use welds_connections::Param;
 /// An un-executed Sql Update.
 ///
 /// Build out a sql statement that will update the database in bulk
-
 pub struct UpdateBuilder<T> {
     _t: PhantomData<T>,
     pub(crate) query_builder: QueryBuilder<T>,
@@ -94,9 +93,8 @@ where
     }
 
     /// Executes the query in the database Bulk updating the values
-    pub async fn run<'s, 'c, C>(&'s self, client: &'c C) -> Result<()>
+    pub async fn run<'s, 'c>(&'s self, client: &'c dyn Client) -> Result<()>
     where
-        C: Client,
         <T as HasSchema>::Schema: UniqueIdentifier + TableInfo + TableColumns,
     {
         let syntax = client.syntax();
@@ -145,7 +143,7 @@ pub struct SetColVal<T> {
 
 impl<T> ClauseAdder for SetColVal<T>
 where
-    T: Clone + Send + Sync + Param, //+ sqlx::Type<DB> + sqlx::Encode<'args, DB>,
+    T: Clone + Send + Sync + Param,
 {
     /// Add the argument to the list of Arguments to send to the database
     fn bind<'lam, 'args, 'p>(&'lam self, args: &'args mut ParamArgs<'p>)

@@ -70,16 +70,6 @@ pub trait UpdateFromRow {
     fn update_from_row(&mut self, row: &mut crate::Row) -> crate::errors::Result<()>;
 }
 
-//pub trait WriteBulkArrayToArgs<DB> {
-//    fn bind(
-//        data: &[&Self],
-//        column: &Column,
-//        args: &mut <DB as HasArguments<'_>>::Arguments,
-//    ) -> Result<()>
-//    where
-//        DB: sqlx::Database;
-//}
-
 /// Used to link a models schema to the model
 pub trait HasSchema: Sync + Send {
     type Schema: Default + TableInfo;

@@ -2,8 +2,7 @@ use super::{AsFieldName, ClauseAdder, ClauseColVal};
 use std::marker::PhantomData;
 use welds_connections::Param;
 
-// Clauses for numeric types such as int, float, etc
-
+/// Clauses for numeric types such as int, float, etc
 pub struct Numeric<T> {
     col: String,
     field: String,
@@ -21,7 +20,7 @@ impl<T> AsFieldName<T> for Numeric<T> {
 
 impl<T> Numeric<T>
 where
-    T: 'static + Clone + Send + Sync, //T: 'static + Clone + Send + sqlx::Type<DB> + sqlx::Encode<'args, DB>,
+    T: 'static + Clone + Send + Sync,
 {
     pub fn new(col: impl Into<String>, field: impl Into<String>) -> Self {
         Self {
@@ -31,6 +30,7 @@ where
         }
     }
 
+    /// Will write SQL checking the value is equal to this (==)
     pub fn equal(self, v: impl Into<T>) -> Box<dyn ClauseAdder>
     where
         T: Param,
@@ -45,6 +45,7 @@ where
         Box::new(cv)
     }
 
+    /// Will write SQL checking the value is equal to this (!=)
     pub fn not_equal(self, v: impl Into<T>) -> Box<dyn ClauseAdder>
     where
         T: Param,
@@ -59,6 +60,7 @@ where
         Box::new(cv)
     }
 
+    /// Will write SQL checking the value is greater than (>)
     pub fn gt(self, v: impl Into<T>) -> Box<dyn ClauseAdder>
     where
         T: Param,
@@ -72,6 +74,8 @@ where
         };
         Box::new(cv)
     }
+
+    /// Will write SQL checking the value is less than (<)
     pub fn lt(self, v: impl Into<T>) -> Box<dyn ClauseAdder>
     where
         T: Param,
@@ -86,6 +90,7 @@ where
         Box::new(cv)
     }
 
+    /// Will write SQL checking the value is greater than or equal to (>=)
     pub fn gte(self, v: impl Into<T>) -> Box<dyn ClauseAdder>
     where
         T: Param,
@@ -100,6 +105,7 @@ where
         Box::new(cv)
     }
 
+    /// Will write SQL checking the value is less than or equal to (<=)
     pub fn lte(self, v: impl Into<T>) -> Box<dyn ClauseAdder>
     where
         T: Param,

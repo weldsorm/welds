@@ -20,9 +20,4 @@ pub struct BadProductColumns {
     pub active: i64,
     #[welds(rename = "Description")]
     pub description: Option<String>,
-    //pub name: String,
-    //#[sqlx(rename = "price1")]
-    //pub price_1: Option<f32>,
-    //#[sqlx(rename = "price2")]
-    //pub price_2: Option<f32>,
 }

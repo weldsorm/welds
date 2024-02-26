@@ -23,10 +23,6 @@ type MigrationFn = fn(state: &TableState) -> Result<Box<dyn MigrationWriter>>;
 //      Transaction<'args, DB>: Connection<DB>,
 //      <DB as HasArguments<'args>>::Arguments: IntoArguments<'args, DB>,
 //      DB: Database + TableScan,
-//      i32: sqlx::Type<DB> + for<'r> sqlx::Decode<'r, DB>,
-//      usize: sqlx::ColumnIndex<<DB as sqlx::Database>::Row>,
-//      String: sqlx::Type<DB> + for<'r> sqlx::Decode<'r, DB>,
-//      Option<String>: sqlx::Type<DB> + for<'r> sqlx::Decode<'r, DB>,
 //      create_table::TableBuilder: MigrationWriter<DB>,
 //  {
 //      // get a list of all the migrations that have already been ran
@@ -76,7 +72,6 @@ type MigrationFn = fn(state: &TableState) -> Result<Box<dyn MigrationWriter>>;
 //  //      C: Connection<DB>,
 //  //      Transaction<'args, DB>: Connection<DB>,
 //  //      <DB as HasArguments<'args1>>::Arguments: IntoArguments<'args2, DB>,
-//  //      for<'x> &'x str: sqlx::Type<DB> + sqlx::Encode<'x, DB>,
 //  //      DB: Database,
 //  //  {
 //  //      let p = NextParam::new::<DB>();
@@ -87,12 +82,10 @@ type MigrationFn = fn(state: &TableState) -> Result<Box<dyn MigrationWriter>>;
 //  //          p.next()
 //  //      );
 //  //
-//  //      use sqlx::Arguments;
 //  //      let mut args: <DB as HasArguments>::Arguments = Default::default();
 //  //      args.add(name);
 //  //      args.add(down);
 //  //
-//  //      //let args sqlx::Arguments
 //  //
 //  //      //// make sure the migration table exists
 //  //      //let make_table_sql = migration_table::<DB>().up_sql().join(";");
@@ -102,7 +95,6 @@ type MigrationFn = fn(state: &TableState) -> Result<Box<dyn MigrationWriter>>;
 //  //      //let sql = "SELECT name FROM _welds_migrations";
 //  //      //let rows = conn.fetch_rows(sql, Default::default()).await?;
 //  //      //// Build a list of all the migrations that have ran
-//  //      //use sqlx::Row;
 //  //      //let mut list: Vec<String> = Vec::default();
 //  //      //for row in rows {
 //  //      //    list.push(row.get(0));
@@ -115,8 +107,6 @@ type MigrationFn = fn(state: &TableState) -> Result<Box<dyn MigrationWriter>>;
 //  where
 //      C: Connection<DB>,
 //      DB: Database,
-//      usize: sqlx::ColumnIndex<<DB as sqlx::Database>::Row>,
-//      String: sqlx::Type<DB> + for<'r> sqlx::Decode<'r, DB>,
 //      create_table::TableBuilder: MigrationWriter<DB>,
 //  {
 //      // make sure the migration table exists
@@ -127,7 +117,6 @@ type MigrationFn = fn(state: &TableState) -> Result<Box<dyn MigrationWriter>>;
 //      let sql = "SELECT name FROM _welds_migrations";
 //      let rows = conn.fetch_rows(sql, Default::default()).await?;
 //      // Build a list of all the migrations that have ran
-//      use sqlx::Row;
 //      let mut list: Vec<String> = Vec::default();
 //      for row in rows {
 //          list.push(row.get(0));
@@ -138,7 +127,6 @@ type MigrationFn = fn(state: &TableState) -> Result<Box<dyn MigrationWriter>>;
 //  fn migration_table<DB>() -> Box<dyn MigrationWriter<DB>>
 //  where
 //      create_table::TableBuilder: MigrationWriter<DB>,
-//      DB: sqlx::Database,
 //  {
 //      use types::Type;
 //      let m = create_table("_welds_migrations")
@@ -147,10 +135,7 @@ type MigrationFn = fn(state: &TableState) -> Result<Box<dyn MigrationWriter>>;
 //      Box::new(m)
 //  }
 
-async fn get_state<C>(client: &C) -> Result<TableState>
-where
-    C: Client,
-{
+async fn get_state(client: &dyn Client) -> Result<TableState> {
     let state = detect::find_tables(client).await?;
     Ok(TableState(state))
 }

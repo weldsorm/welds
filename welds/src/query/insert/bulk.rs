@@ -7,9 +7,8 @@ use crate::Client;
 //use crate::Syntax;
 
 /// Executes the query in the database Bulk Inserting values
-pub async fn run<T, C>(conn: &C, data: &[T]) -> Result<()>
+pub async fn run<T>(conn: &dyn Client, data: &[T]) -> Result<()>
 where
-    C: Client,
     T: WriteToArgs + HasSchema,
     <T as HasSchema>::Schema: TableInfo + TableColumns,
 {

@@ -56,9 +56,8 @@ impl<T> DbState<T> {
     /// Saves the inner T to the database. Results in an insert or update if needed. If no change
     /// has been detected on the inner T, No operation will occur
     ///
-    pub async fn save<C>(&mut self, client: &C) -> Result<()>
+    pub async fn save(&mut self, client: &dyn Client) -> Result<()>
     where
-        C: Client,
         T: HasSchema + WriteToArgs,
         <T as HasSchema>::Schema: TableInfo + TableColumns,
         T: UpdateFromRow,
@@ -77,9 +76,8 @@ impl<T> DbState<T> {
     }
 
     /// Removes the inner T from the database. If T is not in the database no operation will occur
-    pub async fn delete<C>(&mut self, client: &C) -> Result<()>
+    pub async fn delete(&mut self, client: &dyn Client) -> Result<()>
     where
-        C: Client,
         T: HasSchema + WriteToArgs,
         <T as HasSchema>::Schema: TableInfo + TableColumns,
     {

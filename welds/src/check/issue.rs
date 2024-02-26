@@ -37,6 +37,16 @@ impl Display for Diff {
     }
 }
 
+impl Diff {
+    pub fn type_changed(&self) -> bool {
+        self.type_changed
+    }
+
+    pub fn nullable_changed(&self) -> bool {
+        self.welds_nullable != self.db_nullable
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 /// Describes a potential problem or different between the welds struct and the database table
 pub struct Issue {

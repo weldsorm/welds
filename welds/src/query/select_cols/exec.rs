@@ -61,9 +61,8 @@ where
     }
 
     /// Executes the query in the database returning the results
-    pub async fn run<'s, 'c, C>(&'s self, client: &'c C) -> Result<Vec<Row>>
+    pub async fn run<'s, 'c>(&'s self, client: &'c dyn Client) -> Result<Vec<Row>>
     where
-        C: Client,
         <T as HasSchema>::Schema: TableInfo + TableColumns,
     {
         let syntax = client.syntax();

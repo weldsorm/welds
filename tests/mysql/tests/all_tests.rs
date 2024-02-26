@@ -6,12 +6,12 @@ use welds::Syntax;
 use welds::TransactStart;
 
 async fn get_conn() -> MysqlClient {
-    let sqlx_conn = testlib::mysql::conn().await.unwrap();
-    let client: MysqlClient = sqlx_conn.into();
+    let conn = testlib::mysql::conn().await.unwrap();
+    let client: MysqlClient = conn.into();
     client
 }
 
-#[derive(Default, Debug, Clone, sqlx::FromRow)]
+#[derive(Default, Debug, Clone)]
 pub struct Count {
     pub count: i32,
 }
@@ -195,7 +195,7 @@ fn should_be_able_to_scan_for_all_tables() {
 fn a_model_should_be_able_to_verify_its_schema_missing_table() {
     async_std::task::block_on(async {
         let conn = get_conn().await;
-        let issues = welds::check::schema::<BadProductMissingTable, _>(&conn)
+        let issues = welds::check::schema::<BadProductMissingTable>(&conn)
             .await
             .unwrap();
         assert_eq!(issues.len(), 1);
@@ -208,7 +208,7 @@ fn a_model_should_be_able_to_verify_its_schema_missing_table() {
 fn a_model_should_be_able_to_verify_its_schema_missing_column() {
     async_std::task::block_on(async {
         let conn = get_conn().await;
-        let issues = welds::check::schema::<BadProductColumns, _>(&conn)
+        let issues = welds::check::schema::<BadProductColumns>(&conn)
             .await
             .unwrap();
         // NOTE: a column name changed so it is added on the model and removed in the db giving two warnings

@@ -9,12 +9,12 @@ use welds::connections::TransactStart;
 use welds::Syntax;
 
 async fn get_conn() -> PostgresClient {
-    let sqlx_conn = testlib::postgres::conn().await.unwrap();
-    let client: PostgresClient = sqlx_conn.into();
+    let conn = testlib::postgres::conn().await.unwrap();
+    let client: PostgresClient = conn.into();
     client
 }
 
-#[derive(Default, Debug, Clone, sqlx::FromRow)]
+#[derive(Default, Debug, Clone)]
 pub struct Count {
     pub count: i32,
 }
@@ -370,7 +370,7 @@ fn should_be_able_to_save_load_obj_with_db_enum_type() {
 fn a_model_should_be_able_to_verify_its_schema_missing_table() {
     async_std::task::block_on(async {
         let conn = get_conn().await;
-        let issues = welds::check::schema::<BadProductMissingTable, _>(&conn)
+        let issues = welds::check::schema::<BadProductMissingTable>(&conn)
             .await
             .unwrap();
         assert_eq!(issues.len(), 1);
@@ -383,7 +383,7 @@ fn a_model_should_be_able_to_verify_its_schema_missing_table() {
 fn a_model_should_be_able_to_verify_its_schema_missing_column() {
     async_std::task::block_on(async {
         let conn = get_conn().await;
-        let issues = welds::check::schema::<BadProductColumns, _>(&conn)
+        let issues = welds::check::schema::<BadProductColumns>(&conn)
             .await
             .unwrap();
         // NOTE: a column name changed so it is added on the model and removed in the db giving two warnings
@@ -509,7 +509,7 @@ fn should_be_able_to_check_the_schema() {
 
         use postgres_test::models::*;
 
-        let issues = welds::check::schema::<table_with_array::TableWithArray, _>(&conn)
+        let issues = welds::check::schema::<table_with_array::TableWithArray>(&conn)
             .await
             .unwrap();
         for issue in &issues {

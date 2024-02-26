@@ -7,7 +7,7 @@
 /// .where_col(|x| x.name.equal("bla") )
 /// and now having to know if the DB column is null
 ///
-/// This is TO sql only.
+/// This is for writing sql only.
 
 pub enum Optional<T> {
     Some(T),
@@ -96,67 +96,3 @@ where
         }
     }
 }
-
-//use welds_connections::Param;
-
-//impl<T> Param for Optional<T> where T: Param {}
-
-//use sqlx::{Database, Encode, Type};
-//
-//impl<T, DB> Type<DB> for Optional<T>
-//where
-//    DB: Database,
-//    T: Type<DB>,
-//    Option<T>: Type<DB>,
-//{
-//    fn type_info() -> <DB as Database>::TypeInfo {
-//        Option::<T>::type_info()
-//    }
-//    fn compatible(ty: &<DB as Database>::TypeInfo) -> bool {
-//        Option::<T>::compatible(ty)
-//    }
-//}
-//
-//impl<'q, T, DB> Encode<'q, DB> for Optional<T>
-//where
-//    DB: Database,
-//    T: Encode<'q, DB>,
-//    Option<T>: Encode<'q, DB>,
-//{
-//    fn encode(
-//        self,
-//        buf: &mut <DB as sqlx::database::HasArguments<'q>>::ArgumentBuffer,
-//    ) -> sqlx::encode::IsNull
-//    where
-//        Self: Sized,
-//    {
-//        let opt: Option<T> = self.into();
-//        match opt {
-//            Some(x) => T::encode(x, buf),
-//            None => Option::<T>::encode(opt, buf),
-//        }
-//    }
-//
-//    fn encode_by_ref(
-//        &self,
-//        buf: &mut <DB as sqlx::database::HasArguments<'q>>::ArgumentBuffer,
-//    ) -> sqlx::encode::IsNull {
-//        match self {
-//            Optional::Some(x) => T::encode_by_ref(x, buf),
-//            Optional::None => Option::<T>::encode_by_ref(&None, buf),
-//        }
-//    }
-//    fn produces(&self) -> Option<<DB as Database>::TypeInfo> {
-//        match self {
-//            Optional::Some(x) => T::produces(x),
-//            Optional::None => Option::<T>::produces(&None),
-//        }
-//    }
-//
-//    fn size_hint(&self) -> usize {
-//        match self {
-//            Optional::Some(x) => T::size_hint(x),
-//            Optional::None => Option::<T>::size_hint(&None),
-//        }
-//    }
-//}

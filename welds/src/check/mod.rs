@@ -13,9 +13,8 @@ pub use issue::*;
 /// and what the welds object was compiled against
 ///
 /// Used to known if there are going to be issues when running the query of a model
-pub async fn schema<T, C>(client: &C) -> Result<Vec<Issue>>
+pub async fn schema<T>(client: &dyn Client) -> Result<Vec<Issue>>
 where
-    C: Client,
     T: Send + HasSchema,
     <T as HasSchema>::Schema: TableInfo + TableColumns,
 {
@@ -50,10 +49,10 @@ where
 }
 
 /// returns the default namespace that is used if no namespace is provided
-fn unwrap_to_default_namespace<C>(ns: Option<&'static str>, client: &C) -> Option<&'static str>
-where
-    C: Client,
-{
+fn unwrap_to_default_namespace(
+    ns: Option<&'static str>,
+    client: &dyn Client,
+) -> Option<&'static str> {
     if ns.is_some() {
         return ns;
     }

@@ -54,9 +54,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Delete Some Stuff
     let product2 = create_and_update_products(&client).await?;
-    //delete_the_product(&client, product2.id).await?;
+    delete_the_product(&client, product2.id).await?;
 
-    //let _ = Product::all().set(|x| x.description, "".to_string());
+    let _ = Product::all().set(|x| x.description, "".to_string());
 
     Ok(())
 }

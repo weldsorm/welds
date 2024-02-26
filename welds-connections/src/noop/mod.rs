@@ -14,7 +14,6 @@ pub struct NoopClient {
     last_sql: Arc<Mutex<Option<String>>>,
     args_count: Arc<Mutex<Option<u64>>>,
 }
-
 pub fn build(syntax: Syntax) -> NoopClient {
     NoopClient {
         syntax,
@@ -72,6 +71,31 @@ impl Client for NoopClient {
         // return nothing
         Ok(Vec::default())
     }
+
+    async fn fetch_many<'s, 'args, 'i>(
+        &self,
+        fetches: &[crate::Fetch<'s, 'args, 'i>],
+    ) -> Result<Vec<Vec<Row>>> {
+        let mut total = 0;
+        let mut sqls = Vec::default();
+        for fetch in fetches {
+            sqls.push(fetch.sql);
+            total += fetch.params.len()
+        }
+
+        // save off the sql
+        let lock = self.last_sql.clone();
+        let mut mutex = lock.lock().unwrap();
+        *mutex = Some(sqls.join(";").to_string());
+
+        // save off the args count
+        let lock = self.args_count.clone();
+        let mut mutex = lock.lock().unwrap();
+        *mutex = Some(total as u64);
+
+        Ok(Vec::default())
+    }
+
     fn syntax(&self) -> crate::Syntax {
         self.syntax
     }

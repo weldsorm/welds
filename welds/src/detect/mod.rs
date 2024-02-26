@@ -17,10 +17,7 @@ pub use table_def::{ColumnDef, DataType, RelationDef, TableDef, TableDefSingle};
 
 /// Returns a list of all user defined tables in the database
 /// requires feature `detect`
-pub async fn find_tables<C>(client: &C) -> Result<Vec<TableDef>>
-where
-    C: Client,
-{
+pub async fn find_tables(client: &dyn Client) -> Result<Vec<TableDef>> {
     let syntax = client.syntax();
     let ts = TableScan::new(syntax);
     let sql = ts.table_scan_sql();
@@ -46,14 +43,11 @@ where
 
 /// Returns the schema info for a given table in the database
 /// NOTE: does not include relationship info. use find_tables for that
-pub async fn find_table<C>(
+pub async fn find_table(
     namespace: Option<impl Into<String>>,
     tablename: impl Into<String>,
-    client: &C,
-) -> Result<Option<TableDefSingle>>
-where
-    C: Client,
-{
+    client: &dyn Client,
+) -> Result<Option<TableDefSingle>> {
     let syntax = client.syntax();
     let ts = TableScan::new(syntax);
     let sql = ts.single_table_scan_sql();

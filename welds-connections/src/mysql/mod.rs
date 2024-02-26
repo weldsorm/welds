@@ -23,7 +23,7 @@ impl TransactStart for MysqlClient {
     }
 }
 
-pub async fn get_conn(url: &str) -> Result<MysqlClient> {
+pub async fn connect(url: &str) -> Result<MysqlClient> {
     let pool = MySqlPool::connect(url).await?;
     Ok(MysqlClient {
         pool: Arc::new(pool),

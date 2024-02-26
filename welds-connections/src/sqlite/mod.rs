@@ -23,7 +23,7 @@ impl TransactStart for SqliteClient {
     }
 }
 
-pub async fn get_conn(url: &str) -> Result<SqliteClient> {
+pub async fn connect(url: &str) -> Result<SqliteClient> {
     let pool = SqlitePool::connect(url).await?;
     Ok(SqliteClient {
         pool: Arc::new(pool),

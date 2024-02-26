@@ -8,14 +8,6 @@ pub type Result<T> = std::result::Result<T, WeldsError>;
 pub enum WeldsError {
     #[error("An Error From the Database: {0}")]
     Database(ConnError),
-    //#[cfg(any(feature = "mysql", feature = "sqlite", feature = "postgres"))]
-    //Sqlx(sqlx::Error),
-    //#[cfg(feature = "mssql")]
-    //TiberiusConnPool(bb8_tiberius::Error),
-    //#[cfg(feature = "mssql")]
-    //Tiberius(tiberius::error::Error),
-    //Bb8(&'static str),
-    //InvalidDatabaseUrl,
     #[error("Could not find tablebase table {0}")]
     MissingTable(TableIdent),
     #[error("The Database column is not present: {0}")]
@@ -25,8 +17,7 @@ pub enum WeldsError {
     #[error("Expected Row from DB, Found none")]
     RowNowFound,
     #[error("A Primary key is required for this action")]
-    NoPrimaryKey, //ColumnNotFound(String),
-                  //UnexpectedNoneInColumn(String),
+    NoPrimaryKey,
 }
 
 impl From<ConnError> for WeldsError {

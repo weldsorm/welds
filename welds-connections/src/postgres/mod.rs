@@ -23,7 +23,7 @@ impl TransactStart for PostgresClient {
     }
 }
 
-pub async fn get_conn(url: &str) -> Result<PostgresClient> {
+pub async fn connect(url: &str) -> Result<PostgresClient> {
     let pool = PgPool::connect(url).await?;
     Ok(PostgresClient {
         pool: Arc::new(pool),

@@ -30,6 +30,9 @@ pub trait Client {
 }
 
 #[async_trait]
+/// Implementers of this trait can crate a transaction.
+/// If you want to create a transaction off of a Client,
+/// make sure you `use welds::TransactStart`
 pub trait TransactStart {
     async fn begin(&self) -> Result<Transaction>;
 }

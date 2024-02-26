@@ -8,16 +8,16 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     let _ = std::fs::File::create("./test.sqlite")?;
 
     let url = "sqlite://./test.sqlite";
-    let conn = welds_connections::sqlite::get_conn(url).await.unwrap();
+    let conn = welds_connections::sqlite::connect(url).await.unwrap();
 
     //let url = "server=127.0.0.1;user id=sa;password=THEBESTPASSWORDEVER;TrustServerCertificate=true;";
-    //let conn = welds_connections::mssql::get_conn(url).await.unwrap();
+    //let conn = welds_connections::mssql::connect(url).await.unwrap();
 
     //let url = "postgres://postgres:password@localhost:5432";
-    //let conn = welds_connections::postgres::get_conn(url).await.unwrap();
+    //let conn = welds_connections::postgres::connect(url).await.unwrap();
 
     //let url = "mysql://root:welds!123@localhost:3306/weldstests";
-    //let conn = welds_connections::mysql::get_conn(url).await.unwrap();
+    //let conn = welds_connections::mysql::connect(url).await.unwrap();
 
     println!("CONNECTED!");
 

@@ -70,9 +70,9 @@ pub struct Relation {
 impl From<&welds::detect::RelationDef> for Relation {
     fn from(value: &welds::detect::RelationDef) -> Self {
         Relation {
-            schema: value.other_table.schema.clone(),
-            tablename: value.other_table.name.to_owned(),
-            foreign_key: value.foreign_key.to_owned(),
+            schema: value.other_table().schema().map(|x| x.to_owned()),
+            tablename: value.other_table().name().to_owned(),
+            foreign_key: value.foreign_key().to_owned(),
         }
     }
 }

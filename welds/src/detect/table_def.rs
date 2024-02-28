@@ -102,6 +102,18 @@ impl ColumnDef {
     pub fn updatable(&self) -> bool {
         self.updatable
     }
+
+    /// returns a model_traits::Column. This can be used for queries.
+    pub fn as_query_column(&self, syntax: Syntax) -> Option<crate::model_traits::Column> {
+        let db_type = self.ty();
+        let rust_type_pair = crate::writers::types::recommended_rust_type(syntax, db_type)?;
+        let rust_type = rust_type_pair.rust_type();
+        Some(crate::model_traits::Column::new(
+            &self.name,
+            rust_type,
+            self.null(),
+        ))
+    }
 }
 
 #[derive(Debug, Clone, Copy, Hash, Eq, PartialEq)]
@@ -112,12 +124,9 @@ pub enum DataType {
 
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
 pub struct RelationDef {
-    /// The Other side of this relationship
-    pub other_table: TableIdent,
-    /// this is the foreign_key side column regardless of which side this defines
-    pub foreign_key: String,
-    /// this is the column the fk point to, regardless of which side this defines
-    pub primary_key: String,
+    other_table: TableIdent,
+    foreign_key: String,
+    primary_key: String,
 }
 
 impl RelationDef {
@@ -128,13 +137,59 @@ impl RelationDef {
             primary_key: primary_key.to_owned(),
         }
     }
+
+    /// The Other side of this relationship
+    pub fn other_table(&self) -> &TableIdent {
+        &self.other_table
+    }
+    /// this is the foreign_key side column regardless of which side this defines
+    pub fn foreign_key(&self) -> &str {
+        &self.foreign_key
+    }
+    /// this is the column the fk point to, regardless of which side this defines
+    pub fn primary_key(&self) -> &str {
+        &self.primary_key
+    }
 }
 
-#[cfg(test)]
+#[cfg(feature = "mock")]
 /// This module allows you to mock TableDef
 /// useful while testing
 pub mod mock {
     use super::*;
+
+    pub struct MockColumnDef(ColumnDef);
+    impl MockColumnDef {
+        pub fn new(name: impl Into<String>, ty: impl Into<String>) -> MockColumnDef {
+            let name: String = name.into();
+            let ty: String = ty.into();
+            MockColumnDef(ColumnDef {
+                name,
+                ty,
+                null: false,
+                primary_key: false,
+                updatable: true,
+            })
+        }
+
+        pub fn null(mut self) -> Self {
+            self.0.null = true;
+            self
+        }
+
+        pub fn primary_key(mut self) -> Self {
+            self.0.primary_key = true;
+            self
+        }
+        pub fn readonly(mut self) -> Self {
+            self.0.updatable = false;
+            self
+        }
+
+        pub fn build(self) -> ColumnDef {
+            self.0
+        }
+    }
 
     pub struct MockTableDef(TableDef);
 

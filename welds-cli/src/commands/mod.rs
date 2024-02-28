@@ -19,9 +19,9 @@ pub struct Args {
     #[command(subcommand)]
     pub command: Commands,
 
-    /// Force add unknown types to be hidden when generating models.
-    /// NOTE: you will need to resolve compile errors for unknown types.
-    #[arg(short, long, value_name = "hide_unknown_types")]
+    /// Force hiding of type that are not support by the enabled Database drivers
+    /// NOTE: you will need to resolve compile errors for unsupported types.
+    #[arg(long, value_name = "hide_unknown_types")]
     pub hide_unknown_types: bool,
 }
 

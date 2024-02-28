@@ -26,6 +26,7 @@ welds-macros = { path="../welds-macros", version = "^1.0" }
 "sqlite" = ["welds-connections/sqlite"]
 "full" = ["postgres", "mysql", "mssql", "sqlite", "check", "detect", "migrations" ]
 "detect" = []
+"mock" = []
 "check" = ["detect", "colored"]
 "migrations" = ["detect"]
 
@@ -43,7 +44,7 @@ welds-macros = { path="../welds-macros", version = "^1.0" }
 
 
 [dev-dependencies]
-welds = { path="./", features=["full"] }
+welds = { path="./", features=["full", "mock"] }
 futures = {version= "0.3" }
 welds-connections = { path="../welds-connections", version = "^1.0", features=["full"] }
 # used for the examples

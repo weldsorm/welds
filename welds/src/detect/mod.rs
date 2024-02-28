@@ -12,7 +12,9 @@ use table_scan_row::TableScanRow;
 mod fk_scan_row;
 use fk_scan_row::{FkScanRow, FkScanTableCol};
 
-#[cfg(test)]
+#[cfg(feature = "mock")]
+pub use table_def::mock::MockColumnDef;
+#[cfg(feature = "mock")]
 pub use table_def::mock::MockTableDef;
 
 pub(crate) mod table_def;

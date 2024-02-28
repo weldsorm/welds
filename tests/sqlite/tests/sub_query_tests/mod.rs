@@ -1,4 +1,3 @@
-type Db = sqlx::Sqlite;
 use welds::Syntax;
 use welds::WeldsModel;
 
@@ -11,7 +10,7 @@ pub struct Order2 {
     pub oid: i32,
     pub product_id: i32,
 }
-#[derive(Debug, sqlx::FromRow, WeldsModel)]
+#[derive(Debug, WeldsModel)]
 #[welds(db(Sqlite))]
 #[welds(table = "Products")]
 #[welds(HasMany(orders, Order2, "product_id"))]

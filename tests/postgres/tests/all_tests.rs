@@ -495,10 +495,10 @@ fn array_table_should_detect_array_type_as_array() {
         let array_column = tabledef
             .columns()
             .iter()
-            .find(|c| c.name == "numbers")
+            .find(|&c| c.name() == "numbers")
             .unwrap();
         // make sure we are reporting the array type as an array
-        assert_eq!(array_column.ty, "INT4[]");
+        assert_eq!(array_column.ty(), "INT4[]");
     })
 }
 

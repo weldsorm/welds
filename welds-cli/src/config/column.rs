@@ -18,20 +18,20 @@ impl Column {
     pub fn new(def: &ColumnDef) -> Self {
         use inflector::Inflector;
         Column {
-            db_name: def.name.to_owned(),
-            db_type: def.ty.to_owned(),
-            model_name: def.name.to_snake_case(),
-            is_null: def.null,
-            primary_key: def.primary_key,
-            writeable: def.updatable,
+            db_name: def.name().to_owned(),
+            db_type: def.ty().to_owned(),
+            model_name: def.name().to_snake_case(),
+            is_null: def.null(),
+            primary_key: def.primary_key(),
+            writeable: def.updatable(),
         }
     }
 
     pub fn update_from(&mut self, def: &ColumnDef) {
-        self.db_name = def.name.to_owned();
-        self.db_type = def.ty.to_owned();
-        self.is_null = def.null;
-        self.primary_key = def.primary_key;
-        self.writeable = def.updatable;
+        self.db_name = def.name().to_owned();
+        self.db_type = def.ty().to_owned();
+        self.is_null = def.null();
+        self.primary_key = def.primary_key();
+        self.writeable = def.updatable();
     }
 }

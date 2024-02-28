@@ -1,8 +1,9 @@
 pub mod commands;
 pub mod config;
 pub mod errors;
-//pub mod generators;
+pub mod generators;
 
+use anyhow::anyhow;
 use anyhow::Result;
 use config::DbProvider;
 use std::path::PathBuf;
@@ -44,22 +45,22 @@ pub async fn update(schema_path: PathBuf, identifier: Option<String>) -> Result<
 pub struct GenerateOption {
     pub schema_path: PathBuf,
     pub output_path: PathBuf,
-    pub add_unknown_types: bool,
+    pub hide_unknown_types: bool,
     pub table: Option<String>,
 }
 
 pub fn generate(mut opt: GenerateOption) -> Result<()> {
-    todo!()
-    //if !opt.schema_path.exists() {
-    //    return Err(anyhow!(WeldsError::MissingSchemaFile(opt.schema_path)));
-    //}
+    use crate::errors::WeldsError;
+    if !opt.schema_path.exists() {
+        return Err(anyhow!(WeldsError::MissingSchemaFile(opt.schema_path)));
+    }
 
-    //let conf_def = config::read(&opt.schema_path)?;
+    let conf_def = config::read(&opt.schema_path)?;
 
-    //clean_code_output_path(&mut opt);
-    //generators::models::run(&conf_def, &opt)?;
+    clean_code_output_path(&mut opt);
+    generators::models::run(&conf_def, &opt)?;
 
-    //Ok(())
+    Ok(())
 }
 
 /// If the path is the root of a project, add on ./src/models

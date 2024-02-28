@@ -34,7 +34,7 @@ impl Table {
 }
 
 /// This module allows you to mock Table
-#[cfg(test)]
+#[cfg(feature = "mock")]
 pub mod mock {
     use super::*;
     use crate::detect::table_def::mock::MockTableDef;

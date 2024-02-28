@@ -1,12 +1,14 @@
 use crate::config::{Column, DbProvider, Relation, Table};
 use crate::errors::Result;
-use crate::generators::db_type_lookup::TypeInfo;
+//use crate::generators::db_type_lookup::TypeInfo;
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::{format_ident, quote};
 use rust_format::{Formatter, RustFmt};
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::PathBuf;
+use syn::Type;
+use welds::Syntax;
 
 pub(crate) fn generate(
     mod_path: &PathBuf,
@@ -121,36 +123,34 @@ fn build_field(column: &Column, db: DbProvider, hide_unknown_types: bool) -> Opt
     if !column.writeable {
         parts.push(quote! { #[welds(readonly)]});
     }
-    let mn = crate::generators::name_sanitize(&column.model_name);
+    let mn = crate::generators::keyword_sanitize(&column.model_name);
     if mn != column.db_name {
         let dbname = &column.db_name;
-        parts.push(quote! { #[sqlx(rename = #dbname)] });
+        parts.push(quote! { #[welds(rename = #dbname)] });
     }
     let span = Span::call_site();
     let f = Ident::new(&mn, span);
-    let typeinfo = match crate::generators::db_type_lookup::get(&column.db_type, db) {
-        Some(s) => s,
-        None => {
-            log::warn!("NO DB TYPE FOR: {} {}", f, column.db_type);
-            if unknown_types {
-                let span = Span::call_site();
-                let f = Ident::new(&column.db_type, span);
-                TypeInfo {
-                    quote: quote!(#f),
-                    force_null: false,
-                }
-            } else {
-                return None;
-            }
-        }
-    };
 
-    let force_null = typeinfo.force_null;
-    let mut f_type = typeinfo.quote;
-    if force_null || column.is_null {
-        f_type = quote! {Option<#f_type>};
+    let syntax = db.into();
+    let db_type = column.db_type.as_str();
+
+    let mut f_type = rust_type(syntax, db_type);
+
+    if !hide_unknown_types {
+        let dbtype_ident = Ident::new(&column.db_type, span);
+        f_type = f_type.or(Some(quote!(#dbtype_ident)))
     }
+    let f_type = f_type?;
 
     parts.push(quote! { pub #f: #f_type });
     Some(quote! { #(#parts)* })
+}
+
+/// Lookup what rust type to use for this db_type
+fn rust_type(syntax: Syntax, db_type: &str) -> Option<TokenStream> {
+    let recommend_type = welds::writers::types::recommended_rust_type(syntax, db_type)?;
+    let full_rust_type = recommend_type.full_rust_type();
+    let f_type: std::result::Result<Type, _> = syn::parse_str(&full_rust_type);
+    let f_type = f_type.ok()?;
+    Some(quote!( #f_type ))
 }

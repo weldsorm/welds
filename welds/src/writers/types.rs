@@ -188,6 +188,7 @@ const MYSQL_PAIRS: &[Pair] = &[
 
 const SQLITE_PAIRS: &[Pair] = &[
     Pair::new("BOOLEAN", "bool"),
+    Pair::new("BOOL", "bool"),
     Pair::new("INTEGER", "i32"),
     Pair::new("INTEGER", "i64"),
     Pair::new("BIGINT", "i64"),

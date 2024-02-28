@@ -127,6 +127,19 @@
 //!  - [Bulk (Create/Update/Delete)](https://github.com/weldsorm/welds/blob/main/welds/examples/bulk_operations.rs)
 //!  - [Select Only Specific Columns](https://github.com/weldsorm/welds/blob/main/welds/examples/manual_select_columns.rs)
 //!  - [Checking DB schema matches compiled structs](https://github.com/weldsorm/welds/blob/main/welds/examples/verify_tables.rs)
+//
+//!
+//! # Features
+//!
+//! - postgres - enables postgres database connection. (requires sqlx setup)
+//! - mysql - enables MySql database connection. (requires sqlx setup)
+//! - sqlite - enables Sqlite database connection. (requires sqlx setup)
+//! - mssql - enables Microsoft SQL support. (requires tokio runtime.)
+//! - detect - enables scanning of the database to get schema info
+//! - check - enables checking your models against table in the database
+//! - migrations - adds all the migration structs and traits
+//! - full - all the features excluding (mock)
+//! - mock - Use for testing ONLY. Enables mocking out database schemas
 //!
 //!
 //! # Important Notes:

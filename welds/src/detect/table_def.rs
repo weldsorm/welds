@@ -71,11 +71,37 @@ impl TableDefSingle {
 
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
 pub struct ColumnDef {
-    pub name: String,
-    pub ty: String,
-    pub null: bool,
-    pub primary_key: bool,
-    pub updatable: bool,
+    pub(crate) name: String,
+    pub(crate) ty: String,
+    pub(crate) null: bool,
+    pub(crate) primary_key: bool,
+    pub(crate) updatable: bool,
+}
+
+impl ColumnDef {
+    /// return the name of this column
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+
+    /// returns the database type of this column
+    pub fn ty(&self) -> &str {
+        &self.ty
+    }
+
+    /// return if this column can hold null values
+    pub fn null(&self) -> bool {
+        self.null
+    }
+
+    /// returns true if this column holds a primary key
+    pub fn primary_key(&self) -> bool {
+        self.primary_key
+    }
+    /// returns true is this column can be written to. I.E. not readonly
+    pub fn updatable(&self) -> bool {
+        self.updatable
+    }
 }
 
 #[derive(Debug, Clone, Copy, Hash, Eq, PartialEq)]

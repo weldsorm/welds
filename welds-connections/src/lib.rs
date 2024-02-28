@@ -42,6 +42,13 @@ pub trait Client {
     fn syntax(&self) -> Syntax;
 }
 
+/// Used the ENV DATABASE_URL
+/// builds a connection with whatever is in it.
+pub async fn connect_from_env() -> Result<Box<dyn Client>> {
+    let url = std::env::var("DATABASE_URL").or(Err(Error::InvalidDatabaseUrl))?;
+    connect(&url).await
+}
+
 /// Returns a connection pool (Client) for the given connection string.
 /// connection string formats:
 /// SQLX Connection String (postgres, mysql, sqlite)

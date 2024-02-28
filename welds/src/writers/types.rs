@@ -79,6 +79,15 @@ impl Pair {
         }
     }
 
+    /// Returns a full rust type with a namespace if there is one
+    pub fn full_rust_type(&self) -> String {
+        if self.array {
+            format!("Vec<{}>", self.rust_type)
+        } else {
+            self.rust_type.to_owned()
+        }
+    }
+
     /// returns true is this Pair matches a db_type and rust_type
     pub fn matches(&self, db: &str, rust: &str) -> bool {
         self.db_type() == db && self.is_rust_type(rust)
@@ -180,6 +189,7 @@ const MYSQL_PAIRS: &[Pair] = &[
 const SQLITE_PAIRS: &[Pair] = &[
     Pair::new("BOOLEAN", "bool"),
     Pair::new("INTEGER", "i32"),
+    Pair::new("INTEGER", "i64"),
     Pair::new("BIGINT", "i64"),
     Pair::new("INT8", "i64"),
     Pair::new("INTSMALL", "i64"),
@@ -272,6 +282,38 @@ pub(crate) fn pk_override(syntax: Syntax, db_type: &str) -> Option<&'static str>
     None
 }
 
+/// Returns the recommenced rust type to use for a given Database type.
+pub fn recommended_rust_type(syntax: Syntax, db_type: &str) -> Option<Pair> {
+    // find the root of the type VARCHAR from VARCHAR(MAX)
+    let base = match db_type.find('(') {
+        Some(index) => &db_type[..index],
+        None => db_type,
+    };
+
+    let pairs = get_pairs(syntax);
+    let db_type = db_type.trim().to_uppercase();
+    for pair in pairs {
+        let pair_type = pair.db_type();
+        if base == pair_type || db_type == pair_type {
+            return Some(pair);
+        }
+    }
+    None
+}
+
+/// Returns the recommended rust type to use for a given Database type.
+pub fn recommended_db_type(syntax: Syntax, rust_type: &str) -> Option<Pair> {
+    let pairs = get_pairs(syntax);
+    let pairs = pairs.iter().filter(|&x| !x.id_only());
+    let ty = rust_type.trim();
+    for pair in pairs {
+        if pair.is_rust_type(ty) {
+            return Some(pair.clone());
+        }
+    }
+    None
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -284,8 +326,59 @@ mod tests {
         assert!(!are_equivalent_types(&pairs, "SERIAL", "String"));
         assert!(are_equivalent_types(&pairs, "BIGSERIAL", "i64"));
         assert!(are_equivalent_types(&pairs, "BIGINT[]", "Vec<i64>"));
+        assert!(!are_equivalent_types(&pairs, "BIGINT", "Vec<i64>"));
         assert!(are_equivalent_types(&pairs, "VARCHAR", "String"));
         assert!(!are_equivalent_types(&pairs, "FLOAT", "String"));
         assert!(are_equivalent_types(&pairs, "MONEY", "PgMoney"));
+    }
+
+    #[test]
+    fn should_recommend_good_rust_types() {
+        let s = Syntax::Postgres;
+        assert_eq!(
+            recommended_rust_type(s, "Int").unwrap().full_rust_type(),
+            "i32"
+        );
+        assert_eq!(
+            recommended_rust_type(s, "text").unwrap().full_rust_type(),
+            "String"
+        );
+        assert_eq!(
+            recommended_rust_type(s, "bool").unwrap().full_rust_type(),
+            "bool"
+        );
+        let s = Syntax::Sqlite;
+        assert_eq!(
+            recommended_rust_type(s, "INTSMALL")
+                .unwrap()
+                .full_rust_type(),
+            "i64"
+        );
+        assert_eq!(
+            recommended_rust_type(s, "BIGINT").unwrap().full_rust_type(),
+            "i64"
+        );
+        let s = Syntax::Mssql;
+        assert_eq!(
+            recommended_rust_type(s, "VARCHAR(MAX)")
+                .unwrap()
+                .full_rust_type(),
+            "String"
+        );
+        assert_eq!(
+            recommended_rust_type(s, "TEXT").unwrap().full_rust_type(),
+            "String"
+        );
+    }
+
+    #[test]
+    fn should_recommend_good_db_types() {
+        let s = Syntax::Postgres;
+        assert_eq!(recommended_db_type(s, "i32").unwrap().db_type(), "INT");
+        assert_eq!(recommended_db_type(s, "String").unwrap().db_type(), "TEXT");
+        assert_eq!(recommended_db_type(s, "bool").unwrap().db_type(), "BOOL");
+        let s = Syntax::Sqlite;
+        assert_eq!(recommended_db_type(s, "i64").unwrap().db_type(), "INTEGER");
+        assert_eq!(recommended_db_type(s, "i16").unwrap().db_type(), "INTEGER");
     }
 }

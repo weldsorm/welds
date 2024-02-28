@@ -4,7 +4,7 @@ use std::env;
 use std::path::PathBuf;
 use weldscli_lib::{commands::Commands::*, GenerateOption};
 
-#[async_std::main]
+#[tokio::main]
 async fn main() -> Result<()> {
     pretty_env_logger::init();
     let args = weldscli_lib::commands::Args::parse();

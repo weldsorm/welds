@@ -1,6 +1,7 @@
 use crate::errors::{Result, WeldsError};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
+use welds::Syntax;
 
 mod table;
 pub use table::Table;
@@ -43,7 +44,7 @@ impl Config {
             .retain(|x| x.manual_update || idents.contains(&&x.ident()));
     }
 
-    pub(crate) fn add_update(&mut self, tables: &[welds::detect::TableDef], provider: DbProvider) {
+    pub(crate) fn add_update(&mut self, provider: DbProvider, tables: &[welds::detect::TableDef]) {
         // Build a list of new columns to add.
         let mut to_add = Vec::default();
         // Add or update
@@ -82,4 +83,26 @@ pub enum DbProvider {
     Mysql,
     Mssql,
     Sqlite,
+}
+
+impl From<Syntax> for DbProvider {
+    fn from(syntax: Syntax) -> Self {
+        match syntax {
+            Syntax::Mysql => DbProvider::Mysql,
+            Syntax::Postgres => DbProvider::Postgres,
+            Syntax::Mssql => DbProvider::Mssql,
+            Syntax::Sqlite => DbProvider::Sqlite,
+        }
+    }
+}
+
+impl From<DbProvider> for Syntax {
+    fn from(provider: DbProvider) -> Syntax {
+        match provider {
+            DbProvider::Mysql => Syntax::Mysql,
+            DbProvider::Postgres => Syntax::Postgres,
+            DbProvider::Mssql => Syntax::Mssql,
+            DbProvider::Sqlite => Syntax::Sqlite,
+        }
+    }
 }

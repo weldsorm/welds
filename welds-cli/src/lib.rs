@@ -1,38 +1,21 @@
 pub mod commands;
 pub mod config;
 pub mod errors;
-pub mod generators;
-use crate::errors::WeldsError;
-use anyhow::{anyhow, Result};
+//pub mod generators;
+
+use anyhow::Result;
 use config::DbProvider;
-use log::debug;
 use std::path::PathBuf;
-use welds::connection::AnyPool;
-use welds::table::TableIdent;
+use welds::model_traits::TableIdent;
+use welds::prelude::*;
 
 pub async fn update(schema_path: PathBuf, identifier: Option<String>) -> Result<()> {
-    debug!("got to update");
     use welds::detect::find_tables;
     let identifier = identifier.as_ref().map(|x| TableIdent::parse(x));
-    let unknown_pool = AnyPool::connect().await?;
 
-    let provider = match unknown_pool {
-        AnyPool::Postgres(_) => DbProvider::Postgres,
-        AnyPool::MySql(_) => DbProvider::Mysql,
-        AnyPool::Mssql(_) => DbProvider::Mssql,
-        AnyPool::Sqlite(_) => DbProvider::Sqlite,
-    };
-
-    debug!("i know the pool {:?}", provider);
-
-    let mut tables = match unknown_pool {
-        AnyPool::Postgres(conn) => find_tables(&conn).await?,
-        AnyPool::Mssql(conn) => find_tables(&conn).await?,
-        AnyPool::MySql(conn) => find_tables(&conn).await?,
-        AnyPool::Sqlite(conn) => find_tables(&conn).await?,
-    };
-
-    debug!("i know tables {:?}", tables);
+    let client = welds::connections::connect_from_env().await?;
+    let mut tables = find_tables(client.as_ref()).await?;
+    let provider: DbProvider = client.syntax().into();
 
     let mut conf_def = config::read(&schema_path).unwrap_or_default();
 
@@ -45,11 +28,11 @@ pub async fn update(schema_path: PathBuf, identifier: Option<String>) -> Result<
                     "Table not found: no table updated  (HINT: make sure you include the schema)"
                 );
             }
-            conf_def.add_update(&tables, provider);
+            conf_def.add_update(provider, &tables);
         }
         None => {
             conf_def.remove_missing(&tables);
-            conf_def.add_update(&tables, provider);
+            conf_def.add_update(provider, &tables);
         }
     };
 
@@ -66,16 +49,17 @@ pub struct GenerateOption {
 }
 
 pub fn generate(mut opt: GenerateOption) -> Result<()> {
-    if !opt.schema_path.exists() {
-        return Err(anyhow!(WeldsError::MissingSchemaFile(opt.schema_path)));
-    }
+    todo!()
+    //if !opt.schema_path.exists() {
+    //    return Err(anyhow!(WeldsError::MissingSchemaFile(opt.schema_path)));
+    //}
 
-    let conf_def = config::read(&opt.schema_path)?;
+    //let conf_def = config::read(&opt.schema_path)?;
 
-    clean_code_output_path(&mut opt);
-    generators::models::run(&conf_def, &opt)?;
+    //clean_code_output_path(&mut opt);
+    //generators::models::run(&conf_def, &opt)?;
 
-    Ok(())
+    //Ok(())
 }
 
 /// If the path is the root of a project, add on ./src/models
@@ -108,14 +92,15 @@ fn is_project_path(path: &PathBuf) -> bool {
 
 /// tests the underlying database connection set with DATABASE_URL
 pub async fn test_connection() -> Result<()> {
-    let result = AnyPool::connect().await;
+    let result = welds::connections::connect_from_env().await;
     match result {
         Ok(_) => {
             println!("Database connected successfully");
             std::process::exit(0);
         }
-        Err(_) => {
+        Err(err) => {
             eprintln!("Not able to connect to database");
+            log::debug!("{:?}", err);
             std::process::exit(1);
         }
     }

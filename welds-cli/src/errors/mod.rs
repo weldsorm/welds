@@ -48,13 +48,6 @@ impl std::fmt::Display for WeldsError {
     }
 }
 
-impl From<sqlx::Error> for WeldsError {
-    fn from(inner: sqlx::Error) -> WeldsError {
-        let inin = WeldsCoreError::DbError(inner);
-        WeldsError::Core(inin)
-    }
-}
-
 impl From<std::io::Error> for WeldsError {
     fn from(inner: std::io::Error) -> WeldsError {
         WeldsError::IoError(inner)

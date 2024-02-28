@@ -12,27 +12,21 @@ pub(crate) fn generate(
     mod_path: &PathBuf,
     table: &Table,
     all: &[Table],
-    unknown_types: bool,
+    hide_unknown_types: bool,
 ) -> Result<()> {
-    if table.databases.is_empty() {
-        return Ok(());
-    }
-
     let mut path = PathBuf::from(mod_path);
     path.push("definition.rs");
 
     let struct_name = format_ident!("{}", table.struct_name());
 
-    let databases = build_welds_db(&table.databases);
     let weldstable = build_welds_table(table);
     let relations = build_relations(table, all);
-    let fields = build_fields(table, table.databases[0], unknown_types);
+    let fields = build_fields(table, table.database, hide_unknown_types);
 
     let code = quote! {
         use welds::WeldsModel;
 
-        #[derive(Debug, sqlx::FromRow, WeldsModel)]
-        #databases
+        #[derive(Debug, WeldsModel)]
         #weldstable
         #relations
         pub struct #struct_name {
@@ -109,17 +103,17 @@ fn find_table<'a>(
     all.iter().find(|&t| t.name == name && &t.schema == schema)
 }
 
-fn build_fields(table: &Table, db: DbProvider, unknown_types: bool) -> TokenStream {
+fn build_fields(table: &Table, db: DbProvider, hide_unknown_types: bool) -> TokenStream {
     let mut list = Vec::default();
     for col in &table.columns {
-        if let Some(f) = build_field(col, db, unknown_types) {
+        if let Some(f) = build_field(col, db, hide_unknown_types) {
             list.push(f);
         }
     }
     quote! { #(#list), * }
 }
 
-fn build_field(column: &Column, db: DbProvider, unknown_types: bool) -> Option<TokenStream> {
+fn build_field(column: &Column, db: DbProvider, hide_unknown_types: bool) -> Option<TokenStream> {
     let mut parts = Vec::default();
     if column.primary_key {
         parts.push(quote! { #[welds(primary_key)]});

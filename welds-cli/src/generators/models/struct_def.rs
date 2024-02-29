@@ -43,20 +43,6 @@ pub(crate) fn generate(
     Ok(())
 }
 
-fn build_welds_db(providers: &[DbProvider]) -> TokenStream {
-    let mut list = Vec::default();
-    for p in providers {
-        use DbProvider::*;
-        list.push(match p {
-            Mysql => quote! { db(Mysql) },
-            Mssql => quote! { db(Mssql) },
-            Postgres => quote! { db(Postgres) },
-            Sqlite => quote! { db(Sqlite) },
-        });
-    }
-    quote! { #[welds( #(#list),* )] }
-}
-
 fn build_welds_table(table: &Table) -> TokenStream {
     let schema = match &table.schema {
         Some(s) => quote! { schema = #s, },
@@ -140,7 +126,11 @@ fn build_field(column: &Column, db: DbProvider, hide_unknown_types: bool) -> Opt
         let dbtype_ident = Ident::new(&column.db_type, span);
         f_type = f_type.or(Some(quote!(#dbtype_ident)))
     }
-    let f_type = f_type?;
+    let mut f_type = f_type?;
+
+    if column.is_null {
+        f_type = quote!( Option<#f_type> );
+    }
 
     parts.push(quote! { pub #f: #f_type });
     Some(quote! { #(#parts)* })

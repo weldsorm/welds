@@ -100,13 +100,6 @@ fn zip_by_name<'a>(
 fn build_diff(pairs: &[Pair], dbcol: &ColumnDef, field: &Column) -> Option<Diff> {
     let type_changed = !are_equivalent_types(pairs, &dbcol.ty, field.rust_type());
 
-    //eprintln!(
-    //    "DB: {}\t\tR: {}\t{:?}",
-    //    dbcol.ty,
-    //    field.rust_type(),
-    //    type_changed
-    //);
-
     let nullable_chagned = dbcol.null != field.nullable();
     if type_changed || nullable_chagned {
         return Some(Diff {
@@ -131,39 +124,3 @@ fn build_diffs<'a>(
         .filter_map(|(d, m)| build_diff(pairs, d, m))
         .collect()
 }
-
-///// Returns true if the two types are compatible
-///// same_types("INT4", "INT4") == true
-//fn same_types(t1: &str, t2: &str) -> bool {
-//    if t1 == t2 {
-//        return true;
-//    }
-//    if let Some(group) = find_same_group(t1) {
-//        for x in group {
-//            if t2 == *x {
-//                return true;
-//            }
-//        }
-//    }
-//    false
-//}
-//
-//fn find_same_group(t: &str) -> Option<&'static [&'static str]> {
-//    for group in SAME_TYPES {
-//        for inner in group.iter() {
-//            if *inner == t {
-//                return Some(group);
-//            }
-//        }
-//    }
-//    None
-//}
-//
-//// list of all types that are compatible with each other.
-//const SAME_TYPES: &[&[&str]] = &[
-//    &["TEXT", "VARCHAR", "NVARCHAR"],
-//    &["INT4", "INT", "SERIAL", "BIT", "NBIT"],
-//    &["BIGINT", "INT8", "BIGSERIAL"],
-//    &["BINYINT", "BOOLEAN"],
-//    &["TINYINT", "BOOLEAN"],
-//];

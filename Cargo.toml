@@ -1,9 +1,4 @@
 [workspace]
-#default-members = ["welds-cli", "welds", "welds-macros"]
-#members = ["welds-cli", "welds", "welds-macros"]
-
-#default-members = ["welds", "welds-macros"]
-#members = ["welds", "welds-macros"]
 default-members = ["welds", "welds-connections", "welds-macros"]
 members = ["welds", "welds-connections", "welds-macros"]
 workspace.resolver = "2"

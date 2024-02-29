@@ -4,21 +4,20 @@
 ******************************************************************************/
 
 use welds::WeldsModel;
-#[derive(Debug, sqlx :: FromRow, WeldsModel)]
-#[welds(db(Mssql))]
+#[derive(Debug, WeldsModel)]
 #[welds(schema = "welds", table = "Products")]
 #[welds(HasMany(order, super::super::order::Order, "product_id"))]
 #[welds(HasMany(order2, super::super::order::Order, "product_id2"))]
 pub struct Product {
     #[welds(primary_key)]
-    #[sqlx(rename = "ID")]
+    #[welds(rename = "ID")]
     pub id: i32,
-    pub active: Option<i32>,
-    #[sqlx(rename = "Description")]
+    pub active: Option<bool>,
+    #[welds(rename = "Description")]
     pub description: Option<String>,
     pub name: String,
-    #[sqlx(rename = "price1")]
+    #[welds(rename = "price1")]
     pub price_1: Option<f32>,
-    #[sqlx(rename = "price2")]
+    #[welds(rename = "price2")]
     pub price_2: Option<f32>,
 }

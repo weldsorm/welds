@@ -1,11 +1,10 @@
 use super::builder::QueryBuilder;
-use super::clause::NextParam;
-use crate::connection::Database;
+use super::clause::ParamArgs;
+use crate::model_traits::{HasSchema, TableColumns, TableInfo};
 use crate::query::clause::exists::ExistIn;
 use crate::query::clause::ClauseAdder;
-use crate::table::{HasSchema, TableColumns, TableInfo};
-use sqlx::database::HasArguments;
-use sqlx::IntoArguments;
+use crate::writers::NextParam;
+use crate::Syntax;
 
 pub(crate) fn join_sql_parts(parts: &[Option<String>]) -> String {
     // Join al the parts into
@@ -17,41 +16,43 @@ pub(crate) fn join_sql_parts(parts: &[Option<String>]) -> String {
     sql
 }
 
-pub(crate) fn build_where<'schema, 'args, DB>(
+pub(crate) fn build_where<'lam, 'exist, 'args, 'p>(
+    syntax: Syntax,
     next_params: &NextParam,
     alias: &str,
-    args: &mut Option<<DB as HasArguments<'schema>>::Arguments>,
-    wheres: &[Box<dyn ClauseAdder<'schema, DB>>],
-    exist_ins: &[ExistIn<'schema, DB>],
+    wheres: &'lam [Box<dyn ClauseAdder>],
+    args: &'args mut Option<ParamArgs<'p>>,
+    exist_ins: &'exist [ExistIn],
 ) -> Option<String>
 where
-    DB: Database,
-    <DB as HasArguments<'schema>>::Arguments: IntoArguments<'args, DB>,
+    'lam: 'p,
+    'exist: 'p,
 {
-    let where_sql = build_where_clauses(next_params, alias, args, wheres, exist_ins);
+    let where_sql = build_where_clauses(syntax, next_params, alias, wheres, args, exist_ins);
     if where_sql.is_empty() {
         return None;
     }
     Some(format!("WHERE ( {} )", where_sql.join(" AND ")))
 }
 
-pub(crate) fn build_where_clauses<'schema, 'args, DB>(
+pub(crate) fn build_where_clauses<'lam, 'exist, 'args, 'p>(
+    syntax: Syntax,
     next_params: &NextParam,
     alias: &str,
-    args: &mut Option<<DB as HasArguments<'schema>>::Arguments>,
-    wheres: &[Box<dyn ClauseAdder<'schema, DB>>],
-    exist_ins: &[ExistIn<'schema, DB>],
+    wheres: &'lam [Box<dyn ClauseAdder>],
+    args: &'args mut Option<ParamArgs<'p>>,
+    exist_ins: &'exist [ExistIn],
 ) -> Vec<String>
 where
-    DB: Database,
-    <DB as HasArguments<'schema>>::Arguments: IntoArguments<'args, DB>,
+    'lam: 'p,
+    'exist: 'p,
 {
     let mut where_sql: Vec<String> = Vec::default();
     for clause in wheres {
         if let Some(args) = args {
             clause.bind(args);
         }
-        if let Some(p) = clause.clause(alias, next_params) {
+        if let Some(p) = clause.clause(syntax, alias, next_params) {
             where_sql.push(p);
         }
     }
@@ -59,18 +60,16 @@ where
         if let Some(args) = args {
             clause.bind(args);
         }
-        if let Some(p) = clause.clause(alias, next_params) {
+        if let Some(p) = clause.clause(syntax, alias, next_params) {
             where_sql.push(p);
         }
     }
     where_sql
 }
 
-pub(crate) fn build_tail<T, DB>(select: &QueryBuilder<T, DB>) -> Option<String>
+pub(crate) fn build_tail<T>(syntax: Syntax, select: &QueryBuilder<T>) -> Option<String>
 where
     T: HasSchema,
-    DB: Database,
-    <T as HasSchema>::Schema: TableInfo + TableColumns<DB>,
 {
-    super::tail::write::<DB>(&select.limit, &select.offset, &select.orderby)
+    super::tail::write(syntax, &select.limit, &select.offset, &select.orderby)
 }

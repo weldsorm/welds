@@ -1,8 +1,7 @@
 use super::table_def::DataType;
-use crate::table::TableIdent;
-use sqlx::Row;
+use crate::model_traits::TableIdent;
+use crate::Row;
 
-#[derive(Debug, sqlx::FromRow)]
 pub struct TableScanRow {
     pub(super) schema: Option<String>,
     pub(super) table_name: String,
@@ -12,6 +11,22 @@ pub struct TableScanRow {
     pub(super) is_nullable: i32,
     pub(super) is_primary_key: i32,
     pub(super) is_updatable: i32,
+}
+
+impl TryFrom<Row> for TableScanRow {
+    type Error = crate::WeldsError;
+    fn try_from(row: Row) -> Result<Self, Self::Error> {
+        Ok(TableScanRow {
+            schema: row.get_by_position(0)?,
+            table_name: row.get_by_position(1)?,
+            ty: row.get_by_position(2)?,
+            column_name: row.get_by_position(3)?,
+            column_type: row.get_by_position(4)?,
+            is_nullable: row.get_by_position(5)?,
+            is_primary_key: row.get_by_position(6)?,
+            is_updatable: row.get_by_position(7)?,
+        })
+    }
 }
 
 impl TableScanRow {
@@ -26,28 +41,5 @@ impl TableScanRow {
             return DataType::Table;
         }
         DataType::View
-    }
-}
-
-impl<R, DB> From<R> for TableScanRow
-where
-    DB: sqlx::Database,
-    R: Row<Database = DB>,
-    usize: sqlx::ColumnIndex<R>,
-    i32: sqlx::Type<DB> + for<'r> sqlx::Decode<'r, DB>,
-    String: sqlx::Type<DB> + for<'r> sqlx::Decode<'r, DB>,
-    Option<String>: sqlx::Type<DB> + for<'r> sqlx::Decode<'r, DB>,
-{
-    fn from(r: R) -> Self {
-        TableScanRow {
-            schema: r.get(0),
-            table_name: r.get(1),
-            ty: r.get(2),
-            column_name: r.get(3),
-            column_type: r.get(4),
-            is_nullable: r.get(5),
-            is_primary_key: r.get(6),
-            is_updatable: r.get(7),
-        }
     }
 }

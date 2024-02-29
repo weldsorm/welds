@@ -7,8 +7,7 @@
 ******************************************************************************/
 
 use welds::WeldsModel;
-#[derive(Debug, sqlx :: FromRow, WeldsModel, Default)]
-#[welds(db(Postgres))]
+#[derive(Debug, WeldsModel, Default)]
 #[welds(schema = "alt", table = "table_with_arrays")]
 pub struct TableWithArray {
     #[welds(primary_key)]

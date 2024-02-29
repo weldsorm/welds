@@ -10,13 +10,12 @@ pub(crate) fn write(info: &Info) -> TokenStream {
 
 
 
-    pub fn where_col<'args, DB>(
-        lam: impl Fn(#schema) -> Box<dyn #wp::query::clause::ClauseAdder<'args, DB>>,
-    ) -> #wp::query::builder::QueryBuilder<'args, Self, DB>
+    pub fn where_col(
+        lam: impl Fn(#schema) -> Box<dyn #wp::query::clause::ClauseAdder>,
+    ) -> #wp::query::builder::QueryBuilder<Self>
     where
-        DB: #wp::connection::Database,
-        #schema: #wp::table::TableColumns<DB>,
-        Self: Send + Unpin + for<'r> sqlx::FromRow<'r, DB::Row>,
+        #schema: #wp::model_traits::TableColumns,
+        Self: Send
     {
         let select = #wp::query::builder::QueryBuilder::new();
         select.where_col(lam)

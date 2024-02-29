@@ -1,6 +1,6 @@
 use crate::{
     detect::ColumnDef,
-    table::{Column, TableIdent},
+    model_traits::{Column, TableIdent},
 };
 use colored::Colorize;
 use std::fmt::Display;
@@ -13,14 +13,7 @@ pub struct Diff {
     pub db_nullable: bool,
     pub welds_type: String,
     pub welds_nullable: bool,
-    type_changed: bool,
-}
-
-impl Diff {
-    /// returns true if the underlying DB_TYPE and MODEL_TYPE are no longer compatible
-    pub fn type_changed(&self) -> bool {
-        self.type_changed
-    }
+    pub type_changed: bool,
 }
 
 impl Display for Diff {
@@ -41,6 +34,16 @@ impl Display for Diff {
             Display::fmt(&self.welds_nullable, f)?;
         }
         Ok(())
+    }
+}
+
+impl Diff {
+    pub fn type_changed(&self) -> bool {
+        self.type_changed
+    }
+
+    pub fn nullable_changed(&self) -> bool {
+        self.welds_nullable != self.db_nullable
     }
 }
 
@@ -106,25 +109,19 @@ impl Issue {
             level: Level::Critical,
             kind: Kind::OnModelNotDb(Missing {
                 column: col.name().to_string(),
-                ty: col.dbtype().to_string(),
+                ty: col.rust_type().to_string(),
                 nullable: col.nullable(),
             }),
         }
     }
 
-    pub(crate) fn changed(
-        schemaname: Option<&str>,
-        tablename: &str,
-        colcol: &(&ColumnDef, &Column),
-    ) -> Self {
+    pub(crate) fn changed(schemaname: Option<&str>, tablename: &str, diff: Diff) -> Self {
         let ident = TableIdent {
             schema: schemaname.map(|x| x.to_string()),
             name: tablename.to_string(),
         };
-        let (db, st) = *colcol;
-        let type_changed = !super::same_types(&db.ty, st.dbtype());
 
-        let level = if !type_changed {
+        let level = if !diff.type_changed {
             Level::Medium
         } else {
             Level::High
@@ -133,14 +130,7 @@ impl Issue {
         Issue {
             ident,
             level,
-            kind: Kind::Changed(Diff {
-                type_changed,
-                column: db.name.to_string(),
-                db_type: db.ty.to_string(),
-                db_nullable: db.null,
-                welds_type: st.dbtype().to_string(),
-                welds_nullable: st.nullable(),
-            }),
+            kind: Kind::Changed(diff),
         }
     }
 }

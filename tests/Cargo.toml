@@ -1,6 +1,12 @@
 [workspace]
-default-members = ["mssql", "mysql", "postgres", "testlib", "sqlite"]
-members = ["mssql", "mysql", "postgres", "testlib", "sqlite"]
+
+
+
+default-members = ["testlib", "sqlite", "mysql", "mssql"]
+members = ["testlib", "sqlite", "mysql", "mssql"]
+#default-members = ["mssql", "mysql", "postgres", "testlib", "sqlite"]
+#members = ["mssql", "mysql", "postgres", "testlib", "sqlite"]
+
 workspace.resolver = "2"
 
 [profile.dev.package.sqlx-macros]

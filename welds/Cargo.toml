@@ -1,7 +1,7 @@
 [package]
 name = "welds"
 authors = ["Lex Childs <lexchilds@gmail.com>"]
-version = "0.2.3"
+version = "1.0.0"
 edition = "2021"
 license = "BSD-3-Clause"
 categories = ["Database interfaces", "database"]
@@ -11,33 +11,43 @@ repository = "https://github.com/weldsorm/welds"
 description = "An async ORM for (postgres, mssql, mysql, sqlite)"
 
 [dependencies]
-sqlx = { version = "0.7", features = [ "macros"] }
-welds-macros = { path="../welds-macros", version = "^0.2" }
-welds-sqlx-mssql = { path="../../welds-sqlx-mssql", version = "1.7", optional=true }
+welds-connections = { path="../welds-connections", version = "^1.0" }
 async-trait = "0.1"
-thiserror = "1.0"
-anyhow = "1.0"
 log = "0.4"
 colored = { version="2", optional = true }
+thiserror = "1.0.57"
+welds-macros = { path="../welds-macros", version = "^1.0" }
 
 [features]
 "default" = []
+"postgres" = ["welds-connections/postgres"]
+"mysql" = ["welds-connections/mysql"]
+"mssql" = ["welds-connections/mssql"]
+"sqlite" = ["welds-connections/sqlite"]
+"full" = ["postgres", "mysql", "mssql", "sqlite", "check", "detect", "migrations" ]
 "detect" = []
-"check" = ["detect", "dep:colored"]
-"example_objects" = []
-"postgres" = ["sqlx/postgres", "welds-macros/postgres"]
-"mysql" = ["sqlx/mysql", "welds-macros/mysql"]
-"sqlite" = ["sqlx/sqlite", "welds-macros/sqlite"]
-"mssql" = ["welds-sqlx-mssql", "welds-macros/mysql"]
+"mock" = []
+"check" = ["detect", "colored"]
+"migrations" = ["detect"]
+
+#"detect" = []
+#"check" = ["detect", "dep:colored"]
+#"example_objects" = []
+#"postgres" = ["sqlx/postgres", "welds-macros/postgres"]
+#"mysql" = ["sqlx/mysql", "welds-macros/mysql"]
+#"sqlite" = ["sqlx/sqlite", "welds-macros/sqlite"]
+#"mssql" = ["welds-sqlx-mssql", "welds-macros/mysql"]
 
 
-[profile.dev.package.sqlx-macros]
-opt-level = 3
+#[profile.dev.package.sqlx-macros]
+#opt-level = 3
 
 
 [dev-dependencies]
-async-std = { version = "1", features = ["attributes"] }
+welds = { path="./", features=["full", "mock"] }
+futures = {version= "0.3" }
+welds-connections = { path="../welds-connections", version = "^1.0", features=["full"] }
+# used for the examples
 sqlx = { version = "0.7", features = [ "runtime-async-std", "tls-rustls", "macros"] }
-welds = { path="./", features=["postgres", "mysql", "mssql", "sqlite", "detect", "check"] }
-
-
+async-std = { version = "1", features = ["attributes"] }
+pretty_env_logger = "0.5"

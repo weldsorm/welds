@@ -1,19 +1,22 @@
-use sqlite_test::models::order::Order;
+use sqlite_test::models::order::{Order, SmallOrder};
 use sqlite_test::models::product::{BadProduct1, BadProduct2, Product};
 use sqlite_test::models::{Thing1, Thing2, Thing3};
+use welds::connections::sqlite::SqliteClient;
+use welds::connections::TransactStart;
+use welds::Syntax;
 
 pub mod bulk_delete;
 pub mod bulk_update;
 pub mod select_col;
 pub mod sub_query_tests;
 
-type Db = sqlx::Sqlite;
-async fn get_conn() -> welds::connection::Pool<Db> {
-    let sqlx_conn = testlib::sqlite::conn().await.unwrap();
-    sqlx_conn.into()
+async fn get_conn() -> SqliteClient {
+    let conn = testlib::sqlite::conn().await.unwrap();
+    let client: SqliteClient = conn.into();
+    client
 }
 
-#[derive(Default, Debug, Clone, sqlx::FromRow)]
+#[derive(Default, Debug, Clone)]
 pub struct Count {
     pub count: i32,
 }
@@ -32,7 +35,7 @@ fn should_be_able_to_read_all_products() {
         let conn = get_conn().await;
 
         let q = Product::all();
-        eprintln!("SQL: {}", q.to_sql());
+        eprintln!("SQL: {}", q.to_sql(Syntax::Sqlite));
         let all = q.run(&conn).await.unwrap();
         assert_eq!(all.len(), 6, "Unexpected number of rows returned");
     })
@@ -44,7 +47,7 @@ fn should_be_able_to_filter_on_id() {
         let conn = get_conn().await;
 
         let q = Product::where_col(|x| x.id.equal(1));
-        eprintln!("SQL: {}", q.to_sql());
+        eprintln!("SQL: {}", q.to_sql(Syntax::Sqlite));
         let just_horse = q.run(&conn).await.unwrap();
         assert_eq!(
             just_horse.len(),
@@ -59,7 +62,7 @@ fn should_lt() {
     async_std::task::block_on(async {
         let conn = get_conn().await;
         let q = Product::where_col(|x| x.price1.lt(2.10));
-        eprintln!("SQL: {}", q.to_sql());
+        eprintln!("SQL: {}", q.to_sql(Syntax::Sqlite));
         let data = q.run(&conn).await.unwrap();
         assert_eq!(data.len(), 1);
     })
@@ -70,7 +73,7 @@ fn should_be_able_to_filter_on_equal() {
     async_std::task::block_on(async {
         let conn = get_conn().await;
         let q = Product::where_col(|x| x.id.equal(1));
-        eprintln!("SQL: {}", q.to_sql());
+        eprintln!("SQL: {}", q.to_sql(Syntax::Sqlite));
         let just_horse = q.run(&conn).await.unwrap();
         assert_eq!(
             just_horse.len(),
@@ -85,7 +88,7 @@ fn should_be_able_to_filter_on_lt() {
     async_std::task::block_on(async {
         let conn = get_conn().await;
         let q = Product::where_col(|x| x.price1.lt(3.00));
-        eprintln!("SQL: {}", q.to_sql());
+        eprintln!("SQL: {}", q.to_sql(Syntax::Sqlite));
         let data = q.run(&conn).await.unwrap();
         assert_eq!(data.len(), 2, "Expected horse and dog",);
     })
@@ -96,7 +99,7 @@ fn should_be_able_to_filter_on_lte() {
     async_std::task::block_on(async {
         let conn = get_conn().await;
         let q = Product::where_col(|x| x.id.lte(2));
-        eprintln!("SQL: {}", q.to_sql());
+        eprintln!("SQL: {}", q.to_sql(Syntax::Sqlite));
         let data = q.run(&conn).await.unwrap();
         assert_eq!(data.len(), 2, "Expected horse and dog",);
     })
@@ -108,12 +111,12 @@ fn should_be_able_to_filter_with_nulls() {
         let conn = get_conn().await;
         // is null
         let q1 = Product::where_col(|x| x.price1.equal(None));
-        eprintln!("SQL_1: {}", q1.to_sql());
+        eprintln!("SQL_1: {}", q1.to_sql(Syntax::Sqlite));
         let data1 = q1.run(&conn).await.unwrap();
         assert_eq!(data1.len(), 0, "Expected All",);
         // is not null
         let q1 = Product::where_col(|x| x.price1.not_equal(None));
-        eprintln!("SQL_2: {}", q1.to_sql());
+        eprintln!("SQL_2: {}", q1.to_sql(Syntax::Sqlite));
         let data1 = q1.run(&conn).await.unwrap();
         assert_eq!(data1.len(), 6, "Expected All",);
     })
@@ -124,7 +127,7 @@ fn should_be_able_to_count_in_sql() {
     async_std::task::block_on(async {
         let conn = get_conn().await;
         let q = Product::where_col(|x| x.price1.lte(2.15));
-        eprintln!("SQL: {}", q.to_sql());
+        eprintln!("SQL: {}", q.to_sql_count(Syntax::Sqlite));
         let count = q.count(&conn).await.unwrap();
         assert_eq!(count, 2,);
     })
@@ -135,9 +138,41 @@ fn should_be_able_to_limit_results_in_sql() {
     async_std::task::block_on(async {
         let conn = get_conn().await;
         let q = Product::all().limit(2).offset(1);
-        eprintln!("SQL: {}", q.to_sql());
+        eprintln!("SQL: {}", q.to_sql(Syntax::Sqlite));
         let count = q.run(&conn).await.unwrap().len();
         assert_eq!(count, 2);
+    })
+}
+
+#[test]
+fn should_be_able_to_crud_with_small_int() {
+    async_std::task::block_on(async {
+        let client = get_conn().await;
+        let trans = client.begin().await.unwrap();
+
+        let mut p1 = Product::new();
+        p1.save(&trans).await.unwrap();
+        let mut p2 = Product::new();
+        p2.save(&trans).await.unwrap();
+        assert!(p1.id != 0);
+        assert!(p2.id != 0);
+
+        let mut s = SmallOrder::new();
+        s.product_id = p1.id;
+        s.save(&trans).await.unwrap();
+        let s = SmallOrder::find_by_id(&trans, s.id).await.expect("db err");
+        let mut s = s.expect("new SmallOrder not found");
+        assert_eq!(s.product_id, p1.id);
+        s.product_id = p2.id;
+        s.save(&trans).await.unwrap();
+        let s = SmallOrder::find_by_id(&trans, s.id).await.expect("db err");
+        let mut s = s.expect("new SmallOrder not found");
+        assert_eq!(s.product_id, p2.id);
+        s.delete(&trans).await.expect("delete db err");
+        let s_none = SmallOrder::find_by_id(&trans, s.id).await.expect("db err");
+        assert!(s_none.is_none());
+
+        trans.rollback().await.unwrap();
     })
 }
 
@@ -146,7 +181,7 @@ fn should_be_able_to_order_by_id() {
     async_std::task::block_on(async {
         let conn = get_conn().await;
         let q = Product::all().order_by_asc(|x| x.id);
-        eprintln!("SQL: {}", q.to_sql());
+        eprintln!("SQL: {}", q.to_sql(Syntax::Sqlite));
         let all = q.run(&conn).await.unwrap();
         let ids: Vec<i32> = all.iter().map(|x| x.id).collect();
         let mut ids_sorted = ids.clone();
@@ -217,9 +252,7 @@ fn should_be_able_to_scan_for_all_tables() {
 fn a_model_should_be_able_to_verify_its_schema_missing_table() {
     async_std::task::block_on(async {
         let conn = get_conn().await;
-        let issues = welds::check::schema::<BadProduct1, _, _>(&conn)
-            .await
-            .unwrap();
+        let issues = welds::check::schema::<BadProduct1>(&conn).await.unwrap();
         assert_eq!(issues.len(), 1);
         let issue = &issues[0];
         assert_eq!(issue.kind, welds::check::Kind::MissingTable);
@@ -230,9 +263,7 @@ fn a_model_should_be_able_to_verify_its_schema_missing_table() {
 fn a_model_should_be_able_to_verify_its_schema_missing_column() {
     async_std::task::block_on(async {
         let conn = get_conn().await;
-        let issues = welds::check::schema::<BadProduct2, _, _>(&conn)
-            .await
-            .unwrap();
+        let issues = welds::check::schema::<BadProduct2>(&conn).await.unwrap();
         // NOTE: a column name changed so it is added on the model and removed in the db giving two warnings
         for issue in &issues {
             eprintln!("{}", issue);
@@ -294,7 +325,7 @@ fn should_be_able_to_bulk_update() {
         let q = Order::all()
             .where_col(|x| x.code.equal(None))
             .set(|x| x.code, "test");
-        let sql = q.to_sql();
+        let sql = q.to_sql(Syntax::Sqlite);
         eprintln!("SQL: {}", sql);
         q.run(&conn).await.unwrap();
     })
@@ -307,7 +338,7 @@ fn should_be_able_to_bulk_update2() {
         let q = Product::all()
             .map_query(|p| p.orders)
             .set(|x| x.code, "test2");
-        let sql = q.to_sql();
+        let sql = q.to_sql(Syntax::Sqlite);
         eprintln!("SQL: {}", sql);
         q.run(&conn).await.unwrap();
     })
@@ -348,7 +379,7 @@ fn should_only_update_limited_rows_if_limit_is_in_query() {
             .limit(1)
             .set(|x| x.value, "HAS_VALUE");
 
-        let sql = update_statment.to_sql();
+        let sql = update_statment.to_sql(Syntax::Sqlite);
         update_statment.run(&trans).await.unwrap();
         eprintln!("SQL: {}", sql);
 

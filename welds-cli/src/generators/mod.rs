@@ -1,7 +1,6 @@
-pub(crate) mod db_type_lookup;
 pub(crate) mod models;
 
-pub(crate) fn name_sanitize(name: impl Into<String>) -> String {
+pub(crate) fn keyword_sanitize(name: impl Into<String>) -> String {
     let n = name.into();
     match n.as_str() {
         "as" => "as_".to_owned(),

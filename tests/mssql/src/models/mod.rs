@@ -5,8 +5,7 @@ pub mod product;
 
 use welds::WeldsModel;
 
-#[derive(Debug, sqlx::FromRow, WeldsModel)]
-#[welds(db(Mssql))]
+#[derive(Debug, WeldsModel)]
 #[welds(schema = "welds", table = "Thing1")]
 pub struct Thing1 {
     #[welds(primary_key)]

@@ -1,22 +1,25 @@
-pub(crate) struct CountWriter {
-    count: fn(Option<&str>, Option<&str>) -> String,
+use crate::Syntax;
+
+pub struct CountWriter {
+    syntax: Syntax,
 }
 
 impl CountWriter {
-    pub fn new<DB: DbCountWriter>() -> Self {
-        Self { count: DB::count }
+    pub fn new(syntax: Syntax) -> Self {
+        Self { syntax }
     }
     pub fn count(&self, prefix: Option<&str>, x: Option<&str>) -> String {
-        (self.count)(prefix, x)
+        match self.syntax {
+            Syntax::Mysql => MySql::count(prefix, x),
+            Syntax::Postgres => Postgres::count(prefix, x),
+            Syntax::Sqlite => Sqlite::count(prefix, x),
+            Syntax::Mssql => Mssql::count(prefix, x),
+        }
     }
 }
 
-pub trait DbCountWriter {
-    fn count(prefix: Option<&str>, x: Option<&str>) -> String;
-}
-
-#[cfg(feature = "postgres")]
-impl DbCountWriter for sqlx::Postgres {
+struct Postgres;
+impl Postgres {
     fn count(prefix: Option<&str>, x: Option<&str>) -> String {
         let mut x = x.unwrap_or("*").to_owned();
         if let Some(prefix) = prefix {
@@ -26,26 +29,45 @@ impl DbCountWriter for sqlx::Postgres {
     }
 }
 
-#[cfg(feature = "sqlite")]
-impl DbCountWriter for sqlx::Sqlite {
+struct Sqlite;
+impl Sqlite {
     fn count(_prefix: Option<&str>, x: Option<&str>) -> String {
         let x = x.unwrap_or("*");
         format!("CAST( COUNT({}) as BIGINT )", x)
     }
 }
 
-#[cfg(feature = "mssql")]
-impl DbCountWriter for crate::Mssql {
+struct Mssql;
+impl Mssql {
     fn count(_prefix: Option<&str>, x: Option<&str>) -> String {
         let x = x.unwrap_or("*");
         format!("CAST( COUNT({}) as BIGINT )", x)
     }
 }
 
-#[cfg(feature = "mysql")]
-impl DbCountWriter for sqlx::MySql {
+struct MySql;
+impl MySql {
     fn count(_prefix: Option<&str>, x: Option<&str>) -> String {
         let x = x.unwrap_or("*");
         format!("COUNT({})", x)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn pg_should_counts() {
+        let w = CountWriter::new(Syntax::Postgres);
+        assert_eq!(w.count(None, None), "CAST( COUNT(*) as BIGINT )");
+        assert_eq!(
+            w.count(None, Some("sheep")),
+            "CAST( COUNT(sheep) as BIGINT )"
+        );
+        assert_eq!(
+            w.count(Some("t1"), Some("sheep")),
+            "CAST( COUNT(t1.sheep) as BIGINT )"
+        );
     }
 }

@@ -1,33 +1,23 @@
 //!
 //! <div align="center">
 //!   <img src="https://raw.githubusercontent.com/weldsorm/welds/main/page/src/assets/images/banner.png"/>
-//!   <h3>An async ORM written in rust using the sqlx framework.</h3>
+//!   <h3>An async ORM written in rust using sqlx and/or Tiberius.</h3>
 //! </div>
 //!
 //! # What is Welds
 //! Welds is an ORM for the Rust programming language.
-//! The primary way to interact with Welds is by adding the "welds" and "sqlx" macros to your structs.
+//! The primary way to interact with Welds is by adding the "welds" macros to your structs.
 //! This adds to your structs Welds functions and allows for great autocompletion and very intuitive code.
 //!
 //! # Macros - Setup your structs
 //!
-//! To add welds to your struct you will need to derive `sqlx::FromRow` and `welds::WeldsModel`
+//! To add welds to your struct you will need to derive `welds::WeldsModel`
 //! ```rust,ignore
-//! #[derive(sqlx::FromRow, welds::WeldsModel)]
-//! ```
-//!
-//! ## Databases
-//! You will need to tell welds what Databases you want to support.
-//! ```rust,ignore
-//! #[welds(db(Postgres))]
-//! ```
-//! You can list them individually or all together
-//! ```rust,ignore
-//! #[welds(db(Postgres, Mssql, Mysql, Sqlite))]
+//! #[derive(welds::WeldsModel)]
 //! ```
 //!
 //! ## Connect to table / view
-//! let welds know what DB table/schema it will be reading/writing data from
+//! Let welds know what DB table/schema it will be reading/writing data from
 //! ```rust,ignore
 //! #[welds(schema = "public", table = "products")]
 //! ```
@@ -83,20 +73,19 @@
 //! ## Fields Level Attributes
 //! There are a couple attributes you can add to your fields to help control how welds functions
 //! - `#[welds(primary_key)]` Important! Add this to the primary key of your table.
-//! - `#[sqlx(rename = "xyz")]` let welds know the underlying column has a different name than the field
+//! - `#[welds(rename = "xyz")]` let welds know the underlying column has a different name than the field
 //! - `#[welds(ignore)]` Tell welds this fields it not in the database.
 //!
 //!
 //! ## Putting it all together
 //! Here is a working example of what a fully setup struct might look like
 //! ```rust,ignore
-//! #[derive(Debug, sqlx::FromRow, welds::WeldsModel)]
-//! #[welds(db(Postgres))]
+//! #[derive(Debug, welds::WeldsModel)]
 //! #[welds(schema = "public", table = "products")]
 //! #[welds(HasMany(order, super::order::Order, "product_id"))]
 //! pub struct Product {
 //!     #[welds(primary_key)]
-//!     #[sqlx(rename = "ID")]
+//!     #[welds(rename = "product_id")]
 //!     pub id: i32,
 //!     pub active: Option<bool>,
 //!     pub description: Option<String>,
@@ -119,14 +108,14 @@
 //!
 //! Start a query from the struct that derived WeldsModel
 //! ```rust,ignore
-//! let conn = welds::connection::connect_postgres(&url).await.unwrap();
+//! let client = welds::connections::postgres::connect(&url).await.unwrap();
 //! let sellers = Product::all()
 //!       .where_col(|product| product.price.equal(3.50))
 //!       .map_query(|product| product.seller )
 //!       .where_col(|seller| seller.name.ilike("%Nessie%") )
 //!       .order_by_desc(|seller| seller.id )
 //!       .limit( 10 )
-//!       .run(&conn).await?;
+//!       .run(&client).await?;
 //!
 //! ```
 //!
@@ -138,42 +127,49 @@
 //!  - [Bulk (Create/Update/Delete)](https://github.com/weldsorm/welds/blob/main/welds/examples/bulk_operations.rs)
 //!  - [Select Only Specific Columns](https://github.com/weldsorm/welds/blob/main/welds/examples/manual_select_columns.rs)
 //!  - [Checking DB schema matches compiled structs](https://github.com/weldsorm/welds/blob/main/welds/examples/verify_tables.rs)
+//
+//!
+//! # Features
+//!
+//! - postgres - enables postgres database connection. (requires sqlx setup)
+//! - mysql - enables MySql database connection. (requires sqlx setup)
+//! - sqlite - enables Sqlite database connection. (requires sqlx setup)
+//! - mssql - enables Microsoft SQL support. (requires tokio runtime.)
+//! - detect - enables scanning of the database to get schema info
+//! - check - enables checking your models against table in the database
+//! - migrations - adds all the migration structs and traits
+//! - full - all the features excluding (mock)
+//! - mock - Use for testing ONLY. Enables mocking out database schemas
+//!
+//!
+//! # Important Notes:
+//!
+//! - If you are using one of the `sqlx` connections, you will need to setup sqlx. This is so you can pick an async runtime.
 //!
 
-pub(crate) mod alias;
-pub mod connection;
 pub mod errors;
+pub use errors::WeldsError;
+pub mod model_traits;
 pub mod query;
 pub mod relations;
 pub mod state;
-pub mod table;
 pub mod writers;
 
+pub mod prelude;
+
 #[cfg(feature = "detect")]
-/// query the database and return schema and table information
 pub mod detect;
 
 #[cfg(feature = "check")]
-/// Get differences between your rust welds structs and what is in the database.
-/// Useful to detect when the two get out of sync
 pub mod check;
 
-#[cfg(feature = "example_objects")]
-/// This is a set of example Structs that derive WeldsModel.
-///
-/// They are here so you can see what welds will create when you derive WeldsModel.
-/// In addition to the original structs, several helper structs are created. They are used for
-/// generating queries
-///
-/// For this set of example objects, We are wiring up Three database tables. The `Product` and `Order`
-/// tables have a many-to-many relationship with a join table `products_orders` in the middle
-///
-/// Viewing the source for these example objects is very useful to help understand welds.
-pub mod example_objects;
+#[cfg(feature = "migrations")]
+pub mod migrations;
 
-// Re-exports
-pub use sqlx;
+pub use welds_connections as connections;
+
+/// Re-export welds_connections
+pub use welds_connections::{Client, Row, Syntax, TransactStart};
+
+/// Re-export the Macro used to make models
 pub use welds_macros::WeldsModel;
-
-#[cfg(feature = "mssql")]
-pub use welds_sqlx_mssql::Mssql;

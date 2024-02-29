@@ -5,8 +5,7 @@
 
 use welds::WeldsModel;
 
-#[derive(Debug, sqlx :: FromRow, WeldsModel)]
-#[welds(db(Postgres))]
+#[derive(Debug, sqlx::FromRow, WeldsModel)]
 #[welds(schema = "public", table = "Products")]
 #[welds(HasMany(order, super::super::order::Order, "product_id"))]
 pub struct Product {
@@ -16,18 +15,20 @@ pub struct Product {
     pub barcode: Option<Vec<u8>>,
     pub description: Option<String>,
     pub name: String,
+    #[welds(rename = "price1")]
     #[sqlx(rename = "price1")]
     pub price_1: Option<f32>,
+    #[welds(rename = "price2")]
     #[sqlx(rename = "price2")]
     pub price_2: Option<f64>,
+    #[welds(rename = "price3")]
     #[sqlx(rename = "price3")]
     pub price_3: Option<sqlx::postgres::types::PgMoney>,
 }
 
 // Used to test finding table/model diffs
 
-#[derive(Debug, sqlx::FromRow, WeldsModel)]
-#[welds(db(Postgres))]
+#[derive(Debug, WeldsModel)]
 #[welds(schema = "bad_schema_name", table = "products")]
 #[welds(HasMany(order, super::super::order::Order, "product_id"))]
 pub struct BadProductMissingTable {
@@ -37,29 +38,29 @@ pub struct BadProductMissingTable {
     pub barcode: Option<Vec<u8>>,
     pub description: Option<String>,
     pub name: String,
-    #[sqlx(rename = "price1")]
+    #[welds(rename = "price1")]
     pub price_1: Option<f32>,
-    #[sqlx(rename = "price2")]
+    #[welds(rename = "price2")]
     pub price_2: Option<f64>,
-    #[sqlx(rename = "price3")]
+    #[welds(rename = "price3")]
     pub price_3: Option<sqlx::postgres::types::PgMoney>,
 }
 
-#[derive(Debug, sqlx::FromRow, WeldsModel)]
+#[derive(Debug, WeldsModel)]
 #[welds(db(Postgres))]
 #[welds(schema = "public", table = "Products")]
 #[welds(HasMany(order, super::super::order::Order, "product_id"))]
 pub struct BadProductColumns {
     #[welds(primary_key)]
-    pub product_id: i64,
-    pub active: bool,
+    pub product_id: i64, // type should be i32
+    pub active: bool, // null was removed
     pub barcode: Option<Vec<u8>>,
-    pub description2: Option<String>,
-    pub name: Option<String>,
-    #[sqlx(rename = "price1")]
+    pub description2: Option<String>, // column name is wrong
+    pub name: Option<String>,         // null was added
+    #[welds(rename = "price1")]
     pub price_1: Option<f32>,
-    #[sqlx(rename = "price2")]
+    #[welds(rename = "price2")]
     pub price_2: Option<f64>,
-    #[sqlx(rename = "price3")]
+    #[welds(rename = "price3")]
     pub price_3: Option<sqlx::postgres::types::PgMoney>,
 }

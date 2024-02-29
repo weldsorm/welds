@@ -1,49 +1,47 @@
-/// This example uses the mysql testing database in the `tests` directory of welds
-/// you can use it for this example easily with the following commands
-/// ```bash
-/// cd tests/testlib/databases/mysql
-/// docker-compose build
-/// docker-compose up -d
-/// export DATABASE_URL=mysql://root:welds!123@localhost:3306/weldstests
-/// ```
-use welds::WeldsModel;
+use welds::prelude::*;
 
-#[derive(Debug, sqlx::FromRow, WeldsModel)]
-#[welds(db(Mysql))]
+// This struct doesn't have a table in the DB
+#[derive(Debug, WeldsModel)]
 #[welds(table = "i_dont_exist")]
 pub struct NotInDb {
     #[welds(primary_key)]
     pub id: i32,
 }
 
-#[derive(Debug, sqlx::FromRow, WeldsModel)]
-#[welds(db(Mysql))]
-#[welds(schema = "mysql", table = "Orders")]
+#[derive(Debug, WeldsModel)]
+#[welds(table = "Orders")]
 pub struct Order {
     #[welds(primary_key)]
+    // null in db
     pub id: i32,
+    // null int in db
     pub product_id: String,
+    /*
+     * these are removed to show you what happens when they are missing
+    pub price: Option<f32>,
+    pub code: Option<String>,
+    pub product_id2: Option<i32>,
+     */
 }
 
 #[async_std::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let unknown = welds::connection::AnyPool::connect().await.expect(
-        "Expected DATABASE_URL to point to a mysql database. did you boot the test database?",
-    );
-    let pool = unknown
-        .as_mysql()
-        .expect("Expected a mysql database.")
-        .clone();
+    let connection_string = "sqlite::memory:";
+    let client = welds::connections::connect(connection_string).await?;
+
+    // Build an in memory DB with a schema (Product Table, Orders Table)
+    let schema = include_str!("../../tests/testlib/databases/sqlite/01_create_tables.sql");
+    client.execute(schema, &[]).await?;
 
     // the NotInDb struct will only report back that is isn't in the database
     println!();
-    let diff = welds::check::schema::<NotInDb, _, _>(&pool).await?;
+    let diff = welds::check::schema::<NotInDb>(client.as_ref()).await?;
     for d in diff {
         println!("{}", d);
     }
 
     // Get all the things that are different from the Order struct and the order table in the DB
-    let diff = welds::check::schema::<Order, _, _>(&pool).await?;
+    let diff = welds::check::schema::<Order>(client.as_ref()).await?;
     for d in &diff {
         println!("{}", d);
     }

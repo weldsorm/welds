@@ -6,18 +6,20 @@ pub(crate) fn write(info: &Info) -> TokenStream {
     let wp = &info.welds_path;
     quote! {
 
-    pub async fn from_raw_sql<'a, 'c, DB, C>(
+    pub async fn from_raw_sql<'args, 't, 'c, C>(
         sql: &'static str,
-        arguments: <DB as sqlx::database::HasArguments<'a>>::Arguments,
-        conn: &'c C,
+        arguments: &'args #wp::query::clause::ParamArgs<'t>,
+        client: &'c C,
     ) -> #wp::errors::Result<Vec<#wp::state::DbState<Self>>>
     where
-        'c: 'a,
-        DB: #wp::connection::Database,
-        C: #wp::connection::Connection<DB>,
-        Self: Send + Unpin + for<'r> sqlx::FromRow<'r, DB::Row>,
+        C: #wp::Client,
+        <Self as #wp::model_traits::HasSchema>::Schema: #wp::model_traits::TableInfo + #wp::model_traits::TableColumns,
+        Self: Send + TryFrom<#wp::Row>,
+        #wp::WeldsError: From<<Self as TryFrom<#wp::Row>>::Error>
     {
-        let mut data: Vec<Self> = conn.fetch_all(sql, arguments).await?;
+        let mut rows: Vec<#wp::Row> = client.fetch_rows(sql, arguments).await?;
+        let mut data: std::result::Result<Vec<Self>, _> = rows.drain(..).map( Self::try_from ).collect();
+        let mut data = data?;
 
         Ok(data
             .drain(..)

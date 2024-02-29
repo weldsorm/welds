@@ -1,137 +1,121 @@
 use super::super::{
     builder::QueryBuilder,
-    clause::{wherein::WhereIn, ClauseAdder, DbParam, NextParam},
+    clause::{wherein::WhereIn, ClauseAdder},
     helpers::{build_where, join_sql_parts},
 };
-use crate::connection::Connection;
-use crate::connection::Database;
-use crate::table::UniqueIdentifier;
-use crate::table::{HasSchema, TableColumns, TableInfo};
-use crate::writers::column::DbColumnWriter;
-use crate::writers::count::DbCountWriter;
-use crate::writers::limit_skip::DbLimitSkipWriter;
-use anyhow::Result;
-use sqlx::database::HasArguments;
-use sqlx::IntoArguments;
+use crate::errors::Result;
+use crate::model_traits::UniqueIdentifier;
+use crate::model_traits::{HasSchema, TableColumns, TableInfo};
+use crate::query::clause::ParamArgs;
+use crate::writers::ColumnWriter;
+use crate::writers::CountWriter;
+use crate::writers::LimitSkipWriter;
+use crate::writers::NextParam;
+use crate::Syntax;
+use welds_connections::Client;
 
 // ******************************************************************************************
 // This file contains code on a Query builder to allow it to bulk delete
 // ******************************************************************************************
 
-impl<'schema, 'args, T, DB> QueryBuilder<'schema, T, DB>
+impl<T> QueryBuilder<T>
 where
-    DB: Database,
-    T: Send + Unpin + for<'r> sqlx::FromRow<'r, DB::Row> + HasSchema,
+    T: Send + Unpin + HasSchema,
 {
     /// The SQL to delete a `DELETE FROM ... `
     ///
     /// return SQL to delete all the resulting rows from the database
-    pub fn delete_sql<'q>(&'q self) -> String
+    pub fn delete_sql(&self, syntax: Syntax) -> String
     where
-        'schema: 'args,
-        <DB as HasArguments<'schema>>::Arguments: IntoArguments<'args, DB>,
-        DB: DbParam + DbColumnWriter + DbLimitSkipWriter + DbCountWriter,
-        <T as HasSchema>::Schema: TableInfo + TableColumns<DB> + UniqueIdentifier<DB>,
-        i64: sqlx::Type<DB> + for<'r> sqlx::Decode<'r, DB>,
-        usize: sqlx::ColumnIndex<<DB as sqlx::Database>::Row>,
+        <T as HasSchema>::Schema: TableInfo + TableColumns + UniqueIdentifier,
     {
-        self.delete_sql_internal(&mut None)
+        // we are wrapping this query in a where in clause.
+        // This is needed if the user has a limit
+        let mut w_in = WhereIn::new(self);
+
+        self.delete_sql_internal(syntax, &mut w_in, &mut None)
     }
 
-    fn delete_sql_internal<'q>(
-        &'q self,
-        args: &mut Option<<DB as HasArguments<'schema>>::Arguments>,
+    fn delete_sql_internal<'s, 'w, 'args, 'p>(
+        &'s self,
+        syntax: Syntax,
+        w_in: &'w mut WhereIn<T>,
+        args: &'args mut Option<ParamArgs<'p>>,
     ) -> String
     where
-        'schema: 'args,
-        <DB as HasArguments<'schema>>::Arguments: IntoArguments<'args, DB>,
-        DB: DbParam + DbColumnWriter + DbLimitSkipWriter + DbCountWriter,
-        <T as HasSchema>::Schema: TableInfo + TableColumns<DB> + UniqueIdentifier<DB>,
-        i64: sqlx::Type<DB> + for<'r> sqlx::Decode<'r, DB>,
-        usize: sqlx::ColumnIndex<<DB as sqlx::Database>::Row>,
+        'w: 'p,
+        's: 'p,
+        <T as HasSchema>::Schema: UniqueIdentifier + TableInfo + TableColumns,
     {
-        let next_params = NextParam::new::<DB>();
+        let next_params = NextParam::new(syntax);
 
         // Note: for deletes we can't alias the FROM tablename
         let alias = <T as HasSchema>::Schema::identifier().join(".");
 
         join_sql_parts(&[
-            build_head_delete::<DB, <T as HasSchema>::Schema>(),
-            build_where_delete(&next_params, &alias, args, self),
+            build_head_delete::<<T as HasSchema>::Schema>(syntax),
+            build_where_delete(syntax, &next_params, &alias, args, self, w_in),
         ])
     }
 
     /// Executes a `DELETE FROM ... `
     ///
     /// deletes all the resulting rows from the database
-    pub async fn delete<'q, 'c, C>(&'q self, exec: &'c C) -> Result<()>
+    pub async fn delete<'s, 'c>(&'s self, client: &'c dyn Client) -> Result<()>
     where
-        'schema: 'args,
-        C: 'schema,
-        C: Connection<DB>,
-        <DB as HasArguments<'schema>>::Arguments: IntoArguments<'args, DB>,
-        DB: DbParam + DbColumnWriter + DbLimitSkipWriter + DbCountWriter,
-        <T as HasSchema>::Schema: TableInfo + TableColumns<DB> + UniqueIdentifier<DB>,
-        i64: sqlx::Type<DB> + for<'r> sqlx::Decode<'r, DB>,
-        usize: sqlx::ColumnIndex<<DB as sqlx::Database>::Row>,
+        <T as HasSchema>::Schema: UniqueIdentifier + TableInfo + TableColumns,
     {
-        let mut args: Option<<DB as HasArguments>::Arguments> = Some(Default::default());
-        let sql = self.delete_sql_internal(&mut args);
+        // we are wrapping this query in a where in clause.
+        // This is needed if the user has a limit
+        let w_in_q = self;
+        let mut w_in = WhereIn::new(w_in_q);
 
-        // lifetime hacks - Remove if you can
-        // We know the use of sql and conn do not exceed the underlying call to fetch
-        // sqlx if wants to hold the borrow for much longer than what is needed.
-        // This hack prevents the borrow from exceeding the life of this call
-        let sql_len = sql.len();
-        let sqlp = sql.as_ptr();
-        let sql_hack: &[u8] = unsafe { std::slice::from_raw_parts(sqlp, sql_len) };
-        let sql: &str = std::str::from_utf8(sql_hack).unwrap();
-        let exec_ptr: *const &C = &exec;
-        let exec_hack: &mut C = unsafe { *(exec_ptr as *mut &mut C) };
-
-        exec_hack.execute(sql, args.unwrap()).await?;
-
+        let syntax = client.syntax();
+        let mut args: Option<ParamArgs> = Some(Vec::default());
+        let sql = self.delete_sql_internal(syntax, &mut w_in, &mut args);
+        let args: ParamArgs = args.unwrap();
+        client.execute(&sql, &args).await?;
         Ok(())
     }
 }
 
-fn build_head_delete<DB, S>() -> Option<String>
+fn build_head_delete<S>(syntax: Syntax) -> Option<String>
 where
-    DB: sqlx::Database + DbColumnWriter + DbCountWriter,
-    S: TableInfo + TableColumns<DB>,
+    S: TableInfo + TableColumns,
 {
     let identifier = S::identifier().join(".");
     Some(format!("DELETE FROM {}", identifier))
 }
 
-pub(crate) fn build_where_delete<'schema, 'args, DB, T>(
+fn build_where_delete<'args, 'p, 'qb, 'w, T>(
+    syntax: Syntax,
     next_params: &NextParam,
     alias: &str,
-    args: &mut Option<<DB as HasArguments<'schema>>::Arguments>,
-    qb: &QueryBuilder<'schema, T, DB>,
+    args: &'args mut Option<ParamArgs<'p>>,
+    qb: &'qb QueryBuilder<T>,
+    w_in: &'w mut WhereIn<T>,
 ) -> Option<String>
 where
-    'schema: 'args,
+    'qb: 'p,
+    'w: 'p,
     T: HasSchema,
-    <T as HasSchema>::Schema: UniqueIdentifier<DB> + TableInfo + TableColumns<DB>,
-    DB: Database,
-    <DB as HasArguments<'schema>>::Arguments: IntoArguments<'args, DB>,
+    <T as HasSchema>::Schema: UniqueIdentifier + TableInfo + TableColumns,
 {
     // If we have a limit, we need to wrap the wheres in an IN clause to
     // we can limit the number of row to delete
     if qb.limit.is_none() {
         let wheres = qb.wheres.as_slice();
         let exists_in = qb.exist_ins.as_slice();
-        return build_where(next_params, alias, args, wheres, exists_in);
+        return build_where(syntax, next_params, alias, wheres, args, exists_in);
     }
 
     let mut where_sql: Vec<String> = Vec::default();
-    let w_in = WhereIn::new(qb);
 
     if let Some(args) = args {
         w_in.bind(args);
     }
-    if let Some(p) = w_in.clause(alias, next_params) {
+
+    if let Some(p) = w_in.clause(syntax, alias, next_params) {
         where_sql.push(p);
     }
     if where_sql.is_empty() {

@@ -1,4 +1,4 @@
-use crate::table::UniqueIdentifier;
+use crate::model_traits::UniqueIdentifier;
 use std::marker::PhantomData;
 
 pub struct BelongsTo<T> {
@@ -16,19 +16,17 @@ impl<T> BelongsTo<T> {
 }
 
 impl<R> Relationship<R> for BelongsTo<R> {
-    fn my_key<DB, ME, THEM>(&self) -> String
+    fn my_key<ME, THEM>(&self) -> String
     where
-        DB: sqlx::Database,
-        ME: UniqueIdentifier<DB>,
-        THEM: UniqueIdentifier<DB>,
+        ME: UniqueIdentifier,
+        THEM: UniqueIdentifier,
     {
         self.foreign_key.to_owned()
     }
-    fn their_key<DB, ME, THEM>(&self) -> String
+    fn their_key<ME, THEM>(&self) -> String
     where
-        DB: sqlx::Database,
-        ME: UniqueIdentifier<DB>,
-        THEM: UniqueIdentifier<DB>,
+        ME: UniqueIdentifier,
+        THEM: UniqueIdentifier,
     {
         ME::id_column().name().to_owned()
     }
@@ -49,36 +47,32 @@ impl<T> HasMany<T> {
 }
 
 impl<R> Relationship<R> for HasMany<R> {
-    fn my_key<DB, ME, THEM>(&self) -> String
+    fn my_key<ME, THEM>(&self) -> String
     where
-        DB: sqlx::Database,
-        ME: UniqueIdentifier<DB>,
-        THEM: UniqueIdentifier<DB>,
+        ME: UniqueIdentifier,
+        THEM: UniqueIdentifier,
     {
         THEM::id_column().name().to_owned()
     }
-    fn their_key<DB, ME, THEM>(&self) -> String
+    fn their_key<ME, THEM>(&self) -> String
     where
-        DB: sqlx::Database,
-        ME: UniqueIdentifier<DB>,
-        THEM: UniqueIdentifier<DB>,
+        ME: UniqueIdentifier,
+        THEM: UniqueIdentifier,
     {
         self.foreign_key.to_owned()
     }
 }
 
 pub trait Relationship<R> {
-    fn their_key<DB, R2, T>(&self) -> String
+    fn their_key<R2, T>(&self) -> String
     where
-        T: UniqueIdentifier<DB>,
-        R2: UniqueIdentifier<DB>,
-        DB: sqlx::Database;
+        T: UniqueIdentifier,
+        R2: UniqueIdentifier;
 
-    fn my_key<DB, R2, T>(&self) -> String
+    fn my_key<R2, T>(&self) -> String
     where
-        T: UniqueIdentifier<DB>,
-        R2: UniqueIdentifier<DB>,
-        DB: sqlx::Database;
+        T: UniqueIdentifier,
+        R2: UniqueIdentifier;
 }
 
 pub trait HasRelations {

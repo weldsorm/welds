@@ -1,5 +1,5 @@
-use crate::table::TableIdent;
-use sqlx::Row;
+use crate::model_traits::TableIdent;
+use crate::Row;
 
 #[derive(Debug)]
 pub struct FkScanRow {
@@ -25,19 +25,18 @@ impl FkScanTableCol {
     }
 }
 
-impl<R, DB> From<R> for FkScanRow
-where
-    DB: sqlx::Database,
-    R: Row<Database = DB>,
-    usize: sqlx::ColumnIndex<R>,
-    i32: sqlx::Type<DB> + for<'r> sqlx::Decode<'r, DB>,
-    String: sqlx::Type<DB> + for<'r> sqlx::Decode<'r, DB>,
-    Option<String>: sqlx::Type<DB> + for<'r> sqlx::Decode<'r, DB>,
-{
-    fn from(r: R) -> Self {
-        FkScanRow {
-            me: FkScanTableCol::new(r.get(0), r.get(1), r.get(2)),
-            other: FkScanTableCol::new(r.get(3), r.get(4), r.get(5)),
-        }
+impl TryFrom<Row> for FkScanRow {
+    type Error = crate::errors::WeldsError;
+    fn try_from(row: Row) -> Result<Self, Self::Error> {
+        let c0 = row.get_by_position(0)?;
+        let c1 = row.get_by_position(1)?;
+        let c2 = row.get_by_position(2)?;
+        let c3 = row.get_by_position(3)?;
+        let c4 = row.get_by_position(4)?;
+        let c5 = row.get_by_position(5)?;
+        Ok(FkScanRow {
+            me: FkScanTableCol::new(c0, c1, c2),
+            other: FkScanTableCol::new(c3, c4, c5),
+        })
     }
 }

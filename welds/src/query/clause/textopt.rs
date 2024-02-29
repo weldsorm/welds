@@ -1,6 +1,8 @@
 use super::{AsFieldName, ClauseAdder, ClauseColVal};
 use crate::query::optional::HasSomeNone;
+use crate::query::optional::Optional;
 use std::marker::PhantomData;
+use welds_connections::Param;
 
 pub struct TextOpt<T> {
     col: String,
@@ -19,7 +21,7 @@ impl<T> AsFieldName<T> for TextOpt<T> {
 
 impl<T> TextOpt<T>
 where
-    T: 'static + HasSomeNone + Clone + Send + Sync,
+    T: 'static + Clone + Send + Sync,
 {
     pub fn new(col: impl Into<String>, field: impl Into<String>) -> Self {
         Self {
@@ -29,15 +31,16 @@ where
         }
     }
 
-    pub fn equal<'args, DB>(self, v: impl Into<T>) -> Box<dyn ClauseAdder<'args, DB>>
+    pub fn equal(self, v: impl Into<Optional<T>>) -> Box<dyn ClauseAdder>
     where
-        DB: sqlx::Database,
-        T: sqlx::Type<DB> + sqlx::Encode<'args, DB>,
+        T: Param,
     {
-        let val = v.into();
+        let opt = v.into();
+        let is_none = opt.is_none();
+        let val: Option<T> = opt.into();
 
         let cv = ClauseColVal::<T> {
-            null_clause: val.is_none(),
+            null_clause: is_none,
             not_clause: false,
             col: self.col,
             operator: "=",
@@ -46,15 +49,16 @@ where
         Box::new(cv)
     }
 
-    pub fn not_equal<'args, DB>(self, v: impl Into<T>) -> Box<dyn ClauseAdder<'args, DB>>
+    pub fn not_equal(self, v: impl Into<Optional<T>>) -> Box<dyn ClauseAdder>
     where
-        DB: sqlx::Database,
-        T: sqlx::Type<DB> + sqlx::Encode<'args, DB>,
+        T: Param,
     {
-        let val = v.into();
+        let opt = v.into();
+        let is_none = opt.is_none();
+        let val: Option<T> = opt.into();
 
         let cv = ClauseColVal::<T> {
-            null_clause: val.is_none(),
+            null_clause: is_none,
             not_clause: true,
             col: self.col,
             operator: "!=",
@@ -63,12 +67,12 @@ where
         Box::new(cv)
     }
 
-    pub fn like<'args, DB>(self, v: impl Into<T>) -> Box<dyn ClauseAdder<'args, DB>>
+    pub fn like(self, v: impl Into<Optional<T>>) -> Box<dyn ClauseAdder>
     where
-        DB: sqlx::Database,
-        T: sqlx::Type<DB> + sqlx::Encode<'args, DB>,
+        T: Param,
     {
-        let val = v.into();
+        let opt = v.into();
+        let val: Option<T> = opt.into();
 
         let cv = ClauseColVal::<T> {
             null_clause: val.is_none(),
@@ -80,12 +84,13 @@ where
         Box::new(cv)
     }
 
-    pub fn not_like<'args, DB>(self, v: impl Into<T>) -> Box<dyn ClauseAdder<'args, DB>>
+    pub fn not_like(self, v: impl Into<Optional<T>>) -> Box<dyn ClauseAdder>
     where
-        DB: sqlx::Database,
-        T: sqlx::Type<DB> + sqlx::Encode<'args, DB>,
+        T: Param,
     {
-        let val = v.into();
+        let opt = v.into();
+        let val: Option<T> = opt.into();
+
         let cv = ClauseColVal::<T> {
             null_clause: val.is_none(),
             not_clause: true,
@@ -95,12 +100,14 @@ where
         };
         Box::new(cv)
     }
-    pub fn ilike<'args, DB>(self, v: impl Into<T>) -> Box<dyn ClauseAdder<'args, DB>>
+
+    pub fn ilike(self, v: impl Into<Optional<T>>) -> Box<dyn ClauseAdder>
     where
-        DB: sqlx::Database,
-        T: sqlx::Type<DB> + sqlx::Encode<'args, DB>,
+        T: Param,
     {
-        let val = v.into();
+        let opt = v.into();
+        let val: Option<T> = opt.into();
+
         let cv = ClauseColVal::<T> {
             null_clause: val.is_none(),
             not_clause: false,
@@ -110,12 +117,14 @@ where
         };
         Box::new(cv)
     }
-    pub fn not_ilike<'args, DB>(self, v: impl Into<T>) -> Box<dyn ClauseAdder<'args, DB>>
+
+    pub fn not_ilike(self, v: impl Into<Optional<T>>) -> Box<dyn ClauseAdder>
     where
-        DB: sqlx::Database,
-        T: sqlx::Type<DB> + sqlx::Encode<'args, DB>,
+        T: Param,
     {
-        let val = v.into();
+        let opt = v.into();
+        let val: Option<T> = opt.into();
+
         let cv = ClauseColVal::<T> {
             null_clause: val.is_none(),
             not_clause: true,

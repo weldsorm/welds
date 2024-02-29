@@ -1,0 +1,144 @@
+/// ***********************************************************************************
+/// These are all the trait and struct used to connect a rust Struct to a database driver
+/// ***********************************************************************************
+
+/// tells welds what tablename and schema name should used to get data for an Entity
+/// This does on the Schema Object NOT the model
+pub trait TableInfo {
+    /// the unique name (schema + tablename) that identities this database object
+    fn identifier() -> &'static [&'static str];
+}
+
+/// The db column name to use for a field
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct Column {
+    name: String,
+    rust_type: String,
+    nullable: bool,
+}
+
+impl Column {
+    pub fn new(name: impl Into<String>, rust_type: impl Into<String>, nullable: bool) -> Self {
+        let rust_type = rust_type.into();
+        let rust_type: String = rust_type.chars().filter(|c| !c.is_whitespace()).collect();
+        Self {
+            name: name.into(),
+            rust_type,
+            nullable,
+        }
+    }
+    /// The name of the column in the database
+    pub fn name(&self) -> &str {
+        self.name.as_str()
+    }
+    /// if the underlying database column could return a null value
+    /// used to know if you can query for None/Some
+    pub fn nullable(&self) -> bool {
+        self.nullable
+    }
+    /// The name of the column in the database
+    pub fn rust_type(&self) -> &str {
+        self.rust_type.as_str()
+    }
+}
+
+/// How welds knows what columns exist on your model
+/// This trait is impl by the model's schema not the model
+pub trait TableColumns {
+    // Used to identify models that have N columns in their primary_key
+    fn primary_keys() -> Vec<Column>;
+    fn columns() -> Vec<Column>;
+}
+
+/// If the model can be uniquely identifed by a single column,
+/// This is used to create get_by_id methods
+pub trait UniqueIdentifier {
+    /// The column that is used to uniquely identify a row.
+    fn id_column() -> Column;
+}
+
+use crate::errors::Result;
+use crate::query::clause::ParamArgs;
+
+pub trait WriteToArgs {
+    fn bind<'s, 'c, 'a, 'p>(&'s self, column: &'c str, args: &'a mut ParamArgs<'p>) -> Result<()>
+    where
+        's: 'p;
+}
+
+pub trait UpdateFromRow {
+    fn update_from_row(&mut self, row: &mut crate::Row) -> crate::errors::Result<()>;
+}
+
+/// Used to link a models schema to the model
+pub trait HasSchema: Sync + Send {
+    type Schema: Default + TableInfo;
+}
+
+/// a unique identifier for a table.
+#[derive(Debug, Clone, Hash, Eq, PartialEq)]
+pub struct TableIdent {
+    pub(crate) schema: Option<String>,
+    pub(crate) name: String,
+}
+
+impl std::fmt::Display for TableIdent {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if let Some(s) = &self.schema {
+            f.write_str(s)?;
+            f.write_str(".")?;
+        }
+        f.write_str(&self.name)?;
+        Ok(())
+    }
+}
+
+impl TableIdent {
+    pub fn from_model<T>() -> TableIdent
+    where
+        T: HasSchema,
+        <T as HasSchema>::Schema: TableInfo + TableColumns,
+    {
+        let fullname = <T as HasSchema>::Schema::identifier().join(".");
+        Self::parse(&fullname)
+    }
+
+    /// Returns the name of the table. Table only on schema_name
+    pub fn new(table_name: impl Into<String>, schema_name: Option<impl Into<String>>) -> Self {
+        let table_name = table_name.into();
+        let schema_name = schema_name.map(|x| x.into());
+        Self {
+            name: table_name,
+            schema: schema_name,
+        }
+    }
+
+    /// Returns the name of the table. Table only on schema_name
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+
+    /// Returns the schema_name part of the table identifier.
+    /// If schema_name is not given, It will be None
+    pub fn schema(&self) -> Option<&str> {
+        self.schema.as_deref()
+    }
+
+    /// Parse a string into a TableIdent
+    pub fn parse(raw: &str) -> Self {
+        let parts: Vec<&str> = raw.split('.').collect();
+        let parts: Vec<&str> = parts.iter().rev().take(2).cloned().collect();
+        let name = parts
+            .first()
+            .cloned()
+            .map(|x| x.to_owned())
+            .unwrap_or_default();
+        let schema = parts.get(1).cloned().map(|x| x.to_owned());
+        Self { schema, name }
+    }
+
+    /// returns True if a schema_name/table_name match this TableIdent
+    pub fn equals(&self, schema: &Option<String>, name: &str) -> bool {
+        &self.schema == schema && self.name == name
+    }
+}

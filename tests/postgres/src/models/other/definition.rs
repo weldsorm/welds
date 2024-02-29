@@ -4,8 +4,7 @@
 ******************************************************************************/
 
 use welds::WeldsModel;
-#[derive(Debug, sqlx :: FromRow, WeldsModel, PartialEq)]
-#[welds(db(Postgres))]
+#[derive(Debug, WeldsModel, PartialEq)]
 #[welds(schema = "alt", table = "others")]
 pub struct Other {
     #[welds(primary_key)]

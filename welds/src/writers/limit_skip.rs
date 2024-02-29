@@ -1,24 +1,25 @@
-pub(crate) struct LimitSkipWriter {
-    skiplimit: fn(&Option<i64>, &Option<i64>) -> Option<String>,
+use crate::Syntax;
+
+pub struct LimitSkipWriter {
+    syntax: Syntax,
 }
 
 impl LimitSkipWriter {
-    pub fn new<DB: DbLimitSkipWriter>() -> Self {
-        Self {
-            skiplimit: DB::skiplimit,
-        }
+    pub fn new(syntax: Syntax) -> Self {
+        Self { syntax }
     }
     pub fn skiplimit(&self, s: &Option<i64>, l: &Option<i64>) -> Option<String> {
-        (self.skiplimit)(s, l)
+        match self.syntax {
+            Syntax::Mysql => MySql::skiplimit(s, l),
+            Syntax::Postgres => Postgres::skiplimit(s, l),
+            Syntax::Sqlite => Sqlite::skiplimit(s, l),
+            Syntax::Mssql => Mssql::skiplimit(s, l),
+        }
     }
 }
 
-pub trait DbLimitSkipWriter {
-    fn skiplimit(s: &Option<i64>, l: &Option<i64>) -> Option<String>;
-}
-
-#[cfg(feature = "postgres")]
-impl DbLimitSkipWriter for sqlx::Postgres {
+struct Postgres;
+impl Postgres {
     fn skiplimit(s: &Option<i64>, l: &Option<i64>) -> Option<String> {
         if s.is_none() && l.is_none() {
             return None;
@@ -29,8 +30,8 @@ impl DbLimitSkipWriter for sqlx::Postgres {
     }
 }
 
-#[cfg(feature = "sqlite")]
-impl DbLimitSkipWriter for sqlx::Sqlite {
+struct Sqlite;
+impl Sqlite {
     fn skiplimit(s: &Option<i64>, l: &Option<i64>) -> Option<String> {
         if s.is_none() && l.is_none() {
             return None;
@@ -41,8 +42,8 @@ impl DbLimitSkipWriter for sqlx::Sqlite {
     }
 }
 
-#[cfg(feature = "mssql")]
-impl DbLimitSkipWriter for crate::Mssql {
+struct Mssql;
+impl Mssql {
     fn skiplimit(s: &Option<i64>, l: &Option<i64>) -> Option<String> {
         if s.is_none() && l.is_none() {
             return None;
@@ -53,8 +54,8 @@ impl DbLimitSkipWriter for crate::Mssql {
     }
 }
 
-#[cfg(feature = "mysql")]
-impl DbLimitSkipWriter for sqlx::MySql {
+struct MySql;
+impl MySql {
     fn skiplimit(s: &Option<i64>, l: &Option<i64>) -> Option<String> {
         if s.is_none() && l.is_none() {
             return None;

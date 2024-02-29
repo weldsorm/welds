@@ -1,11 +1,8 @@
-use crate::connection::Connection;
-use crate::connection::Database;
-use crate::connection::DbProvider;
-use crate::table::TableIdent;
-use anyhow::Result;
-use sqlx::database::HasArguments;
-use sqlx::Arguments;
-use sqlx::IntoArguments;
+use crate::errors::Result;
+use crate::model_traits::TableIdent;
+use crate::query::clause::ParamArgs;
+use crate::Client;
+use crate::Syntax;
 use std::collections::HashMap;
 
 mod table_scan;
@@ -15,35 +12,34 @@ use table_scan_row::TableScanRow;
 mod fk_scan_row;
 use fk_scan_row::{FkScanRow, FkScanTableCol};
 
+#[cfg(feature = "mock")]
+pub use table_def::mock::MockColumnDef;
+#[cfg(feature = "mock")]
+pub use table_def::mock::MockTableDef;
+
 pub(crate) mod table_def;
 pub use table_def::{ColumnDef, DataType, RelationDef, TableDef, TableDefSingle};
 
 /// Returns a list of all user defined tables in the database
 /// requires feature `detect`
-pub async fn find_tables<'c, 'args, DB, C>(conn: &'c C) -> Result<Vec<TableDef>>
-where
-    'c: 'args,
-    C: Connection<DB>,
-    <DB as HasArguments<'args>>::Arguments: IntoArguments<'args, DB>,
-    DB: Database + TableScan,
-    i32: sqlx::Type<DB> + for<'r> sqlx::Decode<'r, DB>,
-    usize: sqlx::ColumnIndex<<DB as sqlx::Database>::Row>,
-    String: sqlx::Type<DB> + for<'r> sqlx::Decode<'r, DB>,
-    Option<String>: sqlx::Type<DB> + for<'r> sqlx::Decode<'r, DB>,
-{
-    let sql = DB::table_scan_sql();
-    let args: <DB as HasArguments>::Arguments = Default::default();
+pub async fn find_tables(client: &dyn Client) -> Result<Vec<TableDef>> {
+    let syntax = client.syntax();
+    let ts = TableScan::new(syntax);
+    let sql = ts.table_scan_sql();
 
-    let mut raw_rows = conn.fetch_rows(sql, args).await?;
+    let args: ParamArgs = Vec::default();
+    let mut raw_rows = client.fetch_rows(sql, &args).await?;
 
-    let rows: Vec<TableScanRow> = raw_rows.drain(..).map(|r| r.into()).collect();
-    let mut tables = build_table_defs(rows);
+    let rows: Result<Vec<TableScanRow>> = raw_rows.drain(..).map(|r| r.try_into()).collect();
+    let rows = rows?;
+    let mut tables = build_table_defs(syntax, rows);
 
     // Build a list of all the FKs
-    let sql = DB::fk_scan_sql();
-    let args: <DB as HasArguments>::Arguments = Default::default();
-    let mut fks_raw = conn.fetch_rows(sql, args).await?;
-    let fks: Vec<FkScanRow> = fks_raw.drain(..).map(|r| r.into()).collect();
+    let sql = ts.fk_scan_sql();
+    let args: ParamArgs = Vec::default();
+    let mut fks_raw = client.fetch_rows(sql, &args).await?;
+    let fks: Result<Vec<FkScanRow>> = fks_raw.drain(..).map(|r| r.try_into()).collect();
+    let fks = fks?;
 
     link_fks_into_tables(&fks, &mut tables);
 
@@ -52,37 +48,32 @@ where
 
 /// Returns the schema info for a given table in the database
 /// NOTE: does not include relationship info. use find_tables for that
-pub async fn find_table<'a, 'c, 'args1, 'args2, DB, C>(
-    namespace: Option<&'a str>,
-    tablename: &'a str,
-    conn: &'c C,
-) -> Result<Option<TableDefSingle>>
-where
-    'a: 'args1,
-    'c: 'args1,
-    C: Connection<DB>,
-    <DB as HasArguments<'args1>>::Arguments: IntoArguments<'args2, DB>,
-    DB: Database + TableScan,
-    usize: sqlx::ColumnIndex<<DB as sqlx::Database>::Row>,
-    i32: sqlx::Type<DB> + for<'r> sqlx::Decode<'r, DB>,
-    String: sqlx::Type<DB> + for<'r> sqlx::Decode<'r, DB>,
-    Option<String>: sqlx::Type<DB> + for<'r> sqlx::Decode<'r, DB>,
-    for<'x> &'x str: sqlx::Type<DB> + sqlx::Encode<'x, DB>,
-    for<'x> Option<&'x str>: sqlx::Type<DB> + sqlx::Encode<'x, DB>,
-{
-    let sql = DB::single_table_scan_sql();
-    let mut args: <DB as HasArguments>::Arguments = Default::default();
-    args.add(namespace);
+pub async fn find_table(
+    namespace: Option<impl Into<String>>,
+    tablename: impl Into<String>,
+    client: &dyn Client,
+) -> Result<Option<TableDefSingle>> {
+    let syntax = client.syntax();
+    let ts = TableScan::new(syntax);
+    let sql = ts.single_table_scan_sql();
+    let mut args: ParamArgs = Vec::default();
+    let namespace: Option<String> = namespace.map(|x| x.into());
+    let tablename: String = tablename.into();
+    args.push(&namespace);
+
     // Mysql query needs the namespace param twice
-    if conn.provider() == DbProvider::MySql {
-        args.add(namespace);
+    if let Syntax::Mysql = syntax {
+        args.push(&namespace);
     }
-    args.add(tablename);
 
-    let mut raw_rows = conn.fetch_rows(sql, args).await?;
+    args.push(&tablename);
 
-    let rows: Vec<TableScanRow> = raw_rows.drain(..).map(|r| r.into()).collect();
-    let table = build_table_defs(rows).pop().map(|x| x.into());
+    let mut raw_rows = client.fetch_rows(sql, &args).await?;
+
+    let rows: Result<Vec<TableScanRow>> = raw_rows.drain(..).map(|r| r.try_into()).collect();
+    let rows = rows?;
+
+    let table = build_table_defs(syntax, rows).pop().map(|x| x.into());
 
     Ok(table)
 }
@@ -119,7 +110,7 @@ fn link_fks_into_tables(fks: &[FkScanRow], tables: &mut [TableDef]) {
 }
 
 /// Groups the Table Scan Rows into TableDefs
-fn build_table_defs(rows: Vec<TableScanRow>) -> Vec<TableDef> {
+fn build_table_defs(syntax: Syntax, rows: Vec<TableScanRow>) -> Vec<TableDef> {
     //group the rows into vecs for each table
     let mut buckets = HashMap::new();
     for row in rows {
@@ -133,6 +124,7 @@ fn build_table_defs(rows: Vec<TableScanRow>) -> Vec<TableDef> {
         let ty = bucket[0].kind();
         let columns = build_cols(bucket);
         tables.push(TableDef {
+            syntax,
             ident,
             ty,
             columns,

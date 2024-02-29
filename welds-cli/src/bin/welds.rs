@@ -4,7 +4,7 @@ use std::env;
 use std::path::PathBuf;
 use weldscli_lib::{commands::Commands::*, GenerateOption};
 
-#[async_std::main]
+#[tokio::main]
 async fn main() -> Result<()> {
     pretty_env_logger::init();
     let args = weldscli_lib::commands::Args::parse();
@@ -31,7 +31,7 @@ async fn main() -> Result<()> {
         Update { table } => weldscli_lib::update(schema_path, table).await,
         Generate { table } => {
             let opt = GenerateOption {
-                add_unknown_types: args.unknown_types,
+                hide_unknown_types: args.hide_unknown_types,
                 schema_path,
                 output_path: project_dir,
                 table,

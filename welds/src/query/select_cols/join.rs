@@ -1,25 +1,24 @@
 use super::SelectBuilder;
 use super::SelectColumn;
-use crate::alias::TableAlias;
-use crate::connection::Database;
+use crate::model_traits::{HasSchema, TableInfo};
 use crate::query::clause::ClauseAdder;
-use crate::query::clause::NextParam;
-use crate::table::{HasSchema, TableInfo};
-use crate::writers::column::{ColumnWriter, DbColumnWriter};
-use sqlx::database::HasArguments;
-use sqlx::IntoArguments;
+use crate::query::clause::ParamArgs;
+use crate::writers::alias::TableAlias;
+use crate::writers::ColumnWriter;
+use crate::writers::NextParam;
+use crate::Syntax;
 use std::sync::Arc;
 
-pub(crate) struct JoinBuilder<'schema, DB: sqlx::Database> {
+pub(crate) struct JoinBuilder {
     pub(crate) alias_asigner: Arc<TableAlias>,
     pub(crate) outer_key: String,
     pub(crate) inner_alias: String,
     pub(crate) inner_table: String,
     pub(crate) inner_key: String,
-    pub(crate) wheres: Vec<Box<dyn ClauseAdder<'schema, DB>>>,
+    pub(crate) wheres: Vec<Box<dyn ClauseAdder>>,
     pub(crate) selects: Vec<SelectColumn>,
     pub(crate) ty: Join,
-    pub(crate) subs: Vec<JoinBuilder<'schema, DB>>,
+    pub(crate) subs: Vec<JoinBuilder>,
 }
 
 #[derive(Debug, PartialEq, Clone, Copy)]
@@ -41,17 +40,14 @@ impl Join {
     }
 }
 
-impl<'schema, DB: sqlx::Database> JoinBuilder<'schema, DB> {
+impl JoinBuilder {
     pub(crate) fn set_aliases(&mut self, alias_asigner: &Arc<TableAlias>) {
         self.alias_asigner = alias_asigner.clone();
         self.inner_alias = self.alias_asigner.next();
     }
 
-    pub(super) fn append_columns(&self, list: &mut Vec<String>)
-    where
-        DB: DbColumnWriter,
-    {
-        let writer = ColumnWriter::new::<DB>();
+    pub(super) fn append_columns(&self, syntax: Syntax, list: &mut Vec<String>) {
+        let writer = ColumnWriter::new(syntax);
         let alias = &self.inner_alias;
         // Add these columns
         for col in &self.selects {
@@ -66,15 +62,17 @@ impl<'schema, DB: sqlx::Database> JoinBuilder<'schema, DB> {
             }
         }
         for sub in &self.subs {
-            sub.append_columns(list);
+            sub.append_columns(syntax, list);
         }
     }
 
-    pub(super) fn append_jointable(&self, list: &mut Vec<String>, outer_alias: &str)
-    where
-        DB: DbColumnWriter,
-    {
-        let writer = ColumnWriter::new::<DB>();
+    pub(super) fn append_jointable(
+        &self,
+        syntax: Syntax,
+        list: &mut Vec<String>,
+        outer_alias: &str,
+    ) {
+        let writer = ColumnWriter::new(syntax);
         let sql = format!(
             "{jointy} {itn} {ita} ON {ota}.{otk} = {ita}.{itk}",
             jointy = self.ty.to_sql(),
@@ -86,40 +84,35 @@ impl<'schema, DB: sqlx::Database> JoinBuilder<'schema, DB> {
         );
         list.push(sql);
         for sub in &self.subs {
-            sub.append_jointable(list, &self.inner_alias);
+            sub.append_jointable(syntax, list, &self.inner_alias);
         }
     }
 
-    pub(super) fn append_where<'args>(
-        &self,
+    pub(super) fn append_where<'s, 'args, 'p>(
+        &'s self,
+        syntax: Syntax,
         list: &mut Vec<String>,
         next_params: &NextParam,
-        args: &mut Option<<DB as HasArguments<'schema>>::Arguments>,
+        args: &'args mut Option<ParamArgs<'p>>,
     ) where
-        DB: Database,
-        <DB as HasArguments<'schema>>::Arguments: IntoArguments<'args, DB>,
+        's: 'p,
     {
         for clause in &self.wheres {
             if let Some(args) = args {
                 clause.bind(args);
             }
-            if let Some(p) = clause.clause(&self.inner_alias, next_params) {
+            if let Some(p) = clause.clause(syntax, &self.inner_alias, next_params) {
                 list.push(p);
             }
         }
         for sub in &self.subs {
-            sub.append_where(list, next_params, args);
+            sub.append_where(syntax, list, next_params, args);
         }
     }
 
-    pub(super) fn new<T>(
-        sb: SelectBuilder<'schema, T, DB>,
-        outer_key: String,
-        inner_key: String,
-    ) -> JoinBuilder<'schema, DB>
+    pub(super) fn new<T>(sb: SelectBuilder<T>, outer_key: String, inner_key: String) -> JoinBuilder
     where
-        DB: Database,
-        T: Send + Unpin + for<'r> sqlx::FromRow<'r, DB::Row> + HasSchema,
+        T: Send + HasSchema,
         <T as HasSchema>::Schema: TableInfo,
     {
         let tn = <T as HasSchema>::Schema::identifier().join(".");

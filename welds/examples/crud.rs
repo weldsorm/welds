@@ -1,90 +1,82 @@
-use sqlx::{Executor, Sqlite};
-use welds::connection::Connection;
-use welds::state::DbState;
-use welds::WeldsModel;
+use welds::{prelude::*, Syntax, WeldsError};
 
 /// Define a struct the maps to the products table in the databases
-#[derive(Debug, sqlx::FromRow, WeldsModel)]
-#[welds(db(Sqlite))]
+#[derive(Debug, WeldsModel)]
 #[welds(table = "products")]
 #[welds(HasMany(orders, Order, "product_id"))]
 pub struct Product {
     #[welds(primary_key)]
-    #[sqlx(rename = "product_id")]
+    #[welds(rename = "product_id")]
     pub id: i32,
     pub name: String,
     pub description: Option<String>,
-    #[sqlx(rename = "price1")]
+    #[welds(rename = "price1")]
     pub price: Option<f32>,
     pub active: bool,
 }
 
 /// Define a Struct the maps to the Orders table in the databases
-#[derive(Debug, sqlx::FromRow, WeldsModel)]
-#[welds(db(Sqlite))]
+#[derive(Debug, WeldsModel)]
 #[welds(table = "orders")]
 #[welds(BelongsTo(product, Product, "product_id"))]
 pub struct Order {
     #[welds(primary_key)]
     pub id: i32,
     pub product_id: Option<i32>,
-    #[sqlx(rename = "price")]
+    #[welds(rename = "price")]
     pub sell_price: Option<f32>,
 }
 
 #[async_std::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    pretty_env_logger::init();
+
     let connection_string = "sqlite::memory:";
-    let pool = welds::connection::connect_sqlite(connection_string).await?;
+    let client = welds::connections::sqlite::connect(connection_string).await?;
 
     // Build an in memory DB with a schema (Product Table, Orders Table)
     let schema = include_str!("../../tests/testlib/databases/sqlite/01_create_tables.sql");
-    pool.as_sqlx_pool().execute(schema).await?;
+    client.execute(schema, &[]).await?;
 
     // Create and update a Product
-    let trans = pool.clone().begin().await?;
+    let trans = client.begin().await?;
     let product = create_and_update_products(&trans).await?;
     trans.commit().await?;
 
     // Create a bunch of orders
-    create_orders(&product, &pool).await?;
+    create_orders(&product, &client).await?;
 
     // Select the Orders Using the Product
-    chain_query_together(&pool).await?;
+    chain_query_together(&client).await?;
 
     // Filter Orders using relationships from other tables
-    filter_order_using_relationships(&pool).await?;
+    filter_order_using_relationships(&client).await?;
 
     // Delete Some Stuff
-    let product2 = create_and_update_products(&pool).await?;
-    delete_the_product(&pool, product2.id).await?;
+    let product2 = create_and_update_products(&client).await?;
+    delete_the_product(&client, product2.id).await?;
 
-    let _ = Product::all::<sqlx::Sqlite>().set(|x| x.description, "".to_string());
+    let _ = Product::all().set(|x| x.description, "".to_string());
 
     Ok(())
 }
 
-async fn create_and_update_products(
-    conn: &impl Connection<Sqlite>,
-) -> Result<DbState<Product>, Box<dyn std::error::Error>> {
+async fn create_and_update_products(client: &impl Client) -> Result<DbState<Product>, WeldsError> {
     // create the product
     let mut p = Product::new();
     p.name = "Girl Scout Cookies".to_owned();
     p.active = true;
-    p.save(conn).await?;
+    p.save(client).await?;
     println!("Product Created: {:?}", p);
 
     // update the product
     p.description = Some("Yummy !!!".to_owned());
-    p.save(conn).await?;
+    p.save(client).await?;
     println!("Product Updated: {:?}", p);
     Ok(p)
 }
 
-async fn create_orders(
-    product: &Product,
-    conn: &impl Connection<Sqlite>,
-) -> Result<(), Box<dyn std::error::Error>> {
+async fn create_orders(product: &Product, conn: &impl Client) -> Result<(), WeldsError> {
     for _ in 0..100 {
         let mut o = Order::new();
         o.product_id = Some(product.id);
@@ -97,9 +89,7 @@ async fn create_orders(
     Ok(())
 }
 
-async fn chain_query_together(
-    conn: &impl Connection<Sqlite>,
-) -> Result<(), Box<dyn std::error::Error>> {
+async fn chain_query_together(conn: &impl Client) -> Result<(), WeldsError> {
     // Start from a product and ending on its orders
     let order_query = Product::all()
         .order_by_asc(|p| p.id)
@@ -107,7 +97,7 @@ async fn chain_query_together(
         .map_query(|p| p.orders)
         .where_col(|x| x.id.lte(2));
 
-    let sql = order_query.to_sql();
+    let sql = order_query.to_sql(Syntax::Sqlite);
 
     let orders = order_query.run(conn).await?;
 
@@ -119,7 +109,7 @@ async fn chain_query_together(
 }
 
 async fn filter_order_using_relationships(
-    conn: &impl Connection<Sqlite>,
+    conn: &impl Client,
 ) -> Result<(), Box<dyn std::error::Error>> {
     // NOTE: this is an un-executed query.
     let product_query = Product::where_col(|p| p.name.like("%Cookie%"));
@@ -136,7 +126,7 @@ async fn filter_order_using_relationships(
 }
 
 async fn delete_the_product(
-    conn: &impl Connection<Sqlite>,
+    conn: &impl Client,
     product_id: i32,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let mut product = Product::find_by_id(conn, product_id).await?.unwrap();

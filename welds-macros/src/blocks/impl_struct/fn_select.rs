@@ -8,13 +8,12 @@ pub(crate) fn write(info: &Info) -> TokenStream {
 
     quote! {
 
-        pub fn select<'args, DB,  V, FN: #wp::query::clause::AsFieldName<V>>(
-            lam: impl Fn(<Self as #wp::table::HasSchema>::Schema) -> FN,
-        ) -> #wp::query::select_cols::SelectBuilder<'args, Self, DB>
+        pub fn select<V, FN: #wp::query::clause::AsFieldName<V>>(
+            lam: impl Fn(<Self as #wp::model_traits::HasSchema>::Schema) -> FN,
+        ) -> #wp::query::select_cols::SelectBuilder<Self>
         where
-            DB: #wp::connection::Database,
-            #schema: #wp::table::TableColumns<DB>,
-            Self: Send + Unpin + for<'r> sqlx::FromRow<'r, DB::Row>,
+            #schema: #wp::model_traits::TableColumns,
+            Self: Send,
         {
             let qb = #wp::query::builder::QueryBuilder::new();
             qb.select(lam)

@@ -1,13 +1,52 @@
-pub trait TableScan {
-    /// returns the sql needed to get a list of table in the database
-    /// a unique list is build from all the sql commands provided
-    fn table_scan_sql() -> &'static str;
-    fn single_table_scan_sql() -> &'static str;
-    fn fk_scan_sql() -> &'static str;
+use crate::Syntax;
+
+pub(crate) struct TableScan {
+    table_scan_sql: fn() -> &'static str,
+    single_table_scan_sql: fn() -> &'static str,
+    fk_scan_sql: fn() -> &'static str,
 }
 
-#[cfg(feature = "postgres")]
-impl TableScan for sqlx::Postgres {
+impl TableScan {
+    pub(crate) fn new(syntax: Syntax) -> TableScan {
+        match syntax {
+            Syntax::Mysql => TableScan {
+                table_scan_sql: MySql::table_scan_sql,
+                single_table_scan_sql: MySql::single_table_scan_sql,
+                fk_scan_sql: MySql::fk_scan_sql,
+            },
+            Syntax::Postgres => TableScan {
+                table_scan_sql: Postgres::table_scan_sql,
+                single_table_scan_sql: Postgres::single_table_scan_sql,
+                fk_scan_sql: Postgres::fk_scan_sql,
+            },
+            Syntax::Sqlite => TableScan {
+                table_scan_sql: Sqlite::table_scan_sql,
+                single_table_scan_sql: Sqlite::single_table_scan_sql,
+                fk_scan_sql: Sqlite::fk_scan_sql,
+            },
+            Syntax::Mssql => TableScan {
+                table_scan_sql: Mssql::table_scan_sql,
+                single_table_scan_sql: Mssql::single_table_scan_sql,
+                fk_scan_sql: Mssql::fk_scan_sql,
+            },
+        }
+    }
+
+    pub(crate) fn table_scan_sql(&self) -> &'static str {
+        (self.table_scan_sql)()
+    }
+
+    pub(crate) fn single_table_scan_sql(&self) -> &'static str {
+        (self.single_table_scan_sql)()
+    }
+
+    pub(crate) fn fk_scan_sql(&self) -> &'static str {
+        (self.fk_scan_sql)()
+    }
+}
+
+struct Postgres;
+impl Postgres {
     fn table_scan_sql() -> &'static str {
         include_str!("./postgres.sql")
     }
@@ -19,8 +58,8 @@ impl TableScan for sqlx::Postgres {
     }
 }
 
-#[cfg(feature = "mysql")]
-impl TableScan for sqlx::MySql {
+struct MySql;
+impl MySql {
     fn table_scan_sql() -> &'static str {
         include_str!("./mysql.sql")
     }
@@ -32,8 +71,8 @@ impl TableScan for sqlx::MySql {
     }
 }
 
-#[cfg(feature = "mssql")]
-impl TableScan for crate::Mssql {
+struct Mssql;
+impl Mssql {
     fn table_scan_sql() -> &'static str {
         include_str!("./mssql.sql")
     }
@@ -45,8 +84,8 @@ impl TableScan for crate::Mssql {
     }
 }
 
-#[cfg(feature = "sqlite")]
-impl TableScan for sqlx::Sqlite {
+struct Sqlite;
+impl Sqlite {
     fn table_scan_sql() -> &'static str {
         include_str!("./sqlite.sql")
     }

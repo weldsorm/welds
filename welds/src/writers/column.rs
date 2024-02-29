@@ -1,31 +1,33 @@
-use crate::table::Column;
+use crate::model_traits::Column;
+use crate::Syntax;
 
-pub(crate) struct ColumnWriter {
-    excape: fn(&str) -> String,
-    write: fn(&str, &Column) -> String,
+pub struct ColumnWriter {
+    syntax: Syntax,
 }
 impl ColumnWriter {
-    pub fn new<DB: DbColumnWriter>() -> Self {
-        Self {
-            write: DB::write,
-            excape: DB::excape,
-        }
+    pub fn new(syntax: Syntax) -> Self {
+        Self { syntax }
     }
     pub fn write(&self, prefix: &str, col: &Column) -> String {
-        (self.write)(prefix, col)
+        match self.syntax {
+            Syntax::Mysql => MySql::write(prefix, col),
+            Syntax::Postgres => Postgres::write(prefix, col),
+            Syntax::Sqlite => Sqlite::write(prefix, col),
+            Syntax::Mssql => Mssql::write(prefix, col),
+        }
     }
     pub fn excape(&self, name: &str) -> String {
-        (self.excape)(name)
+        match self.syntax {
+            Syntax::Mysql => MySql::excape(name),
+            Syntax::Postgres => Postgres::excape(name),
+            Syntax::Sqlite => Sqlite::excape(name),
+            Syntax::Mssql => Mssql::excape(name),
+        }
     }
 }
 
-pub trait DbColumnWriter {
-    fn excape(name: &str) -> String;
-    fn write(prefix: &str, col: &Column) -> String;
-}
-
-#[cfg(feature = "postgres")]
-impl DbColumnWriter for sqlx::Postgres {
+struct Postgres;
+impl Postgres {
     fn excape(name: &str) -> String {
         format!("\"{}\"", name)
     }
@@ -35,8 +37,8 @@ impl DbColumnWriter for sqlx::Postgres {
     }
 }
 
-#[cfg(feature = "sqlite")]
-impl DbColumnWriter for sqlx::Sqlite {
+struct Sqlite;
+impl Sqlite {
     fn excape(name: &str) -> String {
         format!("\"{}\"", name)
     }
@@ -46,8 +48,8 @@ impl DbColumnWriter for sqlx::Sqlite {
     }
 }
 
-#[cfg(feature = "mysql")]
-impl DbColumnWriter for sqlx::MySql {
+struct MySql;
+impl MySql {
     fn excape(name: &str) -> String {
         name.to_string()
     }
@@ -57,23 +59,13 @@ impl DbColumnWriter for sqlx::MySql {
     }
 }
 
-#[cfg(feature = "mssql")]
-impl DbColumnWriter for crate::Mssql {
+struct Mssql;
+impl Mssql {
     fn excape(name: &str) -> String {
         format!("\"{}\"", name)
     }
     fn write(prefix: &str, col: &Column) -> String {
-        let dbtype = mssql_type_overrides(col.dbtype());
         let name = Self::excape(col.name());
-        format!("cast({}.{} as {}) as {}", prefix, name, dbtype, col.name())
-    }
-}
-
-fn mssql_type_overrides(dbtype: &str) -> &str {
-    match dbtype.to_lowercase().as_str() {
-        //
-        "bit" => "tinyint",
-        "bitn" => "tinyint",
-        _ => dbtype,
+        format!("{}.{}", prefix, name)
     }
 }

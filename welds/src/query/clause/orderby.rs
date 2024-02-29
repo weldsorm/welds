@@ -1,4 +1,4 @@
-pub(crate) struct OrderBy {
+pub struct OrderBy {
     pub(crate) field: String,
     pub(crate) direction: String,
 }

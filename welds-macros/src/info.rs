@@ -1,6 +1,5 @@
 use crate::attributes;
 use crate::column::Column;
-use crate::engine::Engine;
 use crate::errors::Result;
 use crate::relation::Relation;
 use syn::Ident;
@@ -8,7 +7,6 @@ use syn::Ident;
 pub(crate) struct Info {
     pub defstruct: Ident,
     pub schemastruct: Ident,
-    pub engines_path: Vec<syn::Path>,
     pub columns: Vec<Column>,
     pub pks: Vec<Column>,
     pub relations: Vec<Relation>,
@@ -21,7 +19,6 @@ pub(crate) struct Info {
 
 impl Info {
     pub fn new(ast: &syn::DeriveInput) -> Result<Self> {
-        let engines = attributes::get_engines(ast);
         let relations = attributes::get_relations(ast)?;
         let defstruct = attributes::get_scructname(ast);
         let schemastruct_name = format!("{}Schema", defstruct);
@@ -35,13 +32,7 @@ impl Info {
         let readonly = attributes::get_readonly(ast);
         let welds_path = attributes::get_welds_path(ast);
 
-        let engines_path = engines
-            .iter()
-            .map(|eng| build_engine_path(eng, &welds_path))
-            .collect();
-
         Ok(Self {
-            engines_path,
             columns,
             pks,
             defstruct,
@@ -56,15 +47,67 @@ impl Info {
     }
 }
 
-fn build_engine_path(engine: &Engine, wp: &syn::Path) -> syn::Path {
-    use quote::quote;
+#[cfg(test)]
+mod tests {
 
-    let q = match engine {
-        Engine::Postgres => quote!(sqlx::Postgres),
-        Engine::Mssql => quote!(#wp::Mssql),
-        Engine::Mysql => quote!(sqlx::MySql),
-        Engine::Sqlite => quote!(sqlx::Sqlite),
-    };
+    use super::Info;
+    use crate::column::Column;
+    use proc_macro2::{Ident, Span};
+    //use syn::{parse_quote, parse_str, Path, Type};
 
-    syn::parse(q.into()).unwrap()
+    impl Info {
+        pub(crate) fn mock() -> Info {
+            Info {
+                defstruct: Ident::new("Mock", Span::call_site()),
+                schemastruct: Ident::new("MockSchema", Span::call_site()),
+                columns: Vec::default(),
+                pks: Vec::default(),
+                relations: Vec::default(),
+                relations_struct: Ident::new("MockRelationships", Span::call_site()),
+                tablename: "datables".to_string(),
+                schemaname: Some("daschema".to_string()),
+                readonly: false,
+                welds_path: Ident::new("welds", Span::call_site()).into(),
+            }
+        }
+
+        pub(crate) fn add_column(
+            mut self,
+            name: impl Into<String>,
+            ty: impl Into<String>,
+            null: bool,
+        ) -> Info {
+            let name: String = name.into();
+            let field: Ident = Ident::new(&name, Span::call_site());
+            let ty: String = ty.into();
+            let field_type = syn::parse_str(&ty).unwrap();
+            let col = Column {
+                field,
+                ignore: false,
+                dbname: name,
+                field_type,
+                is_option: null,
+            };
+            self.columns.push(col);
+            self
+        }
+
+        pub(crate) fn add_pk(mut self, name: impl Into<String>, ty: impl Into<String>) -> Info {
+            let name: String = name.into();
+            let field: Ident = Ident::new(&name, Span::call_site());
+            let ty: String = ty.into();
+            let field_type = syn::parse_str(&ty).unwrap();
+
+            let col = Column {
+                field,
+                ignore: false,
+                dbname: name,
+                field_type,
+                is_option: false,
+            };
+            self.columns.push(col.clone());
+            self.pks.push(col);
+            self
+        }
+    }
 }

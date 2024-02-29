@@ -4,8 +4,7 @@
 ******************************************************************************/
 
 use welds::WeldsModel;
-#[derive(Debug, sqlx :: FromRow, WeldsModel)]
-#[welds(db(Mssql))]
+#[derive(Debug, WeldsModel)]
 #[welds(schema = "welds", table = "Orders")]
 #[welds(BelongsTo(product, super::super::product::Product, "product_id"))]
 #[welds(BelongsTo(product2, super::super::product::Product, "product_id2"))]
@@ -13,7 +12,7 @@ pub struct Order {
     #[welds(primary_key)]
     pub id: i32,
     pub product_id: i32,
-    #[sqlx(rename = "product_id2")]
+    #[welds(rename = "product_id2")]
     pub product_id_2: Option<i32>,
     pub code: Option<String>,
 }

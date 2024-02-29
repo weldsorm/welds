@@ -1,29 +1,28 @@
 use super::ClauseAdder;
-use crate::connection::Database;
+use crate::model_traits::HasSchema;
+use crate::model_traits::TableColumns;
+use crate::model_traits::TableInfo;
+use crate::model_traits::UniqueIdentifier;
 use crate::query::builder::QueryBuilder;
+use crate::query::clause::ParamArgs;
 use crate::query::helpers::{build_tail, build_where, join_sql_parts};
-use crate::table::HasSchema;
-use crate::table::TableColumns;
-use crate::table::TableInfo;
-use crate::table::UniqueIdentifier;
-use crate::writers::column::ColumnWriter;
-use sqlx::database::HasArguments;
-use sqlx::IntoArguments;
+use crate::writers::ColumnWriter;
+use crate::writers::NextParam;
+use crate::Syntax;
 
 /// Used to generated a SQL IN clause.
 /// This is used when deleting and updating to be able to apply limit
 
-pub struct WhereIn<'qb, 'schema, T, DB: Database> {
-    qb: &'qb QueryBuilder<'schema, T, DB>,
+pub struct WhereIn<'qb, T> {
+    qb: &'qb QueryBuilder<T>,
 }
 
-impl<'qb, 'schema, DB, T> WhereIn<'qb, 'schema, T, DB>
+impl<'qb, T> WhereIn<'qb, T>
 where
-    DB: Database,
     T: HasSchema,
-    <T as HasSchema>::Schema: UniqueIdentifier<DB>,
+    <T as HasSchema>::Schema: UniqueIdentifier,
 {
-    pub(crate) fn new(qb: &'qb QueryBuilder<'schema, T, DB>) -> Self {
+    pub(crate) fn new(qb: &'qb QueryBuilder<T>) -> Self {
         WhereIn { qb }
     }
 
@@ -33,17 +32,15 @@ where
     }
 }
 
-impl<'qb, 'cd, 'args, 'schema, DB, T> ClauseAdder<'cd, DB> for WhereIn<'qb, 'schema, T, DB>
+impl<'qb, T> ClauseAdder for WhereIn<'qb, T>
 where
-    'schema: 'args,
-    'cd: 'schema,
-    'schema: 'cd,
-    <DB as HasArguments<'schema>>::Arguments: IntoArguments<'args, DB>,
-    DB: Database,
     T: HasSchema + Sync + Send,
-    <T as HasSchema>::Schema: UniqueIdentifier<DB> + TableInfo + TableColumns<DB>,
+    <T as HasSchema>::Schema: UniqueIdentifier + TableInfo + TableColumns,
 {
-    fn bind(&self, args: &mut <DB as sqlx::database::HasArguments<'cd>>::Arguments) {
+    fn bind<'lam, 'args, 'p>(&'lam self, args: &'args mut ParamArgs<'p>)
+    where
+        'lam: 'p,
+    {
         for w in &self.qb.wheres {
             w.bind(args);
         }
@@ -52,38 +49,38 @@ where
         }
     }
 
-    fn clause(&self, alias: &str, next_params: &super::NextParam) -> Option<String> {
+    fn clause(&self, syntax: Syntax, alias: &str, next_params: &NextParam) -> Option<String> {
         // writes => ID IN ( SELECT ID FROM ... )
 
         let outcol = self.outer_tablecolumn(alias);
         let inner_alias = &self.qb.alias;
         let mut args = None;
         let inner_sql = join_sql_parts(&[
-            build_head_select::<DB, <T as HasSchema>::Schema>(inner_alias),
+            build_head_select::<<T as HasSchema>::Schema>(syntax, inner_alias),
             build_where(
+                syntax,
                 next_params,
                 inner_alias,
-                &mut args,
                 &self.qb.wheres,
+                &mut args,
                 &self.qb.exist_ins,
             ),
-            build_tail(self.qb),
+            build_tail(syntax, self.qb),
         ]);
 
         Some(format!(" {} IN ({}) ", outcol, inner_sql))
     }
 }
 
-fn build_head_select<DB, S>(tablealias: &str) -> Option<String>
+fn build_head_select<S>(syntax: Syntax, tablealias: &str) -> Option<String>
 where
-    DB: Database,
-    S: TableInfo + UniqueIdentifier<DB>,
+    S: TableInfo + UniqueIdentifier,
 {
     let mut tablename = S::identifier().join(".");
     if tablename != tablealias {
         tablename = format!("{} {}", tablename, tablealias);
     }
-    let writer = ColumnWriter::new::<DB>();
+    let writer = ColumnWriter::new(syntax);
     let col_raw = S::id_column();
     let col = writer.write(tablealias, &col_raw);
     Some(format!("SELECT {} FROM {}", col, tablename))

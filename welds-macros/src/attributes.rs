@@ -1,10 +1,7 @@
-use crate::engine;
-use crate::engine::Engine;
 use crate::errors::Result;
 use crate::utils::as_typepath;
 use crate::{column::Column, relation::Relation};
 use proc_macro2::{Ident, Span};
-use std::collections::HashSet;
 use syn::{Attribute, Field, Type};
 
 pub(crate) fn get_columns(ast: &syn::DeriveInput) -> Vec<Column> {
@@ -20,7 +17,7 @@ pub(crate) fn get_columns(ast: &syn::DeriveInput) -> Vec<Column> {
         .map(|f| {
             let ignore = is_welds_ignore(&f.attrs);
             let fieldname = f.ident.as_ref().unwrap().to_string();
-            let dbname = read_sqlx_rename(f).unwrap_or(fieldname);
+            let dbname = read_rename(f).unwrap_or(fieldname);
             let field_type = as_option_inner(&f.ty);
             let is_option = field_type.is_some();
             let field_type = field_type.unwrap_or(&f.ty).clone();
@@ -50,7 +47,7 @@ pub(crate) fn get_pks(ast: &syn::DeriveInput) -> Vec<Column> {
         .filter(|f| f.ident.is_some())
         .map(|f| {
             let fieldname = f.ident.as_ref().unwrap().to_string();
-            let dbname = read_sqlx_rename(f).unwrap_or(fieldname);
+            let dbname = read_rename(f).unwrap_or(fieldname);
             let field_type = as_option_inner(&f.ty);
             let is_option = field_type.is_some();
             let field_type = field_type.unwrap_or(&f.ty).clone();
@@ -66,13 +63,13 @@ pub(crate) fn get_pks(ast: &syn::DeriveInput) -> Vec<Column> {
         .collect()
 }
 
-fn read_sqlx_rename(field: &Field) -> Option<String> {
+fn read_rename(field: &Field) -> Option<String> {
     let metas: Vec<_> = field
         .attrs
         .iter()
         .filter_map(|a| a.parse_meta().ok())
         .filter_map(as_metalist)
-        .filter(|m| m.path.is_ident("sqlx"))
+        .filter(|m| m.path.is_ident("welds"))
         .collect();
     // Read out the inner meta from [welds(this, and_this)]
     let inners: Vec<&syn::Meta> = metas.iter().flat_map(as_metalist_nested_meta).collect();
@@ -104,30 +101,6 @@ fn as_option_inner(ftype: &Type) -> Option<&Type> {
         _ => return None,
     };
     Some(inner)
-}
-
-pub(crate) fn get_engines(ast: &syn::DeriveInput) -> Vec<Engine> {
-    let metas = welds_meta(&ast.attrs);
-
-    // Read out the inner meta from [welds(this, and_this)]
-    let inners: Vec<&syn::Meta> = metas.iter().flat_map(as_metalist_nested_meta).collect();
-
-    // find all the types in db(this, and_this) inners
-    let engines: HashSet<Engine> = inners
-        .iter()
-        .filter_map(|m| as_metalist_ref(m))
-        .filter(|m| m.path.is_ident("db"))
-        .flat_map(as_metalist_nested_meta)
-        .filter_map(Engine::parse)
-        .collect();
-    let engines: Vec<_> = engines.into_iter().collect();
-
-    // If there are no Dbs selected, default to supporting all that are enabled
-    if engines.is_empty() {
-        return engine::ALL.to_vec();
-    }
-
-    engines
 }
 
 pub(crate) fn get_relations(ast: &syn::DeriveInput) -> Result<Vec<Relation>> {

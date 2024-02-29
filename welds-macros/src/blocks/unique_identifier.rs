@@ -9,26 +9,47 @@ pub(crate) fn write(info: &Info) -> TokenStream {
     }
     let pk = &info.pks[0];
 
-    let parts: Vec<_> = info
-        .engines_path
-        .iter()
-        .map(|db| write_for_db(info, db, pk))
-        .collect();
-    quote! { #(#parts)* }
+    write_for_db(info, pk)
 }
 
-pub(crate) fn write_for_db(info: &Info, db: &syn::Path, pk: &Column) -> TokenStream {
+pub(crate) fn write_for_db(info: &Info, pk: &Column) -> TokenStream {
     let wp = &info.welds_path;
     let def = &info.schemastruct;
-    let pktype = &pk.field_type;
     let name = &pk.dbname;
     let nullable = pk.is_option;
+    let ft = &pk.field_type;
+    let ty = quote! { #ft };
+    let rust_type = ty.to_string();
 
     quote! {
-        impl #wp::table::UniqueIdentifier<#db> for #def {
-            fn id_column() -> #wp::table::Column {
-                #wp::table::Column::new::<#db, #pktype>(#name, #nullable)
+        impl #wp::model_traits::UniqueIdentifier for #def {
+            fn id_column() -> #wp::model_traits::Column {
+                #wp::model_traits::Column::new(#name, #rust_type, #nullable)
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn should_be_able_to_write_uniqueidentifyer() {
+        let info = Info::mock().add_pk("id", "i64");
+        let ts = write(&info);
+        let code = ts.to_string();
+        let expected: &str = r#"
+            impl welds::model_traits::UniqueIdentifier for MockSchema {
+                fn id_column() -> welds::model_traits::Column {
+                    welds::model_traits::Column::new("id", "i64" ,false)
+                }
+            }
+        "#;
+        assert_eq!(cleaned(&code), cleaned(expected));
+    }
+
+    fn cleaned(input: &str) -> String {
+        input.chars().filter(|c| !c.is_whitespace()).collect()
     }
 }

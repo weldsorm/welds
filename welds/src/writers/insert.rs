@@ -1,18 +1,18 @@
 pub struct ColArg(pub String, pub String);
 use super::column::ColumnWriter;
-use crate::table::Column;
+use crate::model_traits::Column;
+use crate::Syntax;
 
 type Sql = (String, Option<String>);
 
-pub(crate) struct InsertWriter {
-    write: fn(identifier: &str, &[ColArg], &[Column], &[Column]) -> Sql,
+pub struct InsertWriter {
+    syntax: Syntax,
 }
 
 impl InsertWriter {
-    pub fn new<DB: DbInsertWriter>() -> Self {
-        Self { write: DB::write }
+    pub fn new(syntax: Syntax) -> Self {
+        Self { syntax }
     }
-
     pub fn write(
         &self,
         identifier: &str,
@@ -20,16 +20,18 @@ impl InsertWriter {
         columns: &[Column],
         pks: &[Column],
     ) -> Sql {
-        (self.write)(identifier, colargs, columns, pks)
+        match self.syntax {
+            Syntax::Mysql => MySql::write(identifier, colargs, columns, pks),
+            Syntax::Postgres => Postgres::write(identifier, colargs, columns, pks),
+            Syntax::Sqlite => Sqlite::write(identifier, colargs, columns, pks),
+            Syntax::Mssql => Mssql::write(identifier, colargs, columns, pks),
+        }
     }
 }
 
-pub trait DbInsertWriter {
-    fn write(identifier: &str, colargs: &[ColArg], columns: &[Column], pks: &[Column]) -> Sql;
-}
+struct Postgres;
 
-#[cfg(feature = "postgres")]
-impl DbInsertWriter for sqlx::Postgres {
+impl Postgres {
     fn write(identifier: &str, colargs: &[ColArg], _columns: &[Column], _pks: &[Column]) -> Sql {
         let cols: Vec<_> = colargs.iter().map(|x| x.0.as_str()).collect();
         let args: Vec<_> = colargs.iter().map(|x| x.1.as_str()).collect();
@@ -45,8 +47,9 @@ impl DbInsertWriter for sqlx::Postgres {
     }
 }
 
-#[cfg(feature = "sqlite")]
-impl DbInsertWriter for sqlx::Sqlite {
+struct Sqlite;
+
+impl Sqlite {
     fn write(identifier: &str, colargs: &[ColArg], _columns: &[Column], pks: &[Column]) -> Sql {
         assert!(
             pks.len() == 1,
@@ -69,8 +72,9 @@ impl DbInsertWriter for sqlx::Sqlite {
     }
 }
 
-#[cfg(feature = "mysql")]
-impl DbInsertWriter for sqlx::MySql {
+struct MySql;
+
+impl MySql {
     fn write(identifier: &str, colargs: &[ColArg], _columns: &[Column], pks: &[Column]) -> Sql {
         assert!(
             pks.len() == 1,
@@ -93,8 +97,9 @@ impl DbInsertWriter for sqlx::MySql {
     }
 }
 
-#[cfg(feature = "mssql")]
-impl DbInsertWriter for crate::Mssql {
+struct Mssql;
+
+impl Mssql {
     fn write(identifier: &str, colargs: &[ColArg], columns: &[Column], _pks: &[Column]) -> Sql {
         let cols: Vec<_> = colargs.iter().map(|x| x.0.as_str()).collect();
         let args: Vec<_> = colargs.iter().map(|x| x.1.as_str()).collect();
@@ -102,7 +107,7 @@ impl DbInsertWriter for crate::Mssql {
         let arg_group = args.join(", ");
 
         // write the column select that will be returned
-        let col_write = ColumnWriter::new::<crate::Mssql>();
+        let col_write = ColumnWriter::new(Syntax::Mssql);
         let return_col: Vec<String> = columns
             .iter()
             .map(|c| col_write.write("Inserted", c))

@@ -40,14 +40,6 @@ pub fn from_def(syntax: Syntax, def: &TableDef) -> Vec<String> {
         columns.join(", ")
     )];
     parts
-    //let columns: Vec<String> = build_columns(syntax, &tb.pk, &tb.columns);
-    //let columns: String = columns.join(", ");
-    //let mut parts = vec![format!("CREATE TABLE {} ( {} )", tb.ident, columns)];
-    //let index_cols = tb.columns.iter().filter(|c| c.index.is_some());
-    //for col in index_cols {
-    //    parts.push(create_pk_index(&tb.ident, col));
-    //}
-    //parts
 }
 
 pub fn from_builder(syntax: Syntax, tb: &TableBuilder) -> Vec<String> {

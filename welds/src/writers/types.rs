@@ -193,10 +193,27 @@ const SQLITE_PAIRS: &[Pair] = &[
     Pair::new("INTEGER", "i64"),
     Pair::new("BIGINT", "i64"),
     Pair::new("INT8", "i64"),
-    Pair::new("INTSMALL", "i64"),
+    Pair::new("INT2", "i64"),
+    Pair::new("INT", "i64"),
+    Pair::new("TINYINT", "i64"),
+    Pair::new("SMALLINT", "i64"),
+    Pair::new("MEDIUMINT", "i64"),
+    Pair::new("UNSIGNED BIG INT", "i64"),
     Pair::new("REAL", "f64"),
+    Pair::new("DOUBLE", "f64"),
+    Pair::new("DOUBLE PRECISION", "f64"),
+    Pair::new("FLOAT", "f64"),
     Pair::new("TEXT", "String"),
+    Pair::new("CHAR", "String"),
+    Pair::new("VARCHAR", "String"),
+    Pair::new("VARYING CHARACTER", "String"),
+    Pair::new("NCHAR", "String"),
+    Pair::new("NATIVE CHARACTER", "String"),
+    Pair::new("NVARCHAR", "String"),
+    Pair::new("CLOB", "String"),
     Pair::new("BLOB", "Vec<u8>"),
+    Pair::new("NUMERIC", "rust_decimal::Decimal"),
+    Pair::new("DECIMAL", "rust_decimal::Decimal"),
     Pair::new("DATETIME", "chrono::DateTime<chrono::Utc>"),
     Pair::new("DATETIME", "chrono::DateTime<Utc>"),
     Pair::new("DATE", "chrono::NaiveDate"),
@@ -350,7 +367,7 @@ mod tests {
         );
         let s = Syntax::Sqlite;
         assert_eq!(
-            recommended_rust_type(s, "INTSMALL")
+            recommended_rust_type(s, "SMALLINT")
                 .unwrap()
                 .full_rust_type(),
             "i64"

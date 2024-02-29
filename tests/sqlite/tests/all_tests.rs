@@ -7,6 +7,7 @@ use welds::Syntax;
 
 pub mod bulk_delete;
 pub mod bulk_update;
+pub mod migrations;
 pub mod select_col;
 pub mod sub_query_tests;
 
@@ -33,7 +34,6 @@ fn should_be_able_to_connect() {
 fn should_be_able_to_read_all_products() {
     async_std::task::block_on(async {
         let conn = get_conn().await;
-
         let q = Product::all();
         eprintln!("SQL: {}", q.to_sql(Syntax::Sqlite));
         let all = q.run(&conn).await.unwrap();

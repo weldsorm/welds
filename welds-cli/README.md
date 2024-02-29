@@ -1,7 +1,7 @@
 
 <div align="center">
   <img src="https://raw.githubusercontent.com/weldsorm/welds/main/page/src/assets/images/banner.png"/>
-  <h3>An async ORM written in rust using the sqlx framework.</h3>
+  <h3>An async ORM written in rust using sqlx and/or Tiberius.</h3>
 </div>
 
 
@@ -18,7 +18,7 @@ You point it at your database and out comes a bunch of rust files for all the ta
 
 # Install
 ```bash
-cargo install welds-cli --version '0.1.6-alpha'
+cargo install welds-cli
 ```
 
 # How to use

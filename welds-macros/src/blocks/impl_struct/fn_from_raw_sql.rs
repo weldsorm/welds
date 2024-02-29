@@ -6,13 +6,12 @@ pub(crate) fn write(info: &Info) -> TokenStream {
     let wp = &info.welds_path;
     quote! {
 
-    pub async fn from_raw_sql<'args, 't, 'c, C>(
+    pub async fn from_raw_sql<'args, 't>(
         sql: &'static str,
         arguments: &'args #wp::query::clause::ParamArgs<'t>,
-        client: &'c C,
+        client: &dyn #wp::Client,
     ) -> #wp::errors::Result<Vec<#wp::state::DbState<Self>>>
     where
-        C: #wp::Client,
         <Self as #wp::model_traits::HasSchema>::Schema: #wp::model_traits::TableInfo + #wp::model_traits::TableColumns,
         Self: Send + TryFrom<#wp::Row>,
         #wp::WeldsError: From<<Self as TryFrom<#wp::Row>>::Error>

@@ -3,7 +3,7 @@ use crate::detect::TableDef;
 use crate::errors::{Result, WeldsError};
 use crate::model_traits::TableIdent;
 
-//pub mod change;
+pub mod change;
 pub mod drop;
 
 pub struct Table(TableDef);
@@ -24,9 +24,9 @@ pub fn alter_table(table_state: &TableState, tablename: impl Into<String>) -> Re
 }
 
 impl Table {
-    //pub fn change(self, column_name: impl Into<String>) -> change::Change {
-    //    change::Change::new(self.0, column_name.into())
-    //}
+    pub fn change(self, column_name: impl Into<String>) -> change::Change {
+        change::Change::new(self.0, column_name.into())
+    }
 
     pub fn drop(self) -> drop::Drop {
         drop::Drop::new(self.0)

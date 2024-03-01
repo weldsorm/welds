@@ -8,6 +8,8 @@ pub struct Pair {
     id_only: bool,
     // If true a size is required to make this type in the DB
     sized: bool,
+    // If true a size is required to make this type in the DB
+    default_size: Option<&'static str>,
     // match on the array version of this pair not the two types
     array: bool,
 }
@@ -19,6 +21,7 @@ impl Pair {
             rust_type,
             id_only: false,
             sized: false,
+            default_size: None,
             array: false,
         }
     }
@@ -26,12 +29,17 @@ impl Pair {
     /// Used to say the db type includes a size value.
     /// This is important to know when checking if the
     /// DB type matches the models fields
-    const fn sized(db_type: &'static str, rust_type: &'static str) -> Pair {
+    const fn sized(
+        db_type: &'static str,
+        rust_type: &'static str,
+        default_size: &'static str,
+    ) -> Pair {
         Pair {
             db_type,
             rust_type,
             id_only: false,
             sized: true,
+            default_size: Some(default_size),
             array: false,
         }
     }
@@ -45,6 +53,7 @@ impl Pair {
             rust_type,
             id_only: true,
             sized: false,
+            default_size: None,
             array: false,
         }
     }
@@ -54,9 +63,15 @@ impl Pair {
         self.id_only
     }
 
-    // returns true if the DB type of this pair requires a size. VARCHAR(255)
+    // returns true if the DB type of this pair requires a size. Example: VARCHAR(255)
     pub fn db_sized(&self) -> bool {
         self.sized
+    }
+
+    // Returns a reasonable default value to use with a given DB type if it is size.
+    // This is used when creating migrations and the use don't pick a size
+    pub fn default_size(&self) -> Option<&'static str> {
+        self.default_size
     }
 
     pub fn db_type(&self) -> String {
@@ -152,10 +167,10 @@ const MSSQL_PAIRS: &[Pair] = &[
     Pair::new("BIGINT", "i64"),
     Pair::new("FLOAT(24)", "f32"),
     Pair::new("FLOAT(53)", "f64"),
-    Pair::sized("NVARCHAR", "String"),
-    Pair::sized("VARCHAR", "String"),
+    Pair::sized("NVARCHAR", "String", "MAX"),
+    Pair::sized("VARCHAR", "String", "MAX"),
     Pair::new("TEXT", "String"),
-    Pair::sized("VARBINARY", "Vec<u8>"),
+    Pair::sized("VARBINARY", "Vec<u8>", "MAX"),
     Pair::new("UNIQUEIDENTIFIER", "Uuid"),
 ];
 
@@ -174,11 +189,14 @@ const MYSQL_PAIRS: &[Pair] = &[
     Pair::new("DOUBLE", "f64"),
     Pair::new("VARCHAR(255)", "String"),
     Pair::new("TEXT", "String"),
-    Pair::sized("VARCHAR", "String"),
-    Pair::sized("CHAR ", "String"),
-    Pair::sized("VARBINARY", "Vec<u8>"),
-    Pair::sized("BINARY", "Vec<u8>"),
+    Pair::sized("VARCHAR", "String", "255"),
+    Pair::sized("CHAR ", "String", "255"),
     Pair::new("BLOB", "Vec<u8>"),
+    Pair::new("TINYBLOB", "Vec<u8>"),
+    Pair::new("MEDIUMBLOB", "Vec<u8>"),
+    Pair::new("LONGBLOB", "Vec<u8>"),
+    Pair::sized("BINARY", "Vec<u8>", "255"),
+    Pair::sized("VARBINARY", "Vec<u8>", "255"),
     Pair::new("TIMESTAMP", "chrono::DateTime<chrono::Utc>"),
     Pair::new("DATETIME", "chrono::NaiveDateTime"),
     Pair::new("DATE", "chrono::NaiveDate"),
@@ -243,8 +261,8 @@ const POSTGRES_PAIRS: &[Pair] = &[
     Pair::new("DOUBLE PRECISION", "f64"),
     Pair::new("FLOAT8", "f64"),
     Pair::new("TEXT", "String"),
-    Pair::sized("VARCHAR", "String"),
-    Pair::sized("CHAR", "String"),
+    Pair::sized("VARCHAR", "String", "255"),
+    Pair::sized("CHAR", "String", "255"),
     Pair::new("NAME", "String"),
     Pair::new("BYTEA", "Vec<u8>"),
     Pair::new("BLOB", "Vec<u8>"),

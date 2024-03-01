@@ -7,6 +7,7 @@ use crate::Client;
 use crate::Syntax;
 
 mod issue;
+use crate::model_traits::TableIdent;
 pub use issue::*;
 
 /// Returns a list of differences in the current database schema
@@ -21,8 +22,11 @@ where
     let mut problems = Vec::default();
     let identifier_parts: Vec<&str> = <T::Schema>::identifier().iter().rev().cloned().collect();
     let tablename = identifier_parts[0];
-    let namespace = identifier_parts.get(1).copied();
-    let namespace = unwrap_to_default_namespace(namespace, client);
+    let syntax = client.syntax();
+    let namespace = identifier_parts
+        .get(1)
+        .copied()
+        .or(TableIdent::default_namespace(syntax));
 
     let tabledef = match crate::detect::find_table(namespace, tablename, client).await? {
         Some(x) => x,
@@ -46,24 +50,6 @@ where
         .for_each(|x| problems.push(Issue::struct_missing(namespace, tablename, x)));
 
     Ok(problems)
-}
-
-/// returns the default namespace that is used if no namespace is provided
-fn unwrap_to_default_namespace(
-    ns: Option<&'static str>,
-    client: &dyn Client,
-) -> Option<&'static str> {
-    if ns.is_some() {
-        return ns;
-    }
-    let syntax = client.syntax();
-    match syntax {
-        Syntax::Mssql => Some("dbo"),
-        Syntax::Postgres => Some("public"),
-        // NOTE if schema is left out, the mysql query uses the name of the db in the connection
-        Syntax::Mysql => None,
-        Syntax::Sqlite => None,
-    }
 }
 
 fn struct_missing<'a>(table_cols: &'a [ColumnDef], model_cols: &[Column]) -> Vec<&'a ColumnDef> {

@@ -57,7 +57,11 @@ pub async fn find_table(
     let ts = TableScan::new(syntax);
     let sql = ts.single_table_scan_sql();
     let mut args: ParamArgs = Vec::default();
-    let namespace: Option<String> = namespace.map(|x| x.into());
+
+    let namespace: Option<String> = namespace
+        .map(|x| x.into())
+        .or(TableIdent::default_namespace(syntax).map(|s| s.to_string()));
+
     let tablename: String = tablename.into();
     args.push(&namespace);
 

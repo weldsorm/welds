@@ -39,7 +39,7 @@ impl<'t> Transaction<'t> {
     }
     pub async fn commit(self) -> Result<()> {
         let inner = self.take_conn();
-        inner.commit().await;
+        inner.commit().await?;
         Ok(())
     }
 }

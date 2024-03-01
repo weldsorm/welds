@@ -7,6 +7,8 @@ edition = "2021"
 
 [dependencies]
 testlib = { path = "../testlib" }
-welds = { path = "../../welds", features = ["mysql", "detect", "check"]  }
+welds = { path = "../../welds", features = ["mysql", "detect", "check", "migrations"]  }
 async-std = { version = "1", features = ["attributes"] }
 sqlx = { version = "0.7", features = [ "runtime-async-std", "tls-rustls", "macros"] }
+env_logger = "0.11.2"
+log = "0.4.21"

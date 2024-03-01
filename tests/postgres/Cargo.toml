@@ -8,6 +8,8 @@ edition = "2021"
 
 [dependencies]
 testlib = { path = "../testlib" }
-welds = { path = "../../welds", features = ["postgres", "detect", 'check']  }
+welds = { path = "../../welds", features = ["postgres", "detect", 'check', "migrations"]  }
 async-std = { version = "1", features = ["attributes"] }
 sqlx = { version = "0.7", features = [ "runtime-async-std", "tls-rustls", "macros"] }
+log = "0.4.21"
+env_logger = "0.11.2"

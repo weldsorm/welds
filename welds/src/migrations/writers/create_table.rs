@@ -18,7 +18,7 @@ pub fn from_def(syntax: Syntax, def: &TableDef) -> Vec<String> {
         let pk_type = pk_override(syntax, &c.ty).unwrap_or(&c.ty);
         let col = IdBuilder {
             name: c.name.to_string(),
-            ty: Type::Raw(pk_type.to_owned()),
+            ty: Type::parse_db_type(syntax, c.ty()),
         };
         columns.push(build_id_column(syntax, &col))
     }
@@ -26,7 +26,7 @@ pub fn from_def(syntax: Syntax, def: &TableDef) -> Vec<String> {
     for c in def.columns().iter().filter(|&x| !x.primary_key) {
         let col = ColumnBuilder {
             name: c.name.to_string(),
-            ty: Type::Raw(c.ty.to_string()),
+            ty: Type::parse_db_type(syntax, c.ty()),
             nullable: c.null,
             index: None,
             index_name: None,
@@ -80,6 +80,7 @@ fn build_id_column(syntax: Syntax, col: &IdBuilder) -> String {
 fn build_column(syntax: Syntax, col: &ColumnBuilder) -> String {
     let name = &col.name;
     let ty: String = col.ty.db_type(syntax);
+
     let null = if col.nullable { "NULL" } else { "NOT NULL" };
     format!("{name} {ty} {null}")
 }

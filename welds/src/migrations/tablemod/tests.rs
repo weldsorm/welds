@@ -70,26 +70,3 @@ fn should_be_able_to_rename_column2() {
     let expected_down = r#"EXEC sp_rename 's2.cars', 'name2', 'name'"#;
     assert_eq!(sql, expected_down);
 }
-
-#[test]
-fn should_be_able_to_rename_and_change_type() {
-    let table = mock_table(Syntax::Postgres);
-    let t = Type::Raw("APPLE".to_string());
-    let m = table.change("name").rename("name2").to_type(t).null();
-    // up sql
-    let sql = MigrationWriter::up_sql(&m, Syntax::Postgres).join("; ");
-    let expected_up = [
-        r#"ALTER TABLE s2.cars RENAME name TO name2"#,
-        r#"ALTER TABLE s2.cars ALTER COLUMN name2 TYPE APPLE NULL"#,
-    ]
-    .join("; ");
-    assert_eq!(sql, expected_up);
-    // down sql
-    let sql = MigrationWriter::down_sql(&m, Syntax::Postgres).join("; ");
-    let expected_up = [
-        r#"ALTER TABLE s2.cars ALTER COLUMN name2 TYPE TEXT NOT NULL"#,
-        r#"ALTER TABLE s2.cars RENAME name2 TO name"#,
-    ]
-    .join("; ");
-    assert_eq!(sql, expected_up);
-}

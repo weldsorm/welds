@@ -5,6 +5,8 @@ use welds::connections::mysql::MysqlClient;
 use welds::Syntax;
 use welds::TransactStart;
 
+mod migrations;
+
 async fn get_conn() -> MysqlClient {
     let conn = testlib::mysql::conn().await.unwrap();
     let client: MysqlClient = conn.into();

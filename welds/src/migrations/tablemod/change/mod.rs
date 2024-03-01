@@ -1,11 +1,13 @@
-use crate::detect::{ColumnDef, TableDef};
+use crate::detect::TableDef;
 use crate::migrations::types::Type;
-use crate::migrations::writers::alter_column_type;
+use crate::migrations::utils::find_column_or_unwrap;
+use crate::migrations::writers::add_column;
+use crate::migrations::writers::alter_column_type_down;
+use crate::migrations::writers::alter_column_type_up;
+use crate::migrations::writers::drop_column;
 use crate::migrations::writers::rename_column;
 use crate::migrations::MigrationWriter;
 use crate::Syntax;
-
-//pub(crate) mod sqlite_writer;
 
 pub struct Change {
     pub(super) tabledef: TableDef,
@@ -42,18 +44,15 @@ impl Change {
     }
 
     pub fn not_null(mut self) -> Change {
-        self.set_null = Some(true);
+        self.set_null = Some(false);
         self
     }
 
-    /// returns the columndef matching by its name
-    fn find_column_or_unwrap(&self, name: &str) -> &ColumnDef {
-        let err = format!("Could not find column '{}' in the database", name);
-        self.tabledef
-            .columns()
-            .iter()
-            .find(|&c| c.name() == self.column_name)
-            .expect(&err)
+    pub fn drop_column(self) -> DropColumn {
+        DropColumn {
+            tabledef: self.tabledef,
+            column_name: self.column_name,
+        }
     }
 }
 
@@ -61,7 +60,7 @@ impl MigrationWriter for Change {
     fn down_sql(&self, syntax: Syntax) -> Vec<String> {
         let mut commands = Vec::default();
         let ident = self.tabledef.ident();
-        let col = self.find_column_or_unwrap(&self.column_name);
+        let col = find_column_or_unwrap(&self.tabledef, &self.column_name);
         // None means no change to the null-ability of the column
         let nullable = col.null();
         let null_changed = self.set_null.is_some() && col.null() != nullable;
@@ -82,7 +81,9 @@ impl MigrationWriter for Change {
 
         // If there is a change, update the column type/null
         if type_changed || null_changed {
-            commands.push(alter_column_type(syntax, ident, columnname, ty, nullable));
+            let mut alters =
+                alter_column_type_down(syntax, &self.tabledef, col, columnname, ty, nullable);
+            commands.append(&mut alters);
         }
 
         if let Some(new_name) = &self.new_name {
@@ -94,7 +95,7 @@ impl MigrationWriter for Change {
     fn up_sql(&self, syntax: Syntax) -> Vec<String> {
         let mut commands = Vec::default();
         let ident = self.tabledef.ident();
-        let col = self.find_column_or_unwrap(&self.column_name);
+        let col = find_column_or_unwrap(&self.tabledef, &self.column_name);
         // None means no change to the null-ability of the column
         let nullable = self.set_null.unwrap_or(col.null());
         let null_changed = self.set_null.is_some() && col.null() != nullable;
@@ -127,9 +128,29 @@ impl MigrationWriter for Change {
 
         // If there is a change, update the column type/null
         if type_changed || null_changed {
-            commands.push(alter_column_type(syntax, ident, columnname, ty, nullable));
+            let mut alters =
+                alter_column_type_up(syntax, &self.tabledef, col, columnname, ty, nullable);
+            commands.append(&mut alters);
         }
 
         commands
+    }
+}
+
+pub struct DropColumn {
+    tabledef: TableDef,
+    column_name: String,
+}
+
+impl MigrationWriter for DropColumn {
+    fn up_sql(&self, _syntax: Syntax) -> Vec<String> {
+        vec![drop_column(&self.tabledef, &self.column_name)]
+    }
+
+    fn down_sql(&self, _syntax: Syntax) -> Vec<String> {
+        let col = find_column_or_unwrap(&self.tabledef, &self.column_name);
+        let ty = col.ty();
+        let nullable = col.null();
+        vec![add_column(&self.tabledef, &self.column_name, ty, nullable)]
     }
 }

@@ -10,6 +10,7 @@ use sqlx::query::Query;
 use sqlx::{PgPool, Postgres};
 use std::sync::Arc;
 
+#[derive(Debug, Clone)]
 pub struct PostgresClient {
     pool: Arc<PgPool>,
 }

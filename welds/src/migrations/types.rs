@@ -51,7 +51,22 @@ impl Type {
     pub fn db_id_type(&self, syntax: Syntax) -> String {
         let pairs = get_pairs(syntax);
         let mut pairs_iter = pairs.iter();
-        find_db_type(self, &mut pairs_iter)
+        let out = find_db_type(self, &mut pairs_iter);
+        out
+    }
+
+    /// Reads in a DB type and returns a type version of it.
+    pub(crate) fn parse_db_type(syntax: Syntax, db_type: &str) -> Type {
+        let db_type = db_type.to_uppercase();
+        let pairs = get_pairs(syntax);
+
+        let found = pairs.iter().find(|&p| p.db_type() == db_type);
+        let size = found.and_then(|f| f.default_size());
+
+        match size {
+            Some(s) => Type::Raw(format!("{}({})", db_type, s)),
+            None => Type::Raw(db_type),
+        }
     }
 }
 
@@ -67,18 +82,15 @@ where
     // find the best DB type based on the rust type
     let rust_type = ty.rust_type().unwrap();
     let pair = pairs.find(|&p| p.is_rust_type(&rust_type)).unwrap();
-    // If the pair is sized. make sure we add the size info
-    if let Type::StringSized(size) = ty {
-        if pair.db_sized() {
-            return format!("{}({})", pair.db_type(), size);
-        }
+    // If the pair is sized. Make sure we add the size info
+    if pair.db_sized() {
+        let size = match ty {
+            Type::StringSized(s) => s.to_string(),
+            _ => pair.default_size().unwrap().to_owned(),
+        };
+        return format!("{}({})", pair.db_type(), size);
     }
-    // If the db is sized, add a default value if needed
-    if let Type::String = ty {
-        if pair.db_sized() {
-            return format!("{}({})", pair.db_type(), "MAX");
-        }
-    }
+
     pair.db_type().to_string()
 }
 

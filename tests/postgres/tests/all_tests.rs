@@ -8,6 +8,8 @@ use welds::connections::postgres::PostgresClient;
 use welds::connections::TransactStart;
 use welds::Syntax;
 
+mod migrations;
+
 async fn get_conn() -> PostgresClient {
     let conn = testlib::postgres::conn().await.unwrap();
     let client: PostgresClient = conn.into();
@@ -329,7 +331,7 @@ fn should_be_able_to_scan_for_all_tables() {
     async_std::task::block_on(async {
         let conn = get_conn().await;
         let tables = welds::detect::find_tables(&conn).await.unwrap();
-        assert_eq!(14, tables.len());
+        assert!(tables.len() > 14);
     })
 }
 

@@ -1,52 +1,47 @@
 use super::*;
-use crate::migrations::types::{ToDbType, Type};
-use crate::migrations::MigrationWriter;
+use crate::detect::TableDef;
+use crate::migrations::types::Type;
 
-impl MigrationWriter<sqlx::Sqlite> for Change {
-    fn down_sql(&self) -> Vec<String> {
-        if rename_only(self) {
-            let new_name = self.new_name.as_ref().unwrap();
-            return vec![rename(&self.tabledef, new_name, &self.column_name)];
-        }
-
-        let temptable = format!("{}_weldstmp", self.tabledef.ident());
-        let old_cols = old_columns(&self.tabledef);
-        let new_cols = new_columns(self);
-        let tablename = self.tabledef.ident().to_string();
-        vec![
-            build_table_create(&temptable, &old_cols),
-            build_copy_data(&tablename, &new_cols, &temptable, &old_cols),
-            build_drop(&tablename),
-            build_table_rename(&temptable, &tablename),
-        ]
-    }
-
-    fn up_sql(&self) -> Vec<String> {
-        if rename_only(self) {
-            let new_name = self.new_name.as_ref().unwrap();
-            return vec![rename(&self.tabledef, &self.column_name, new_name)];
-        }
-
-        let temptable = format!("{}_weldstmp", self.tabledef.ident());
-        let new_cols = new_columns(self);
-        let old_cols = old_columns(&self.tabledef);
-        let tablename = self.tabledef.ident().to_string();
-        vec![
-            build_table_create(&temptable, &new_cols),
-            build_copy_data(&tablename, &old_cols, &temptable, &new_cols),
-            build_drop(&tablename),
-            build_table_rename(&temptable, &tablename),
-        ]
-    }
+pub(crate) fn down_sql(
+    table: &TableDef,
+    col: impl Into<String>,
+    ty: impl Into<String>,
+    nullable: bool,
+) -> Vec<String> {
+    let temptable = format!("{}_weldstmp", table.ident());
+    let col: String = col.into();
+    let ty: String = ty.into();
+    let old_cols = old_columns(table);
+    let new_cols = new_columns(table, &col, &ty, nullable);
+    let tablename = table.ident().to_string();
+    vec![
+        build_table_create(&temptable, &old_cols),
+        build_copy_data(&tablename, &new_cols, &temptable, &old_cols),
+        build_drop(&tablename),
+        build_table_rename(&temptable, &tablename),
+    ]
 }
 
-fn rename_only(change: &Change) -> bool {
-    change.new_name.is_some() && change.new_ty.is_none() && change.set_null.is_none()
-}
+pub(crate) fn up_sql(
+    table: &TableDef,
+    col: impl Into<String>,
+    ty: impl Into<String>,
+    nullable: bool,
+) -> Vec<String> {
+    let temptable = format!("{}_weldstmp", table.ident());
 
-fn rename(tabledef: &TableDef, oldname: &str, newname: &str) -> String {
-    let table = tabledef.ident().to_string();
-    format!("ALTER TABLE {table} RENAME COLUMN {oldname} TO {newname}")
+    let col: String = col.into();
+    let ty: String = ty.into();
+
+    let old_cols = old_columns(table);
+    let new_cols = new_columns(table, &col, &ty, nullable);
+    let tablename = table.ident().to_string();
+    vec![
+        build_table_create(&temptable, &new_cols),
+        build_copy_data(&tablename, &old_cols, &temptable, &new_cols),
+        build_drop(&tablename),
+        build_table_rename(&temptable, &tablename),
+    ]
 }
 
 // writes the SQL to create a table
@@ -91,26 +86,20 @@ pub(crate) struct Col {
 }
 
 // build a list of the new versions of the columns
-fn new_columns(change: &Change) -> Vec<Col> {
-    let mut list = old_columns(&change.tabledef);
+fn new_columns(table: &TableDef, col: &str, new_ty: &str, nullable: bool) -> Vec<Col> {
+    let mut list = old_columns(&table);
 
     list.drain(..)
         .map(|c| {
-            if c.name != change.column_name {
+            if c.name != col {
                 return c;
             }
 
-            // get the override fields
-            let name = change.new_name.as_deref();
-            let ty: Option<Type> = change.new_ty.clone();
-            let ty: Option<String> = ty.map(|x| ToDbType::<sqlx::Sqlite>::dbtype(&x));
-            let nullable: Option<bool> = change.set_null;
-
             // build the updated version of the column
             Col {
-                name: name.unwrap_or(&c.name).to_string(),
-                ty: ty.unwrap_or(c.ty.to_string()),
-                nullable: nullable.unwrap_or(c.nullable),
+                name: col.to_string(),
+                ty: new_ty.to_string(),
+                nullable,
                 primary_key: c.primary_key,
             }
         })

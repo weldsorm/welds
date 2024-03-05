@@ -71,7 +71,10 @@ impl MigrationWriter for Change {
                 .as_ref()
                 .map(|t| t.db_type(syntax) != col.ty())
                 .unwrap_or_default();
-        let ty = col.ty();
+
+        // use the Type enum to make sure they type
+        // has sizing if needed
+        let ty = Type::parse_db_type(syntax, col.ty()).db_type(syntax);
 
         // The new name of the column after the migration
         let columnname: &str = self
@@ -147,9 +150,13 @@ impl MigrationWriter for DropColumn {
         vec![drop_column(&self.tabledef, &self.column_name)]
     }
 
-    fn down_sql(&self, _syntax: Syntax) -> Vec<String> {
+    fn down_sql(&self, syntax: Syntax) -> Vec<String> {
         let col = find_column_or_unwrap(&self.tabledef, &self.column_name);
-        let ty = col.ty();
+
+        // use the Type enum to make sure they type
+        // has sizing if needed
+        let ty = Type::parse_db_type(syntax, col.ty()).db_type(syntax);
+
         let nullable = col.null();
         vec![add_column(&self.tabledef, &self.column_name, ty, nullable)]
     }

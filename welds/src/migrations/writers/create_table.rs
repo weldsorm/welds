@@ -18,7 +18,7 @@ pub fn from_def(syntax: Syntax, def: &TableDef) -> Vec<String> {
         let pk_type = pk_override(syntax, &c.ty).unwrap_or(&c.ty);
         let col = IdBuilder {
             name: c.name.to_string(),
-            ty: Type::parse_db_type(syntax, c.ty()),
+            ty: Type::parse_db_type(syntax, pk_type),
         };
         columns.push(build_id_column(syntax, &col))
     }
@@ -34,7 +34,7 @@ pub fn from_def(syntax: Syntax, def: &TableDef) -> Vec<String> {
         columns.push(build_column(syntax, &col))
     }
 
-    let mut parts = vec![format!(
+    let parts = vec![format!(
         "CREATE TABLE {} ( {} )",
         def.ident(),
         columns.join(", ")

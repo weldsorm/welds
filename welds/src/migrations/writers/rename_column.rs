@@ -14,6 +14,7 @@ pub fn write(
 
     match syntax {
         Syntax::Mssql => format!("EXEC sp_rename '{tablename}', '{oldname}', '{newname}'"),
+        Syntax::Mysql => format!("ALTER TABLE {tablename} RENAME COLUMN {oldname} TO {newname}"),
         _ => format!("ALTER TABLE {tablename} RENAME {oldname} TO {newname}"),
     }
 }

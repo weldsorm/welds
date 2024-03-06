@@ -1,7 +1,7 @@
 [package]
 name = "welds"
 authors = ["Lex Childs <lexchilds@gmail.com>"]
-version = "1.0.0"
+version = "0.3.0-rc1"
 edition = "2021"
 license = "BSD-3-Clause"
 categories = ["Database interfaces", "database"]
@@ -11,12 +11,12 @@ repository = "https://github.com/weldsorm/welds"
 description = "An async ORM for (postgres, mssql, mysql, sqlite)"
 
 [dependencies]
-welds-connections = { path="../welds-connections", version = "^1.0" }
+welds-connections = { path="../welds-connections", version = "^0.3.0-rc1" }
 async-trait = "0.1"
 log = "0.4"
 colored = { version="2", optional = true }
 thiserror = "1.0.57"
-welds-macros = { path="../welds-macros", version = "^1.0" }
+welds-macros = { path="../welds-macros", version = "^0.3.0-rc1" }
 
 [features]
 "default" = []
@@ -30,14 +30,6 @@ welds-macros = { path="../welds-macros", version = "^1.0" }
 "check" = ["detect", "colored"]
 "migrations" = ["detect"]
 
-#"detect" = []
-#"check" = ["detect", "dep:colored"]
-#"example_objects" = []
-#"postgres" = ["sqlx/postgres", "welds-macros/postgres"]
-#"mysql" = ["sqlx/mysql", "welds-macros/mysql"]
-#"sqlite" = ["sqlx/sqlite", "welds-macros/sqlite"]
-#"mssql" = ["welds-sqlx-mssql", "welds-macros/mysql"]
-
 
 #[profile.dev.package.sqlx-macros]
 #opt-level = 3
@@ -46,7 +38,7 @@ welds-macros = { path="../welds-macros", version = "^1.0" }
 [dev-dependencies]
 welds = { path="./", features=["full", "mock"] }
 futures = {version= "0.3" }
-welds-connections = { path="../welds-connections", version = "^1.0", features=["full"] }
+welds-connections = { path="../welds-connections", version = "^0.3.0-rc1", features=["full"] }
 # used for the examples
 sqlx = { version = "0.7", features = [ "runtime-async-std", "tls-rustls", "macros"] }
 async-std = { version = "1", features = ["attributes"] }

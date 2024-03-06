@@ -1,7 +1,7 @@
 [package]
 name = "welds-macros"
 authors = ["Lex Childs <lexchilds@gmail.com>"]
-version = "1.0.0"
+version = "0.3.0-rc1"
 edition = "2021"
 license = "BSD-3-Clause"
 categories = ["Database interfaces", "database"]
@@ -21,13 +21,3 @@ proc-macro2 = "1"
 
 [features]
 "default" = []
-#"postgres" = []
-#"mysql" = []
-#"sqlite" = []
-#"mssql" = []
-
-#[dev-dependencies]
-#welds-macros = { path="./", features=["postgres", "mysql",  "sqlite"] }
-#welds-macros = { path="./", features=["postgres", "mysql",  "sqlite"] }
-
-

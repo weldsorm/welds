@@ -1,7 +1,14 @@
 [package]
 name = "welds-connections"
+authors = ["Lex Childs <lexchilds@gmail.com>"]
 version = "0.3.0-rc1"
 edition = "2021"
+license = "BSD-3-Clause"
+categories = ["Database interfaces", "database"]
+keywords = ["orm", "postgres", "mssql", "mysql", "sqlite"]
+readme = "README.md"
+repository = "https://github.com/weldsorm/welds"
+description = "An async ORM for (postgres, mssql, mysql, sqlite)"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

@@ -5,6 +5,14 @@
 CREATE DATABASE weldstests;
 USE weldstests;
 
+CREATE TABLE _welds_migrations(
+  id INT NOT NULL AUTO_INCREMENT,
+  name VARCHAR ( 512 ) UNIQUE NOT NULL,
+  when_applied BIGINT NOT NULL,
+  rollback TEXT NOT NULL,
+  PRIMARY KEY (id)
+);
+
 CREATE TABLE Products (
   product_id INT NOT NULL AUTO_INCREMENT,
   name VARCHAR ( 50 ) UNIQUE NOT NULL,
@@ -38,3 +46,4 @@ CREATE TABLE Orders (
   FOREIGN KEY (product_id)  REFERENCES weldstests.Products(product_id),
   FOREIGN KEY (product_id2) REFERENCES weldstests.Products(product_id)
 );
+

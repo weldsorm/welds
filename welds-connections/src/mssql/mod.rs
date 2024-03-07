@@ -5,6 +5,8 @@ use super::{Client, Param};
 use crate::errors::Result;
 use crate::ExecuteResult;
 use async_trait::async_trait;
+use std::sync::{Arc, Mutex};
+use tokio::sync::oneshot;
 
 use bb8::Pool;
 use bb8_tiberius::ConnectionManager;
@@ -16,12 +18,34 @@ pub struct MssqlClient {
     pool: Pool<ConnectionManager>,
 }
 
+pub(crate) type DbConn = tiberius::Client<tokio_util::compat::Compat<tokio::net::TcpStream>>;
+
 #[async_trait]
 impl TransactStart for MssqlClient {
     async fn begin(&self) -> Result<Transaction> {
-        let conn = self.pool.get().await?;
-        let trans = transaction::MssqlTransaction::new(conn).await?;
+        // WARNING: we are taking the connection out of the pool. we must put it back when we are finished
+
+        let conn = self.pool.dedicated_connection().await?;
+        let conn = Arc::new(Mutex::new(Some(conn)));
+        let (tx, rx) = oneshot::channel();
+
+        let trans = transaction::MssqlTransaction::new(tx, conn.clone()).await?;
         let inner = TransT::Mssql(trans);
+
+        tokio::spawn(async move {
+            let needs_rollback: bool = rx.await.unwrap();
+            if needs_rollback {
+                let mut mine = None;
+                {
+                    let mut m = conn.lock().unwrap();
+                    let inner: &mut Option<_> = &mut m;
+                    std::mem::swap(&mut mine, inner);
+                }
+                let mut coms = mine.unwrap();
+                let _ = coms.simple_query("ROLLBACK").await;
+            }
+        });
+
         Ok(Transaction::new(inner))
     }
 }

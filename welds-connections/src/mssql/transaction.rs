@@ -1,3 +1,4 @@
+use super::DbConn;
 use super::MssqlParam;
 use crate::errors::Result;
 use crate::Client;
@@ -7,8 +8,10 @@ use crate::Row;
 use async_trait::async_trait;
 use bb8::PooledConnection;
 use bb8_tiberius::ConnectionManager;
-use std::sync::Mutex;
+use std::marker::PhantomData;
+use std::sync::{Arc, Mutex};
 use tiberius::ToSql;
+use tokio::sync::oneshot::Sender;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum State {
@@ -18,20 +21,30 @@ enum State {
 }
 
 pub(crate) struct MssqlTransaction<'t> {
-    conn: Mutex<Option<PooledConnection<'t, ConnectionManager>>>,
+    done: Option<Sender<bool>>,
+    conn: Arc<Mutex<Option<DbConn>>>,
     state: State,
+    _phantom: PhantomData<&'t ()>,
 }
 
 impl<'t> MssqlTransaction<'t> {
-    pub async fn new(mut conn: PooledConnection<'t, ConnectionManager>) -> Result<Self> {
-        conn.simple_query("BEGIN TRAN").await?;
-        Ok(Self {
-            conn: Mutex::new(Some(conn)),
+    pub async fn new(done: Sender<bool>, conn: Arc<Mutex<Option<DbConn>>>) -> Result<Self> {
+        let this = Self {
+            done: Some(done),
+            conn,
             state: State::Open,
-        })
+            _phantom: Default::default(),
+        };
+
+        let mut conn = this.take_conn();
+        conn.simple_query("BEGIN TRAN").await?;
+        this.return_conn(conn);
+
+        Ok(this)
     }
 
     pub async fn commit(mut self) -> Result<()> {
+        assert_eq!(self.state, State::Open);
         self.state = State::Commited;
         let mut conn = self.take_conn();
         conn.simple_query("COMMIT").await?;
@@ -40,6 +53,22 @@ impl<'t> MssqlTransaction<'t> {
     }
 
     pub async fn rollback(mut self) -> Result<()> {
+        if self.state == State::Rolledback {
+            return Ok(());
+        }
+        assert_eq!(self.state, State::Open);
+        self.state = State::Rolledback;
+        let mut conn = self.take_conn();
+        conn.simple_query("ROLLBACK").await?;
+        self.return_conn(conn);
+        Ok(())
+    }
+
+    pub(crate) async fn rollback_internal(&mut self) -> Result<()> {
+        if self.state == State::Rolledback {
+            return Ok(());
+        }
+        assert_eq!(self.state, State::Open);
         self.state = State::Rolledback;
         let mut conn = self.take_conn();
         conn.simple_query("ROLLBACK").await?;
@@ -54,19 +83,19 @@ impl<'t> MssqlTransaction<'t> {
     // this (take_conn/return_conn) acts like a CellRef
     // It will panic if you try to the conn more one at at time
     //
-    fn take_conn(&self) -> PooledConnection<'t, ConnectionManager> {
+    fn take_conn(&self) -> DbConn {
         let mut placeholder = None;
         let mut m = self.conn.lock().unwrap();
-        let inner: &mut Option<PooledConnection<ConnectionManager>> = &mut m;
+        let inner: &mut Option<_> = &mut m;
         // Panic if the conn is already taken
         assert!(inner.is_some(), "Pool was already taken");
         std::mem::swap(&mut placeholder, inner);
         placeholder.unwrap()
     }
-    fn return_conn(&self, conn: PooledConnection<'t, ConnectionManager>) {
+    fn return_conn(&self, conn: DbConn) {
         let mut placeholder = Some(conn);
         let mut m = self.conn.lock().unwrap();
-        let inner: &mut Option<PooledConnection<ConnectionManager>> = &mut m;
+        let inner: &mut Option<_> = &mut m;
         // Panic if we already have a the conn
         assert!(inner.is_none(), "Overriding existing pool");
         std::mem::swap(&mut placeholder, inner);
@@ -128,7 +157,7 @@ impl<'t> Client for MssqlTransaction<'t> {
 }
 
 async fn fetch_rows_inner<'t>(
-    conn: &mut PooledConnection<'t, ConnectionManager>,
+    conn: &mut DbConn,
     sql: &str,
     params: &[&(dyn Param + Sync)],
 ) -> Result<Vec<Row>> {
@@ -153,15 +182,22 @@ async fn fetch_rows_inner<'t>(
 
 impl<'t> Drop for MssqlTransaction<'t> {
     fn drop(&mut self) {
+        let mut done = None;
+        std::mem::swap(&mut done, &mut self.done);
+        let done = done.unwrap();
+
         if self.state != State::Open {
+            done.send(false).unwrap();
             return;
         }
 
-        // Last resort, Make sure the transaction is rolled back if just dropped
-        futures::executor::block_on(async {
-            log::warn!("WARNING: transaction was dropped without a commit or rollback. auto-rollback of transaction occurred",);
-            let mut conn = self.take_conn();
-            conn.simple_query("ROLLBACK").await.unwrap();
-        })
+        done.send(true).unwrap();
+
+        //// Last resort, Make sure the transaction is rolled back if just dropped
+        //futures::executor::block_on(async {
+        //    log::warn!("WARNING: transaction was dropped without a commit or rollback. auto-rollback of transaction occurred",);
+        //    let mut conn = self.take_conn();
+        //    conn.simple_query("ROLLBACK").await.unwrap();
+        //})
     }
 }

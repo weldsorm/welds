@@ -42,7 +42,7 @@ impl MigrationWriter for AddColumn {
         let col = self.name.as_str();
         let ty = self.ty.db_type(syntax);
         let nullable = self.null;
-        vec![add_column(&self.tabledef, col, ty, nullable)]
+        vec![add_column(syntax, &self.tabledef, col, ty, nullable)]
     }
 
     fn down_sql(&self, _syntax: Syntax) -> Vec<String> {

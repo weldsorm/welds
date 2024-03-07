@@ -1,7 +1,10 @@
+use welds_connections::Syntax;
+
 use crate::detect::TableDef;
 
 /// writes the SQL to Renames a column on a table
 pub fn write(
+    syntax: Syntax,
     table: &TableDef,
     col: impl Into<String>,
     ty: impl Into<String>,
@@ -13,7 +16,10 @@ pub fn write(
     let null = if nullable { "NULL" } else { "NOT NULL" };
     let coldef = format!("{ty} {null}");
 
-    format!("ALTER TABLE {tablename} ADD COLUMN {col} {coldef}")
+    match syntax {
+        Syntax::Mssql => format!("ALTER TABLE {tablename} ADD {col} {coldef}"),
+        _ => format!("ALTER TABLE {tablename} ADD COLUMN {col} {coldef}"),
+    }
 }
 
 /// Make sure this string is a valid column name

@@ -205,7 +205,13 @@ async fn execute_inner<'t>(
         }
 
         #[cfg(feature = "mssql")]
-        TransT::Mssql(inner) => inner.execute(sql, params).await,
+        TransT::Mssql(inner) => {
+            let result = inner.execute(sql, params).await;
+            if result.is_err() {
+                inner.rollback_internal().await?;
+            }
+            result
+        }
     }
 }
 
@@ -252,6 +258,12 @@ async fn fetch_rows_inner<'t>(
         }
 
         #[cfg(feature = "mssql")]
-        TransT::Mssql(inner) => Ok(inner.fetch_rows(sql, params).await?),
+        TransT::Mssql(inner) => {
+            let result = inner.fetch_rows(sql, params).await;
+            if result.is_err() {
+                inner.rollback_internal().await?;
+            }
+            result
+        }
     }
 }

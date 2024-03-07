@@ -5,6 +5,8 @@ use welds::connections::mssql::MssqlClient;
 use welds::TransactStart;
 use welds::{Client, Syntax};
 
+mod migrations;
+
 async fn get_conn() -> MssqlClient {
     let conn = testlib::mssql::conn().await.unwrap();
     let client: MssqlClient = conn.into();
@@ -176,7 +178,7 @@ async fn should_be_able_to_filter_with_relations2() {
 async fn should_be_able_to_scan_for_all_tables() {
     let conn = get_conn().await;
     let tables = welds::detect::find_tables(&conn).await.unwrap();
-    assert_eq!(14, tables.len());
+    assert!(tables.len() >= 14);
 }
 
 #[tokio::test]

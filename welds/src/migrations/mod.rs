@@ -57,7 +57,7 @@ pub async fn up(client: &(dyn TransactStart), migrations: &[MigrationFn]) -> Res
                 id: 0,
                 name: step.name.to_string(),
                 when_applied: unixtime() as i64,
-                rollback: step.writer.down_sql(trans.syntax()).join("; "),
+                rollback_sql: step.writer.down_sql(trans.syntax()).join("; "),
             });
             mlog.save(&trans).await?;
         }
@@ -110,7 +110,7 @@ pub async fn down_last(client: &(dyn TransactStart)) -> Result<Option<String>> {
         None => return Ok(None),
     };
 
-    let down = last.rollback.as_str();
+    let down = last.rollback_sql.as_str();
     let parts = utils::split_sql_commands(down);
 
     for sql in parts {
@@ -149,7 +149,7 @@ pub async fn down(client: &(dyn TransactStart), name: impl Into<String>) -> Resu
         None => return Ok(None),
     };
 
-    let down = mlog.rollback.as_str();
+    let down = mlog.rollback_sql.as_str();
     let parts = utils::split_sql_commands(down);
 
     for sql in parts {
@@ -169,7 +169,7 @@ where
         .id(|c| c("id", Type::IntBig))
         .column(|c| c("name", Type::StringSized(255)).create_unique_index())
         .column(|c| c("when_applied", Type::IntBig))
-        .column(|c| c("rollback", Type::Text));
+        .column(|c| c("rollback_sql", Type::Text));
     Box::new(m)
 }
 
@@ -183,7 +183,7 @@ pub struct MigrationLog {
     pub(crate) id: i64,
     pub(crate) name: String,
     pub(crate) when_applied: i64,
-    pub(crate) rollback: String,
+    pub(crate) rollback_sql: String,
 }
 
 async fn get_state(client: &dyn Client) -> Result<TableState> {

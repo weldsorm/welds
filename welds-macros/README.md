@@ -1,29 +1,42 @@
 
 <div align="center">
   <img src="https://raw.githubusercontent.com/weldsorm/welds/main/page/src/assets/images/banner.png"/>
-  <h3>An async ORM written in rust using the sqlx framework.</h3>
+  <h3>An async ORM written in rust using sqlx and/or Tiberius.</h3>
 </div>
+
+
 
 # Welds
 
-#### Welds is an async ORM written in rust using the sqlx framework. 
+#### Welds is an async ORM written in rust using sqlx and/or Tiberius. 
+
+### Welds Next
+### WARNING: This branch is the working version of the next version of welds
+Objectives of next version
+- Connections should be simple to use across databases
+- writing SQL without a connection
+- better info/reporting about database types
+- Migrations
 
 ## Features
 - Async for all. 
 - Support for multiple SQL databases (Mssql, MySql, Postgres, Sqlite)
 - Written for ease of development. Features aren't hidden behind traits. Code should be simple to write, and simple to read.
-- sqlx always available when you need to drop down to something lower level
+- Low level connection always available when you need to drop down to raw SQL.
+
+Under the hood welds uses:
+- sqlx for Postgres, MySql, and Sqlite.
+- Tiberius for MSSQL
+
 
 ## Example Setup
 
 ```rust
-#[derive(Debug, sqlx::FromRow, WeldsModel)]
-#[welds(db(Postgres))]
-//#[welds(db(Postgres, Mssql, Mysql, Sqlite))]
+#[derive(Debug, WeldsModel)]
 #[welds(schema= "inventory", table = "products")]
 #[welds(BelongsTo(seller, super::people::People, "seller_id"))]
 pub struct Product {
-    #[sqlx(rename = "product_id")]
+    #[welds(rename = "product_id")]
     #[welds(primary_key)]
     pub id: i32,
     pub name: String,
@@ -39,32 +52,32 @@ pub struct Product {
 ### Basic Select 
 ```rust
   let url = "postgres://postgres:password@localhost:5432";
-  let pool = welds::connection::connect_postgres(url).await.unwrap();
+  let client = welds::connections::postgres::connect(url).await.unwrap();
 
-  let products = Product::where_col(|p| p.price.equal(3.50)).run(&pool).await?;
+  let products = Product::where_col(|p| p.price.equal(3.50)).run(&client).await?;
 ```
 
 ### Basic Filter Across tables 
 ```rust
-  let conn = welds::connection::connect_mssql(url).await.unwrap();
+  let client = welds::connections::mssql::connect(url).await.unwrap();
 
   let sellers = Product::where_col(|product| product.price.equal(3.50))
         .map_query(|product| product.seller )
         .where_col(|seller| seller.name.ilike("%Nessie%") )
-        .run(&conn).await?;
+        .run(&client).await?;
 ```
 
 ### Create And Update
 ```rust
-  let conn = welds::connection::connect_sqlite(url).await.unwrap();
+  let client = welds::connections::sqlite::connect(url).await.unwrap();
   
   let mut cookies = Product::new();
   cookies.name = "cookies".to_owned();
   // Creates the product cookie
-  cookies.save.await(&conn)?; 
+  cookies.save.await(&client)?; 
   cookies.description = "Yum".to_owned();
   // Updates the Cookies
-  cookies.save.await(&conn)?; 
+  cookies.save.await(&client)?; 
 ```
 
 ## Other Examples

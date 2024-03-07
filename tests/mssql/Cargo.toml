@@ -7,6 +7,8 @@ edition = "2021"
 
 [dependencies]
 testlib = { path = "../testlib" }
-welds = { path = "../../welds", features = [ 'mssql', 'detect', 'check']  }
+welds = { path = "../../welds", features = [ 'mssql', 'detect', 'check', 'migrations']  }
 tokio = { version = "1", features = ["full"] }
+log = "0.4.21"
+env_logger = "0.11.3"
 

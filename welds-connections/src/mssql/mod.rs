@@ -30,6 +30,7 @@ impl TransactStart for MssqlClient {
         let (tx, rx) = oneshot::channel();
 
         let trans = transaction::MssqlTransaction::new(tx, conn.clone()).await?;
+        let name = trans.trans_name.clone();
         let inner = TransT::Mssql(trans);
 
         tokio::spawn(async move {
@@ -42,7 +43,8 @@ impl TransactStart for MssqlClient {
                     std::mem::swap(&mut mine, inner);
                 }
                 let mut coms = mine.unwrap();
-                let _ = coms.simple_query("ROLLBACK").await;
+                let sql = format!("ROLLBACK TRANSACTION {}", name);
+                let _ = coms.simple_query(sql).await;
             }
         });
 

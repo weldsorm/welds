@@ -6,10 +6,10 @@ CREATE DATABASE weldstests;
 USE weldstests;
 
 CREATE TABLE _welds_migrations(
-  id INT NOT NULL AUTO_INCREMENT,
+  id BIGINT NOT NULL AUTO_INCREMENT,
   name VARCHAR ( 512 ) UNIQUE NOT NULL,
   when_applied BIGINT NOT NULL,
-  rollback TEXT NOT NULL,
+  rollback_sql TEXT NOT NULL,
   PRIMARY KEY (id)
 );
 

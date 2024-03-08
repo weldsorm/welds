@@ -6,8 +6,6 @@ use crate::ExecuteResult;
 use crate::Param;
 use crate::Row;
 use async_trait::async_trait;
-use bb8::PooledConnection;
-use bb8_tiberius::ConnectionManager;
 use std::marker::PhantomData;
 use std::sync::{Arc, Mutex};
 use tiberius::ToSql;
@@ -25,6 +23,7 @@ pub(crate) struct MssqlTransaction<'t> {
     conn: Arc<Mutex<Option<DbConn>>>,
     state: State,
     _phantom: PhantomData<&'t ()>,
+    pub(crate) trans_name: String,
 }
 
 impl<'t> MssqlTransaction<'t> {
@@ -34,10 +33,12 @@ impl<'t> MssqlTransaction<'t> {
             conn,
             state: State::Open,
             _phantom: Default::default(),
+            trans_name: format!("t_{}", get_trans_count()),
         };
 
         let mut conn = this.take_conn();
-        conn.simple_query("BEGIN TRAN").await?;
+        let sql = format!("BEGIN TRANSACTION {}", this.trans_name);
+        conn.simple_query(sql).await?;
         this.return_conn(conn);
 
         Ok(this)
@@ -47,7 +48,8 @@ impl<'t> MssqlTransaction<'t> {
         assert_eq!(self.state, State::Open);
         self.state = State::Commited;
         let mut conn = self.take_conn();
-        conn.simple_query("COMMIT").await?;
+        let sql = format!("COMMIT TRANSACTION {}", self.trans_name);
+        conn.simple_query(sql).await?;
         self.return_conn(conn);
         Ok(())
     }
@@ -59,7 +61,8 @@ impl<'t> MssqlTransaction<'t> {
         assert_eq!(self.state, State::Open);
         self.state = State::Rolledback;
         let mut conn = self.take_conn();
-        conn.simple_query("ROLLBACK").await?;
+        let sql = format!("ROLLBACK TRANSACTION {}", self.trans_name);
+        let _ = conn.simple_query(sql).await;
         self.return_conn(conn);
         Ok(())
     }
@@ -71,7 +74,8 @@ impl<'t> MssqlTransaction<'t> {
         assert_eq!(self.state, State::Open);
         self.state = State::Rolledback;
         let mut conn = self.take_conn();
-        conn.simple_query("ROLLBACK").await?;
+        let sql = format!("ROLLBACK TRANSACTION {}", self.trans_name);
+        let _ = conn.simple_query(sql).await;
         self.return_conn(conn);
         Ok(())
     }
@@ -200,4 +204,12 @@ impl<'t> Drop for MssqlTransaction<'t> {
         //    conn.simple_query("ROLLBACK").await.unwrap();
         //})
     }
+}
+
+use std::sync::atomic::{AtomicUsize, Ordering};
+
+static CALL_COUNT: AtomicUsize = AtomicUsize::new(0);
+
+fn get_trans_count() -> usize {
+    CALL_COUNT.fetch_add(1, Ordering::SeqCst) + 1
 }

@@ -3,6 +3,13 @@
 CREATE SCHEMA welds;
 GO
 
+CREATE TABLE _welds_migrations(
+  id BIGINT NOT NULL IDENTITY PRIMARY KEY,
+  name VARCHAR ( 512 ) NOT NULL,
+  when_applied BIGINT NOT NULL,
+  rollback_sql TEXT NOT NULL,
+);
+
 CREATE TABLE welds.Products (
     ID INT NOT NULL IDENTITY PRIMARY KEY,
     name varchar(50) NOT NULL,

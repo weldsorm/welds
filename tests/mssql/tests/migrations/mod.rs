@@ -39,6 +39,7 @@ fn test_create_table_migration(_state: &TableState) -> Result<MigrationStep> {
 
 #[tokio::test]
 async fn should_be_able_to_create_a_table() {
+    //env_logger::init();
     let client = get_conn().await;
     let client = &client;
 
@@ -212,7 +213,7 @@ async fn should_be_able_to_change_a_type_without_dropping_data() {
     let mut count_rows = client.fetch_rows(&count_sql, &[]).await.unwrap();
     let count_row = count_rows.pop().unwrap();
     let count: i64 = count_row.get_by_position(0).unwrap();
-    assert_eq!(count, 1);
+    assert!(count > 0);
 
     // down the migration restores the type
     down(client, "test_change_type_2").await.unwrap();

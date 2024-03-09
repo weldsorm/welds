@@ -10,13 +10,6 @@
 
 #### Welds is an async ORM written in rust using sqlx and/or Tiberius. 
 
-### Welds Next
-### WARNING: This branch is the working version of the next version of welds
-Objectives of next version
-- Connections should be simple to use across databases
-- writing SQL without a connection
-- better info/reporting about database types
-- Migrations
 
 ## Features
 - Async for all. 

@@ -10,7 +10,7 @@ impl MigrationWriter for Drop {
 
     fn up_sql(&self, _syntax: Syntax) -> Vec<String> {
         let tablename = self.tabledef.ident();
-        vec![writers::drop_table(&tablename)]
+        vec![writers::drop_table(tablename)]
     }
 }
 

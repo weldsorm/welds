@@ -69,11 +69,11 @@ fn should_be_able_to_rename_column2() {
     let m = table.change("name").rename("name2");
     // up sql
     let sql = MigrationWriter::up_sql(&m, Syntax::Mssql).join("; ");
-    let expected_up = r#"EXEC sp_rename 's2.cars', 'name', 'name2'"#;
+    let expected_up = r#"EXEC sp_rename 's2.cars.name', 'name2', 'COLUMN'"#;
     assert_eq!(sql, expected_up);
     // down sql
     let sql = MigrationWriter::down_sql(&m, Syntax::Mssql).join("; ");
-    let expected_down = r#"EXEC sp_rename 's2.cars', 'name2', 'name'"#;
+    let expected_down = r#"EXEC sp_rename 's2.cars.name2', 'name', 'COLUMN'"#;
     assert_eq!(sql, expected_down);
 }
 

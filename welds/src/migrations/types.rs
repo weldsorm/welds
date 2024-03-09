@@ -51,8 +51,7 @@ impl Type {
     pub fn db_id_type(&self, syntax: Syntax) -> String {
         let pairs = get_pairs(syntax);
         let mut pairs_iter = pairs.iter();
-        let out = find_db_type(self, &mut pairs_iter);
-        out
+        find_db_type(self, &mut pairs_iter)
     }
 
     /// Reads in a DB type and returns a type version of it.

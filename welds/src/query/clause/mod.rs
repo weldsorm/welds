@@ -18,7 +18,7 @@ pub use text::Text;
 mod textopt;
 pub use textopt::TextOpt;
 
-//// Relationships / SubQueries
+//  Relationships / SubQueries
 pub(crate) mod exists;
 pub(crate) mod wherein;
 

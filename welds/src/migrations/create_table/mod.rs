@@ -31,8 +31,11 @@ pub struct TableBuilder {
     pub(crate) columns: Vec<ColumnBuilder>,
 }
 
+type ColumnLambda = fn(&str, Type) -> ColumnBuilder;
+type TableLambda = fn(&str, Type) -> IdBuilder;
+
 impl TableBuilder {
-    pub fn id(mut self, lam: fn(fn(&str, Type) -> IdBuilder) -> IdBuilder) -> Self {
+    pub fn id(mut self, lam: fn(TableLambda) -> IdBuilder) -> Self {
         let builder = |name: &str, ty: Type| -> IdBuilder {
             IdBuilder {
                 name: name.to_string(),
@@ -44,7 +47,7 @@ impl TableBuilder {
         self
     }
 
-    pub fn column(mut self, lam: fn(fn(&str, Type) -> ColumnBuilder) -> ColumnBuilder) -> Self {
+    pub fn column(mut self, lam: fn(ColumnLambda) -> ColumnBuilder) -> Self {
         let builder = |name: &str, ty: Type| -> ColumnBuilder {
             ColumnBuilder {
                 name: name.to_string(),

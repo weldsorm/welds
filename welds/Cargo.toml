@@ -38,7 +38,7 @@ welds-macros = { path="../welds-macros", version = "^0.3.0" }
 [dev-dependencies]
 welds = { path="./", features=["full", "mock"] }
 futures = {version= "0.3" }
-welds-connections = { path="../welds-connections", version = "^0.3.0", features=["full"] }
+welds-connections = { path="../welds-connections", version = "^0.3.1", features=["full"] }
 # used for the examples
 sqlx = { version = "0.7", features = [ "runtime-async-std", "tls-rustls", "macros"] }
 async-std = { version = "1", features = ["attributes"] }

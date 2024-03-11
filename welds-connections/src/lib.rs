@@ -25,7 +25,7 @@ pub struct Fetch<'s, 'args, 't> {
 
 #[async_trait]
 /// The common trait for database connections and transactions.
-pub trait Client {
+pub trait Client: Sync + Send {
     /// Execute a sql command. returns the number of rows that were affected
     async fn execute(&self, sql: &str, params: &[&(dyn Param + Sync)]) -> Result<ExecuteResult>;
 

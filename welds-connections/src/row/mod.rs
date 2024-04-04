@@ -22,7 +22,7 @@ use tiberius::Row as MssqlRow;
 #[cfg(feature = "mssql")]
 mod mssql_row_wrapper;
 #[cfg(feature = "mssql")]
-use mssql_row_wrapper::MssqlRowWrapper;
+pub use mssql_row_wrapper::MssqlRowWrapper;
 
 /// all kinds of rows
 pub enum RowInner {

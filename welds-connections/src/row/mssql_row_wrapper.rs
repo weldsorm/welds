@@ -3,7 +3,7 @@ use crate::errors::Result;
 use tiberius::Column;
 use tiberius::Row as MssqlRow;
 
-pub(crate) struct MssqlRowWrapper {
+pub struct MssqlRowWrapper {
     columns: Vec<Column>,
     datas: Vec<ColumnData<'static>>,
 }
@@ -16,7 +16,7 @@ impl MssqlRowWrapper {
         }
     }
 
-    pub(crate) fn try_get<T>(&self, name: &str) -> Result<T>
+    pub fn try_get<T>(&self, name: &str) -> Result<T>
     where
         T: TiberiusDecode,
     {
@@ -28,7 +28,7 @@ impl MssqlRowWrapper {
         Err(Error::ColumnNotFound(name.to_owned()))
     }
 
-    pub(crate) fn try_get_by_posision<T>(&self, idx: usize) -> Result<T>
+    pub fn try_get_by_posision<T>(&self, idx: usize) -> Result<T>
     where
         T: TiberiusDecode,
     {

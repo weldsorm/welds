@@ -4,25 +4,54 @@ use tiberius::Column;
 use tiberius::Row as MssqlRow;
 
 pub struct MssqlRowWrapper {
-    columns: Vec<Column>,
-    datas: Vec<ColumnData<'static>>,
+    cells: Vec<Cell>,
+}
+
+pub struct Cell {
+    column: Column,
+    data: ColumnData<'static>,
+}
+
+impl Cell {
+    pub fn column(&self) -> &Column {
+        &self.column
+    }
+    pub fn data(&self) -> &ColumnData<'static> {
+        &self.data
+    }
 }
 
 impl MssqlRowWrapper {
     pub(crate) fn new(row: MssqlRow) -> MssqlRowWrapper {
-        Self {
-            columns: row.columns().to_vec(),
-            datas: row.into_iter().collect(),
-        }
+        let mut columns = row.columns().to_vec();
+        let datas = row.into_iter();
+        let cells: Vec<Cell> = datas
+            .zip(columns.drain(..))
+            .map(|(data, column)| Cell {
+                data,
+                column: column.clone(),
+            })
+            .collect();
+        Self { cells }
+    }
+
+    /// Returns a slice of the cells that make up this row
+    pub fn cells(&self) -> &[Cell] {
+        &self.cells
+    }
+
+    /// Returns an owned version of the cells that make up this row
+    pub fn into_inner(self) -> Vec<Cell> {
+        self.cells
     }
 
     pub fn try_get<T>(&self, name: &str) -> Result<T>
     where
         T: TiberiusDecode,
     {
-        for (col, data) in self.columns.iter().zip(self.datas.iter()) {
-            if col.name() == name {
-                return TiberiusDecode::read(col, data.clone());
+        for cell in &self.cells {
+            if cell.column.name() == name {
+                return TiberiusDecode::read(cell.column(), cell.data.clone());
             }
         }
         Err(Error::ColumnNotFound(name.to_owned()))
@@ -32,15 +61,11 @@ impl MssqlRowWrapper {
     where
         T: TiberiusDecode,
     {
-        let data: &ColumnData = self
-            .datas
+        let cell: &Cell = self
+            .cells
             .get(idx)
             .ok_or_else(|| Error::ColumnNotFound(format!("BY_INDEX: {}", idx)))?;
-        let col: &Column = self
-            .columns
-            .get(idx)
-            .ok_or_else(|| Error::ColumnNotFound(format!("BY_INDEX: {}", idx)))?;
-        TiberiusDecode::read(col, data.clone())
+        TiberiusDecode::read(cell.column(), cell.data.clone())
     }
 }
 
@@ -58,7 +83,7 @@ impl<T> TiberiusDecode for Option<T>
 where
     T: FromSqlOwned,
 {
-    fn read(col: &Column, value: ColumnData<'static>) -> Result<Self> {
+    fn read(_col: &Column, value: ColumnData<'static>) -> Result<Self> {
         Ok(FromSqlOwned::from_sql_owned(value)?)
     }
 }

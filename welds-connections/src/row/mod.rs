@@ -103,6 +103,16 @@ impl Row {
 }
 
 #[cfg(feature = "mssql")]
+impl Row {
+    pub fn as_mssql_row(self) -> Option<MssqlRowWrapper> {
+        match self.inner {
+            RowInner::Mssql(r) => Some(r),
+            _ => None,
+        }
+    }
+}
+
+#[cfg(feature = "mssql")]
 use mssql_row_wrapper::TiberiusDecode;
 
 // This code is scripted out cuz writing it for all the features to be to much

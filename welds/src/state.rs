@@ -94,10 +94,15 @@ impl<T> DbState<T> {
         Ok(())
     }
 
-    /// Consumes the DbState, returning the wrapped value. the inner value is nolonger connected to
+    /// Consumes the DbState, returning the wrapped value. The inner value is nolonger connected to
     /// welds and can nolonger be saved/created/deleted
-    pub async fn into_inner(self) -> T {
+    pub fn into_inner(self) -> T {
         self.inner
+    }
+
+    /// Consumes the model and transforms it into an immutable object that is useful for Views and sharing.
+    pub fn into_vm(self) -> std::sync::Arc<T> {
+        std::sync::Arc::new(self.inner)
     }
 }
 

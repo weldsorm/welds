@@ -151,13 +151,6 @@ impl TiberiusDecode for u8 {
     }
 }
 
-impl TiberiusDecode for tiberius::numeric::Numeric {
-    fn read(col: &Column, value: ColumnData<'static>) -> Result<Self> {
-        let v = FromSqlOwned::from_sql_owned(value)?;
-        v.ok_or_else(|| Error::UnexpectedNoneInColumn(col.name().to_owned()))
-    }
-}
-
 impl TiberiusDecode for tiberius::Uuid {
     fn read(col: &Column, value: ColumnData<'static>) -> Result<Self> {
         let v = FromSqlOwned::from_sql_owned(value)?;
@@ -169,5 +162,93 @@ impl TiberiusDecode for tiberius::xml::XmlData {
     fn read(col: &Column, value: ColumnData<'static>) -> Result<Self> {
         let v = FromSqlOwned::from_sql_owned(value)?;
         v.ok_or_else(|| Error::UnexpectedNoneInColumn(col.name().to_owned()))
+    }
+}
+
+impl TiberiusDecode for tiberius::numeric::Numeric {
+    fn read(col: &Column, value: ColumnData<'static>) -> Result<Self> {
+        let v = FromSqlOwned::from_sql_owned(value)?;
+        v.ok_or_else(|| Error::UnexpectedNoneInColumn(col.name().to_owned()))
+    }
+}
+#[cfg(feature = "mssql-rust_decimal")]
+impl TiberiusDecode for tiberius::numeric::Decimal {
+    fn read(col: &Column, value: ColumnData<'static>) -> Result<Self> {
+        let v = FromSqlOwned::from_sql_owned(value)?;
+        v.ok_or_else(|| Error::UnexpectedNoneInColumn(col.name().to_owned()))
+    }
+}
+#[cfg(feature = "mssql-bigdecimal")]
+impl TiberiusDecode for tiberius::numeric::BigDecimal {
+    fn read(col: &Column, value: ColumnData<'static>) -> Result<Self> {
+        let v = FromSqlOwned::from_sql_owned(value)?;
+        v.ok_or_else(|| Error::UnexpectedNoneInColumn(col.name().to_owned()))
+    }
+}
+
+#[cfg(feature = "mssql-chrono")]
+/// All mapping for the chrono crate
+mod chrono {
+    use super::*;
+    impl TiberiusDecode for tiberius::time::chrono::NaiveDateTime {
+        fn read(col: &Column, value: ColumnData<'static>) -> Result<Self> {
+            let v = FromSqlOwned::from_sql_owned(value)?;
+            v.ok_or_else(|| Error::UnexpectedNoneInColumn(col.name().to_owned()))
+        }
+    }
+    impl TiberiusDecode for tiberius::time::chrono::NaiveDate {
+        fn read(col: &Column, value: ColumnData<'static>) -> Result<Self> {
+            let v = FromSqlOwned::from_sql_owned(value)?;
+            v.ok_or_else(|| Error::UnexpectedNoneInColumn(col.name().to_owned()))
+        }
+    }
+    impl TiberiusDecode for tiberius::time::chrono::NaiveTime {
+        fn read(col: &Column, value: ColumnData<'static>) -> Result<Self> {
+            let v = FromSqlOwned::from_sql_owned(value)?;
+            v.ok_or_else(|| Error::UnexpectedNoneInColumn(col.name().to_owned()))
+        }
+    }
+    impl TiberiusDecode for tiberius::time::chrono::DateTime<tiberius::time::chrono::Utc> {
+        fn read(col: &Column, value: ColumnData<'static>) -> Result<Self> {
+            let v = FromSqlOwned::from_sql_owned(value)?;
+            v.ok_or_else(|| Error::UnexpectedNoneInColumn(col.name().to_owned()))
+        }
+    }
+    impl TiberiusDecode for tiberius::time::chrono::DateTime<tiberius::time::chrono::FixedOffset> {
+        fn read(col: &Column, value: ColumnData<'static>) -> Result<Self> {
+            let v = FromSqlOwned::from_sql_owned(value)?;
+            v.ok_or_else(|| Error::UnexpectedNoneInColumn(col.name().to_owned()))
+        }
+    }
+}
+
+#[cfg(feature = "mssql-time")]
+/// All mapping for the time crate
+mod time {
+    use super::*;
+
+    impl TiberiusDecode for tiberius::time::time::Date {
+        fn read(col: &Column, value: ColumnData<'static>) -> Result<Self> {
+            let v = FromSqlOwned::from_sql_owned(value)?;
+            v.ok_or_else(|| Error::UnexpectedNoneInColumn(col.name().to_owned()))
+        }
+    }
+    impl TiberiusDecode for tiberius::time::time::Time {
+        fn read(col: &Column, value: ColumnData<'static>) -> Result<Self> {
+            let v = FromSqlOwned::from_sql_owned(value)?;
+            v.ok_or_else(|| Error::UnexpectedNoneInColumn(col.name().to_owned()))
+        }
+    }
+    impl TiberiusDecode for tiberius::time::time::OffsetDateTime {
+        fn read(col: &Column, value: ColumnData<'static>) -> Result<Self> {
+            let v = FromSqlOwned::from_sql_owned(value)?;
+            v.ok_or_else(|| Error::UnexpectedNoneInColumn(col.name().to_owned()))
+        }
+    }
+    impl TiberiusDecode for tiberius::time::time::PrimitiveDateTime {
+        fn read(col: &Column, value: ColumnData<'static>) -> Result<Self> {
+            let v = FromSqlOwned::from_sql_owned(value)?;
+            v.ok_or_else(|| Error::UnexpectedNoneInColumn(col.name().to_owned()))
+        }
     }
 }

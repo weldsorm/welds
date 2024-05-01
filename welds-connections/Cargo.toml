@@ -1,7 +1,7 @@
 [package]
 name = "welds-connections"
 authors = ["Lex Childs <lexchilds@gmail.com>"]
-version = "0.3.4"
+version = "0.3.5"
 edition = "2021"
 license = "BSD-3-Clause"
 categories = ["Database interfaces", "database"]
@@ -13,13 +13,16 @@ description = "An async ORM for (postgres, mssql, mysql, sqlite)"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 
-
 [features]
 "default" = []
 "postgres" = ["sqlx/postgres"]
 "mysql" = ["sqlx/mysql"]
 "sqlite" = ["sqlx/sqlite"]
-"mssql" = ["tokio", "tokio-util", "futures-util", "bb8-tiberius", "bb8", "futures"]
+"mssql" = ["tokio", "tokio-util", "futures-util", "tiberius", "bb8-tiberius", "bb8", "futures"]
+"mssql-chrono" = ["tiberius/chrono"]
+"mssql-time" = ["tiberius/time"]
+"mssql-rust_decimal" = ["tiberius/rust_decimal"]
+"mssql-bigdecimal" = ["tiberius/bigdecimal"]
 "noop" = []
 "full" = ["postgres", "mysql", "sqlite", "mssql", "noop"]
 
@@ -28,12 +31,12 @@ description = "An async ORM for (postgres, mssql, mysql, sqlite)"
 async-trait = "0.1"
 bb8 = { version="0.8", optional=true }
 bb8-tiberius = { version="0.15", optional=true }
+tiberius = { version = "0.12", features = ["tokio"], optional = true }
 futures = {version= "0.3", optional=true }
 futures-util = { version= "0.3", optional=true }
 log = "0.4"
 sqlx = { version = "0.7", features = [], optional = true}
 thiserror = "1.0.57"
-tiberius = { version = "0.12", features = ["tokio"] }
 tokio = { version = "1", features = [], optional = true }
 tokio-util = { version = "0.7", features = ["full"], optional = true }
 

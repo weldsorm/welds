@@ -47,7 +47,7 @@ CREATE TABLE Thing7 ( id serial PRIMARY KEY, value text);
 CREATE TABLE Thing8 ( id serial PRIMARY KEY, value text);
 CREATE TABLE Thing9 ( id serial PRIMARY KEY, value text);
 
-
+CREATE TABLE StringThing ( id text PRIMARY KEY, value text NOT NULL );
 
 CREATE TABLE alt.table_with_arrays (
   id serial PRIMARY KEY,

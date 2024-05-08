@@ -3,9 +3,11 @@ use postgres_test::models::order::Order;
 use postgres_test::models::other::Other;
 use postgres_test::models::product::{BadProductColumns, BadProductMissingTable, Product};
 use postgres_test::models::table_with_array::TableWithArray;
+use postgres_test::models::StringThing;
 use postgres_test::models::Thing1;
 use welds::connections::postgres::PostgresClient;
 use welds::connections::TransactStart;
+use welds::state::{DbState, DbStatus};
 use welds::Syntax;
 
 mod migrations;
@@ -518,5 +520,22 @@ fn should_be_able_to_check_the_schema() {
             eprintln!("{}", issue);
         }
         assert!(issues.is_empty(), "{:?}", issues);
+    })
+}
+
+#[test]
+fn should_be_able_to_create_a_model_with_a_string_id() {
+    async_std::task::block_on(async {
+        let conn = get_conn().await;
+        let mut thing = DbState::new_uncreated(StringThing {
+            id: "test".to_owned(),
+            value: "test".to_owned(),
+        });
+        thing.save(&conn).await.unwrap();
+        assert_eq!(thing.db_status(), DbStatus::NotModified);
+        let found = StringThing::find_by_id(&conn, "test".to_owned())
+            .await
+            .unwrap();
+        assert!(found.is_some());
     })
 }

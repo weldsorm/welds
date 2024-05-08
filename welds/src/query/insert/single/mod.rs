@@ -29,12 +29,27 @@ where
     let pks = <<T as HasSchema>::Schema as TableColumns>::primary_keys();
 
     let mut colargs = Vec::default();
+    let mut id_return_required = true;
 
     for col in &columns {
-        if !pks.contains(col) {
-            obj.bind(col.name(), &mut args)?;
-            let col = col_writer.excape(col.name());
-            colargs.push(ColArg(col, next_params.next()));
+        let pk = pks.iter().find(|p| p == &col);
+
+        match pk {
+            None => {
+                // column isn't PK just insert it
+                obj.bind(col.name(), &mut args)?;
+                let col = col_writer.excape(col.name());
+                colargs.push(ColArg(col, next_params.next()));
+            }
+            Some(pk) => {
+                // If the PK is a type that needs to be provided, add it.
+                if pk.rust_type() == "String" || pk.rust_type() == "Uuid" {
+                    id_return_required = false;
+                    obj.bind(col.name(), &mut args)?;
+                    let col = col_writer.excape(col.name());
+                    colargs.push(ColArg(col, next_params.next()));
+                }
+            }
         }
     }
 
@@ -47,12 +62,14 @@ where
 
     // If this insert needs a second select command to get the id, add it to the vec of sql to run
     let sql2: String;
-    if let Some(select) = select {
-        sql2 = select.to_owned();
-        statements.push(Fetch {
-            sql: &sql2,
-            params: &args2,
-        })
+    if id_return_required {
+        if let Some(select) = select {
+            sql2 = select.to_owned();
+            statements.push(Fetch {
+                sql: &sql2,
+                params: &args2,
+            })
+        }
     }
 
     // WARNING: these statements MUST be ran on the same DB connection in the pool
@@ -60,6 +77,11 @@ where
     // That is why we are using fetch_many
     let mut datasets = client.fetch_many(&statements).await?;
     let mut rows: Vec<Row> = datasets.drain(..).flatten().collect();
+
+    // If we are providing the DB with the ID, (string/uuid) it doesn't need to return the id, and will not
+    if !id_return_required {
+        return Ok(());
+    }
 
     let row = rows.pop();
     let mut row =

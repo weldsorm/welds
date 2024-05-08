@@ -27,3 +27,5 @@ CREATE TABLE Thing6 ( id INTEGER PRIMARY KEY, value text NOT NULL );
 CREATE TABLE Thing7 ( id INTEGER PRIMARY KEY, value text NOT NULL );
 CREATE TABLE Thing8 ( id INTEGER PRIMARY KEY, value text NOT NULL );
 CREATE TABLE Thing9 ( id INTEGER PRIMARY KEY, value text NOT NULL );
+
+CREATE TABLE StringThing ( id text PRIMARY KEY, value text NOT NULL );

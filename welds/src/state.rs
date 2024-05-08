@@ -9,9 +9,12 @@ use std::ops::{Deref, DerefMut};
 use welds_connections::Client;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub(crate) enum DbStatus {
+pub enum DbStatus {
+    /// The entity has NOT been saved.
     NotInDatabase,
+    /// The entity is an exact copy of what is in the database
     NotModified,
+    /// The entity is most likely different from what is in the database
     Edited,
 }
 
@@ -35,6 +38,11 @@ where
 }
 
 impl<T> DbState<T> {
+    /// Returns status of the entity. If it is in the database/unsaved/modified/..
+    pub fn db_status(&self) -> DbStatus {
+        self.status
+    }
+
     /// Returns a DbState<T> that assumes its inner T does not exist in the database
     pub fn new_uncreated(inner: T) -> DbState<T> {
         DbState {

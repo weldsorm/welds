@@ -12,10 +12,19 @@ pub struct Thing1 {
     pub id: i32,
     pub value: String,
 }
+
 #[derive(Debug, WeldsModel)]
 #[welds(table = "Thing2")]
 pub struct Thing2 {
     #[welds(primary_key)]
     pub id: i32,
+    pub value: String,
+}
+
+#[derive(Debug, WeldsModel)]
+#[welds(table = "StringThing")]
+pub struct StringThing {
+    #[welds(primary_key)]
+    pub id: String,
     pub value: String,
 }

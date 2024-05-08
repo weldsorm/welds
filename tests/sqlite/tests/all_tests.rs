@@ -1,8 +1,10 @@
 use sqlite_test::models::order::{Order, SmallOrder};
 use sqlite_test::models::product::{BadProduct1, BadProduct2, Product};
+use sqlite_test::models::StringThing;
 use sqlite_test::models::{Thing1, Thing2, Thing3};
 use welds::connections::sqlite::SqliteClient;
 use welds::connections::TransactStart;
+use welds::state::{DbState, DbStatus};
 use welds::Syntax;
 
 pub mod bulk_delete;
@@ -244,7 +246,7 @@ fn should_be_able_to_scan_for_all_tables() {
     async_std::task::block_on(async {
         let conn = get_conn().await;
         let tables = welds::detect::find_tables(&conn).await.unwrap();
-        assert_eq!(12, tables.len());
+        assert_eq!(13, tables.len());
     })
 }
 
@@ -407,5 +409,22 @@ fn should_be_able_to_bulk_insert() {
             .await
             .unwrap();
         trans.rollback().await.unwrap();
+    })
+}
+
+#[test]
+fn should_be_able_to_create_a_model_with_a_string_id() {
+    async_std::task::block_on(async {
+        let conn = get_conn().await;
+        let mut thing = DbState::new_uncreated(StringThing {
+            id: "test".to_owned(),
+            value: "test".to_owned(),
+        });
+        thing.save(&conn).await.unwrap();
+        assert_eq!(thing.db_status(), DbStatus::NotModified);
+        let found = StringThing::find_by_id(&conn, "test".to_owned())
+            .await
+            .unwrap();
+        assert!(found.is_some());
     })
 }

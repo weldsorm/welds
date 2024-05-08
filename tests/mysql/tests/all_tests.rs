@@ -1,7 +1,9 @@
 use mysql_test::models::order::Order;
 use mysql_test::models::product::{BadProductColumns, BadProductMissingTable, Product};
+use mysql_test::models::StringThing;
 use mysql_test::models::Thing1;
 use welds::connections::mysql::MysqlClient;
+use welds::state::{DbState, DbStatus};
 use welds::Syntax;
 use welds::TransactStart;
 
@@ -285,5 +287,22 @@ fn should_be_able_to_bulk_insert() {
             .await
             .unwrap();
         trans.rollback().await.unwrap();
+    })
+}
+
+#[test]
+fn should_be_able_to_create_a_model_with_a_string_id() {
+    async_std::task::block_on(async {
+        let conn = get_conn().await;
+        let mut thing = DbState::new_uncreated(StringThing {
+            id: "test".to_owned(),
+            value: "test".to_owned(),
+        });
+        thing.save(&conn).await.unwrap();
+        assert_eq!(thing.db_status(), DbStatus::NotModified);
+        let found = StringThing::find_by_id(&conn, "test".to_owned())
+            .await
+            .unwrap();
+        assert!(found.is_some());
     })
 }

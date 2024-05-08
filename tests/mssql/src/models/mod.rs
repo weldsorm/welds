@@ -12,3 +12,11 @@ pub struct Thing1 {
     pub id: i32,
     pub value: String,
 }
+
+#[derive(Debug, WeldsModel)]
+#[welds(schema = "welds", table = "StringThing")]
+pub struct StringThing {
+    #[welds(primary_key)]
+    pub id: String,
+    pub value: String,
+}

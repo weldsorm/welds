@@ -7,6 +7,9 @@ use crate::Syntax;
 use crate::TransactStart;
 use std::collections::HashSet;
 
+// All the things a dev needs to start writing migrations
+pub mod prelude;
+
 // object => sql strings
 pub mod writers;
 

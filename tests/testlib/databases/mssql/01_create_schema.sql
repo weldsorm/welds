@@ -51,3 +51,6 @@ CREATE TABLE welds.Thing6 ( id INT IDENTITY PRIMARY KEY, value varchar(max) );
 CREATE TABLE welds.Thing7 ( id INT IDENTITY PRIMARY KEY, value varchar(max) );
 CREATE TABLE welds.Thing8 ( id INT IDENTITY PRIMARY KEY, value varchar(max) );
 CREATE TABLE welds.Thing9 ( id INT IDENTITY PRIMARY KEY, value varchar(max) );
+
+CREATE TABLE welds.StringThing ( id VARCHAR(64) PRIMARY KEY, value varchar(max) );
+

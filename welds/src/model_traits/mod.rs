@@ -66,6 +66,10 @@ pub trait WriteToArgs {
         's: 'p;
 }
 
+pub trait ColumnDefaultCheck {
+    fn col_is_default<'s, 'c>(&'s self, column: &'c str) -> Result<bool>;
+}
+
 pub trait UpdateFromRow {
     fn update_from_row(&mut self, row: &mut crate::Row) -> crate::errors::Result<()>;
 }

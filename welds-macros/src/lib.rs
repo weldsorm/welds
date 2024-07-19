@@ -36,6 +36,7 @@ fn model_gen_inner(input: TokenStream) -> errors::Result<TokenStream> {
     let p9 = blocks::impl_struct(&info);
     let p10 = blocks::try_from_row(&info);
     let p11 = blocks::update_from_row(&info);
+    let p12 = blocks::write_col_default_check(&info);
 
     let q = quote! {
         #p1
@@ -49,6 +50,7 @@ fn model_gen_inner(input: TokenStream) -> errors::Result<TokenStream> {
         #p9
         #p10
         #p11
+        #p12
     };
 
     //  // Want to see what the macros generate?

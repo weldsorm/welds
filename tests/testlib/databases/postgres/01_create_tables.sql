@@ -1,6 +1,7 @@
 -- This is a collection of tables used to test Welds.
 -- They use a variety of styles and types to test Welds in many ways
 -- This collection of table focues on the build in types 
+CREATE EXTENSION pgcrypto;
 
 
 CREATE SCHEMA alt;
@@ -36,6 +37,15 @@ CREATE TABLE alt.Others (
   colour public.Color
 );
 
+CREATE TABLE uuid_id_from_db (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(128) NOT NULL
+);
+
+CREATE TABLE uuid_id_from_dev (
+    id UUID PRIMARY KEY,
+    name VARCHAR(128) NOT NULL
+);
 
 CREATE TABLE Thing1 ( id serial PRIMARY KEY, value text);
 CREATE TABLE Thing2 ( id serial PRIMARY KEY, value text);

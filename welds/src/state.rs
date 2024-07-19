@@ -1,6 +1,8 @@
 //use crate::query::{delete, insert, update};
 use crate::errors::Result;
-use crate::model_traits::{HasSchema, TableColumns, TableInfo, UpdateFromRow, WriteToArgs};
+use crate::model_traits::{
+    ColumnDefaultCheck, HasSchema, TableColumns, TableInfo, UpdateFromRow, WriteToArgs,
+};
 use crate::query::delete;
 use crate::query::insert;
 use crate::query::update;
@@ -66,7 +68,7 @@ impl<T> DbState<T> {
     ///
     pub async fn save(&mut self, client: &dyn Client) -> Result<()>
     where
-        T: HasSchema + WriteToArgs,
+        T: HasSchema + WriteToArgs + ColumnDefaultCheck,
         <T as HasSchema>::Schema: TableInfo + TableColumns,
         T: UpdateFromRow,
     {

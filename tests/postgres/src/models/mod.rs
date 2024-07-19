@@ -28,3 +28,19 @@ pub struct StringThing {
     pub id: String,
     pub value: String,
 }
+
+#[derive(WeldsModel)]
+#[welds(table = "uuid_id_from_db")]
+pub struct UuidIdFromDb {
+    #[welds(primary_key)]
+    pub id: uuid::Uuid,
+    pub name: String,
+}
+
+#[derive(WeldsModel)]
+#[welds(table = "uuid_id_from_dev")]
+pub struct UuidIdFromDev {
+    #[welds(primary_key)]
+    pub id: uuid::Uuid,
+    pub name: String,
+}

@@ -5,6 +5,8 @@ use postgres_test::models::product::{BadProductColumns, BadProductMissingTable, 
 use postgres_test::models::table_with_array::TableWithArray;
 use postgres_test::models::StringThing;
 use postgres_test::models::Thing1;
+use postgres_test::models::UuidIdFromDb;
+use postgres_test::models::UuidIdFromDev;
 use welds::connections::postgres::PostgresClient;
 use welds::connections::TransactStart;
 use welds::state::{DbState, DbStatus};
@@ -536,6 +538,40 @@ fn should_be_able_to_create_a_model_with_a_string_id() {
         let found = StringThing::find_by_id(&conn, "test".to_owned())
             .await
             .unwrap();
+        assert!(found.is_some());
+    })
+}
+
+#[test]
+fn should_be_able_to_create_a_model_with_a_uuid_id_assigned_from_dev() {
+    async_std::task::block_on(async {
+        let id = uuid::Uuid::new_v4();
+        let conn = get_conn().await;
+        let mut thing = DbState::new_uncreated(UuidIdFromDev {
+            id,
+            name: "test".to_owned(),
+        });
+        thing.save(&conn).await.unwrap();
+        assert_eq!(thing.db_status(), DbStatus::NotModified);
+        let found = UuidIdFromDev::find_by_id(&conn, id).await.unwrap();
+        assert!(found.is_some());
+    })
+}
+
+#[test]
+fn should_be_able_to_create_a_model_with_a_uuid_id_assigned_from_db() {
+    async_std::task::block_on(async {
+        // default is all zero uuid
+        let id = uuid::Uuid::default();
+        let conn = get_conn().await;
+        let mut thing = DbState::new_uncreated(UuidIdFromDb {
+            id,
+            name: "test".to_owned(),
+        });
+        thing.save(&conn).await.unwrap();
+        assert_ne!(id, thing.id);
+        assert_eq!(thing.db_status(), DbStatus::NotModified);
+        let found = UuidIdFromDb::find_by_id(&conn, thing.id).await.unwrap();
         assert!(found.is_some());
     })
 }

@@ -1,6 +1,6 @@
 use crate::errors::Result;
 use crate::errors::WeldsError::InsertFailed;
-use crate::model_traits::UpdateFromRow;
+use crate::model_traits::{ColumnDefaultCheck, UpdateFromRow};
 use crate::model_traits::{HasSchema, TableColumns, TableInfo, WriteToArgs};
 use crate::query::clause::ParamArgs;
 use crate::writers::column::ColumnWriter;
@@ -12,7 +12,7 @@ use welds_connections::Fetch;
 
 pub async fn insert_one<T>(obj: &mut T, client: &dyn Client) -> Result<()>
 where
-    T: WriteToArgs + HasSchema,
+    T: WriteToArgs + HasSchema + ColumnDefaultCheck,
     <T as HasSchema>::Schema: TableInfo + TableColumns,
     T: UpdateFromRow,
 {
@@ -41,9 +41,13 @@ where
                 let col = col_writer.excape(col.name());
                 colargs.push(ColArg(col, next_params.next()));
             }
-            Some(pk) => {
-                // If the PK is a type that needs to be provided, add it.
-                if pk.rust_type() == "String" || pk.rust_type() == "Uuid" {
+            Some(_) => {
+                // If the column is the default value,
+                // the user is expected an ID to be returned
+                //
+                // If it is NOT the default value we need to include
+                // it in the query for insertion
+                if !obj.col_is_default(col.name())? {
                     id_return_required = false;
                     obj.bind(col.name(), &mut args)?;
                     let col = col_writer.excape(col.name());

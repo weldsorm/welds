@@ -25,11 +25,6 @@ pub(crate) fn write_col_normal(col: &Column) -> TokenStream {
     let field = &col.field;
     quote! { #dbname => args.push(&self.#field), }
 }
-//pub(crate) fn write_col_sqlite(col: &Column) -> TokenStream {
-//    let dbname = col.dbname.as_str();
-//    let field = &col.field;
-//    quote! { #dbname => args.add(self.#field.clone()), }
-//}
 
 pub(crate) fn write_for_db(info: &Info, matches: &TokenStream) -> TokenStream {
     let def = &info.defstruct;
@@ -59,8 +54,6 @@ pub(crate) fn write_for_db(info: &Info, matches: &TokenStream) -> TokenStream {
             Ok(())
         }
     }
-
-
 
     }
 }

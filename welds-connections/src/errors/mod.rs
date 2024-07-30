@@ -21,7 +21,21 @@ impl std::error::Error for Error {}
 
 impl Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str("Bad Thing")?;
+        let message = match self {
+            #[cfg(any(feature = "mysql", feature = "sqlite", feature = "postgres"))]
+            Error::Sqlx(err) => err.to_string(),
+            #[cfg(feature = "mssql")]
+            Error::TiberiusConnPool(err) => err.to_string(),
+            #[cfg(feature = "mssql")]
+            Error::Tiberius(err) => err.to_string(),
+            Error::Bb8(err) => err.to_string(),
+            Error::InvalidDatabaseUrl => "Invalid database URL".to_string(),
+            Error::RowNowFound => "Row not found".to_string(),
+            Error::ColumnNotFound(name) => format!("Column not found: {name}"),
+            Error::UnexpectedNoneInColumn(name) => format!("Unexpected None in column: {name}"),
+        };
+
+        f.write_str(&message)?;
         Ok(())
     }
 }

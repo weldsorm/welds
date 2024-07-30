@@ -3,7 +3,7 @@ use crate::errors::Result;
 use async_trait::async_trait;
 pub use row::Row;
 pub use transaction::Transaction;
-mod errors;
+pub mod errors;
 pub mod row;
 pub mod transaction;
 

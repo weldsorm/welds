@@ -10,7 +10,6 @@
 
 #### Welds is an async ORM written in rust using sqlx and/or Tiberius. 
 
-
 ## Features
 - Async for all. 
 - Support for multiple SQL databases (Mssql, MySql, Postgres, Sqlite)
@@ -21,6 +20,9 @@ Under the hood welds uses:
 - sqlx for Postgres, MySql, and Sqlite.
 - Tiberius for MSSQL
 
+Compatibility:
+- the `0.4.*` line of welds is compiled with sqlx 0.8
+- the `0.3.*` line of welds is compiled with sqlx 0.7
 
 ## Example Setup
 

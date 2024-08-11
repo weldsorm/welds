@@ -18,7 +18,7 @@ path = "src/lib.rs"
 
 [dependencies]
 tokio = { version = "1", features = ["full"] }
-sqlx = { version = "0.7", features = [ "runtime-tokio-rustls",  "macros"] }
+sqlx = { version = "0.8", features = [ "runtime-tokio-rustls",  "macros"] }
 clap = { version = "4.0", features = ["derive"] }
 serde = { version = "1", features = ["derive"] }
 serde_yaml = "0.9"
@@ -30,7 +30,7 @@ anyhow = "1.0"
 log = "0.4"
 pretty_env_logger = "0.4"
 futures = "0.3"
-welds = { path = "../welds", version = '0.3.0', features=["full"] }
+welds = { path = "../welds", version = '0.4', features=["full"] }
 syn = "2.0.52"
 
 

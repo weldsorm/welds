@@ -14,7 +14,7 @@ tokio = { version = "1", features = [], optional = true }
 bb8 = { version="0.8" }
 bb8-tiberius = { version="0.15"}
 
-sqlx = { version = "0.7", features = [
+sqlx = { version = "0.8", features = [
   "runtime-async-std", "tls-rustls",
   "postgres",
   "mysql",

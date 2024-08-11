@@ -1,9 +1,9 @@
 SELECT 
-tv.table_schema, 
-tv.table_name, 
-tv.ty, 
-col.column_name, 
-col.data_type, 
+cast(tv.table_schema as CHAR ) as table_schema,
+cast(tv.table_name as CHAR ) as table_name,
+cast(tv.ty as CHAR ) as ty,
+cast(col.column_name as CHAR ) as column_name,
+cast(col.data_type as CHAR ) as data_type,
 cast(col.is_nullable='YES' AS SIGNED INTEGER) as is_nullable,
 case when column_key= 'PRI' then 1 else 0 end as is_primary_key,
 1 as is_updatable

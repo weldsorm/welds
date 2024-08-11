@@ -2,6 +2,7 @@ use mysql_test::models::order::Order;
 use mysql_test::models::product::{BadProductColumns, BadProductMissingTable, Product};
 use mysql_test::models::StringThing;
 use mysql_test::models::Thing1;
+use std::env;
 use welds::connections::mysql::MysqlClient;
 use welds::state::{DbState, DbStatus};
 use welds::Syntax;
@@ -10,9 +11,17 @@ use welds::TransactStart;
 mod migrations;
 
 async fn get_conn() -> MysqlClient {
-    let conn = testlib::mysql::conn().await.unwrap();
-    let client: MysqlClient = conn.into();
-    client
+    // Allow the tester to control the database to test against.
+    // WARNING: if you take control of the database connection, YOU are resonsible
+    // for making it a valid test database. checkout: testlib/database/mysql
+    match env::var("TEST_DATABASE_URL") {
+        Ok(cs) => welds::connections::mysql::connect(&cs).await.unwrap(),
+        Err(_) => {
+            let conn = testlib::mysql::conn().await.unwrap();
+            let client: MysqlClient = conn.into();
+            client
+        }
+    }
 }
 
 #[derive(Default, Debug, Clone)]
@@ -294,15 +303,17 @@ fn should_be_able_to_bulk_insert() {
 fn should_be_able_to_create_a_model_with_a_string_id() {
     async_std::task::block_on(async {
         let conn = get_conn().await;
+        let trans = conn.begin().await.unwrap();
         let mut thing = DbState::new_uncreated(StringThing {
             id: "test".to_owned(),
             value: "test".to_owned(),
         });
-        thing.save(&conn).await.unwrap();
+        thing.save(&trans).await.unwrap();
         assert_eq!(thing.db_status(), DbStatus::NotModified);
-        let found = StringThing::find_by_id(&conn, "test".to_owned())
+        let found = StringThing::find_by_id(&trans, "test".to_owned())
             .await
             .unwrap();
         assert!(found.is_some());
+        trans.rollback().await.unwrap();
     })
 }

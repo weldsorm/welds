@@ -8,7 +8,7 @@ but a running version of docker that you have access to is required to run these
 
 ## Running tests
 
-From this directory
+From each individual database directory
 ```
 cargo test
 ```

@@ -5,6 +5,7 @@ pub(crate) mod attributes;
 pub(crate) mod blocks;
 pub(crate) mod column;
 pub(crate) mod errors;
+pub(crate) mod hook;
 pub(crate) mod info;
 pub(crate) mod relation;
 pub(crate) mod utils;
@@ -37,6 +38,7 @@ fn model_gen_inner(input: TokenStream) -> errors::Result<TokenStream> {
     let p10 = blocks::try_from_row(&info);
     let p11 = blocks::update_from_row(&info);
     let p12 = blocks::write_col_default_check(&info);
+    let p13 = blocks::write_hooks(&info);
 
     let q = quote! {
         #p1
@@ -51,6 +53,7 @@ fn model_gen_inner(input: TokenStream) -> errors::Result<TokenStream> {
         #p10
         #p11
         #p12
+        #p13
     };
 
     //  // Want to see what the macros generate?

@@ -22,6 +22,12 @@ pub enum WeldsError {
     NoPrimaryKey,
     #[error("There are multiple migrations with the same name")]
     DuplicateMigration,
+
+    #[error("An underlying Hook canceled the action")]
+    ActionCanceled,
+
+    #[error("Anyhow Error")]
+    Other(#[from] anyhow::Error),
 }
 
 impl From<ConnError> for WeldsError {

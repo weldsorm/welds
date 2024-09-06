@@ -10,7 +10,6 @@
 
 #### Welds is an async ORM written in rust using sqlx and/or Tiberius. 
 
-
 ## Features
 - Async for all. 
 - Support for multiple SQL databases (Mssql, MySql, Postgres, Sqlite)
@@ -24,7 +23,6 @@ Under the hood welds uses:
 Compatibility:
 - the `0.4.*` line of welds is compiled with sqlx 0.8
 - the `0.3.*` line of welds is compiled with sqlx 0.7
-
 
 ## Example Setup
 
@@ -54,7 +52,7 @@ pub struct Product {
   let products = Product::where_col(|p| p.price.equal(3.50)).run(&client).await?;
 ```
 
-### Basic Filter Across tables 
+### Basic Filter Across tables
 ```rust
   let client = welds::connections::mssql::connect(url).await.unwrap();
 
@@ -67,14 +65,14 @@ pub struct Product {
 ### Create And Update
 ```rust
   let client = welds::connections::sqlite::connect(url).await.unwrap();
-  
+
   let mut cookies = Product::new();
   cookies.name = "cookies".to_owned();
   // Creates the product cookie
-  cookies.save.await(&client)?; 
+  cookies.save.await(&client)?;
   cookies.description = "Yum".to_owned();
   // Updates the Cookies
-  cookies.save.await(&client)?; 
+  cookies.save.await(&client)?;
 ```
 
 ## Other Examples
@@ -82,6 +80,7 @@ pub struct Product {
  - [Mapping Queries / Joining](https://github.com/weldsorm/welds/blob/main/welds/examples/crud.rs)
  - [Bulk (Create/Update/Delete)](https://github.com/weldsorm/welds/blob/main/welds/examples/bulk_operations.rs)
  - [Select Only Specific Columns](https://github.com/weldsorm/welds/blob/main/welds/examples/manual_select_columns.rs)
+ - [Hooks, Callback when models (Save/Update/Delete)](https://github.com/weldsorm/welds/blob/main/welds/examples/hooks.rs)
  - [Checking DB schema matches compiled structs](https://github.com/weldsorm/welds/blob/main/welds/examples/verify_tables.rs)
 
 For more good examples [check out the examples repo](https://github.com/weldsorm/welds/tree/main/welds/examples).

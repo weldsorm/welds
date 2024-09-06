@@ -1,5 +1,6 @@
 use crate::errors::Result;
 use crate::errors::WeldsError;
+use crate::model_traits::hooks::{AfterDelete, BeforeDelete};
 use crate::model_traits::{HasSchema, TableColumns, TableInfo, WriteToArgs};
 use crate::query::clause::ParamArgs;
 use crate::writers::ColumnWriter;
@@ -12,7 +13,9 @@ pub async fn delete_one<T>(obj: &T, client: &dyn Client) -> Result<()>
 where
     T: HasSchema + WriteToArgs,
     <T as HasSchema>::Schema: TableInfo + TableColumns,
+    T: AfterDelete + BeforeDelete,
 {
+    BeforeDelete::before(obj)?;
     let syntax = client.syntax();
     let col_writer = ColumnWriter::new(syntax);
     let next_params = NextParam::new(syntax);
@@ -37,6 +40,7 @@ where
     let sql = format!("DELETE FROM {} where {}", identifier, wheres);
 
     client.execute(&sql, &args).await?;
+    AfterDelete::after(obj);
 
     Ok(())
 }

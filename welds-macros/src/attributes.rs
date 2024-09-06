@@ -1,6 +1,10 @@
 use crate::errors::Result;
 use crate::utils::as_typepath;
-use crate::{column::Column, relation::Relation};
+use crate::{
+    column::Column,
+    hook::{Hook, HookKind},
+    relation::Relation,
+};
 use proc_macro2::{Ident, Span};
 use syn::{Attribute, Field, Type};
 
@@ -126,6 +130,65 @@ pub(crate) fn get_relations(ast: &syn::DeriveInput) -> Result<Vec<Relation>> {
     let relations: Vec<_> = relations1.drain(..).chain(relations2.drain(..)).collect();
 
     Ok(relations)
+}
+
+pub(crate) fn get_hooks(ast: &syn::DeriveInput) -> Result<Vec<Hook>> {
+    let metas = welds_meta(&ast.attrs);
+
+    // Read out the inner meta from [welds(this, and_this)]
+    let inners: Vec<&syn::Meta> = metas.iter().flat_map(as_metalist_nested_meta).collect();
+
+    let before_create: Result<Vec<_>> = inners
+        .iter()
+        .filter_map(|m| as_metalist_ref(m))
+        .filter(|m| m.path.is_ident("BeforeCreate"))
+        .map(|m| Hook::new(m, HookKind::BeforeCreate))
+        .collect();
+    let after_create: Result<Vec<_>> = inners
+        .iter()
+        .filter_map(|m| as_metalist_ref(m))
+        .filter(|m| m.path.is_ident("AfterCreate"))
+        .map(|m| Hook::new(m, HookKind::AfterCreate))
+        .collect();
+
+    let before_update: Result<Vec<_>> = inners
+        .iter()
+        .filter_map(|m| as_metalist_ref(m))
+        .filter(|m| m.path.is_ident("BeforeUpdate"))
+        .map(|m| Hook::new(m, HookKind::BeforeUpdate))
+        .collect();
+    let after_update: Result<Vec<_>> = inners
+        .iter()
+        .filter_map(|m| as_metalist_ref(m))
+        .filter(|m| m.path.is_ident("AfterUpdate"))
+        .map(|m| Hook::new(m, HookKind::AfterUpdate))
+        .collect();
+
+    let before_delete: Result<Vec<_>> = inners
+        .iter()
+        .filter_map(|m| as_metalist_ref(m))
+        .filter(|m| m.path.is_ident("BeforeDelete"))
+        .map(|m| Hook::new(m, HookKind::BeforeDelete))
+        .collect();
+    let after_delete: Result<Vec<_>> = inners
+        .iter()
+        .filter_map(|m| as_metalist_ref(m))
+        .filter(|m| m.path.is_ident("AfterDelete"))
+        .map(|m| Hook::new(m, HookKind::AfterDelete))
+        .collect();
+
+    let hooks: Vec<_> = vec![
+        before_create?,
+        after_create?,
+        before_update?,
+        after_update?,
+        before_delete?,
+        after_delete?,
+    ]
+    .drain(..)
+    .flatten()
+    .collect();
+    Ok(hooks)
 }
 
 pub(crate) fn get_scructname(ast: &syn::DeriveInput) -> syn::Ident {

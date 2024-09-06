@@ -69,8 +69,8 @@ impl Mssql {
         format!("@p{}", i)
     }
     fn max_params() -> u32 {
-        60
-        //2100
+        //60
+        2100
     }
 }
 

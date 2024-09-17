@@ -114,6 +114,16 @@ impl<T> DbState<T> {
     pub fn into_vm(self) -> std::sync::Arc<T> {
         std::sync::Arc::new(self.inner)
     }
+
+    /// Overwrite the inner value with another, and set the db state ready for update.
+    /// 
+    /// ⚠️ It may update the wrong row if the Primary Key is modified. Make sure to check beforehand. ⚠️
+    pub fn replace_inner(&mut self, new: T) {
+        if self.status == DbStatus::NotModified {
+            self.status = DbStatus::Edited
+        }
+        self.inner = new;
+    }
 }
 
 impl<T> Deref for DbState<T> {

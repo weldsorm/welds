@@ -1,7 +1,7 @@
 [package]
 name = "welds-connections"
 authors = ["Lex Childs <lexchilds@gmail.com>"]
-version = "0.4.1"
+version = "0.4.2"
 edition = "2021"
 license = "BSD-3-Clause"
 categories = ["database"]
@@ -45,3 +45,6 @@ welds-connections = { path="./", features = ["full"] }
 sqlx = { version = "0.8", features = ["runtime-tokio"] }
 tokio = { version = "1", features = ["full"] }
 pretty_env_logger = "0.5"
+
+[package.metadata.docs.rs]
+all-features = true

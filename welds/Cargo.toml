@@ -1,7 +1,7 @@
 [package]
 name = "welds"
 authors = ["Lex Childs <lexchilds@gmail.com>"]
-version = "0.4.1"
+version = "0.4.2"
 edition = "2021"
 license = "BSD-3-Clause"
 categories = ["database"]
@@ -11,12 +11,12 @@ repository = "https://github.com/weldsorm/welds"
 description = "An async ORM for (postgres, mssql, mysql, sqlite)"
 
 [dependencies]
-welds-connections = { path="../welds-connections", version = "^0.4.1" }
+welds-connections = { path="../welds-connections", version = "^0.4.2" }
 async-trait = "0.1"
 log = "0.4"
 colored = { version="2", optional = true }
 thiserror = "1.0.57"
-welds-macros = { path="../welds-macros", version = "^0.4.1" }
+welds-macros = { path="../welds-macros", version = "^0.4.2" }
 
 [features]
 "default" = []

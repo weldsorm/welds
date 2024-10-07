@@ -2342,7 +2342,7 @@ checksum = "1778a42e8b3b90bff8d0f5032bf22250792889a5cdc752aa0020c84abe3aaf10"
 
 [[package]]
 name = "welds"
-version = "0.4.0"
+version = "0.4.2"
 dependencies = [
  "async-trait",
  "colored",
@@ -2354,7 +2354,7 @@ dependencies = [
 
 [[package]]
 name = "welds-cli"
-version = "0.4.0"
+version = "0.4.2"
 dependencies = [
  "Inflector",
  "anyhow",
@@ -2375,7 +2375,7 @@ dependencies = [
 
 [[package]]
 name = "welds-connections"
-version = "0.4.0"
+version = "0.4.2"
 dependencies = [
  "async-trait",
  "bb8",
@@ -2392,7 +2392,7 @@ dependencies = [
 
 [[package]]
 name = "welds-macros"
-version = "0.4.0"
+version = "0.4.2"
 dependencies = [
  "log",
  "proc-macro2",

@@ -13,12 +13,14 @@ pub fn write_up(
     nullable: bool,
 ) -> Vec<String> {
     let tablename: String = table.ident().to_string();
+
+    let current_col = column.name();
     let colname: String = sanitize_column(colname.into());
     let ty: String = ty.into();
     let null = if nullable { "NULL" } else { "NOT NULL" };
 
     match syntax {
-        Syntax::Sqlite => sqlite_writer::up_sql(table, colname, ty, nullable),
+        Syntax::Sqlite => sqlite_writer::up_sql(table, current_col, colname, ty, nullable),
         Syntax::Postgres => pg_writer::up_sql(table, column, colname, ty, nullable),
         Syntax::Mssql => vec![format!(
             "ALTER TABLE {tablename} ALTER COLUMN {colname} {ty} {null}"
@@ -39,12 +41,14 @@ pub fn write_down(
     nullable: bool,
 ) -> Vec<String> {
     let tablename: String = table.ident().to_string();
+
+    let current_col = column.name();
     let colname: String = sanitize_column(colname.into());
     let ty: String = ty.into();
     let null = if nullable { "NULL" } else { "NOT NULL" };
 
     match syntax {
-        Syntax::Sqlite => sqlite_writer::down_sql(table, colname, ty, nullable),
+        Syntax::Sqlite => sqlite_writer::down_sql(table, current_col, colname, ty, nullable),
         Syntax::Postgres => pg_writer::down_sql(table, column, colname, ty, nullable),
         Syntax::Mssql => vec![format!(
             "ALTER TABLE {tablename} ALTER COLUMN {colname} {ty} {null}"

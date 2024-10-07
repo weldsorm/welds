@@ -1,18 +1,18 @@
-use super::*;
 use crate::detect::TableDef;
-use crate::migrations::types::Type;
 
 pub(crate) fn down_sql(
     table: &TableDef,
-    col: impl Into<String>,
+    colname_match: impl Into<String>,
+    colname_new: impl Into<String>,
     ty: impl Into<String>,
     nullable: bool,
 ) -> Vec<String> {
     let temptable = format!("{}_weldstmp", table.ident());
-    let col: String = col.into();
+    let col_match: String = colname_match.into();
+    let col_new: String = colname_new.into();
     let ty: String = ty.into();
-    let old_cols = old_columns(table);
-    let new_cols = new_columns(table, &col, &ty, nullable);
+    let old_cols = old_columns(table, &col_match, &col_new);
+    let new_cols = new_columns(table, &col_match, &col_new, &ty, nullable);
     let tablename = table.ident().to_string();
     vec![
         build_table_create(&temptable, &old_cols),
@@ -24,17 +24,20 @@ pub(crate) fn down_sql(
 
 pub(crate) fn up_sql(
     table: &TableDef,
-    col: impl Into<String>,
+    colname_match: impl Into<String>,
+    colname_new: impl Into<String>,
     ty: impl Into<String>,
     nullable: bool,
 ) -> Vec<String> {
     let temptable = format!("{}_weldstmp", table.ident());
 
-    let col: String = col.into();
+    let col_match: String = colname_match.into();
+    let col_new: String = colname_new.into();
     let ty: String = ty.into();
 
-    let old_cols = old_columns(table);
-    let new_cols = new_columns(table, &col, &ty, nullable);
+    let old_cols = old_columns(table, &col_match, &col_new);
+    let new_cols = new_columns(table, &col_match, &col_new, &ty, nullable);
+
     let tablename = table.ident().to_string();
     vec![
         build_table_create(&temptable, &new_cols),
@@ -78,6 +81,7 @@ fn write_pk(col: &Col) -> String {
     format!("{name} {ty} PRIMARY KEY{auto}")
 }
 
+#[derive(Debug)]
 pub(crate) struct Col {
     name: String,
     ty: String,
@@ -86,15 +90,20 @@ pub(crate) struct Col {
 }
 
 // build a list of the new versions of the columns
-fn new_columns(table: &TableDef, col: &str, new_ty: &str, nullable: bool) -> Vec<Col> {
-    let mut list = old_columns(&table);
+fn new_columns(
+    table: &TableDef,
+    col: &str,
+    new_name: &str,
+    new_ty: &str,
+    nullable: bool,
+) -> Vec<Col> {
+    let mut list = old_columns(table, col, new_name);
 
     list.drain(..)
         .map(|c| {
             if c.name != col {
                 return c;
             }
-
             // build the updated version of the column
             Col {
                 name: col.to_string(),
@@ -107,11 +116,20 @@ fn new_columns(table: &TableDef, col: &str, new_ty: &str, nullable: bool) -> Vec
 }
 
 // build a list of the old versions of the columns
-pub(crate) fn old_columns(tabledef: &TableDef) -> Vec<Col> {
+pub(crate) fn old_columns(tabledef: &TableDef, col_match: &str, col_name: &str) -> Vec<Col> {
     let mut list = Vec::default();
     for def in tabledef.columns() {
+        // The column name could have changed AFTER the table was scanned. This happens then the
+        // column has been renamed. and THEN a type change occurs. make sure we are using the
+        // correct name
+        let name = if def.name == col_match {
+            col_name
+        } else {
+            def.name()
+        };
+
         list.push(Col {
-            name: def.name.to_string(),
+            name: name.to_string(),
             ty: def.ty.to_string(),
             nullable: def.null,
             primary_key: def.primary_key,

@@ -1,5 +1,6 @@
 use crate::errors::Result;
 use crate::errors::WeldsError::InsertFailed;
+use crate::model_traits::hooks::{AfterCreate, BeforeCreate};
 use crate::model_traits::{ColumnDefaultCheck, UpdateFromRow};
 use crate::model_traits::{HasSchema, TableColumns, TableInfo, WriteToArgs};
 use crate::query::clause::ParamArgs;
@@ -15,7 +16,10 @@ where
     T: WriteToArgs + HasSchema + ColumnDefaultCheck,
     <T as HasSchema>::Schema: TableInfo + TableColumns,
     T: UpdateFromRow,
+    T: BeforeCreate + AfterCreate,
 {
+    BeforeCreate::before(obj)?;
+
     let syntax = client.syntax();
     let mut args: ParamArgs = Vec::default();
     let args2: ParamArgs = Vec::default();
@@ -84,6 +88,7 @@ where
 
     // If we are providing the DB with the ID, (string/uuid) it doesn't need to return the id, and will not
     if !id_return_required {
+        AfterCreate::after(obj);
         return Ok(());
     }
 
@@ -91,6 +96,7 @@ where
     let mut row =
         row.ok_or_else(|| InsertFailed("Insert didn't return inserted ID/Row".to_owned()))?;
     UpdateFromRow::update_from_row(obj, &mut row)?;
+    AfterCreate::after(obj);
 
     Ok(())
 }

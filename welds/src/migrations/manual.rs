@@ -7,12 +7,17 @@ pub struct Manual {
 }
 
 impl Manual {
+    /// write some RAW sql that will be executed as a migration
+    /// NOTE: you can write multiple commands executing each after ';'
     pub fn up(sql: impl Into<String>) -> Manual {
         Manual {
             up: sql.into(),
             down: "".to_string(),
         }
     }
+
+    /// Write the down part of this manual migration.
+    /// NOTE: you can write multiple commands executing each after ';'
     pub fn down(mut self, sql: impl Into<String>) -> Manual {
         self.down = sql.into();
         self

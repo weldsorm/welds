@@ -1,6 +1,7 @@
 use crate::attributes;
 use crate::column::Column;
 use crate::errors::Result;
+use crate::hook::Hook;
 use crate::relation::Relation;
 use syn::Ident;
 
@@ -10,6 +11,7 @@ pub(crate) struct Info {
     pub columns: Vec<Column>,
     pub pks: Vec<Column>,
     pub relations: Vec<Relation>,
+    pub hooks: Vec<Hook>,
     pub relations_struct: Ident,
     pub tablename: String,
     pub schemaname: Option<String>,
@@ -20,6 +22,7 @@ pub(crate) struct Info {
 impl Info {
     pub fn new(ast: &syn::DeriveInput) -> Result<Self> {
         let relations = attributes::get_relations(ast)?;
+        let hooks = attributes::get_hooks(ast)?;
         let defstruct = attributes::get_scructname(ast);
         let schemastruct_name = format!("{}Schema", defstruct);
         let schemastruct = Ident::new(&schemastruct_name, defstruct.span());
@@ -37,6 +40,7 @@ impl Info {
             pks,
             defstruct,
             relations,
+            hooks,
             schemastruct,
             relations_struct,
             tablename,

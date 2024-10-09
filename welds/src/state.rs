@@ -1,5 +1,7 @@
-//use crate::query::{delete, insert, update};
 use crate::errors::Result;
+use crate::model_traits::hooks::{
+    AfterCreate, AfterDelete, AfterUpdate, BeforeCreate, BeforeDelete, BeforeUpdate,
+};
 use crate::model_traits::{
     ColumnDefaultCheck, HasSchema, TableColumns, TableInfo, UpdateFromRow, WriteToArgs,
 };
@@ -71,6 +73,8 @@ impl<T> DbState<T> {
         T: HasSchema + WriteToArgs + ColumnDefaultCheck,
         <T as HasSchema>::Schema: TableInfo + TableColumns,
         T: UpdateFromRow,
+        T: BeforeCreate + AfterCreate,
+        T: BeforeUpdate + AfterUpdate,
     {
         match self.status {
             DbStatus::NotModified => {}
@@ -90,6 +94,7 @@ impl<T> DbState<T> {
     where
         T: HasSchema + WriteToArgs,
         <T as HasSchema>::Schema: TableInfo + TableColumns,
+        T: BeforeDelete + AfterDelete,
     {
         match self.status {
             DbStatus::NotModified => {
@@ -116,7 +121,7 @@ impl<T> DbState<T> {
     }
 
     /// Overwrite the inner value with another, and set the db state ready for update.
-    /// 
+    ///
     /// ⚠️ It may update the wrong row if the Primary Key is modified. Make sure to check beforehand. ⚠️
     pub fn replace_inner(&mut self, new: T) {
         if self.status == DbStatus::NotModified {

@@ -1,4 +1,5 @@
 use crate::errors::{Result, WeldsError};
+use crate::model_traits::hooks::{AfterUpdate, BeforeUpdate};
 use crate::model_traits::{HasSchema, TableColumns, TableInfo, UpdateFromRow, WriteToArgs};
 use crate::query::clause::ParamArgs;
 use crate::writers::ColumnWriter;
@@ -10,7 +11,10 @@ where
     T: WriteToArgs + HasSchema,
     <T as HasSchema>::Schema: TableInfo + TableColumns,
     T: UpdateFromRow,
+    T: AfterUpdate + BeforeUpdate,
 {
+    BeforeUpdate::before(obj)?;
+
     let syntax = client.syntax();
     let mut args: ParamArgs = Vec::default();
     let col_writer = ColumnWriter::new(syntax);
@@ -51,6 +55,7 @@ where
 
     client.execute(&sql, &args).await?;
 
+    AfterUpdate::after(obj);
     Ok(())
 }
 

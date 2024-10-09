@@ -9,6 +9,7 @@ mod unique_identifier;
 mod try_from_row;
 mod update_from_row;
 mod write_col_default_check;
+mod write_hooks;
 mod write_to_args;
 
 pub(crate) use define_schema::write as define_schema;
@@ -22,5 +23,5 @@ pub(crate) use unique_identifier::write as unique_identifier;
 pub(crate) use try_from_row::write as try_from_row;
 pub(crate) use update_from_row::write as update_from_row;
 pub(crate) use write_col_default_check::write as write_col_default_check;
+pub(crate) use write_hooks::write as write_hooks;
 pub(crate) use write_to_args::write as write_to_args;
-

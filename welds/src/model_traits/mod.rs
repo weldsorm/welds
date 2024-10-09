@@ -1,6 +1,7 @@
 /// ***********************************************************************************
 /// These are all the trait and struct used to connect a rust Struct to a database driver
 /// ***********************************************************************************
+pub mod hooks;
 
 /// tells welds what tablename and schema name should used to get data for an Entity
 /// This does on the Schema Object NOT the model

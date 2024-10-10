@@ -81,6 +81,7 @@ pub struct Product {
  - [Bulk (Create/Update/Delete)](https://github.com/weldsorm/welds/blob/main/welds/examples/bulk_operations.rs)
  - [Select Only Specific Columns](https://github.com/weldsorm/welds/blob/main/welds/examples/manual_select_columns.rs)
  - [Hooks, Callback when models (Save/Update/Delete)](https://github.com/weldsorm/welds/blob/main/welds/examples/hooks.rs)
+ - [Migrations](https://github.com/weldsorm/welds/blob/main/welds/examples/migrations.rs)
  - [Checking DB schema matches compiled structs](https://github.com/weldsorm/welds/blob/main/welds/examples/verify_tables.rs)
 
 For more good examples [check out the examples repo](https://github.com/weldsorm/welds/tree/main/welds/examples).

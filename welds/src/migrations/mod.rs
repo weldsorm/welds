@@ -44,6 +44,7 @@ pub async fn up(client: &(dyn TransactStart), migrations: &[MigrationFn]) -> Res
         if seen.get(step.name).is_some() {
             Err(WeldsError::DuplicateMigration)?;
         }
+
         seen.insert(step.name.to_string());
 
         let mut found = MigrationLog::where_col(|c| c.name.equal(step.name))

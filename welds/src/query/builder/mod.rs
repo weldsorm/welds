@@ -253,6 +253,12 @@ where
         self
     }
 
+    /// Manually write the order by part of the query
+    pub fn order_manual(mut self, sql: &str) -> Self {
+        self.orderby.push(OrderBy::new(sql.to_string(), ""));
+        self
+    }
+
     /// Select only the specific columns
     pub fn select<V, FN: AsFieldName<V>>(
         self,

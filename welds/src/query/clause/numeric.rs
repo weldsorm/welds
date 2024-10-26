@@ -1,4 +1,4 @@
-use super::{AsFieldName, ClauseAdder, ClauseColVal};
+use super::{AsFieldName, ClauseAdder, ClauseColVal, ClauseColValList};
 use std::marker::PhantomData;
 use welds_connections::Param;
 
@@ -116,6 +116,43 @@ where
             col: self.col,
             operator: "<=",
             val: Some(v.into()),
+        };
+        Box::new(cv)
+    }
+
+    /// Will write SQL checking for any matching value in from list
+    /// NOTE: the negation of this operator is not_all(&[])
+    pub fn any<P>(self, slice: &[P]) -> Box<dyn ClauseAdder>
+    where
+        P: Into<T> + Clone,
+        Vec<T>: Param,
+    {
+        let mut list: Vec<T> = Vec::default();
+        for p in slice {
+            list.push(p.clone().into());
+        }
+        let cv = ClauseColValList::<T> {
+            col: self.col,
+            operator: "= any",
+            list,
+        };
+        Box::new(cv)
+    }
+
+    /// Will make sure the columns values does NOT match ALL values in the list
+    pub fn not_all<P>(self, slice: &[P]) -> Box<dyn ClauseAdder>
+    where
+        P: Into<T> + Clone,
+        Vec<T>: Param,
+    {
+        let mut list: Vec<T> = Vec::default();
+        for p in slice {
+            list.push(p.clone().into());
+        }
+        let cv = ClauseColValList::<T> {
+            col: self.col,
+            operator: "!= all",
+            list,
         };
         Box::new(cv)
     }

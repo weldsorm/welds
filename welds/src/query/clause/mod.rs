@@ -33,6 +33,12 @@ pub struct ClauseColVal<T> {
     pub val: Option<T>,
 }
 
+pub struct ClauseColValList<T> {
+    pub col: String,
+    pub operator: &'static str,
+    pub list: Vec<T>,
+}
+
 pub trait AsFieldName<T> {
     fn colname(&self) -> &str;
     fn fieldname(&self) -> &str;
@@ -84,6 +90,33 @@ where
         let np = next_params.next();
         parts.push(&np);
         let clause: String = parts.join(" ");
+        Some(clause)
+    }
+}
+
+impl<T> ClauseAdder for ClauseColValList<T>
+where
+    Vec<T>: Clone + Send + Sync + Param,
+{
+    fn bind<'lam, 'args, 'p>(&'lam self, args: &'args mut ParamArgs<'p>)
+    where
+        'lam: 'p,
+    {
+        args.push(&self.list);
+    }
+
+    fn clause(&self, _syntax: Syntax, alias: &str, next_params: &NextParam) -> Option<String> {
+        // build the column name
+        let col = format!("{}.{}", alias, self.col);
+        let mut parts = vec![col.as_str()];
+
+        // normal path
+        parts.push(self.operator);
+        let np = next_params.next();
+        parts.push("(");
+        parts.push(&np);
+        parts.push(")");
+        let clause: String = parts.join("");
         Some(clause)
     }
 }

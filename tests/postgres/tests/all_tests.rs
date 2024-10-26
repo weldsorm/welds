@@ -575,3 +575,40 @@ fn should_be_able_to_create_a_model_with_a_uuid_id_assigned_from_db() {
         assert!(found.is_some());
     })
 }
+
+#[test]
+fn any_should_match_for_first_id_in_list() {
+    async_std::task::block_on(async {
+        let conn = get_conn().await;
+        // get a known good record and its id
+        let mut knowns = Product::all().limit(1).run(&conn).await.unwrap();
+        let known = knowns.pop().unwrap();
+        let known_id = known.product_id;
+        // make a list of ids to look for
+        let list_of_ids: Vec<i32> = vec![known_id, 0];
+        // get test results
+        let expected = Product::where_col(|x| x.product_id.any(&list_of_ids))
+            .run(&conn)
+            .await
+            .unwrap();
+        //verify
+        assert_eq!(expected.len(), 1)
+    })
+}
+
+#[test]
+fn all_values_from_list_should_not_make_colums_value() {
+    async_std::task::block_on(async {
+        let conn = get_conn().await;
+        // get a known good record and its id
+        let all = Product::all().run(&conn).await.unwrap();
+        let all_id: Vec<i32> = all.iter().map(|x| x.product_id).collect();
+        // get test results
+        let expected = Product::where_col(|x| x.product_id.not_all(&all_id))
+            .run(&conn)
+            .await
+            .unwrap();
+        //verify
+        assert_eq!(expected.len(), 0)
+    })
+}

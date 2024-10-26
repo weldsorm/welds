@@ -41,7 +41,7 @@ pub struct ClauseColValList<T> {
 }
 
 pub struct ClauseColManual {
-    pub(crate) col: String,
+    pub(crate) col: Option<String>,
     pub(crate) sql: String,
     pub(crate) params: Vec<Box<dyn Param + Send + Sync>>,
 }
@@ -140,17 +140,22 @@ impl ClauseAdder for ClauseColManual {
 
     fn clause(&self, _syntax: Syntax, alias: &str, next_params: &NextParam) -> Option<String> {
         // build the column name
-        let col = format!("{}.{}", alias, self.col);
-        let mut parts = vec![col];
+        let mut parts = vec![];
+        if let Some(colname) = &self.col {
+            let col = format!("{}.{} ", alias, colname);
+            parts.push(col);
+        }
 
         // swap out all the '?' with the correct params type for the syntax
+        // swap out all the '$' the table prefix/alias used in this table
         for char in self.sql.chars() {
-            if char == '?' {
-                parts.push(next_params.next())
-            } else {
-                parts.push(char.to_string())
+            match char {
+                '?' => parts.push(next_params.next()),
+                '$' => parts.push(alias.to_string()),
+                _ => parts.push(char.to_string()),
             }
         }
+
         let clause = parts.join("");
         Some(clause)
     }

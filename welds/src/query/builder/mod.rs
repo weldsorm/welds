@@ -1,5 +1,7 @@
-use welds_connections::Param;
-
+use super::clause;
+pub use super::clause::manualwhereparam::ManualWhereParam;
+use super::select_cols::SelectBuilder;
+use super::update::bulk::UpdateBuilder;
 use crate::model_traits::{HasSchema, TableColumns, TableInfo, UniqueIdentifier};
 use crate::query::clause::exists::ExistIn;
 use crate::query::clause::{AsFieldName, ClauseAdder, OrderBy};
@@ -7,11 +9,7 @@ use crate::relations::{HasRelations, Relationship};
 use crate::writers::alias::TableAlias;
 use std::marker::PhantomData;
 use std::sync::Arc;
-
-use super::clause;
-pub use super::clause::manualwhereparam::ManualWhereParam;
-use super::select_cols::SelectBuilder;
-use super::update::bulk::UpdateBuilder;
+use welds_connections::Param;
 
 /// An un-executed Query.
 ///
@@ -73,8 +71,16 @@ where
         self
     }
 
-    /// write custom sql for the right side of a where clause
+    /// write custom sql for the right side of a clauses in a where block
     /// NOTE: use '?' for params. They will be swapped out for the correct Syntax
+    /// NOTE: use '$' for table prefix/alias. It will be swapped out for the prefix used at runtime
+    ///
+    /// Example
+    /// ```rust,ignore
+    /// where_manual(|c| c.price1, " > $.price2")
+    /// // WHERE t1.price1 > t1.price2
+    /// ```
+    ///
     pub fn where_manual<V, FN>(
         mut self,
         col: impl Fn(<T as HasSchema>::Schema) -> FN,
@@ -85,9 +91,29 @@ where
         FN: AsFieldName<V>,
     {
         let field = col(Default::default());
-        let colname = field.colname();
+        let colname = field.colname().to_string();
         let c = clause::ClauseColManual {
-            col: colname.to_string(),
+            col: Some(colname),
+            sql: sql.to_string(),
+            params: params.into_inner(),
+        };
+        self.wheres.push(Box::new(c));
+        self
+    }
+
+    /// write custom sql for a fill clause in where block
+    /// NOTE: use '?' for params. They will be swapped out for the correct Syntax
+    /// NOTE: use '$' for table prefix/alias. It will be swapped out for the prefix used at runtime
+    ///
+    /// Example
+    /// ```rust,ignore
+    /// where_manual2("$.price1 > $.price2")
+    /// // WHERE t1.price1 > t1.price2
+    /// ```
+    ///
+    pub fn where_manual2(mut self, sql: &'static str, params: ManualWhereParam) -> Self {
+        let c = clause::ClauseColManual {
+            col: None,
             sql: sql.to_string(),
             params: params.into_inner(),
         };
@@ -183,6 +209,22 @@ where
     }
 
     /// Order the results of the query by a given column
+    /// puts NULLs as the end of the resulting rows
+    ///
+    /// multiple calls will result in multiple OrderBys
+    pub fn order_by_desc_null_last<V, FN: AsFieldName<V>>(
+        mut self,
+        lam: impl Fn(<T as HasSchema>::Schema) -> FN,
+    ) -> Self {
+        let field = lam(Default::default());
+        let colname = field.colname();
+        let colnull = format!("{colname} is null");
+        self.orderby.push(OrderBy::new(colnull, "ASC"));
+        self.orderby.push(OrderBy::new(colname, "DESC"));
+        self
+    }
+
+    /// Order the results of the query by a given column
     ///
     /// multiple calls will result in multiple OrderBys
     pub fn order_by_asc<V, FN: AsFieldName<V>>(
@@ -191,6 +233,22 @@ where
     ) -> Self {
         let field = lam(Default::default());
         let colname = field.colname();
+        self.orderby.push(OrderBy::new(colname, "ASC"));
+        self
+    }
+
+    /// Order the results of the query by a given column
+    /// puts NULLs at the front of the resulting rows
+    ///
+    /// multiple calls will result in multiple OrderBys
+    pub fn order_by_asc_null_first<V, FN: AsFieldName<V>>(
+        mut self,
+        lam: impl Fn(<T as HasSchema>::Schema) -> FN,
+    ) -> Self {
+        let field = lam(Default::default());
+        let colname = field.colname();
+        let colnull = format!("{colname} is null");
+        self.orderby.push(OrderBy::new(colnull, "DESC"));
         self.orderby.push(OrderBy::new(colname, "ASC"));
         self
     }

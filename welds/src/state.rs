@@ -146,3 +146,18 @@ impl<T> DerefMut for DbState<T> {
         &mut self.inner
     }
 }
+
+impl<T> AsRef<T> for DbState<T> {
+    fn as_ref(&self) -> &T {
+        &self.inner
+    }
+}
+
+impl<T> AsMut<T> for DbState<T> {
+    fn as_mut(&mut self) -> &mut T {
+        if self.status == DbStatus::NotModified {
+            self.status = DbStatus::Edited
+        }
+        &mut self.inner
+    }
+}

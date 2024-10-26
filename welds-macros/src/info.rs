@@ -67,6 +67,7 @@ mod tests {
                 columns: Vec::default(),
                 pks: Vec::default(),
                 relations: Vec::default(),
+                hooks: Vec::default(),
                 relations_struct: Ident::new("MockRelationships", Span::call_site()),
                 tablename: "datables".to_string(),
                 schemaname: Some("daschema".to_string()),

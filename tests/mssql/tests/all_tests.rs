@@ -271,3 +271,25 @@ async fn should_be_able_to_create_a_model_with_a_string_id() {
         .unwrap();
     assert!(found.is_some());
 }
+
+#[tokio::test]
+async fn should_be_able_to_write_custom_wheres() {
+    use welds::query::builder::ManualWhereParam;
+    let conn = get_conn().await;
+
+    // find a known in DB row
+    let mut knowns = Product::all().limit(1).run(&conn).await.unwrap();
+    let known = knowns.pop().unwrap();
+    let known_id = known.id;
+
+    let params = ManualWhereParam::new().push(known_id);
+    // run the custom where
+    let found = Product::all()
+        .where_manual(|c| c.id, " IN (?)", params)
+        .run(&conn)
+        .await
+        .unwrap()
+        .pop()
+        .unwrap();
+    assert_eq!(found.id, known_id);
+}

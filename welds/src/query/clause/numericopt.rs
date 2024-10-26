@@ -141,6 +141,7 @@ where
 
     /// Will write SQL checking for any matching value in from list
     /// NOTE: the negation of this operator is not_all(&[])
+    #[cfg(feature = "postgres")]
     pub fn any<P>(self, slice: &[P]) -> Box<dyn ClauseAdder>
     where
         P: Into<T> + Clone,
@@ -159,6 +160,7 @@ where
     }
 
     /// Will make sure the columns values does NOT match ALL values in the list
+    #[cfg(feature = "postgres")]
     pub fn not_all<P>(self, slice: &[P]) -> Box<dyn ClauseAdder>
     where
         P: Into<T> + Clone,

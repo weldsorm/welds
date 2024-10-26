@@ -8,6 +8,8 @@ use crate::writers::alias::TableAlias;
 use std::marker::PhantomData;
 use std::sync::Arc;
 
+use super::clause;
+pub use super::clause::manualwhereparam::ManualWhereParam;
 use super::select_cols::SelectBuilder;
 use super::update::bulk::UpdateBuilder;
 
@@ -68,6 +70,28 @@ where
     {
         let qba = lam(Default::default());
         self.wheres.push(qba);
+        self
+    }
+
+    /// write custom sql for the right side of a where clause
+    /// NOTE: use '?' for params. They will be swapped out for the correct Syntax
+    pub fn where_manual<V, FN>(
+        mut self,
+        col: impl Fn(<T as HasSchema>::Schema) -> FN,
+        sql: &'static str,
+        params: ManualWhereParam,
+    ) -> Self
+    where
+        FN: AsFieldName<V>,
+    {
+        let field = col(Default::default());
+        let colname = field.colname();
+        let c = clause::ClauseColManual {
+            col: colname.to_string(),
+            sql: sql.to_string(),
+            params: params.into_inner(),
+        };
+        self.wheres.push(Box::new(c));
         self
     }
 

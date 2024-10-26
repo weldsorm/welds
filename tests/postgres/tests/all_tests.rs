@@ -612,3 +612,27 @@ fn all_values_from_list_should_not_make_colums_value() {
         assert_eq!(expected.len(), 0)
     })
 }
+
+#[test]
+fn should_be_able_to_write_custom_wheres() {
+    async_std::task::block_on(async {
+        use welds::query::builder::ManualWhereParam;
+        let conn = get_conn().await;
+
+        // find a known in DB row
+        let mut knowns = Product::all().limit(1).run(&conn).await.unwrap();
+        let known = knowns.pop().unwrap();
+        let known_id = known.product_id;
+
+        let params = ManualWhereParam::new().push(known_id);
+        // run the custom where
+        let found = Product::all()
+            .where_manual(|c| c.product_id, " IN (?)", params)
+            .run(&conn)
+            .await
+            .unwrap()
+            .pop()
+            .unwrap();
+        assert_eq!(found.product_id, known_id);
+    })
+}

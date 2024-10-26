@@ -1,7 +1,6 @@
 use crate::writers::NextParam;
 use crate::Syntax;
 use welds_connections::Param;
-
 pub type ParamArgs<'a> = Vec<&'a (dyn Param + Sync)>;
 
 // Concrete Types
@@ -17,6 +16,8 @@ mod text;
 pub use text::Text;
 mod textopt;
 pub use textopt::TextOpt;
+
+pub(crate) mod manualwhereparam;
 
 //  Relationships / SubQueries
 pub(crate) mod exists;
@@ -37,6 +38,12 @@ pub struct ClauseColValList<T> {
     pub col: String,
     pub operator: &'static str,
     pub list: Vec<T>,
+}
+
+pub struct ClauseColManual {
+    pub(crate) col: String,
+    pub(crate) sql: String,
+    pub(crate) params: Vec<Box<dyn Param + Send + Sync>>,
 }
 
 pub trait AsFieldName<T> {
@@ -117,6 +124,34 @@ where
         parts.push(&np);
         parts.push(")");
         let clause: String = parts.join("");
+        Some(clause)
+    }
+}
+
+impl ClauseAdder for ClauseColManual {
+    fn bind<'lam, 'args, 'p>(&'lam self, args: &'args mut ParamArgs<'p>)
+    where
+        'lam: 'p,
+    {
+        for p in &self.params {
+            args.push(p.as_ref());
+        }
+    }
+
+    fn clause(&self, _syntax: Syntax, alias: &str, next_params: &NextParam) -> Option<String> {
+        // build the column name
+        let col = format!("{}.{}", alias, self.col);
+        let mut parts = vec![col];
+
+        // swap out all the '?' with the correct params type for the syntax
+        for char in self.sql.chars() {
+            if char == '?' {
+                parts.push(next_params.next())
+            } else {
+                parts.push(char.to_string())
+            }
+        }
+        let clause = parts.join("");
         Some(clause)
     }
 }

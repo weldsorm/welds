@@ -166,12 +166,23 @@ const MSSQL_PAIRS: &[Pair] = &[
     Pair::new("SMALLINT", "i16"),
     Pair::new("BIGINT", "i64"),
     Pair::new("FLOAT(24)", "f32"),
-    Pair::new("FLOAT(53)", "f64"),
+    Pair::sized("FLOAT", "f64", "53"),
     Pair::sized("NVARCHAR", "String", "MAX"),
     Pair::sized("VARCHAR", "String", "MAX"),
     Pair::new("TEXT", "String"),
+    Pair::sized("NTEXT", "String", "MAX"),
     Pair::sized("VARBINARY", "Vec<u8>", "MAX"),
     Pair::new("UNIQUEIDENTIFIER", "Uuid"),
+    Pair::new("DATETIME2", "chrono::NaiveDateTime"),
+    Pair::new("DATETIME", "chrono::NaiveDateTime"),
+    Pair::new("DATE", "chrono::NaiveDate"),
+    Pair::new("DECIMAL", "f32"),
+    Pair::new("CHAR", "char"),
+    Pair::new("MONEY", "i64"),   
+    Pair::new("SMALLINT", "i16"),
+    Pair::new("TINYINT", "u8"),
+    Pair::new("REAL", "f32"),
+    Pair::new("NUMERIC", "f32"),
 ];
 
 const MYSQL_PAIRS: &[Pair] = &[
@@ -290,7 +301,7 @@ pub(crate) fn are_equivalent_types(pairs: &[Pair], db: &str, rust: &str) -> bool
 }
 
 /// Override the type of a column to the type that should be used
-/// to crate its PK value. e.g.
+/// to create its PK value. e.g.
 pub(crate) fn pk_override(syntax: Syntax, db_type: &str) -> Option<&'static str> {
     // Use the Serial type to create the PKs, the type will be reported back as int..
     if let Syntax::Postgres = syntax {
@@ -405,6 +416,12 @@ mod tests {
             recommended_rust_type(s, "TEXT").unwrap().full_rust_type(),
             "String"
         );
+        assert_eq!(
+            recommended_rust_type(s, "DATETIME")
+                .unwrap()
+                .full_rust_type(),
+            "chrono::NaiveDateTime"
+        )
     }
 
     #[test]
@@ -416,5 +433,19 @@ mod tests {
         let s = Syntax::Sqlite;
         assert_eq!(recommended_db_type(s, "i64").unwrap().db_type(), "INTEGER");
         assert_eq!(recommended_db_type(s, "i16").unwrap().db_type(), "INTEGER");
+        let s = Syntax::Mssql;
+        assert_eq!(recommended_db_type(s, "i32").unwrap().db_type(), "INT");
+        assert_eq!(recommended_db_type(s, "f64").unwrap().db_type(), "FLOAT");
+        assert_eq!(
+            recommended_db_type(s, "String").unwrap().db_type(),
+            "NVARCHAR"
+        );
+        assert_eq!(recommended_db_type(s, "bool").unwrap().db_type(), "BIT");
+        assert_eq!(
+            recommended_db_type(s, "chrono::NaiveDateTime")
+                .unwrap()
+                .db_type(),
+            "DATETIME"
+        );
     }
 }

@@ -172,6 +172,7 @@ const MSSQL_PAIRS: &[Pair] = &[
     Pair::new("TEXT", "String"),
     Pair::sized("VARBINARY", "Vec<u8>", "MAX"),
     Pair::new("UNIQUEIDENTIFIER", "Uuid"),
+    Pair::new("JSON", "serde_json::Value"),
 ];
 
 const MYSQL_PAIRS: &[Pair] = &[
@@ -202,6 +203,7 @@ const MYSQL_PAIRS: &[Pair] = &[
     Pair::new("DATE", "chrono::NaiveDate"),
     Pair::new("TIME", "chrono::NaiveTime"),
     Pair::new("VARCHAR(36)", "sqlx::types::Uuid"),
+    Pair::new("JSON", "serde_json::Value"),
 ];
 
 const SQLITE_PAIRS: &[Pair] = &[
@@ -241,6 +243,7 @@ const SQLITE_PAIRS: &[Pair] = &[
     Pair::new("INTEGER", "i32"),
     Pair::new("REAL", "f32"),
     Pair::new("TEXT", "sqlx::types::Uuid"),
+    Pair::new("TEXT", "serde_json::Value"),
 ];
 
 const POSTGRES_PAIRS: &[Pair] = &[
@@ -276,6 +279,7 @@ const POSTGRES_PAIRS: &[Pair] = &[
     Pair::new("DATE", "chrono::NaiveDate"),
     Pair::new("TIME", "chrono::NaiveTime"),
     Pair::new("TIMETZ", "sqlx::postgres::types::PgTimeTz"),
+    Pair::new("JSONB", "serde_json::Value"),
 ];
 
 /// Returns true if two types are a match

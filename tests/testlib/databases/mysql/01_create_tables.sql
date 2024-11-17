@@ -37,6 +37,16 @@ CREATE TABLE Thing9 ( id INT NOT NULL AUTO_INCREMENT, value text, PRIMARY KEY(id
 
 CREATE TABLE StringThing ( id VARCHAR(64) NOT NULL, value text NOT NULL, PRIMARY KEY(id) );
 
+
+CREATE TABLE extra_types (
+    id VARCHAR(36) PRIMARY KEY,
+    json_col JSON NOT NULL,
+    date_col DATE NOT NULL,
+    time_col TIME NOT NULL,
+    datetime_col DATETIME NOT NULL,
+    datetimetz_col TIMESTAMP NOT NULL
+);
+
 USE mysql;
 CREATE TABLE Orders (
   id INT NOT NULL AUTO_INCREMENT,

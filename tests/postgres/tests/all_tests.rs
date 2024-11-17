@@ -12,6 +12,7 @@ use welds::connections::TransactStart;
 use welds::state::{DbState, DbStatus};
 use welds::Syntax;
 
+mod extra_types;
 mod migrations;
 
 async fn get_conn() -> PostgresClient {

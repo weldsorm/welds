@@ -15,6 +15,7 @@ pub enum Error {
     RowNowFound,
     ColumnNotFound(String),
     UnexpectedNoneInColumn(String),
+    JsonParseError(String, String),
 }
 
 impl std::error::Error for Error {}
@@ -33,6 +34,9 @@ impl Display for Error {
             Error::RowNowFound => "Row not found".to_string(),
             Error::ColumnNotFound(name) => format!("Column not found: {name}"),
             Error::UnexpectedNoneInColumn(name) => format!("Unexpected None in column: {name}"),
+            Error::JsonParseError(col, json) => {
+                format!("unable to parse json in column: {col}. json: {json}")
+            }
         };
 
         f.write_str(&message)?;

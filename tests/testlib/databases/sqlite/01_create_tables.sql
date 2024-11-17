@@ -29,3 +29,12 @@ CREATE TABLE Thing8 ( id INTEGER PRIMARY KEY, value text NOT NULL );
 CREATE TABLE Thing9 ( id INTEGER PRIMARY KEY, value text NOT NULL );
 
 CREATE TABLE StringThing ( id text PRIMARY KEY, value text NOT NULL );
+
+CREATE TABLE extra_types (
+    id TEXT PRIMARY KEY,
+    json_col TEXT NOT NULL,
+    date_col DATE NOT NULL,
+    time_col TIME NOT NULL,
+    datetime_col DATETIME NOT NULL,
+    datetimetz_col DATETIME NOT NULL
+);

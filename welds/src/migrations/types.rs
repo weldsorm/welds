@@ -19,6 +19,11 @@ pub enum Type {
     FloatBig,
     Binary,
     Uuid,
+    Date,
+    Time,
+    Datetime,
+    /// Datetime + (offset or timezone)
+    DatetimeZone,
     Raw(String),
 }
 
@@ -38,6 +43,10 @@ impl Type {
             Type::FloatBig => "f64".to_owned(),
             Type::Binary => "Vec<u8>".to_owned(),
             Type::Uuid => "Uuid".to_owned(),
+            Type::Date => "chrono::NaiveDate".to_owned(),
+            Type::Time => "chrono::NaiveTime".to_owned(),
+            Type::Datetime => "chrono::NaiveDateTime".to_owned(),
+            Type::DatetimeZone => "chrono::DateTime<chrono::Utc>".to_owned(),
             Type::Raw(_) => return None,
         })
     }

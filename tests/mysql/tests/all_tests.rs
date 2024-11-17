@@ -8,6 +8,7 @@ use welds::state::{DbState, DbStatus};
 use welds::Syntax;
 use welds::TransactStart;
 
+mod extra_types;
 mod migrations;
 
 async fn get_conn() -> MysqlClient {

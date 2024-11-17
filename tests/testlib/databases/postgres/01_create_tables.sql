@@ -64,4 +64,13 @@ CREATE TABLE alt.table_with_arrays (
   numbers int[]
 );
 
+CREATE TABLE extra_types (
+    id UUID PRIMARY KEY,
+    json_col JSONB NOT NULL,
+    date_col DATE NOT NULL,
+    time_col TIME NOT NULL,
+    datetime_col TIMESTAMP NOT NULL,
+    datetimetz_col TIMESTAMPTZ NOT NULL
+);
+
 

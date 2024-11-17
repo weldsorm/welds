@@ -9,4 +9,7 @@ edition = "2021"
 testlib = { path = "../testlib" }
 welds = { path = "../../welds", features = ["sqlite", 'detect', 'check', "migrations"]  }
 async-std = { version = "1", features = ["attributes"] }
-sqlx = { version = "0.8", features = [ "runtime-async-std", "tls-rustls", "macros"] }
+sqlx = { version = "0.8", features = [ "runtime-async-std", "tls-rustls", "macros", "chrono", "uuid"] }
+chrono = "0.4.38"
+uuid = { version = "1.11.0", features = ["v4"] }
+serde_json = "1.0.133"

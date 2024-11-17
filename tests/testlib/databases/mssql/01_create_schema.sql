@@ -54,3 +54,11 @@ CREATE TABLE welds.Thing9 ( id INT IDENTITY PRIMARY KEY, value varchar(max) );
 
 CREATE TABLE welds.StringThing ( id VARCHAR(64) PRIMARY KEY, value varchar(max) );
 
+
+CREATE TABLE welds.extra_types (
+    id uniqueidentifier PRIMARY KEY,
+    date_col DATE NOT NULL,
+    time_col TIME NOT NULL,
+    datetime_col DATETIME2 NOT NULL,
+    datetimetz_col DATETIMEOFFSET NOT NULL
+);

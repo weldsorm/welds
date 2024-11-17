@@ -340,7 +340,7 @@ fn manual_test_setup(_state: &TableState) -> Result<MigrationStep> {
 }
 
 use welds::migrations::Manual;
-fn manual_step(state: &TableState) -> Result<MigrationStep> {
+fn manual_step(_state: &TableState) -> Result<MigrationStep> {
     let m = Manual::up("update test_table6 set firstname = 'test' where firstname is null");
     Ok(MigrationStep::new("manual_test_2", m))
 }
@@ -354,4 +354,28 @@ fn should_be_able_to_run_manual_migration_step() {
         let list1: Vec<MigrationFn> = vec![manual_test_setup, manual_step];
         up(client, list1.as_slice()).await.unwrap();
     })
+}
+
+#[test]
+fn should_be_able_to_create_a_table_with_json() {
+    async_std::task::block_on(async {
+        let client = get_conn().await;
+        let client = &client;
+        let list1: Vec<MigrationFn> = vec![test_json_column];
+        up(client, list1.as_slice()).await.unwrap();
+
+        // make sure the table exists
+        let table = find_table(None as Option<&str>, "tmp_table_with_json", client).await;
+        let table = table.unwrap().unwrap();
+        let mut cols = table.columns().iter();
+        let col = cols.find(|c| c.name() == "test_json_column").unwrap();
+        assert_eq!(col.ty(), "JSON");
+
+        // cleanup
+        down(client, "test_json_column").await.unwrap();
+    })
+}
+fn test_json_column(_state: &TableState) -> Result<MigrationStep> {
+    let m = create_table("tmp_table_with_json").column(|c| c("test_json_column", Type::Json));
+    Ok(MigrationStep::new("test_json_column", m))
 }

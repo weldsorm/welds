@@ -7,6 +7,7 @@ use welds::state::{DbState, DbStatus};
 use welds::TransactStart;
 use welds::{Client, Syntax};
 
+mod extra_types;
 mod migrations;
 
 async fn get_conn() -> MssqlClient {

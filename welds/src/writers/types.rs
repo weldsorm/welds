@@ -172,7 +172,11 @@ const MSSQL_PAIRS: &[Pair] = &[
     Pair::new("TEXT", "String"),
     Pair::sized("VARBINARY", "Vec<u8>", "MAX"),
     Pair::new("UNIQUEIDENTIFIER", "Uuid"),
-    Pair::new("JSON", "serde_json::Value"),
+    Pair::sized("NVARCHAR", "serde_json::Value", "MAX"),
+    Pair::new("DATETIMEOFFSET", "chrono::DateTime<chrono::Utc>"),
+    Pair::new("DATETIME2", "chrono::NaiveDateTime"),
+    Pair::new("DATE", "chrono::NaiveDate"),
+    Pair::new("TIME", "chrono::NaiveTime"),
 ];
 
 const MYSQL_PAIRS: &[Pair] = &[

@@ -9,6 +9,7 @@ use welds::Syntax;
 
 pub mod bulk_delete;
 pub mod bulk_update;
+pub mod extra_types;
 pub mod migrations;
 pub mod select_col;
 pub mod sub_query_tests;
@@ -246,7 +247,7 @@ fn should_be_able_to_scan_for_all_tables() {
     async_std::task::block_on(async {
         let conn = get_conn().await;
         let tables = welds::detect::find_tables(&conn).await.unwrap();
-        assert_eq!(13, tables.len());
+        assert_eq!(14, tables.len());
     })
 }
 

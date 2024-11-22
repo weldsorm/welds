@@ -238,6 +238,7 @@ const SQLITE_PAIRS: &[Pair] = &[
     Pair::new("BLOB", "Vec<u8>"),
     Pair::new("NUMERIC", "rust_decimal::Decimal"),
     Pair::new("DECIMAL", "rust_decimal::Decimal"),
+    Pair::new("DATETIME", "chrono::NaiveDateTime"),
     Pair::new("DATETIME", "chrono::DateTime<chrono::Utc>"),
     Pair::new("DATETIME", "chrono::DateTime<Utc>"),
     Pair::new("DATE", "chrono::NaiveDate"),

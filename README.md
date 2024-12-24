@@ -78,12 +78,12 @@ pub struct Product {
 
 ### Types from external crates
 
-Both `Tiberius` and `sqlx` support types from external create such at `chrono` and `serde_json`. These types need to be enabled in the underlying crate to use.
+Both `Tiberius` and `sqlx` support types from external crates such at `chrono` and `serde_json`. These types need to be enabled in the underlying crate to use.
 In order to use types that are external the appropriate feature needs to be enabled in these underlying frameworks.
 We have chosen to leave this up to you as the developer so you have full control over your underlying SQLX/Tiberius setup.
 
 In order to get these types to work you will need to:
-1) Add the external create `cargo add chrono`
+1) Add the external crate `cargo add chrono`
 2) Enable the feature in the underlying SQL framework. `cargo add sqlx --features=chrono`
 3) (Tiberius only) enable the corresponding feature for welds-connections feature `cargo add welds-connections --features=mssql,mssql-chrono`
 

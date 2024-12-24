@@ -88,6 +88,58 @@ pub async fn connect(cs: impl Into<String>) -> Result<Box<dyn Client>> {
     Err(errors::Error::InvalidDatabaseUrl)
 }
 
+/// Returns a connection pool (TransactStart) for the given connection string.
+///
+/// use this over connect if you want a `TransactStart` not a Client
+/// This is useful if you are running migrations on an unknown database or need transactions
+/// on an unknown database
+///
+/// connection string formats:
+/// SQLX Connection String (postgres, mysql, sqlite)
+/// ADO Connection String (mssql)
+pub async fn connect_transaction_start(cs: impl Into<String>) -> Result<Box<dyn TransactStart>> {
+    let cs: String = cs.into();
+    #[cfg(feature = "postgres")]
+    if cs.starts_with("postgresql:") {
+        log::debug!("Welds connecting to Postgres");
+        let client = postgres::connect(&cs).await?;
+        return Ok(Box::new(client));
+    }
+    #[cfg(feature = "postgres")]
+    if cs.starts_with("postgres:") {
+        log::debug!("Welds connecting to Postgres");
+        let client = postgres::connect(&cs).await?;
+        return Ok(Box::new(client));
+    }
+    #[cfg(feature = "mysql")]
+    if cs.starts_with("mysql:") {
+        log::debug!("Welds connecting to MySql");
+        let client = mysql::connect(&cs).await?;
+        return Ok(Box::new(client));
+    }
+    #[cfg(feature = "sqlite")]
+    if cs.starts_with("sqlite:") {
+        log::debug!("Welds connecting to Sqlite");
+        let client = sqlite::connect(&cs).await?;
+        return Ok(Box::new(client));
+    }
+    #[cfg(feature = "mssql")]
+    if !cs.is_empty() {
+        log::debug!("Welds connecting to MSSQL");
+        let client = mssql::connect(&cs).await?;
+        return Ok(Box::new(client));
+    }
+    Err(errors::Error::InvalidDatabaseUrl)
+}
+
+/// Used the ENV DATABASE_URL
+/// builds a connection with whatever is in it.
+/// returns a TransactStart not a client.
+pub async fn connect_transstart_from_env() -> Result<Box<dyn TransactStart>> {
+    let url = std::env::var("DATABASE_URL").or(Err(Error::InvalidDatabaseUrl))?;
+    connect_transaction_start(&url).await
+}
+
 #[async_trait]
 /// Implementers of this trait can crate a transaction.
 /// If you want to create a transaction off of a Client,

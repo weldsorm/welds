@@ -1,4 +1,4 @@
-use super::{AsFieldName, ClauseAdder, ClauseColVal};
+use super::{AsFieldName, AsOptField, ClauseAdder, ClauseColVal};
 use crate::query::optional::HasSomeNone;
 use crate::query::optional::Optional;
 use std::marker::PhantomData;
@@ -18,6 +18,8 @@ impl<T> AsFieldName<T> for TextOpt<T> {
         self.field.as_str()
     }
 }
+
+impl<T> AsOptField for TextOpt<T> {}
 
 impl<T> TextOpt<T>
 where

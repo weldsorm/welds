@@ -1,5 +1,5 @@
-use super::clause;
 pub use super::clause::manualwhereparam::ManualWhereParam;
+use super::clause::{self, AsOptField};
 use super::select_cols::SelectBuilder;
 use super::update::bulk::UpdateBuilder;
 use crate::model_traits::{HasSchema, TableColumns, TableInfo, UniqueIdentifier};
@@ -268,8 +268,8 @@ where
         sb.select(lam)
     }
 
-    /// Filter the results returned by this query.
-    /// Used when you want to filter on the columns of this table.
+    /// Changes this query Into a sql UPDATE.
+    /// sets the value from the lambda in the database
     pub fn set<V, FIELD>(
         self,
         lam: impl Fn(<T as HasSchema>::Schema) -> FIELD,
@@ -282,5 +282,19 @@ where
     {
         let ub = UpdateBuilder::new(self);
         ub.set(lam, value)
+    }
+
+    /// Nulls out the value from the lambda in the database
+    pub fn set_null<V, FIELD>(
+        self,
+        lam: impl Fn(<T as HasSchema>::Schema) -> FIELD,
+    ) -> UpdateBuilder<T>
+    where
+        <T as HasSchema>::Schema: Default,
+        FIELD: AsFieldName<V> + AsOptField,
+        V: 'static + Sync + Send + Clone + Param,
+    {
+        let ub = UpdateBuilder::new(self);
+        ub.set_null(lam)
     }
 }

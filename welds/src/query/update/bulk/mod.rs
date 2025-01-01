@@ -3,9 +3,9 @@ use crate::model_traits::UniqueIdentifier;
 use crate::model_traits::{HasSchema, TableColumns, TableInfo};
 use crate::query::builder::QueryBuilder;
 use crate::query::clause::wherein::WhereIn;
-use crate::query::clause::AsFieldName;
 use crate::query::clause::ClauseAdder;
 use crate::query::clause::ParamArgs;
+use crate::query::clause::{AsFieldName, AsOptField};
 use crate::query::helpers::{build_where, join_sql_parts};
 use crate::writers::ColumnWriter;
 use crate::writers::NextParam;
@@ -35,8 +35,7 @@ where
         }
     }
 
-    /// Filter the results returned by this query.
-    /// Used when you want to filter on the columns of this table.
+    /// sets the value from the lambda in the database
     pub fn set<V, FIELD>(
         mut self,
         lam: impl Fn(<T as HasSchema>::Schema) -> FIELD,
@@ -51,6 +50,19 @@ where
         let field = lam(Default::default());
         let col_raw = field.colname().to_string();
         self.sets.push(Box::new(SetColVal { col_raw, val }));
+        self
+    }
+
+    /// Nulls out the value from the lambda in the database
+    pub fn set_null<V, FIELD>(mut self, lam: impl Fn(<T as HasSchema>::Schema) -> FIELD) -> Self
+    where
+        <T as HasSchema>::Schema: Default,
+        FIELD: AsFieldName<V> + AsOptField,
+        V: 'static + Sync + Send + Clone + Param,
+    {
+        let field = lam(Default::default());
+        let col_raw = field.colname().to_string();
+        self.sets.push(Box::new(SetColNull { col_raw }));
         self
     }
 
@@ -157,6 +169,27 @@ where
     fn clause(&self, syntax: Syntax, _alias: &str, next_params: &NextParam) -> Option<String> {
         let colname = ColumnWriter::new(syntax).excape(&self.col_raw);
         let sql = format!("{}={}", colname, next_params.next());
+        Some(sql)
+    }
+}
+
+pub struct SetColNull {
+    pub col_raw: String,
+}
+
+impl ClauseAdder for SetColNull {
+    /// Add the argument to the list of Arguments to send to the database
+    fn bind<'lam, 'args, 'p>(&'lam self, _args: &'args mut ParamArgs<'p>)
+    where
+        'lam: 'p,
+    {
+        // no args added
+    }
+
+    /// Returns the SQL snipit for this clause
+    fn clause(&self, syntax: Syntax, _alias: &str, _next_params: &NextParam) -> Option<String> {
+        let colname = ColumnWriter::new(syntax).excape(&self.col_raw);
+        let sql = format!("{}=NULL", colname);
         Some(sql)
     }
 }

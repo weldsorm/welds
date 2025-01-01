@@ -429,3 +429,20 @@ fn should_be_able_to_create_a_model_with_a_string_id() {
         assert!(found.is_some());
     })
 }
+
+#[test]
+fn should_be_able_to_set_a_nullable_value_to_null() {
+    async_std::task::block_on(async {
+        let conn = get_conn().await;
+        let trans = conn.begin().await.unwrap();
+
+        Order::all()
+            .where_col(|x| x.code.equal("333"))
+            .set_null(|x| x.code)
+            .run(&trans)
+            .await
+            .unwrap();
+
+        trans.rollback().await.unwrap();
+    })
+}

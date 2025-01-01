@@ -51,6 +51,9 @@ pub trait AsFieldName<T> {
     fn fieldname(&self) -> &str;
 }
 
+// marker trait to make sure a field is nullable
+pub trait AsOptField {}
+
 pub trait ClauseAdder: Send + Sync {
     /// Add the argument to the list of Arguments to send to the database
     fn bind<'lam, 'args, 'p>(&'lam self, args: &'args mut ParamArgs<'p>)

@@ -10,6 +10,7 @@ use crate::query::insert;
 use crate::query::update;
 use std::marker::PhantomData;
 use std::ops::{Deref, DerefMut};
+use std::sync::Arc;
 use welds_connections::Client;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -116,8 +117,8 @@ impl<T> DbState<T> {
     }
 
     /// Consumes the model and transforms it into an immutable object that is useful for Views and sharing.
-    pub fn into_vm(self) -> std::sync::Arc<T> {
-        std::sync::Arc::new(self.inner)
+    pub fn into_vm(self) -> Arc<T> {
+        Arc::new(self.inner)
     }
 
     /// Overwrite the inner value with another, and set the db state ready for update.
@@ -128,6 +129,26 @@ impl<T> DbState<T> {
             self.status = DbStatus::Edited
         }
         self.inner = new;
+    }
+}
+
+// helper, method extensions, to make it really simple to map DB results into useful result sets
+pub trait VecStateExt<T> {
+    fn to_vms(self) -> Arc<Vec<Arc<T>>>;
+    fn into_inners(self) -> Vec<T>;
+}
+
+impl<T> VecStateExt<T> for Vec<DbState<T>> {
+    /// convert from DbState wrapped data to Arc wrapped data.
+    /// Very useful when passing to a View layer such as Yew (Server Side)
+    fn to_vms(mut self) -> Arc<Vec<Arc<T>>> {
+        let vec: Vec<_> = self.drain(..).map(|x| x.into_vm()).collect();
+        Arc::new(vec)
+    }
+
+    /// convert from DbState wrapped data to Unwrapped Models
+    fn into_inners(mut self) -> Vec<T> {
+        self.drain(..).map(|x| x.into_inner()).collect()
     }
 }
 

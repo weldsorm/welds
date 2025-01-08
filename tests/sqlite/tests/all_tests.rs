@@ -13,7 +13,6 @@ pub mod extra_types;
 pub mod migrations;
 pub mod select_col;
 pub mod sub_query_tests;
-
 async fn get_conn() -> SqliteClient {
     let conn = testlib::sqlite::conn().await.unwrap();
     let client: SqliteClient = conn.into();

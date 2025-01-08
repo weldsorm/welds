@@ -1,5 +1,5 @@
 
-SELECT 
+SELECT
     things.schemaname as schema,
     things.tablename as table_name,
     things.ty,
@@ -7,14 +7,14 @@ SELECT
     col.udt_name as column_type,
     case when col.is_nullable = 'YES' then 1 else 0 end as is_nullable,
     case when (
-SELECT 1  
+SELECT 1
 FROM information_schema.table_constraints AS tc
 INNER JOIN
     information_schema.constraint_column_usage AS ccu
     ON
         tc.constraint_schema = ccu.constraint_schema
         AND tc.constraint_name = ccu.constraint_name
-WHERE 
+WHERE
     tc.constraint_type = 'PRIMARY KEY'
     AND tc.constraint_schema = things.schemaname
     AND tc.table_name = things.tablename

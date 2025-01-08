@@ -1,4 +1,4 @@
-SELECT 
+SELECT
     tv.table_schema,
     tv.table_name,
     tv.ty,
@@ -7,13 +7,13 @@ SELECT
     CAST(c.is_nullable as INT) as is_nullable,
     CAST(ISNULL(i.is_primary_key, 0) as INT) as is_primary_key,
     CAST(1 as INT) as is_updatable
-FROM    
+FROM
     sys.columns c
-INNER JOIN 
+INNER JOIN
     sys.types t ON c.user_type_id = t.user_type_id
-LEFT OUTER JOIN 
+LEFT OUTER JOIN
     sys.index_columns ic ON ic.object_id = c.object_id AND ic.column_id = c.column_id
-LEFT OUTER JOIN 
+LEFT OUTER JOIN
     sys.indexes i ON ic.object_id = i.object_id AND ic.index_id = i.index_id
 JOIN (
 SELECT table_schema, table_name, 'table' as ty FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME NOT in (select name from sys.objects where type = 'U' and is_ms_shipped = 1) AND TABLE_TYPE='BASE TABLE'

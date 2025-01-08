@@ -22,10 +22,12 @@ pub enum WeldsError {
     NoPrimaryKey,
     #[error("There are multiple migrations with the same name")]
     DuplicateMigration,
-
     #[error("An underlying Hook canceled the action")]
     ActionCanceled,
-
+    #[error(
+        "Multiple tables exist with this table. Use `table_search` to search return all results"
+    )]
+    AmbiguousTable,
     #[error("Anyhow Error")]
     Other(#[from] anyhow::Error),
 }

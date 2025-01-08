@@ -637,3 +637,54 @@ fn should_be_able_to_write_custom_wheres() {
         assert_eq!(found.product_id, known_id);
     })
 }
+
+#[test]
+fn should_err_when_two_tables_have_the_same_name() {
+    async_std::task::block_on(async {
+        use welds::Client;
+        let conn = get_conn().await;
+        let trans = conn.begin().await.unwrap();
+
+        // make the tables with the same names
+        let sql1 = "CREATE TABLE trash1 ( id SERIAL, value text NOT NULL );";
+        let sql2 = "CREATE TABLE \"TRASH1\" ( id SERIAL, value text NOT NULL );";
+        trans.execute(sql1, &[]).await.unwrap();
+        trans.execute(sql2, &[]).await.unwrap();
+        let t = welds::detect::find_table(None as Option<String>, "trash1", &trans).await;
+        assert!(
+            t.is_err(),
+            "Expected to get error that two table have the same name"
+        );
+        trans.rollback().await.unwrap();
+    })
+}
+
+#[test]
+fn should_be_able_to_find_both_tables_with_the_same_name() {
+    async_std::task::block_on(async {
+        use welds::Client;
+        let conn = get_conn().await;
+        let trans = conn.begin().await.unwrap();
+
+        // make the tables with the same names
+        let sql1 = "CREATE TABLE trash1 ( id SERIAL, value text NOT NULL );";
+        let sql2 =
+            "CREATE TABLE \"TRASH1\" ( id SERIAL, blas text NOT NULL, value2 text NOT NULL );";
+        trans.execute(sql1, &[]).await.unwrap();
+        trans.execute(sql2, &[]).await.unwrap();
+        let mut t: Vec<_> = welds::detect::table_search(None as Option<String>, "trash1", &trans)
+            .await
+            .unwrap();
+        assert_eq!(t.len(), 2);
+
+        t.sort_by_key(|x| x.ident().name().to_string());
+
+        // t[0] == TRASH1
+        assert_eq!(t[0].columns().len(), 3);
+
+        // t[1] == trash1
+        assert_eq!(t[1].columns().len(), 2);
+
+        trans.rollback().await.unwrap();
+    })
+}

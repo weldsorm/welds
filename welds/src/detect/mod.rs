@@ -22,7 +22,14 @@ pub use table_def::{ColumnDef, DataType, RelationDef, TableDef, TableDefSingle};
 
 /// Returns a list of all user defined tables in the database
 /// requires feature `detect`
+#[deprecated(since = "0.4.11", note = "please use `find_all_tables` instead.")]
 pub async fn find_tables(client: &dyn Client) -> Result<Vec<TableDef>> {
+    find_all_tables(client).await
+}
+
+/// Returns a list of all user defined tables in the database
+/// requires feature `detect`
+pub async fn find_all_tables(client: &dyn Client) -> Result<Vec<TableDef>> {
     let syntax = client.syntax();
     let ts = TableScan::new(syntax);
     let sql = ts.table_scan_sql();
@@ -47,7 +54,9 @@ pub async fn find_tables(client: &dyn Client) -> Result<Vec<TableDef>> {
 }
 
 /// Returns the schema info for a given table in the database
-/// NOTE: does not include relationship info. use find_tables for that
+/// Will return Err if two tables with the same name exist. (Ex: "welds.Products" and "welds.products").
+/// Use table_search if you are expecting multiple table name.
+/// NOTE: does not include relationship info. use find_all_tables for that
 pub async fn find_table(
     namespace: Option<impl Into<String>>,
     tablename: impl Into<String>,
@@ -77,9 +86,54 @@ pub async fn find_table(
     let rows: Result<Vec<TableScanRow>> = raw_rows.drain(..).map(|r| r.try_into()).collect();
     let rows = rows?;
 
-    let table = build_table_defs(syntax, rows).pop().map(|x| x.into());
+    let mut tables = build_table_defs(syntax, rows);
+    if tables.len() > 1 {
+        return Err(crate::errors::WeldsError::AmbiguousTable);
+    }
+    let table = tables.pop().map(|x| x.into());
 
     Ok(table)
+}
+
+/// Returns the schema info for the given tables in the database that match the query
+/// Can use SQL wildcard.
+/// NOTE: namespace and tablename are case insensitive (using ilike)
+/// NOTE: Does not include relationship info. Use find_all_tables for that
+pub async fn table_search(
+    namespace: Option<impl Into<String>>,
+    tablename: impl Into<String>,
+    client: &dyn Client,
+) -> Result<Vec<TableDefSingle>> {
+    let syntax = client.syntax();
+    let ts = TableScan::new(syntax);
+    let sql = ts.single_table_scan_sql();
+    let mut args: ParamArgs = Vec::default();
+
+    let namespace: Option<String> = namespace
+        .map(|x| x.into())
+        .or(TableIdent::default_namespace(syntax).map(|s| s.to_string()));
+
+    let tablename: String = tablename.into();
+    args.push(&namespace);
+
+    // Mysql query needs the namespace param twice
+    if let Syntax::Mysql = syntax {
+        args.push(&namespace);
+    }
+
+    args.push(&tablename);
+
+    let mut raw_rows = client.fetch_rows(sql, &args).await?;
+
+    let rows: Result<Vec<TableScanRow>> = raw_rows.drain(..).map(|r| r.try_into()).collect();
+    let rows = rows?;
+
+    let tables: Vec<_> = build_table_defs(syntax, rows)
+        .into_iter()
+        .map(|x| x.into())
+        .collect();
+
+    Ok(tables)
 }
 
 fn link_fks_into_tables(fks: &[FkScanRow], tables: &mut [TableDef]) {

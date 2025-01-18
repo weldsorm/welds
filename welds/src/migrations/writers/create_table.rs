@@ -1,4 +1,4 @@
-use super::create_pk_index;
+use super::create_index;
 use crate::detect::TableDef;
 use crate::migrations::create_table::ColumnBuilder;
 use crate::migrations::create_table::IdBuilder;
@@ -48,7 +48,7 @@ pub fn from_builder(syntax: Syntax, tb: &TableBuilder) -> Vec<String> {
     let mut parts = vec![format!("CREATE TABLE {} ( {} )", tb.ident, columns)];
     let index_cols = tb.columns.iter().filter(|c| c.index.is_some());
     for col in index_cols {
-        parts.push(create_pk_index(&tb.ident, col));
+        parts.push(create_index(syntax, &tb.ident, col));
     }
     parts
 }

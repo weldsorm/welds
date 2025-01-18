@@ -1,4 +1,4 @@
-use super::types::{Index, Type};
+use super::types::{Index, OnDelete, Type};
 use crate::migrations::writers;
 use crate::migrations::MigrationWriter;
 use crate::model_traits::TableIdent;
@@ -93,6 +93,16 @@ impl ColumnBuilder {
 
     pub fn create_unique_index(mut self) -> Self {
         self.index = Some(Index::Unique);
+        self
+    }
+
+    pub fn create_foreign_key(
+        mut self,
+        table: impl Into<String>,
+        column: impl Into<String>,
+        on_delete: OnDelete,
+    ) -> Self {
+        self.index = Some(Index::ForeignKey((table.into(), column.into(), on_delete)));
         self
     }
 }

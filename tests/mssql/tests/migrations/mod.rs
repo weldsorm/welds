@@ -1,11 +1,7 @@
 use super::get_conn;
 use welds::detect::find_table;
 use welds::errors::Result;
-use welds::migrations::types::Type;
-use welds::migrations::MigrationFn;
-use welds::migrations::MigrationStep;
-use welds::migrations::{change_table, create_table, TableState};
-use welds::migrations::{down, up};
+use welds::migrations::prelude::*;
 use welds::Client;
 
 /************************************************
@@ -340,4 +336,56 @@ async fn should_be_able_to_run_manual_migration_step() {
 
     let list1: Vec<MigrationFn> = vec![manual_test_setup, manual_step];
     up(client, list1.as_slice()).await.unwrap();
+}
+
+/************************************************
+ * Testing FK indexes
+ * **********************************************/
+
+fn creating_a_fk_to_nontable_should_fail(_state: &TableState) -> Result<MigrationStep> {
+    let m = create_table("blarf")
+        .id(|c| c("id", Type::Int))
+        .column(|c| c("name", Type::String).create_foreign_key("trash", "t_id", OnDelete::Cascade));
+    Ok(MigrationStep::new("Create Trash FK", m))
+}
+
+#[tokio::test]
+async fn creating_a_fk_to_nontable_should_fail_test() {
+    let client = get_conn().await;
+    let client = &client;
+
+    // Run the migration
+    let list: Vec<MigrationFn> = vec![creating_a_fk_to_nontable_should_fail];
+    let result = up(client, list.as_slice()).await;
+
+    assert!(result.is_err());
+}
+
+fn creating_a_fk_to_table_should_be_ok_step_1(_state: &TableState) -> Result<MigrationStep> {
+    let m = create_table("other").id(|c| c("o_id", Type::Int));
+    Ok(MigrationStep::new("Create table for fk", m))
+}
+
+fn creating_a_fk_to_table_should_be_ok_step_2(_state: &TableState) -> Result<MigrationStep> {
+    let m = create_table("pk_table")
+        .id(|c| c("id", Type::Int))
+        .column(|c| {
+            c("other_id", Type::Int).create_foreign_key("other", "o_id", OnDelete::Cascade)
+        });
+    Ok(MigrationStep::new("Create Trash FK", m))
+}
+
+#[tokio::test]
+async fn creating_a_fk_to_table_should_be_ok_test() {
+    let client = get_conn().await;
+    let client = &client;
+
+    // Run the migration
+    let list: Vec<MigrationFn> = vec![
+        creating_a_fk_to_table_should_be_ok_step_1,
+        creating_a_fk_to_table_should_be_ok_step_2,
+    ];
+    let result = up(client, list.as_slice()).await;
+
+    assert!(result.is_ok());
 }

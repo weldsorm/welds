@@ -34,6 +34,35 @@ fn should_create_basic_table() {
 }
 
 #[test]
+fn should_be_able_to_make_a_fk() {
+    let m = create_table("s1.MyTable")
+        .id(|c| c("id", Type::Int))
+        .column(|c| {
+            c("other_id", Type::Int).create_foreign_key("others", "o_id", OnDelete::Cascade)
+        });
+
+    //mysql
+    let sql = MigrationWriter::up_sql(&m, Syntax::Mysql).pop().unwrap();
+    let expected = r#"ALTER TABLE s1.MyTable ADD CONSTRAINT fk_MyTable_other_id FOREIGN KEY (other_id) REFERENCES others (o_id) ON DELETE CASCADE"#;
+    assert_eq!(sql, expected.trim());
+
+    //postgres
+    let sql = MigrationWriter::up_sql(&m, Syntax::Postgres).pop().unwrap();
+    let expected = r#"ALTER TABLE s1.MyTable ADD CONSTRAINT fk_MyTable_other_id FOREIGN KEY (other_id) REFERENCES others (o_id) ON DELETE CASCADE"#;
+    assert_eq!(sql, expected.trim());
+
+    //mysql
+    let sql = MigrationWriter::up_sql(&m, Syntax::Mssql).pop().unwrap();
+    let expected = r#"ALTER TABLE s1.MyTable ADD CONSTRAINT fk_MyTable_other_id FOREIGN KEY (other_id) REFERENCES others (o_id) ON DELETE CASCADE"#;
+    assert_eq!(sql, expected.trim());
+
+    //sqlite
+    let sql2 = MigrationWriter::up_sql(&m, Syntax::Sqlite).pop().unwrap();
+    let expected = r#""#;
+    assert_eq!(sql2, expected.trim());
+}
+
+#[test]
 fn should_drop_basic_table() {
     let m = create_table("s1.MyTable")
         .id(|c| c("id", Type::Int))

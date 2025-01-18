@@ -109,6 +109,24 @@ where
 pub enum Index {
     Default,
     Unique,
+    ForeignKey((String, String, OnDelete)),
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// These are types of Indexes that can be created
+pub enum OnDelete {
+    /// Automatically deletes rows in the child table that reference the deleted row in the parent table.
+    Cascade,
+    /// Sets the foreign key column in the child table to NULL when the referenced row in the parent table is deleted.
+    SetNull,
+    /// Sets the foreign key column in the child table to its default value when the referenced row in the parent table is deleted.
+    /// WARNING: Requires the foreign key column to have a default value defined.
+    SetDefault,
+    /// Prevents the deletion of the referenced row in the parent table if any child rows reference it.
+    /// This is the default behavior in most databases when ON DELETE is not explicitly specified.
+    Restrict,
+    /// Similar to RESTRICT, but the check is deferred until the end of the current transaction in some databases.
+    NoAction,
 }
 
 #[cfg(test)]

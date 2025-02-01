@@ -8,6 +8,7 @@ use syn::Ident;
 pub(crate) struct Info {
     pub defstruct: Ident,
     pub schemastruct: Ident,
+    pub colstruct: Ident,
     pub columns: Vec<Column>,
     pub pks: Vec<Column>,
     pub relations: Vec<Relation>,
@@ -26,6 +27,8 @@ impl Info {
         let defstruct = attributes::get_scructname(ast);
         let schemastruct_name = format!("{}Schema", defstruct);
         let schemastruct = Ident::new(&schemastruct_name, defstruct.span());
+        let colstruct_name = format!("{}Columns", defstruct);
+        let colstruct = Ident::new(&colstruct_name, defstruct.span());
         let relations_struct_name = format!("{}Relation", defstruct);
         let relations_struct = Ident::new(&relations_struct_name, defstruct.span());
         let tablename = attributes::get_tablename(ast);
@@ -42,6 +45,7 @@ impl Info {
             relations,
             hooks,
             schemastruct,
+            colstruct,
             relations_struct,
             tablename,
             schemaname,
@@ -64,6 +68,7 @@ mod tests {
             Info {
                 defstruct: Ident::new("Mock", Span::call_site()),
                 schemastruct: Ident::new("MockSchema", Span::call_site()),
+                colstruct: Ident::new("MockColumns", Span::call_site()),
                 columns: Vec::default(),
                 pks: Vec::default(),
                 relations: Vec::default(),

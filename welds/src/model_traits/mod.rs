@@ -11,7 +11,7 @@ pub trait TableInfo {
 }
 
 /// The db column name to use for a field
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub struct Column {
     name: String,
     rust_type: String,
@@ -46,6 +46,8 @@ impl Column {
 /// How welds knows what columns exist on your model
 /// This trait is impl by the model's schema not the model
 pub trait TableColumns {
+    type ColumnStruct: TableColumns + Default;
+
     // Used to identify models that have N columns in their primary_key
     fn primary_keys() -> Vec<Column>;
     fn columns() -> Vec<Column>;

@@ -1,19 +1,35 @@
+use crate::column::Column;
 use crate::info::Info;
 use proc_macro2::TokenStream;
 use quote::quote;
 
 pub(crate) fn write(info: &Info) -> TokenStream {
-    let columns = write_cols(info);
-    let pks = write_pks(info);
-    write_for_db(info, &pks, &columns)
+    let colstruct = write_colstruct(info);
+    let columns = write_cols(&info.columns);
+    let pks = write_cols(&info.pks);
+    write_for_db(info, &colstruct, &pks, &columns)
 }
 
-pub(crate) fn write_cols(info: &Info) -> TokenStream {
-    let parts: Vec<_> = info
+pub(crate) fn write_colstruct(info: &Info) -> TokenStream {
+    let wp = &info.welds_path;
+    let name = &info.colstruct;
+
+    let fields: Vec<_> = info
+        .columns
+        .iter()
+        .filter(|c| !c.ignore)
+        .map(|c| {
+            let name = &c.field;
+            quote! { pub #name: #wp::model_traits::Column }
+        })
+        .collect();
+
+    let default_fields: Vec<_> = info
         .columns
         .iter()
         .filter(|x| !x.ignore)
         .map(|c| {
+            let name = &c.field;
             let ft = &c.field_type;
             let ty = quote! { #ft };
             let nullable = c.is_option;
@@ -22,46 +38,77 @@ pub(crate) fn write_cols(info: &Info) -> TokenStream {
             //}
             let dbname = c.dbname.as_str();
             let rust_type = ty.to_string();
-            quote! { Column::new(#dbname, #rust_type, #nullable) }
+            quote! { #name: #wp::model_traits::Column::new(#dbname, #rust_type, #nullable) }
         })
         .collect();
-    quote! { vec![ #(#parts),* ] }
+
+    quote! {
+        pub struct #name {
+            #(#fields,)*
+        }
+
+        impl Default for #name {
+            fn default() -> Self {
+                Self {
+                    #(#default_fields,)*
+                }
+            }
+        }
+    }
 }
 
-pub(crate) fn write_pks(info: &Info) -> TokenStream {
-    let parts: Vec<_> = info
-        .pks
+pub(crate) fn write_cols(columns: &[Column]) -> TokenStream {
+    let parts: Vec<_> = columns
         .iter()
         .filter(|x| !x.ignore)
         .map(|c| {
-            let ft = &c.field_type;
-            let ty = quote! { #ft };
-            let nullable = c.is_option;
-            let dbname = c.dbname.as_str();
-            let rust_type = ty.to_string();
-            quote! { Column::new(#dbname, #rust_type, #nullable) }
+            let name = &c.field;
+            quote! { columns.#name }
         })
         .collect();
     quote! { vec![ #(#parts),* ] }
 }
 
-pub(crate) fn write_for_db(info: &Info, pks: &TokenStream, columns: &TokenStream) -> TokenStream {
+pub(crate) fn write_for_db(
+    info: &Info,
+    colstruct: &TokenStream,
+    pks: &TokenStream,
+    columns: &TokenStream,
+) -> TokenStream {
     let wp = &info.welds_path;
-    let def = &info.schemastruct;
+    let ident_schemastruct = &info.schemastruct;
+    let ident_colstruct = &info.colstruct;
 
     quote! {
+        #colstruct
 
-        impl #wp::model_traits::TableColumns for #def {
+        impl #wp::model_traits::TableColumns for #ident_colstruct {
+            type ColumnStruct = #ident_colstruct;
+
             fn primary_keys() -> Vec<#wp::model_traits::Column> {
-                use #wp::model_traits::Column;
+                #[allow(dead_code)]
+                let columns = Self::default();
                 #pks
             }
+
             fn columns() -> Vec<#wp::model_traits::Column> {
-                use #wp::model_traits::Column;
+                #[allow(dead_code)]
+                let columns = Self::default();
                 #columns
             }
         }
 
+        impl #wp::model_traits::TableColumns for #ident_schemastruct {
+            type ColumnStruct = #ident_colstruct;
+
+            fn primary_keys() -> Vec<#wp::model_traits::Column> {
+                #ident_colstruct::primary_keys()
+            }
+
+            fn columns() -> Vec<#wp::model_traits::Column> {
+                #ident_colstruct::columns()
+            }
+        }
     }
 }
 
@@ -75,26 +122,52 @@ mod tests {
             .add_pk("id", "i64")
             .add_column("num", "f32", true);
         let ts = write(&info);
-        let code = ts.to_string();
 
-        let expected: &str = r#"
-            impl welds::model_traits::TableColumns for MockSchema {
-                fn primary_keys() -> Vec<welds::model_traits::Column> {
-                    use welds::model_traits::Column;
-                    vec![Column::new("id", "i64" , false)]
-                }
-                fn columns() -> Vec<welds::model_traits::Column> {
-                    use welds::model_traits::Column;
-                    vec![Column::new("id", "i64", false), Column::new("num", "f32",  true)]
+        let expected = quote! {
+            pub struct MockColumns {
+                pub id: welds::model_traits::Column,
+                pub num: welds::model_traits::Column,
+            }
+
+            impl Default for MockColumns {
+                fn default() -> Self {
+                    Self {
+                        id: welds::model_traits::Column::new("id", "i64", false),
+                        num: welds::model_traits::Column::new("num", "f32", true),
+                    }
                 }
             }
-        "#;
 
-        eprintln!("CODE: \n{}\n", code);
-        assert_eq!(cleaned(&code), cleaned(expected));
-    }
+            impl welds::model_traits::TableColumns for MockColumns {
+                type ColumnStruct = MockColumns;
 
-    fn cleaned(input: &str) -> String {
-        input.chars().filter(|c| !c.is_whitespace()).collect()
+                fn primary_keys() -> Vec<welds::model_traits::Column> {
+                    #[allow(dead_code)]
+                    let columns = Self::default();
+                    vec![columns.id]
+                }
+
+                fn columns() -> Vec<welds::model_traits::Column> {
+                    #[allow(dead_code)]
+                    let columns = Self::default();
+                    vec![columns.id, columns.num]
+                }
+            }
+
+            impl welds::model_traits::TableColumns for MockSchema {
+                type ColumnStruct = MockColumns;
+
+                fn primary_keys() -> Vec<welds::model_traits::Column> {
+                    MockColumns::primary_keys()
+                }
+
+                fn columns() -> Vec<welds::model_traits::Column> {
+                    MockColumns::columns()
+                }
+            }
+        };
+
+        eprintln!("CODE: \n{ts}\n");
+        assert_eq!(ts.to_string(), expected.to_string());
     }
 }

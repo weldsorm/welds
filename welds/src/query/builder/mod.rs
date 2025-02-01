@@ -1,7 +1,7 @@
 pub use super::clause::manualwhereparam::ManualWhereParam;
 use super::clause::{self, AsOptField};
 use super::select_cols::SelectBuilder;
-use super::update::bulk::UpdateBuilder;
+pub use super::update::bulk::UpdateBuilder;
 use crate::model_traits::{HasSchema, TableColumns, TableInfo, UniqueIdentifier};
 use crate::query::clause::exists::ExistIn;
 use crate::query::clause::{AsFieldName, ClauseAdder, OrderBy};
@@ -269,7 +269,7 @@ where
     }
 
     /// Changes this query Into a sql UPDATE.
-    /// sets the value from the lambda in the database
+    /// Sets the value from the lambda in the database
     pub fn set<V, FIELD>(
         self,
         lam: impl Fn(<T as HasSchema>::Schema) -> FIELD,
@@ -282,6 +282,20 @@ where
     {
         let ub = UpdateBuilder::new(self);
         ub.set(lam, value)
+    }
+
+    /// Changes this query Into a sql UPDATE.
+    /// Sets a custom [`ClauseAdder`] value from the lambda in the database
+    pub fn set_col<V>(
+        self,
+        lam: impl Fn(<T as HasSchema>::Schema) -> Box<dyn ClauseAdder>,
+    ) -> UpdateBuilder<T>
+    where
+        <T as HasSchema>::Schema: Default,
+        V: 'static + Sync + Send + Clone + Param,
+    {
+        let ub = UpdateBuilder::new(self);
+        ub.set_col::<V>(lam)
     }
 
     /// Nulls out the value from the lambda in the database

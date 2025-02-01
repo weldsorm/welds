@@ -35,7 +35,7 @@ where
         }
     }
 
-    /// sets the value from the lambda in the database
+    /// Sets the value from the lambda in the database
     pub fn set<V, FIELD>(
         mut self,
         lam: impl Fn(<T as HasSchema>::Schema) -> FIELD,
@@ -50,6 +50,19 @@ where
         let field = lam(Default::default());
         let col_raw = field.colname().to_string();
         self.sets.push(Box::new(SetColVal { col_raw, val }));
+        self
+    }
+
+    /// Sets a custom [`ClauseAdder`] value from the lambda in the database
+    pub fn set_col<V>(
+        mut self,
+        lam: impl Fn(<T as HasSchema>::Schema) -> Box<dyn ClauseAdder>,
+    ) -> Self
+    where
+        <T as HasSchema>::Schema: Default,
+        V: 'static + Sync + Send + Clone + Param,
+    {
+        self.sets.push(lam(Default::default()));
         self
     }
 

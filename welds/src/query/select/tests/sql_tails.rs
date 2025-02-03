@@ -42,6 +42,7 @@ impl TableInfo for ProductSchema {
 }
 
 impl TableColumns for ProductSchema {
+    type ColumnStruct = Self;
     fn columns() -> Vec<Column> {
         vec![
             Column::new("a", "i32", false),

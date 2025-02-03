@@ -41,6 +41,7 @@ impl TableInfo for Product2Schema {
 }
 
 impl TableColumns for Product2Schema {
+    type ColumnStruct = Self;
     fn columns() -> Vec<Column> {
         vec![Column::new("dbname", "String", true)]
     }

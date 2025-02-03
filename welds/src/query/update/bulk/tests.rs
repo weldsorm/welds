@@ -40,7 +40,7 @@ fn should_be_able_to_write_simple_set_value() {
 }
 
 #[test]
-fn should_be_able_to_write_complex_set_value() {
+fn should_be_able_to_write_complex_set_values() {
     futures::executor::block_on(async move {
         // setup the query
         let q = QueryBuilder::<Product>::new().where_col(|c| c.id.gt(10));
@@ -58,5 +58,26 @@ fn should_be_able_to_write_complex_set_value() {
         assert_eq!(expected, &ran_sql);
 
         assert_eq!(client.args_count().unwrap(), 3);
+    });
+}
+
+#[test]
+fn should_be_able_to_write_complex_set_col_values() {
+    futures::executor::block_on(async move {
+        let q = QueryBuilder::<Product>::new().where_col(|c| c.id.gt(10));
+
+        let bulk = q.set_col(|x| x.a.equal(2)).set_col(|p| p.b.equal(2));
+
+        //setup the fake client and run it.
+        let client = welds_connections::noop::build(Syntax::Postgres);
+        let _ = bulk.run(&client).await;
+
+        let ran_sql = client
+            .last_sql()
+            .expect("Expected to get SQL back from client");
+
+        //let expected = "UPDATE nums SET nums.a = $1, nums.b = $2 WHERE ( nums.id > $3 )";
+        let expected = "UPDATE nums SET \"a\"=$1, \"b\"=$2 WHERE ( nums.id > $3 )";
+        assert_eq!(expected, &ran_sql);
     });
 }

@@ -36,6 +36,24 @@ where
     }
 
     /// Sets the value from the lambda in the database
+    ///
+    /// ```
+    /// use welds::prelude::*;
+    ///
+    /// #[derive(Debug, Default, WeldsModel)]
+    /// #[welds(table = "things")]
+    /// struct Thing {
+    ///     #[welds(primary_key)]
+    ///     pub id: i32,
+    ///     pub foo: i32,
+    /// }
+    ///
+    /// async fn example(db: &dyn Client) -> welds::errors::Result<()> {
+    ///     Thing::all().set(|x| x.foo, 42).run(db).await?;
+    ///     // [UPDATE things SET foo = ?]   (?=42)
+    ///     Ok(())
+    /// }
+    ///
     pub fn set<V, FIELD>(
         mut self,
         lam: impl Fn(<T as HasSchema>::Schema) -> FIELD,
@@ -54,13 +72,30 @@ where
     }
 
     /// Sets a custom [`ClauseAdder`] value from the lambda in the database
-    pub fn set_col<V>(
-        mut self,
-        lam: impl Fn(<T as HasSchema>::Schema) -> Box<dyn ClauseAdder>,
-    ) -> Self
+    /// This is funcionally the same as set, but you can provide any thing that impl [`ClauseAdder`]
+    ///
+    /// ```
+    /// use welds::prelude::*;
+    ///
+    /// #[derive(Debug, Default, WeldsModel)]
+    /// #[welds(table = "things")]
+    /// struct Thing {
+    ///     #[welds(primary_key)]
+    ///     pub id: i32,
+    ///     pub foo: i32,
+    /// }
+    ///
+    /// async fn example(db: &dyn Client) -> welds::errors::Result<()> {
+    ///     Thing::all().set_col(|x| x.foo.equal(42) ).run(db).await?;
+    ///     // [UPDATE things SET foo = ?]   (?=42)
+    ///     Ok(())
+    /// }
+    ///
+    /// ```
+    pub fn set_col(mut self, lam: impl Fn(<T as HasSchema>::Schema) -> Box<dyn ClauseAdder>) -> Self
     where
         <T as HasSchema>::Schema: Default,
-        V: 'static + Sync + Send + Clone + Param,
+        //V: 'static + Sync + Send + Clone + Param,
     {
         self.sets.push(lam(Default::default()));
         self

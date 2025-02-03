@@ -25,7 +25,6 @@ async fn get_conn() -> PostgresClient {
 pub struct Count {
     pub count: i32,
 }
-
 #[test]
 fn should_be_able_to_connect() {
     async_std::task::block_on(async {
@@ -434,6 +433,20 @@ fn should_be_able_to_bulk_update2() {
         let q = Product::all()
             .map_query(|p| p.order)
             .set(|x| x.code, "test2");
+        let sql = q.to_sql(Syntax::Postgres);
+        eprintln!("SQL: {}", sql);
+        q.run(&conn).await.unwrap();
+    })
+}
+
+#[test]
+fn should_be_able_to_bulk_update_by_set_col() {
+    async_std::task::block_on(async {
+        let conn = get_conn().await;
+        let q = Product::all()
+            .map_query(|p| p.order)
+            .where_col(|c| c.id.equal(2342534))
+            .set_col(|x| x.code.equal("test2"));
         let sql = q.to_sql(Syntax::Postgres);
         eprintln!("SQL: {}", sql);
         q.run(&conn).await.unwrap();

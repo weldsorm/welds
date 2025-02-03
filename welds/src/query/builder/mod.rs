@@ -270,6 +270,24 @@ where
 
     /// Changes this query Into a sql UPDATE.
     /// Sets the value from the lambda in the database
+    ///
+    /// ```
+    /// use welds::prelude::*;
+    ///
+    /// #[derive(Debug, Default, WeldsModel)]
+    /// #[welds(table = "things")]
+    /// struct Thing {
+    ///     #[welds(primary_key)]
+    ///     pub id: i32,
+    ///     pub foo: i32,
+    /// }
+    ///
+    /// async fn example(db: &dyn Client) -> welds::errors::Result<()> {
+    ///     Thing::all().set(|x| x.foo, 42).run(db).await?;
+    ///     // [UPDATE things SET foo = ?]   (?=42)
+    ///     Ok(())
+    /// }
+    ///
     pub fn set<V, FIELD>(
         self,
         lam: impl Fn(<T as HasSchema>::Schema) -> FIELD,
@@ -286,16 +304,35 @@ where
 
     /// Changes this query Into a sql UPDATE.
     /// Sets a custom [`ClauseAdder`] value from the lambda in the database
-    pub fn set_col<V>(
+    ///
+    /// ```
+    /// use welds::prelude::*;
+    ///
+    /// #[derive(Debug, Default, WeldsModel)]
+    /// #[welds(table = "thing")]
+    /// struct Thing {
+    ///     #[welds(primary_key)]
+    ///     pub id: i32,
+    ///     pub foo: i32,
+    /// }
+    ///
+    /// async fn example(db: &dyn Client) -> welds::errors::Result<()> {
+    ///     Thing::all().set_col(|x| x.foo.equal(42) ).run(db).await?;
+    ///     Ok(())
+    /// }
+    ///
+    /// ```
+    ///
+    pub fn set_col(
         self,
         lam: impl Fn(<T as HasSchema>::Schema) -> Box<dyn ClauseAdder>,
     ) -> UpdateBuilder<T>
     where
         <T as HasSchema>::Schema: Default,
-        V: 'static + Sync + Send + Clone + Param,
+        //V: 'static + Sync + Send + Clone + Param,
     {
         let ub = UpdateBuilder::new(self);
-        ub.set_col::<V>(lam)
+        ub.set_col(lam)
     }
 
     /// Nulls out the value from the lambda in the database

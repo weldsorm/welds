@@ -243,6 +243,18 @@ async fn should_be_able_to_bulk_update() {
 }
 
 #[tokio::test]
+async fn should_be_able_to_bulk_update_by_set_col() {
+    let conn = get_conn().await;
+    let q = Product::all()
+        .map_query(|p| p.order)
+        .where_col(|c| c.id.equal(2342534))
+        .set_col(|x| x.code.equal("test2"));
+    let sql = q.to_sql(Syntax::Postgres);
+    eprintln!("SQL: {}", sql);
+    q.run(&conn).await.unwrap();
+}
+
+#[tokio::test]
 async fn should_be_able_to_bulk_insert() {
     let conn = get_conn().await;
     let trans = conn.begin().await.unwrap();

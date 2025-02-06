@@ -1,4 +1,4 @@
-use super::{AsFieldName, AsOptField, ClauseAdder, ClauseColVal, ClauseColValList};
+use super::{AsFieldName, AsOptField, ClauseColVal, ClauseColValEqual, ClauseColValList};
 use crate::query::optional::HasSomeNone;
 use crate::query::optional::Optional;
 use std::marker::PhantomData;
@@ -33,7 +33,7 @@ where
         }
     }
 
-    pub fn equal(self, v: impl Into<Optional<T>>) -> Box<dyn ClauseAdder>
+    pub fn equal(self, v: impl Into<Optional<T>>) -> Box<ClauseColValEqual<T>>
     where
         T: Param,
     {
@@ -41,7 +41,7 @@ where
         let is_none = opt.is_none();
         let val: Option<T> = opt.into();
 
-        let cv = ClauseColVal::<T> {
+        let cv = ClauseColValEqual::<T> {
             null_clause: is_none,
             not_clause: false,
             col: self.col,
@@ -51,7 +51,7 @@ where
         Box::new(cv)
     }
 
-    pub fn not_equal(self, v: impl Into<Optional<T>>) -> Box<dyn ClauseAdder>
+    pub fn not_equal(self, v: impl Into<Optional<T>>) -> Box<ClauseColVal<T>>
     where
         T: Param,
     {
@@ -69,7 +69,7 @@ where
         Box::new(cv)
     }
 
-    pub fn gt(self, v: impl Into<Optional<T>>) -> Box<dyn ClauseAdder>
+    pub fn gt(self, v: impl Into<Optional<T>>) -> Box<ClauseColVal<T>>
     where
         T: Param,
     {
@@ -87,12 +87,12 @@ where
         Box::new(cv)
     }
 
-    pub fn lt(self, v: impl Into<Optional<T>>) -> Box<dyn ClauseAdder>
+    pub fn lt(self, v: impl Into<Optional<T>>) -> Box<ClauseColVal<T>>
     where
         T: Param,
     {
         let opt = v.into();
-        let is_none = opt.is_none();
+        //let is_none = opt.is_none();
         let val: Option<T> = opt.into();
 
         let cv = ClauseColVal::<T> {
@@ -105,7 +105,7 @@ where
         Box::new(cv)
     }
 
-    pub fn gte(self, v: impl Into<Optional<T>>) -> Box<dyn ClauseAdder>
+    pub fn gte(self, v: impl Into<Optional<T>>) -> Box<ClauseColVal<T>>
     where
         T: Param,
     {
@@ -123,7 +123,7 @@ where
         Box::new(cv)
     }
 
-    pub fn lte(self, v: impl Into<Optional<T>>) -> Box<dyn ClauseAdder>
+    pub fn lte(self, v: impl Into<Optional<T>>) -> Box<ClauseColVal<T>>
     where
         T: Param,
     {
@@ -144,7 +144,7 @@ where
     /// Will write SQL checking for any matching value in from list
     /// NOTE: the negation of this operator is not_all(&[])
     #[cfg(feature = "postgres")]
-    pub fn any<P>(self, slice: &[P]) -> Box<dyn ClauseAdder>
+    pub fn any<P>(self, slice: &[P]) -> Box<ClauseColValList<T>>
     where
         P: Into<T> + Clone,
         Vec<T>: Param,
@@ -163,7 +163,7 @@ where
 
     /// Will make sure the columns values does NOT match ALL values in the list
     #[cfg(feature = "postgres")]
-    pub fn not_all<P>(self, slice: &[P]) -> Box<dyn ClauseAdder>
+    pub fn not_all<P>(self, slice: &[P]) -> Box<ClauseColValList<T>>
     where
         P: Into<T> + Clone,
         Vec<T>: Param,

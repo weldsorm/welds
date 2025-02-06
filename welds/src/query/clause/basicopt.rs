@@ -1,4 +1,4 @@
-use super::{AsFieldName, AsOptField, ClauseAdder, ClauseColVal};
+use super::{AsFieldName, AsOptField, ClauseColVal, ClauseColValEqual};
 use crate::query::optional::HasSomeNone;
 use crate::query::optional::Optional;
 use std::marker::PhantomData;
@@ -33,14 +33,14 @@ where
         }
     }
 
-    pub fn equal(self, v: impl Into<Optional<T>>) -> Box<dyn ClauseAdder>
+    pub fn equal(self, v: impl Into<Optional<T>>) -> Box<ClauseColValEqual<T>>
     where
         T: Param,
     {
         let opt = v.into();
         let is_none = opt.is_none();
         let val: Option<T> = opt.into();
-        let cv = ClauseColVal::<T> {
+        let cv = ClauseColValEqual::<T> {
             null_clause: is_none,
             not_clause: false,
             col: self.col,
@@ -50,7 +50,7 @@ where
         Box::new(cv)
     }
 
-    pub fn not_equal(self, v: impl Into<Optional<T>>) -> Box<dyn ClauseAdder>
+    pub fn not_equal(self, v: impl Into<Optional<T>>) -> Box<ClauseColVal<T>>
     where
         T: Param,
     {

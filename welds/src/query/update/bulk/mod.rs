@@ -3,11 +3,11 @@ use crate::model_traits::UniqueIdentifier;
 use crate::model_traits::{HasSchema, TableColumns, TableInfo};
 use crate::query::builder::QueryBuilder;
 use crate::query::clause::wherein::WhereIn;
-use crate::query::clause::ClauseAdder;
 use crate::query::clause::ParamArgs;
 use crate::query::clause::{AsFieldName, AsOptField};
+use crate::query::clause::{AssignmentAdder, ClauseAdder};
+use crate::query::clause::{SetColNull, SetColVal};
 use crate::query::helpers::{build_where, join_sql_parts};
-use crate::writers::ColumnWriter;
 use crate::writers::NextParam;
 use crate::Client;
 use crate::Syntax;
@@ -20,7 +20,7 @@ use welds_connections::Param;
 pub struct UpdateBuilder<T> {
     _t: PhantomData<T>,
     pub(crate) query_builder: QueryBuilder<T>,
-    pub(crate) sets: Vec<Box<dyn ClauseAdder>>,
+    pub(crate) sets: Vec<Box<dyn AssignmentAdder>>,
 }
 
 impl<T> UpdateBuilder<T>
@@ -71,8 +71,7 @@ where
         self
     }
 
-    /// Sets a custom [`ClauseAdder`] value from the lambda in the database
-    /// This is funcionally the same as set, but you can provide any thing that impl [`ClauseAdder`]
+    /// Sets a value from the lambda into the database
     ///
     /// ```
     /// use welds::prelude::*;
@@ -92,12 +91,15 @@ where
     /// }
     ///
     /// ```
-    pub fn set_col(mut self, lam: impl Fn(<T as HasSchema>::Schema) -> Box<dyn ClauseAdder>) -> Self
+    pub fn set_col(
+        mut self,
+        lam: impl Fn(<T as HasSchema>::Schema) -> Box<dyn AssignmentAdder>,
+    ) -> Self
     where
         <T as HasSchema>::Schema: Default,
-        //V: 'static + Sync + Send + Clone + Param,
     {
-        self.sets.push(lam(Default::default()));
+        let clase = lam(Default::default());
+        self.sets.push(clase);
         self
     }
 
@@ -173,7 +175,7 @@ fn build_head<'s, 'args, 'p, S>(
     next_params: &NextParam,
     alias: &str,
     args: &'args mut Option<ParamArgs<'p>>,
-    sets: &'s [Box<dyn ClauseAdder>],
+    sets: &'s [Box<dyn AssignmentAdder>],
 ) -> Option<String>
 where
     's: 'p,
@@ -194,52 +196,6 @@ where
     let set_sql = set_parts.join(", ");
 
     Some(format!("UPDATE {tn} SET {sets}", tn = tn, sets = set_sql))
-}
-
-pub struct SetColVal<T> {
-    pub col_raw: String,
-    pub val: T,
-}
-
-impl<T> ClauseAdder for SetColVal<T>
-where
-    T: Clone + Send + Sync + Param,
-{
-    /// Add the argument to the list of Arguments to send to the database
-    fn bind<'lam, 'args, 'p>(&'lam self, args: &'args mut ParamArgs<'p>)
-    where
-        'lam: 'p,
-    {
-        args.push(&self.val);
-    }
-
-    /// Returns the SQL snipit for this clause
-    fn clause(&self, syntax: Syntax, _alias: &str, next_params: &NextParam) -> Option<String> {
-        let colname = ColumnWriter::new(syntax).excape(&self.col_raw);
-        let sql = format!("{}={}", colname, next_params.next());
-        Some(sql)
-    }
-}
-
-pub struct SetColNull {
-    pub col_raw: String,
-}
-
-impl ClauseAdder for SetColNull {
-    /// Add the argument to the list of Arguments to send to the database
-    fn bind<'lam, 'args, 'p>(&'lam self, _args: &'args mut ParamArgs<'p>)
-    where
-        'lam: 'p,
-    {
-        // no args added
-    }
-
-    /// Returns the SQL snipit for this clause
-    fn clause(&self, syntax: Syntax, _alias: &str, _next_params: &NextParam) -> Option<String> {
-        let colname = ColumnWriter::new(syntax).excape(&self.col_raw);
-        let sql = format!("{}=NULL", colname);
-        Some(sql)
-    }
 }
 
 pub(crate) fn build_where_update<'q, 'w, 'args, 'p, T>(

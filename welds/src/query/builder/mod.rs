@@ -4,7 +4,7 @@ use super::select_cols::SelectBuilder;
 pub use super::update::bulk::UpdateBuilder;
 use crate::model_traits::{HasSchema, TableColumns, TableInfo, UniqueIdentifier};
 use crate::query::clause::exists::ExistIn;
-use crate::query::clause::{AsFieldName, ClauseAdder, OrderBy};
+use crate::query::clause::{AsFieldName, AssignmentAdder, ClauseAdder, OrderBy};
 use crate::relations::{HasRelations, Relationship};
 use crate::writers::alias::TableAlias;
 use std::marker::PhantomData;
@@ -303,7 +303,7 @@ where
     }
 
     /// Changes this query Into a sql UPDATE.
-    /// Sets a custom [`ClauseAdder`] value from the lambda in the database
+    /// Sets a value from the lambda into the database
     ///
     /// ```
     /// use welds::prelude::*;
@@ -325,11 +325,10 @@ where
     ///
     pub fn set_col(
         self,
-        lam: impl Fn(<T as HasSchema>::Schema) -> Box<dyn ClauseAdder>,
+        lam: impl Fn(<T as HasSchema>::Schema) -> Box<dyn AssignmentAdder>,
     ) -> UpdateBuilder<T>
     where
         <T as HasSchema>::Schema: Default,
-        //V: 'static + Sync + Send + Clone + Param,
     {
         let ub = UpdateBuilder::new(self);
         ub.set_col(lam)

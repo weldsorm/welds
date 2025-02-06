@@ -446,7 +446,8 @@ fn should_be_able_to_bulk_update_by_set_col() {
         let q = Product::all()
             .map_query(|p| p.order)
             .where_col(|c| c.id.equal(2342534))
-            .set_col(|x| x.code.equal("test2"));
+            .set_col(|x| x.code.equal("test2"))
+            .set_col(|x| x.quantity.equal(None));
         let sql = q.to_sql(Syntax::Postgres);
         eprintln!("SQL: {}", sql);
         q.run(&conn).await.unwrap();

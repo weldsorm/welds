@@ -1,4 +1,4 @@
-use super::{AsFieldName, ClauseAdder, ClauseColVal};
+use super::{AsFieldName, ClauseColVal, ClauseColValEqual};
 use std::marker::PhantomData;
 use welds_connections::Param;
 
@@ -29,11 +29,11 @@ where
         }
     }
 
-    pub fn equal(self, v: impl Into<T>) -> Box<dyn ClauseAdder>
+    pub fn equal(self, v: impl Into<T>) -> Box<ClauseColValEqual<T>>
     where
         T: Param,
     {
-        let cv = ClauseColVal::<T> {
+        let cv = ClauseColValEqual::<T> {
             null_clause: false,
             not_clause: false,
             col: self.col,
@@ -43,7 +43,7 @@ where
         Box::new(cv)
     }
 
-    pub fn not_equal(self, v: impl Into<T>) -> Box<dyn ClauseAdder>
+    pub fn not_equal(self, v: impl Into<T>) -> Box<ClauseColVal<T>>
     where
         T: Param,
     {

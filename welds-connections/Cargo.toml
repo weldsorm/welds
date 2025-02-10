@@ -29,8 +29,8 @@ description = "An async ORM for (postgres, mssql, mysql, sqlite)"
 
 [dependencies]
 async-trait = "0.1"
-bb8 = { version="0.8", optional=true }
-bb8-tiberius = { version="0.15", optional=true }
+bb8 = { version="0.9", optional=true }
+bb8-tiberius = { version="0.16", optional=true }
 tiberius = { version = "0.12", features = ["tokio"], optional = true }
 futures = {version= "0.3", optional=true }
 futures-util = { version= "0.3", optional=true }

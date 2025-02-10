@@ -54,7 +54,7 @@ impl TransactStart for MssqlClient {
 
 pub async fn connect(cs: &str) -> Result<MssqlClient> {
     let mgr = bb8_tiberius::ConnectionManager::build(cs)?;
-    let pool = bb8::Pool::builder().max_size(2).build(mgr).await.unwrap();
+    let pool = bb8::Pool::builder().build(mgr).await.unwrap();
     Ok(MssqlClient { pool })
 }
 

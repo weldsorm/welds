@@ -343,9 +343,11 @@ async fn should_be_able_to_run_manual_migration_step() {
  * **********************************************/
 
 fn creating_a_fk_to_nontable_should_fail(_state: &TableState) -> Result<MigrationStep> {
-    let m = create_table("blarf")
+    let m = create_table("blarf2")
         .id(|c| c("id", Type::Int))
-        .column(|c| c("name", Type::String).create_foreign_key("trash", "t_id", OnDelete::Cascade));
+        .column(|c| {
+            c("name", Type::String).create_foreign_key("blarf2_trash", "t_id", OnDelete::Cascade)
+        });
     Ok(MigrationStep::new("Create Trash FK", m))
 }
 
@@ -362,7 +364,7 @@ async fn creating_a_fk_to_nontable_should_fail_test() {
 }
 
 fn creating_a_fk_to_table_should_be_ok_step_1(_state: &TableState) -> Result<MigrationStep> {
-    let m = create_table("other").id(|c| c("o_id", Type::Int));
+    let m = create_table("test7other").id(|c| c("o_id", Type::Int));
     Ok(MigrationStep::new("Create table for fk", m))
 }
 
@@ -370,7 +372,7 @@ fn creating_a_fk_to_table_should_be_ok_step_2(_state: &TableState) -> Result<Mig
     let m = create_table("pk_table")
         .id(|c| c("id", Type::Int))
         .column(|c| {
-            c("other_id", Type::Int).create_foreign_key("other", "o_id", OnDelete::Cascade)
+            c("other_id", Type::Int).create_foreign_key("test7other", "o_id", OnDelete::Cascade)
         });
     Ok(MigrationStep::new("Create Trash FK", m))
 }

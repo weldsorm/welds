@@ -145,7 +145,7 @@ pub async fn connect_transstart_from_env() -> Result<Box<dyn TransactStart>> {
 /// If you want to create a transaction off of a Client,
 /// make sure you `use welds::TransactStart`
 pub trait TransactStart {
-    async fn begin(&self) -> Result<Transaction>;
+    async fn begin<'t>(&'t self) -> Result<Transaction<'t>>;
 }
 
 // This code is scripted out cuz writing it for all the features to be to much

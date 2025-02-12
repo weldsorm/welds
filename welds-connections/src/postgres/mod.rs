@@ -17,7 +17,7 @@ pub struct PostgresClient {
 
 #[async_trait]
 impl TransactStart for PostgresClient {
-    async fn begin(&self) -> Result<Transaction> {
+    async fn begin<'t>(&'t self) -> Result<Transaction<'t>> {
         let t = self.pool.begin().await?;
         let t = TransT::Postgres(t);
         Ok(Transaction::new(t))

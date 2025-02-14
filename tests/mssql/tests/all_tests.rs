@@ -2,6 +2,7 @@ use mssql_test::models::order::Order;
 use mssql_test::models::product::{BadProductColumns, BadProductMissingTable, Product};
 use mssql_test::models::StringThing;
 use mssql_test::models::Thing1;
+use welds::connections::mssql::connect;
 use welds::connections::mssql::MssqlClient;
 use welds::state::{DbState, DbStatus};
 use welds::TransactStart;
@@ -11,8 +12,8 @@ mod extra_types;
 mod migrations;
 
 async fn get_conn() -> MssqlClient {
-    let conn = testlib::mssql::conn().await.unwrap();
-    let client: MssqlClient = conn.into();
+    let cs = testlib::mssql::conn_string();
+    let client: MssqlClient = connect(&cs).await.unwrap();
     client
 }
 
@@ -305,4 +306,20 @@ async fn should_be_able_to_write_custom_wheres() {
         .pop()
         .unwrap();
     assert_eq!(found.id, known_id);
+}
+
+#[tokio::test]
+async fn an_abandoned_transaction_should_be_rolled_back() {
+    let conn = get_conn().await;
+    {
+        let trans = conn.begin().await.unwrap();
+        let sql = "CREATE TABLE welds.trash_dead_trans ( ID INT NOT NULL IDENTITY PRIMARY KEY )";
+        trans.execute(sql, &[]).await.unwrap();
+        // note: not doing a rollback
+    }
+    // the table should no longer exist if the transition has been rolled back
+    let bad_sql = "select * from welds.trash_dead_trans";
+    // if you get a deadlock, the first transaction isn't being rolled back
+    let r = conn.execute(bad_sql, &[]).await;
+    assert!(r.is_err());
 }

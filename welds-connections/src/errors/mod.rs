@@ -13,6 +13,8 @@ pub enum Error {
     Bb8(&'static str),
     InvalidDatabaseUrl,
     RowNowFound,
+    PoolError,
+    ClosedTransaction,
     ColumnNotFound(String),
     UnexpectedNoneInColumn(String),
     JsonParseError(String, String),
@@ -31,7 +33,11 @@ impl Display for Error {
             Error::Tiberius(err) => err.to_string(),
             Error::Bb8(err) => err.to_string(),
             Error::InvalidDatabaseUrl => "Invalid database URL".to_string(),
+            Error::PoolError => "the MSSQL connection pool has a locked mutex".to_string(),
             Error::RowNowFound => "Row not found".to_string(),
+            Error::ClosedTransaction => {
+                "SQL can not be executed on a closed transaction".to_string()
+            }
             Error::ColumnNotFound(name) => format!("Column not found: {name}"),
             Error::UnexpectedNoneInColumn(name) => format!("Unexpected None in column: {name}"),
             Error::JsonParseError(col, json) => {

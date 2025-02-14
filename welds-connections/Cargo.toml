@@ -18,7 +18,7 @@ description = "An async ORM for (postgres, mssql, mysql, sqlite)"
 "postgres" = ["sqlx/postgres"]
 "mysql" = ["sqlx/mysql"]
 "sqlite" = ["sqlx/sqlite"]
-"mssql" = ["tokio", "tokio-util", "futures-util", "tiberius", "bb8-tiberius", "bb8", "futures"]
+"mssql" = ["tokio", "tokio-util", "futures-util", "tiberius", "bb8-tiberius", "bb8", "futures", "async-mutex"]
 "mssql-chrono" = ["tiberius/chrono"]
 "mssql-time" = ["tiberius/time"]
 "mssql-rust_decimal" = ["tiberius/rust_decimal"]
@@ -39,6 +39,7 @@ sqlx = { version = "0.8", features = [], optional = true }
 thiserror = "1.0.57"
 tokio = { version = "1", features = [], optional = true }
 tokio-util = { version = "0.7", features = ["full"], optional = true }
+async-mutex = { version = "1.4", optional = true }
 
 [dev-dependencies]
 welds-connections = { path="./", features = ["full"] }

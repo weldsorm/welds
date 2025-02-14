@@ -7,7 +7,7 @@ use crate::ExecuteResult;
 use async_trait::async_trait;
 use sqlx::query::Query;
 use sqlx::sqlite::SqliteArguments;
-use sqlx::{Acquire, Sqlite, SqlitePool};
+use sqlx::{Sqlite, SqlitePool};
 use std::sync::Arc;
 
 pub struct SqliteClient {
@@ -16,7 +16,7 @@ pub struct SqliteClient {
 
 #[async_trait]
 impl TransactStart for SqliteClient {
-    async fn begin(&self) -> Result<Transaction> {
+    async fn begin<'t>(&'t self) -> Result<Transaction<'t>> {
         let t = self.pool.begin().await?;
         let t = TransT::Sqlite(t);
         Ok(Transaction::new(t))

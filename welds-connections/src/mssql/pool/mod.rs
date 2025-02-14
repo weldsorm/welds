@@ -37,6 +37,7 @@ pub struct Pool {
 }
 
 impl Pool {
+    /// Create a new connection pool
     pub fn new(mgr: ConnectionManager) -> Arc<Self> {
         let size = 10;
         let mut slots = Vec::with_capacity(size);
@@ -57,6 +58,9 @@ impl Pool {
         me
     }
 
+    /// Returns a connection from the connection pool.
+    /// useful if you want to do several operations in the same connection
+    /// The connection is automatically returned to the pool when dropped
     pub async fn get(&self) -> Result<PooledConnection> {
         // Note: the round_robin_next doesn't have to be perfect.
         // Its is just a good starting point to start looking for the next available connection
@@ -88,6 +92,23 @@ impl Pool {
             slot_index %= self.slots.len();
             yield_now().await;
         }
+    }
+
+    /// returns a string displaying the status of each Slot in the pool
+    pub async fn status(&self) -> String {
+        let mut display = Vec::with_capacity(self.slots.len() + 2);
+        display.push('[');
+        for slot in &self.slots {
+            let guard = slot.lock().unwrap();
+            let slot_guard: &Slot = &guard;
+            match slot_guard {
+                Slot::Avalable(_) => display.push('A'),
+                Slot::Empty => display.push('.'),
+                Slot::Checkedout => display.push('C'),
+            }
+        }
+        display.push(']');
+        display.iter().collect()
     }
 }
 
@@ -188,6 +209,7 @@ async fn pool_return_inner(
             let guard = pool.round_robin_next.lock().unwrap();
             *guard
         };
+        let mut index = slot_index;
 
         let itor = pool
             .slots
@@ -210,8 +232,15 @@ async fn pool_return_inner(
                 // return the connection to the pool
                 let mut returning = Slot::Avalable(conn);
                 std::mem::swap(&mut returning, slot_guard);
+                {
+                    // update the next slot to use to point to this slot.
+                    let mut guard = pool.round_robin_next.lock().unwrap();
+                    *guard = index;
+                }
                 return;
             }
+            index += 1;
+            index %= pool.slots.len();
         }
 
         panic!("unable to return a connection to the connection pool, pool is full");

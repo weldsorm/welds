@@ -4,7 +4,6 @@ use crate::model_traits::Column;
 use crate::model_traits::{HasSchema, TableColumns, TableInfo};
 use crate::writers::types::{are_equivalent_types, get_pairs, Pair};
 use crate::Client;
-use crate::Syntax;
 
 mod issue;
 use crate::model_traits::TableIdent;

@@ -155,7 +155,7 @@ where
     }
 
     /// Executes the query in the database Bulk updating the values
-    pub async fn run<'s, 'c>(&'s self, client: &'c dyn Client) -> Result<()>
+    pub async fn run(&self, client: &dyn Client) -> Result<()>
     where
         <T as HasSchema>::Schema: UniqueIdentifier + TableInfo + TableColumns,
     {

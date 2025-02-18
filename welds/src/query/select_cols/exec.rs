@@ -4,7 +4,6 @@ use crate::query::clause::ParamArgs;
 use crate::query::helpers::{build_tail, build_where_clauses, join_sql_parts};
 use crate::query::select_cols::SelectBuilder;
 use crate::writers::ColumnWriter;
-use crate::writers::LimitSkipWriter;
 use crate::writers::NextParam;
 use crate::Client;
 use crate::Row;
@@ -61,7 +60,7 @@ where
     }
 
     /// Executes the query in the database returning the results
-    pub async fn run<'s, 'c>(&'s self, client: &'c dyn Client) -> Result<Vec<Row>>
+    pub async fn run(&self, client: &dyn Client) -> Result<Vec<Row>>
     where
         <T as HasSchema>::Schema: TableInfo + TableColumns,
     {

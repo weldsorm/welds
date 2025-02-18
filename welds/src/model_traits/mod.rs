@@ -70,7 +70,7 @@ pub trait WriteToArgs {
 }
 
 pub trait ColumnDefaultCheck {
-    fn col_is_default<'s, 'c>(&'s self, column: &'c str) -> Result<bool>;
+    fn col_is_default(&self, column: &str) -> Result<bool>;
 }
 
 pub trait UpdateFromRow {

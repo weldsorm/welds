@@ -48,7 +48,27 @@ impl<T> DbState<T> {
         self.status
     }
 
-    /// Returns a DbState<T> that assumes its inner T does not exist in the database
+    /// Returns a DbState<T> that assumes its inner T does not exist in the database.
+    ///
+    /// Useful when creating new object to save to the database
+    /// ```
+    /// use welds::prelude::*;
+    ///
+    /// #[derive(Debug, Default, WeldsModel)]
+    /// #[welds(table = "thing")]
+    /// struct Thing {
+    ///     #[welds(primary_key)]
+    ///     pub id: i32,
+    ///     pub num: i32,
+    /// }
+    ///
+    /// async fn example(db: &dyn Client) -> welds::errors::Result<()> {
+    ///     let mut thing = DbState::new_uncreated(Thing { id: 0, num: 42});
+    ///     thing.save(db).await?;
+    ///     Ok(())
+    /// }
+    ///
+    /// ```
     pub fn new_uncreated(inner: T) -> DbState<T> {
         DbState {
             _t: PhantomData,

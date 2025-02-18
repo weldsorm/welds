@@ -59,6 +59,23 @@ where
 
     /// Filter the results returned by this query.
     /// Used when you want to filter on the columns of this table.
+    /// This is the default way to write `WHERE` clauses
+    /// ```
+    /// use welds::prelude::*;
+    /// use welds::query::builder::ManualWhereParam;
+    ///
+    /// #[derive(Debug, Default, WeldsModel)]
+    /// #[welds(table = "thing")]
+    /// struct Thing {
+    ///     #[welds(primary_key)]
+    ///     pub id: i32,
+    /// }
+    ///
+    /// async fn example(db: &dyn Client) -> welds::errors::Result<()> {
+    ///     let rows = Thing::all().where_col(|c| c.id.gt(10) ).run(db).await?;
+    ///     Ok(())
+    /// }
+    /// ```
     pub fn where_col(
         mut self,
         lam: impl Fn(<T as HasSchema>::Schema) -> Box<dyn ClauseAdder>,
@@ -71,27 +88,47 @@ where
         self
     }
 
-    /// write custom sql for the right side of a clauses in a where block
+    /// write custom sql for the right side of a clause in a where block
+    ///
     /// NOTE: use '?' for params. They will be swapped out for the correct Syntax
+    ///
     /// NOTE: use '$' for table prefix/alias. It will be swapped out for the prefix used at runtime
     ///
     /// Example
-    /// ```rust,ignore
-    /// where_manual(|c| c.price1, " > $.price2")
-    /// // WHERE t1.price1 > t1.price2
+    /// ```
+    /// use welds::prelude::*;
+    /// use welds::query::builder::ManualWhereParam;
+    ///
+    /// #[derive(Debug, Default, WeldsModel)]
+    /// #[welds(table = "thing")]
+    /// struct Thing {
+    ///     #[welds(primary_key)]
+    ///     pub id: i32,
+    ///     pub price1: i32,
+    ///     pub price2: i32,
+    /// }
+    ///
+    /// async fn example(db: &dyn Client) -> welds::errors::Result<()> {
+    ///     let params = ManualWhereParam::new().push(5);
+    ///     let rows = Thing::all().where_manual(|c| c.price1, " > $.price2 + ?", params).run(db).await?;
+    ///     // will result in:
+    ///     // WHERE t1.price1 > t1.price2 + 5
+    ///     Ok(())
+    /// }
     /// ```
     ///
     pub fn where_manual<V, FN>(
         mut self,
         col: impl Fn(<T as HasSchema>::Schema) -> FN,
         sql: &'static str,
-        params: ManualWhereParam,
+        params: impl Into<ManualWhereParam>,
     ) -> Self
     where
         FN: AsFieldName<V>,
     {
         let field = col(Default::default());
         let colname = field.colname().to_string();
+        let params: ManualWhereParam = params.into();
         let c = clause::ClauseColManual {
             col: Some(colname),
             sql: sql.to_string(),
@@ -101,17 +138,37 @@ where
         self
     }
 
-    /// write custom sql for a fill clause in where block
+    /// write custom sql for a clause in a where block
+    ///
     /// NOTE: use '?' for params. They will be swapped out for the correct Syntax
+    ///
     /// NOTE: use '$' for table prefix/alias. It will be swapped out for the prefix used at runtime
     ///
     /// Example
-    /// ```rust,ignore
-    /// where_manual2("$.price1 > $.price2")
-    /// // WHERE t1.price1 > t1.price2
+    /// ```
+    /// use welds::prelude::*;
+    /// use welds::query::builder::ManualWhereParam;
+    ///
+    /// #[derive(Debug, Default, WeldsModel)]
+    /// #[welds(table = "thing")]
+    /// struct Thing {
+    ///     #[welds(primary_key)]
+    ///     pub id: i32,
+    ///     pub price1: i32,
+    ///     pub price2: i32,
+    /// }
+    ///
+    /// async fn example(db: &dyn Client) -> welds::errors::Result<()> {
+    ///     let params = ManualWhereParam::new().push(5);
+    ///     let rows = Thing::all().where_manual2("$.price1 + $.price2 > ?", params).run(db).await?;
+    ///     // will result in:
+    ///     // WHERE t1.price1 + t1.price2 > 5
+    ///     Ok(())
+    /// }
     /// ```
     ///
-    pub fn where_manual2(mut self, sql: &'static str, params: ManualWhereParam) -> Self {
+    pub fn where_manual2(mut self, sql: &'static str, params: impl Into<ManualWhereParam>) -> Self {
+        let params: ManualWhereParam = params.into();
         let c = clause::ClauseColManual {
             col: None,
             sql: sql.to_string(),

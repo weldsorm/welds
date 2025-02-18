@@ -80,7 +80,7 @@ pub(crate) enum TransT<'t> {
     Mssql(MssqlTransaction<'t>),
 }
 
-impl<'t> TransT<'t> {
+impl TransT<'_> {
     async fn rollback(self) -> Result<()> {
         match self {
             #[cfg(feature = "sqlite")]
@@ -117,7 +117,7 @@ use super::postgres::PostgresParam;
 use super::sqlite::SqliteParam;
 
 #[async_trait]
-impl<'t> Client for Transaction<'t> {
+impl Client for Transaction<'_> {
     fn syntax(&self) -> crate::Syntax {
         self.syntax
     }
@@ -159,8 +159,8 @@ impl<'t> Client for Transaction<'t> {
     }
 }
 
-async fn execute_inner<'t>(
-    inner: &mut TransT<'t>,
+async fn execute_inner(
+    inner: &mut TransT<'_>,
     sql: &str,
     params: &[&(dyn Param + Sync)],
 ) -> Result<ExecuteResult> {
@@ -215,8 +215,8 @@ async fn execute_inner<'t>(
     }
 }
 
-async fn fetch_rows_inner<'t>(
-    inner: &mut TransT<'t>,
+async fn fetch_rows_inner(
+    inner: &mut TransT<'_>,
     sql: &str,
     params: &[&(dyn Param + Sync)],
 ) -> Result<Vec<Row>> {

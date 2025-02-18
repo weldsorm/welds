@@ -28,26 +28,31 @@ impl Change {
         }
     }
 
+    /// Rename a column on the table  
     pub fn rename(mut self, newname: impl Into<String>) -> Change {
         self.new_name = Some(newname.into());
         self
     }
 
+    /// Change the type of a column on the table
     pub fn to_type(mut self, ty: Type) -> Change {
         self.new_ty = Some(ty);
         self
     }
 
+    /// Change a column in the database to allow for null values
     pub fn null(mut self) -> Change {
         self.set_null = Some(true);
         self
     }
 
+    /// Change a column in the database to prevent null values
     pub fn not_null(mut self) -> Change {
         self.set_null = Some(false);
         self
     }
 
+    /// removes this column from the database
     pub fn drop_column(self) -> DropColumn {
         DropColumn {
             tabledef: self.tabledef,

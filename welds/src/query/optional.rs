@@ -1,13 +1,13 @@
-/// This is part of the fluent builder for queries.
-/// We are using it instead of Option so we can have slightly different behavior
-///
-/// often you have a database that has null columns everywhere.
-/// If all you want to do is query, it would get very annoying have to deal will Some/None
-/// for everything that goes into the query. This allows for searching by
-/// .where_col(|x| x.name.equal("bla") )
-/// and now having to know if the DB column is null
-///
-/// This is for writing sql only.
+// This is part of the fluent builder for queries.
+// We are using it instead of Option so we can have slightly different behavior
+//
+// often you have a database that has null columns everywhere.
+// If all you want to do is query, it would get very annoying have to deal will Some/None
+// for everything that goes into the query. This allows for searching by
+// .where_col(|x| x.name.equal("bla") )
+// and not having to know if the DB column is null
+//
+// This is for writing sql only.
 
 pub enum Optional<T> {
     Some(T),

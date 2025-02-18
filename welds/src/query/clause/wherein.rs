@@ -12,7 +12,6 @@ use crate::Syntax;
 
 /// Used to generated a SQL IN clause.
 /// This is used when deleting and updating to be able to apply limit
-
 pub struct WhereIn<'qb, T> {
     qb: &'qb QueryBuilder<T>,
 }
@@ -32,7 +31,7 @@ where
     }
 }
 
-impl<'qb, T> ClauseAdder for WhereIn<'qb, T>
+impl<T> ClauseAdder for WhereIn<'_, T>
 where
     T: HasSchema + Sync + Send,
     <T as HasSchema>::Schema: UniqueIdentifier + TableInfo + TableColumns,

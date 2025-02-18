@@ -8,7 +8,6 @@ use crate::Syntax;
 use std::sync::Arc;
 
 /// Used to generated a SQL EXISTS OR IN clause for writing sub-queries
-
 pub struct ExistIn {
     outer_column: String,
     inner_column: String,

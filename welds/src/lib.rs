@@ -74,7 +74,7 @@
 //! There are a couple attributes you can add to your fields to help control how welds functions
 //! - `#[welds(primary_key)]` Important! Add this to the primary key of your table.
 //! - `#[welds(rename = "xyz")]` let welds know the underlying column has a different name than the field
-//! - `#[welds(ignore)]` Tell welds this fields it not in the database.
+//! - `#[welds(ignore)]` Tell welds this field is it not in the database.
 //!
 //!
 //! ## Putting it all together
@@ -126,6 +126,9 @@
 //!  - [Mapping Queries / Joining](https://github.com/weldsorm/welds/blob/main/welds/examples/crud.rs)
 //!  - [Bulk (Create/Update/Delete)](https://github.com/weldsorm/welds/blob/main/welds/examples/bulk_operations.rs)
 //!  - [Select Only Specific Columns](https://github.com/weldsorm/welds/blob/main/welds/examples/manual_select_columns.rs)
+//!  - [Hooks, Callback when models (Save/Update/Delete)](https://github.com/weldsorm/welds/blob/main/welds/examples/hooks.rs)
+//!  - [Scopes for your Models](https://github.com/weldsorm/welds/blob/main/welds/examples/scopes.rs)
+//!  - [Migrations](https://github.com/weldsorm/welds/blob/main/welds/examples/migrations.rs)
 //!  - [Checking DB schema matches compiled structs](https://github.com/weldsorm/welds/blob/main/welds/examples/verify_tables.rs)
 //
 //!

@@ -1,11 +1,8 @@
 use super::builder::QueryBuilder;
 use super::clause::ParamArgs;
-use super::helpers::{build_tail, build_where, join_sql_parts};
 use crate::errors::Result;
 use crate::model_traits::{HasSchema, TableColumns, TableIdent, TableInfo};
 use crate::state::DbState;
-use crate::writers::column::ColumnWriter;
-use crate::writers::nextparam::NextParam;
 use crate::{Syntax, WeldsError};
 use welds_connections::Client;
 use welds_connections::Row;

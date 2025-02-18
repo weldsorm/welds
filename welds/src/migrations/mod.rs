@@ -41,7 +41,7 @@ pub async fn up(client: &(dyn TransactStart), migrations: &[MigrationFn]) -> Res
         let state = get_state(&trans).await?;
         let step = lambda(&state)?;
 
-        if seen.get(step.name).is_some() {
+        if seen.contains(step.name) {
             Err(WeldsError::DuplicateMigration)?;
         }
 
@@ -191,7 +191,7 @@ pub struct MigrationLog {
 }
 
 async fn get_state(client: &dyn Client) -> Result<TableState> {
-    let state = detect::find_tables(client).await?;
+    let state = detect::find_all_tables(client).await?;
     Ok(TableState(state))
 }
 

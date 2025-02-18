@@ -7,9 +7,6 @@ use crate::errors::Result;
 use crate::model_traits::UniqueIdentifier;
 use crate::model_traits::{HasSchema, TableColumns, TableInfo};
 use crate::query::clause::ParamArgs;
-use crate::writers::ColumnWriter;
-use crate::writers::CountWriter;
-use crate::writers::LimitSkipWriter;
 use crate::writers::NextParam;
 use crate::Syntax;
 use welds_connections::Client;
@@ -61,7 +58,7 @@ where
     /// Executes a `DELETE FROM ... `
     ///
     /// deletes all the resulting rows from the database
-    pub async fn delete<'s, 'c>(&'s self, client: &'c dyn Client) -> Result<()>
+    pub async fn delete(&self, client: &dyn Client) -> Result<()>
     where
         <T as HasSchema>::Schema: UniqueIdentifier + TableInfo + TableColumns,
     {
@@ -79,7 +76,7 @@ where
     }
 }
 
-fn build_head_delete<S>(syntax: Syntax) -> Option<String>
+fn build_head_delete<S>(_syntax: Syntax) -> Option<String>
 where
     S: TableInfo + TableColumns,
 {

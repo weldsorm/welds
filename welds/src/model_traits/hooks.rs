@@ -9,7 +9,6 @@ use crate::errors::Result;
 /// Welds you want a Hook in the welds macros
 ///
 /// WARNING: These are NOT effected by bulk operations !!!
-
 pub trait BeforeCreate {
     /// a last minute opportunity to check/edit a model before it is saved to the database
     /// Err results will cancel the action.

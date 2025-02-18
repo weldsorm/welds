@@ -54,14 +54,17 @@ pub fn change_table(table_state: &TableState, tablename: impl Into<String>) -> R
 }
 
 impl Table {
+    /// Alter a column on this table
     pub fn change(self, column_name: impl Into<String>) -> change::Change {
         change::Change::new(self.0, column_name.into())
     }
 
+    /// Drop this table from the database
     pub fn drop(self) -> drop::Drop {
         drop::Drop::new(self.0)
     }
 
+    /// Add a new column onto this table
     pub fn add_column(self, column_name: impl Into<String>, ty: Type) -> add_column::AddColumn {
         add_column::AddColumn::new(self.0, column_name.into(), ty)
     }

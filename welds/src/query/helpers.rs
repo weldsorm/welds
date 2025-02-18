@@ -1,6 +1,6 @@
 use super::builder::QueryBuilder;
 use super::clause::ParamArgs;
-use crate::model_traits::{HasSchema, TableColumns, TableInfo};
+use crate::model_traits::HasSchema;
 use crate::query::clause::exists::ExistIn;
 use crate::query::clause::ClauseAdder;
 use crate::writers::NextParam;

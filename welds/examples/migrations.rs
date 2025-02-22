@@ -6,7 +6,7 @@ async fn main() -> Result<()> {
     pretty_env_logger::init();
 
     // Connect and setup a DB for use to play with
-    let client = welds::connections::sqlite::connect("sqlite::memory:").await?;
+    let client = welds::connections::connect("sqlite::memory:").await?;
 
     // run all the migrations
     // This will skip over migrations that have already ran

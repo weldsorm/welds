@@ -32,7 +32,7 @@ impl Display for Error {
             #[cfg(feature = "mssql")]
             Error::Tiberius(err) => err.to_string(),
             Error::Bb8(err) => err.to_string(),
-            Error::InvalidDatabaseUrl => "Invalid database URL".to_string(),
+            Error::InvalidDatabaseUrl => "Invalid database URL. If your connection string is valid, make sure the feature for your database type is enabled".to_string(),
             Error::PoolError => "the MSSQL connection pool has a locked mutex".to_string(),
             Error::RowNowFound => "Row not found".to_string(),
             Error::ClosedTransaction => {

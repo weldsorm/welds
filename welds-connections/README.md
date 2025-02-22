@@ -37,11 +37,11 @@ pub trait Client {
 
 ```
 
-Thats it. 
+Thats it.
 
 Thats All this crate is.
 
-You get this for: 
+You get this for:
  - MySql and its transactions
  - Postgres and its transactions
  - Sqlite and its transactions
@@ -57,7 +57,7 @@ use welds_connections::{Client, TransactStart};
 #[tokio::main]
 async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     let url = "sqlite://./test.sqlite";
-    let client = welds_connections::sqlite::get_conn(url).await?;
+    let client = welds_connections::connect(url).await?;
     let transaction = client.begin().await?;
     transaction.rollback.await?;
 }
@@ -74,7 +74,7 @@ use welds_connections::{Client, TransactStart};
 async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
 
     let url = "sqlite://./test.sqlite";
-    let client = welds_connections::sqlite::get_conn(url).await?;
+    let client = welds_connections::connect(url).await?;
 
     let sql = "SELECT name from people where name like ?";
     let filter = "James%".to_string();

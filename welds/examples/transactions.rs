@@ -25,20 +25,20 @@ async fn main() -> Result<()> {
     pretty_env_logger::init();
 
     // Connect and setup a DB for use to play with
-    let client = welds::connections::sqlite::connect("sqlite::memory:").await?;
+    let client = welds::connections::connect("sqlite::memory:").await?;
     up(&client, &[db_setup]).await?;
 
     // run some SQL with an error. it will rollback the transaction
     let _ = create_with_errors(&client).await;
     let count = Person::all().count(&client).await?;
     assert_eq!(count, 0);
-    println!("PEOPLE COUNT: {}", 0);
+    println!("PEOPLE COUNT: {}", count);
 
     // run some SQL and commit. it will commit the transaction
     let _ = create_person(&client).await;
     let count = Person::all().count(&client).await?;
     assert_eq!(count, 1);
-    println!("PEOPLE COUNT: {}", 1);
+    println!("PEOPLE COUNT: {}", count);
 
     Ok(())
 }

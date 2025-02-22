@@ -65,7 +65,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     pretty_env_logger::init();
 
     let connection_string = "sqlite::memory:";
-    let client = welds::connections::sqlite::connect(connection_string).await?;
+    let client = welds::connections::connect(connection_string).await?;
 
     // Build an in memory DB with a schema (Product Table, Orders Table)
     let schema = include_str!("../../tests/testlib/databases/sqlite/01_create_tables.sql");

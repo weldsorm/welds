@@ -69,10 +69,10 @@ pub struct Product {
   let mut cookies = Product::new();
   cookies.name = "cookies".to_owned();
   // Creates the product cookie
-  cookies.save.await(&client)?;
+  cookies.save(&client).await?;
   cookies.description = "Yum".to_owned();
   // Updates the Cookies
-  cookies.save.await(&client)?;
+  cookies.save(&client).await?;
 ```
 
 

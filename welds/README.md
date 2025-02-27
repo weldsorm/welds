@@ -69,10 +69,10 @@ pub struct Product {
   let mut cookies = Product::new();
   cookies.name = "cookies".to_owned();
   // Creates the product cookie
-  cookies.save.await(&client)?;
+  cookies.save(&client).await?;
   cookies.description = "Yum".to_owned();
   // Updates the Cookies
-  cookies.save.await(&client)?;
+  cookies.save(&client).await?;
 ```
 
 
@@ -100,6 +100,7 @@ welds-connections features needed for mssql (tiberius):
  - [Bulk (Create/Update/Delete)](https://github.com/weldsorm/welds/blob/main/welds/examples/bulk_operations.rs)
  - [Select Only Specific Columns](https://github.com/weldsorm/welds/blob/main/welds/examples/manual_select_columns.rs)
  - [Hooks, Callback when models (Save/Update/Delete)](https://github.com/weldsorm/welds/blob/main/welds/examples/hooks.rs)
+ - [Scopes for your Models](https://github.com/weldsorm/welds/blob/main/welds/examples/scopes.rs)
  - [Migrations](https://github.com/weldsorm/welds/blob/main/welds/examples/migrations.rs)
  - [Checking DB schema matches compiled structs](https://github.com/weldsorm/welds/blob/main/welds/examples/verify_tables.rs)
 

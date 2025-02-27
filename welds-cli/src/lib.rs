@@ -11,11 +11,11 @@ use welds::model_traits::TableIdent;
 use welds::prelude::*;
 
 pub async fn update(schema_path: PathBuf, identifier: Option<String>) -> Result<()> {
-    use welds::detect::find_tables;
+    use welds::detect::find_all_tables;
     let identifier = identifier.as_ref().map(|x| TableIdent::parse(x));
 
     let client = welds::connections::connect_from_env().await?;
-    let mut tables = find_tables(client.as_ref()).await?;
+    let mut tables = find_all_tables(client.as_ref()).await?;
     let provider: DbProvider = client.syntax().into();
 
     let mut conf_def = config::read(&schema_path).unwrap_or_default();

@@ -1,4 +1,3 @@
-pub use super::clause::manualwhereparam::ManualWhereParam;
 use super::clause::{self, AsOptField};
 use super::select_cols::SelectBuilder;
 pub use super::update::bulk::UpdateBuilder;
@@ -10,6 +9,11 @@ use crate::writers::alias::TableAlias;
 use std::marker::PhantomData;
 use std::sync::Arc;
 use welds_connections::Param;
+
+pub use super::clause::manualparam::ManualParam;
+
+#[deprecated(note = "please use `ManualParam` instead")]
+pub type ManualWhereParam = ManualParam;
 
 /// An un-executed Query.
 ///
@@ -62,7 +66,6 @@ where
     /// This is the default way to write `WHERE` clauses
     /// ```
     /// use welds::prelude::*;
-    /// use welds::query::builder::ManualWhereParam;
     ///
     /// #[derive(Debug, Default, WeldsModel)]
     /// #[welds(table = "thing")]
@@ -97,7 +100,7 @@ where
     /// Example
     /// ```
     /// use welds::prelude::*;
-    /// use welds::query::builder::ManualWhereParam;
+    /// use welds::query::builder::ManualParam;
     ///
     /// #[derive(Debug, Default, WeldsModel)]
     /// #[welds(table = "thing")]
@@ -109,7 +112,7 @@ where
     /// }
     ///
     /// async fn example(db: &dyn Client) -> welds::errors::Result<()> {
-    ///     let params = ManualWhereParam::new().push(5);
+    ///     let params = ManualParam::new().push(5);
     ///     let rows = Thing::all().where_manual(|c| c.price1, " > $.price2 + ?", params).run(db).await?;
     ///     // will result in:
     ///     // WHERE t1.price1 > t1.price2 + 5
@@ -121,14 +124,14 @@ where
         mut self,
         col: impl Fn(<T as HasSchema>::Schema) -> FN,
         sql: &'static str,
-        params: impl Into<ManualWhereParam>,
+        params: impl Into<ManualParam>,
     ) -> Self
     where
         FN: AsFieldName<V>,
     {
         let field = col(Default::default());
         let colname = field.colname().to_string();
-        let params: ManualWhereParam = params.into();
+        let params: ManualParam = params.into();
         let c = clause::ClauseColManual {
             col: Some(colname),
             sql: sql.to_string(),
@@ -147,7 +150,7 @@ where
     /// Example
     /// ```
     /// use welds::prelude::*;
-    /// use welds::query::builder::ManualWhereParam;
+    /// use welds::query::builder::ManualParam;
     ///
     /// #[derive(Debug, Default, WeldsModel)]
     /// #[welds(table = "thing")]
@@ -159,7 +162,7 @@ where
     /// }
     ///
     /// async fn example(db: &dyn Client) -> welds::errors::Result<()> {
-    ///     let params = ManualWhereParam::new().push(5);
+    ///     let params = ManualParam::new().push(5);
     ///     let rows = Thing::all().where_manual2("$.price1 + $.price2 > ?", params).run(db).await?;
     ///     // will result in:
     ///     // WHERE t1.price1 + t1.price2 > 5
@@ -167,8 +170,8 @@ where
     /// }
     /// ```
     ///
-    pub fn where_manual2(mut self, sql: &'static str, params: impl Into<ManualWhereParam>) -> Self {
-        let params: ManualWhereParam = params.into();
+    pub fn where_manual2(mut self, sql: &'static str, params: impl Into<ManualParam>) -> Self {
+        let params: ManualParam = params.into();
         let c = clause::ClauseColManual {
             col: None,
             sql: sql.to_string(),
@@ -403,5 +406,43 @@ where
     {
         let ub = UpdateBuilder::new(self);
         ub.set_null(lam)
+    }
+
+    /// Write custom sql for the right side of a SET clause
+    ///
+    /// NOTE: use '?' for params. They will be swapped out for the correct Syntax
+    ///
+    /// ```
+    /// use welds::prelude::*;
+    /// use welds::query::builder::ManualParam;
+    ///
+    /// #[derive(Debug, Default, WeldsModel)]
+    /// #[welds(table = "things")]
+    /// struct Thing {
+    ///     #[welds(primary_key)]
+    ///     pub id: i32,
+    ///     pub num: i32,
+    /// }
+    ///
+    /// async fn example(db: &dyn Client) -> welds::errors::Result<()> {
+    ///     let params = ManualParam::new().push(42);
+    ///     Thing::all().set_manual(|x| x.num, "num+?", params).run(db).await?;
+    ///     // [UPDATE things SET num = (num+?)]   (?=42)
+    ///     Ok(())
+    /// }
+    ///
+    pub fn set_manual<V, FIELD>(
+        self,
+        lam: impl Fn(<T as HasSchema>::Schema) -> FIELD,
+        sql: &'static str,
+        params: impl Into<ManualParam>,
+    ) -> UpdateBuilder<T>
+    where
+        <T as HasSchema>::Schema: Default,
+        FIELD: AsFieldName<V>,
+        V: 'static + Sync + Send + Clone + Param,
+    {
+        let ub = UpdateBuilder::new(self);
+        ub.set_manual(lam, sql, params)
     }
 }

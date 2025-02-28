@@ -2,10 +2,11 @@ use crate::errors::Result;
 use crate::model_traits::UniqueIdentifier;
 use crate::model_traits::{HasSchema, TableColumns, TableInfo};
 use crate::query::builder::QueryBuilder;
+pub use crate::query::clause::manualparam::ManualParam;
 use crate::query::clause::wherein::WhereIn;
-use crate::query::clause::ParamArgs;
 use crate::query::clause::{AsFieldName, AsOptField};
 use crate::query::clause::{AssignmentAdder, ClauseAdder};
+use crate::query::clause::{AssignmentManual, ParamArgs};
 use crate::query::clause::{SetColNull, SetColVal};
 use crate::query::helpers::{build_where, join_sql_parts};
 use crate::writers::NextParam;
@@ -113,6 +114,54 @@ where
         let field = lam(Default::default());
         let col_raw = field.colname().to_string();
         self.sets.push(Box::new(SetColNull { col_raw }));
+        self
+    }
+
+    /// Write custom sql for the right side of a SET clause
+    ///
+    /// NOTE: use '?' for params. They will be swapped out for the correct Syntax
+    ///
+    /// ```
+    /// use welds::prelude::*;
+    /// use welds::query::builder::ManualParam;
+    ///
+    /// #[derive(Debug, Default, WeldsModel)]
+    /// #[welds(table = "things")]
+    /// struct Thing {
+    ///     #[welds(primary_key)]
+    ///     pub id: i32,
+    ///     pub num: i32,
+    /// }
+    ///
+    /// async fn example(db: &dyn Client) -> welds::errors::Result<()> {
+    ///     let params = ManualParam::new().push(42);
+    ///     Thing::all().set_manual(|x| x.num, "num+?", params).run(db).await?;
+    ///     // [UPDATE things SET num = (num+?)]   (?=42)
+    ///     Ok(())
+    /// }
+    ///
+    pub fn set_manual<V, FIELD>(
+        mut self,
+        lam: impl Fn(<T as HasSchema>::Schema) -> FIELD,
+        sql: &'static str,
+        params: impl Into<ManualParam>,
+    ) -> Self
+    where
+        <T as HasSchema>::Schema: Default,
+        FIELD: AsFieldName<V>,
+        V: 'static + Sync + Send + Clone + Param,
+    {
+        let params: ManualParam = params.into();
+        let field = lam(Default::default());
+        let col_raw = field.colname().to_string();
+
+        let adder = AssignmentManual {
+            col: col_raw,
+            sql: sql.to_string(),
+            params: params.into_inner(),
+        };
+        self.sets.push(Box::new(adder));
+
         self
     }
 

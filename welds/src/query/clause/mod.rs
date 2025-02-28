@@ -15,7 +15,7 @@ pub use text::Text;
 mod textopt;
 pub use textopt::TextOpt;
 
-pub(crate) mod manualwhereparam;
+pub(crate) mod manualparam;
 
 //  Relationships / SubQueries
 pub(crate) mod exists;
@@ -24,8 +24,11 @@ pub(crate) mod wherein;
 pub(crate) mod orderby;
 pub(crate) use orderby::OrderBy;
 
+// trait used to add where clause to a sql statement
 mod clause_adder;
 pub use clause_adder::ClauseAdder;
+
+// trait used to write assignments in a sql statement
 mod assignment_adder;
 pub use assignment_adder::AssignmentAdder;
 
@@ -53,6 +56,12 @@ pub struct ClauseColValList<T> {
 
 pub struct ClauseColManual {
     pub(crate) col: Option<String>,
+    pub(crate) sql: String,
+    pub(crate) params: Vec<Box<dyn Param + Send + Sync>>,
+}
+
+pub struct AssignmentManual {
+    pub(crate) col: String,
     pub(crate) sql: String,
     pub(crate) params: Vec<Box<dyn Param + Send + Sync>>,
 }

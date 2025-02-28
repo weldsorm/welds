@@ -1,3 +1,4 @@
+use crate::query::builder::ManualParam;
 use crate::query::builder::QueryBuilder;
 use crate::Syntax;
 
@@ -78,6 +79,28 @@ fn should_be_able_to_write_complex_set_col_values() {
 
         //let expected = "UPDATE nums SET nums.a = $1, nums.b = $2 WHERE ( nums.id > $3 )";
         let expected = "UPDATE nums SET \"a\"=$1, \"b\"=$2 WHERE ( nums.id > $3 )";
+        assert_eq!(expected, &ran_sql);
+    });
+}
+
+#[test]
+fn should_be_able_to_write_a_custom_set_statement() {
+    futures::executor::block_on(async move {
+        let params = ManualParam::new().push(42);
+
+        let q = QueryBuilder::<Product>::new()
+            .where_col(|c| c.id.gt(10))
+            .set_manual(|p| p.a, "$.b + ?", params);
+
+        //setup the fake client and run it.
+        let client = welds_connections::noop::build(Syntax::Postgres);
+        let _ = q.run(&client).await;
+
+        let ran_sql = client
+            .last_sql()
+            .expect("Expected to get SQL back from client");
+
+        let expected = "UPDATE nums SET \"a\" = ( nums.b + $1 ) WHERE ( nums.id > $2 )";
         assert_eq!(expected, &ran_sql);
     });
 }

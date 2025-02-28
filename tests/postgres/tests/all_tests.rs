@@ -631,7 +631,6 @@ fn all_values_from_list_should_not_make_colums_value() {
 #[test]
 fn should_be_able_to_write_custom_wheres() {
     async_std::task::block_on(async {
-        use welds::query::builder::ManualWhereParam;
         let conn = get_conn().await;
 
         // find a known in DB row
@@ -639,10 +638,9 @@ fn should_be_able_to_write_custom_wheres() {
         let known = knowns.pop().unwrap();
         let known_id = known.product_id;
 
-        let params = ManualWhereParam::new().push(known_id);
         // run the custom where
         let found = Product::all()
-            .where_manual(|c| c.product_id, " IN (?)", params)
+            .where_manual(|c| c.product_id, " IN (?)", (known_id,))
             .run(&conn)
             .await
             .unwrap()
@@ -700,5 +698,21 @@ fn should_be_able_to_find_both_tables_with_the_same_name() {
         assert_eq!(t[1].columns().len(), 2);
 
         trans.rollback().await.unwrap();
+    })
+}
+
+#[test]
+fn should_be_able_to_write_a_custom_set() {
+    async_std::task::block_on(async {
+        use welds::query::builder::ManualParam;
+        let params = ManualParam::new().push(1);
+        let conn = get_conn().await;
+        let q = Product::all()
+            .map_query(|p| p.order)
+            .where_col(|c| c.id.equal(2342534))
+            .set_manual(|x| x.quantity, "quantity + ?", params);
+        let sql = q.to_sql(Syntax::Postgres);
+        eprintln!("SQL: {}", sql);
+        q.run(&conn).await.unwrap();
     })
 }

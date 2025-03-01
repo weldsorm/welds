@@ -1,3 +1,6 @@
+use super::get_conn;
+use sqlite_test::models::order::Order;
+use sqlite_test::models::product::Product;
 use welds::Syntax;
 use welds::WeldsModel;
 
@@ -34,7 +37,7 @@ fn should_be_able_to_select_a_single_column() {
 fn should_select_with_as_to_make_returned_value_match_fieldname() {
     async_std::task::block_on(async {
         let q = Order2::all().select(|o| o.name).to_sql(Syntax::Sqlite);
-        assert_eq!(q, "SELECT t1.\"name2\" as \"name\" FROM orders t1");
+        assert_eq!(q, "SELECT t1.\"name2\" AS \"name\" FROM orders t1");
     })
 }
 
@@ -47,7 +50,7 @@ fn should_be_able_to_select_multiple_columns() {
             .to_sql(Syntax::Sqlite);
         assert_eq!(
             q,
-            "SELECT t1.\"oid\", t1.\"name2\" as \"name\" FROM orders t1"
+            "SELECT t1.\"oid\", t1.\"name2\" AS \"name\" FROM orders t1"
         );
     })
 }
@@ -109,5 +112,21 @@ fn should_be_able_to_select_where_in_join() {
             q,
             "SELECT t1.\"oid\", t2.\"pid\" FROM orders t1 JOIN Products t2 ON t1.\"product_id\" = t2.\"pid\" WHERE ( t2.pid = ? )"
         );
+    })
+}
+
+#[test]
+fn should_be_able_to_select_out_columns_of_the_name_name() {
+    async_std::task::block_on(async {
+        let conn = get_conn().await;
+        let rows: Result<Vec<_>, _> = Product::select_as(|p| p.id, "product_id")
+            .join(|p| p.orders, Order::select_as(|o| o.id, "order_id"))
+            .run(&conn)
+            .await
+            .unwrap()
+            .drain(..)
+            .map(|r| (r.get::<i32>("product_id")))
+            .collect();
+        let _rows = rows.unwrap();
     })
 }

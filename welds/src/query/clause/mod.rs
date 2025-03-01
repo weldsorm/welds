@@ -66,6 +66,10 @@ pub struct AssignmentManual {
     pub(crate) params: Vec<Box<dyn Param + Send + Sync>>,
 }
 
+// How a value should be selected out.
+// colname refers to the real name of the column.
+// fieldname refers to what we want to get the column out as.
+// for example: select id as ids from bla.
 pub trait AsFieldName<T> {
     fn colname(&self) -> &str;
     fn fieldname(&self) -> &str;

@@ -1,4 +1,4 @@
-use sqlite_test::models::order::{Order, SmallOrder};
+use sqlite_test::models::order::{self, Order, SmallOrder};
 use sqlite_test::models::product::{BadProduct1, BadProduct2, Product};
 use sqlite_test::models::StringThing;
 use sqlite_test::models::{Thing1, Thing2, Thing3};
@@ -470,7 +470,7 @@ fn should_be_able_to_write_a_custom_set() {
             .map_query(|p| p.orders)
             .where_col(|c| c.id.equal(2342534))
             .set_manual(|x| x.product_id, "product_id + ?", params);
-        let sql = q.to_sql(Syntax::Postgres);
+        let sql = q.to_sql(Syntax::Sqlite);
         eprintln!("SQL: {}", sql);
         q.run(&conn).await.unwrap();
     })
@@ -484,7 +484,7 @@ fn should_be_able_to_write_a_custom_set3() {
             .map_query(|p| p.orders)
             .where_col(|c| c.id.equal(2342534))
             .set_manual(|x| x.product_id, "product_id + ? + ?", (42, 20.0));
-        let sql = q.to_sql(Syntax::Postgres);
+        let sql = q.to_sql(Syntax::Sqlite);
         eprintln!("SQL: {}", sql);
         q.run(&conn).await.unwrap();
     })
@@ -498,7 +498,7 @@ fn should_be_able_to_write_a_custom_set2() {
             .map_query(|p| p.orders)
             .where_col(|c| c.id.equal(2342534))
             .set_manual(|x| x.product_id, "product_id + ?", ());
-        let sql = q.to_sql(Syntax::Postgres);
+        let sql = q.to_sql(Syntax::Sqlite);
         eprintln!("SQL: {}", sql);
         q.run(&conn).await.unwrap();
     })

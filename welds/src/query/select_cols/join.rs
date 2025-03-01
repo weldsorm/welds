@@ -57,7 +57,7 @@ impl JoinBuilder {
                 let col = format!("{}.{}", alias, colname);
                 list.push(col);
             } else {
-                let col = format!("{}.{} as {}", alias, colname, fieldname);
+                let col = format!("{}.{} AS {}", alias, colname, fieldname);
                 list.push(col);
             }
         }

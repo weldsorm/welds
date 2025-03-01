@@ -93,7 +93,7 @@ where
             let col = format!("{}.{}", alias, colname);
             cols.push(col);
         } else {
-            let col = format!("{}.{} as {}", alias, colname, fieldname);
+            let col = format!("{}.{} AS {}", alias, colname, fieldname);
             cols.push(col);
         }
     }

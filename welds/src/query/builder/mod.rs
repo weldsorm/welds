@@ -328,6 +328,18 @@ where
         sb.select(lam)
     }
 
+    /// Select only the specific columns
+    /// uses a sql "AS" to rename the selected column so it can match
+    /// the struct you are selecting into
+    pub fn select_as<V, FN: AsFieldName<V>>(
+        self,
+        lam: impl Fn(<T as HasSchema>::Schema) -> FN,
+        as_name: &'static str,
+    ) -> SelectBuilder<T> {
+        let sb = SelectBuilder::new(self);
+        sb.select_as(lam, as_name)
+    }
+
     /// Changes this query Into a sql UPDATE.
     /// Sets the value from the lambda in the database
     ///

@@ -12,6 +12,9 @@ mod exec;
 mod join;
 mod select_column;
 
+#[cfg(test)]
+mod tests;
+
 /// An un-executed Query Selecting specific columns.
 ///
 /// Build out a query that can be executed on the database.
@@ -46,6 +49,22 @@ where
         self.selects.push(SelectColumn {
             col_name: field.colname().to_string(),
             field_name: field.fieldname().to_string(),
+        });
+        self
+    }
+
+    /// Add a columns to the specific list of columns that will be selected
+    /// uses a sql "AS" to rename the returns column so it can match
+    /// the struct you are selecting into
+    pub fn select_as<V, FN: AsFieldName<V>>(
+        mut self,
+        lam: impl Fn(<T as HasSchema>::Schema) -> FN,
+        as_name: &'static str,
+    ) -> SelectBuilder<T> {
+        let field = lam(Default::default());
+        self.selects.push(SelectColumn {
+            col_name: field.colname().to_string(),
+            field_name: as_name.to_string(),
         });
         self
     }

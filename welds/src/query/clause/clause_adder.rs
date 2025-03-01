@@ -1,4 +1,4 @@
-use super::{ClauseColManual, ClauseColVal, ClauseColValEqual, ClauseColValList};
+use super::{ClauseColManual, ClauseColVal, ClauseColValEqual, ClauseColValIn, ClauseColValList};
 use super::{Param, ParamArgs};
 use crate::writers::NextParam;
 use crate::Syntax;
@@ -116,6 +116,38 @@ where
         let np = next_params.next();
         parts.push("(");
         parts.push(&np);
+        parts.push(")");
+        let clause: String = parts.join("");
+        Some(clause)
+    }
+}
+
+impl<T> ClauseAdder for ClauseColValIn<T>
+where
+    T: Clone + Send + Sync + Param,
+{
+    fn bind<'lam, 'args, 'p>(&'lam self, args: &'args mut ParamArgs<'p>)
+    where
+        'lam: 'p,
+    {
+        for item in &self.list {
+            args.push(item);
+        }
+    }
+
+    fn clause(&self, _syntax: Syntax, alias: &str, next_params: &NextParam) -> Option<String> {
+        let col = format!("{}.{}", alias, self.col);
+        let mut parts = vec![col.as_str()];
+        let np = next_params.next();
+
+        parts.push(" ");
+        parts.push(self.operator);
+        parts.push(" ");
+        parts.push("(");
+        for (i, _in) in self.list.iter().enumerate() {
+            if i > 0 { parts.push(",") }
+            parts.push(&np);
+        }
         parts.push(")");
         let clause: String = parts.join("");
         Some(clause)

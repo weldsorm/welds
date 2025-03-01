@@ -152,6 +152,7 @@
 
 pub mod errors;
 pub use errors::WeldsError;
+pub mod exts;
 pub mod model_traits;
 pub mod query;
 pub mod relations;

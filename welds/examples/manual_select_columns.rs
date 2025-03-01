@@ -2,7 +2,6 @@ use welds::prelude::*;
 
 /// Define a struct the maps to the products table in the databases
 #[derive(Debug, WeldsModel)]
-#[welds(db(Sqlite))]
 #[welds(table = "products")]
 #[welds(HasMany(orders, Order, "product_id"))]
 pub struct Product {
@@ -18,7 +17,6 @@ pub struct Product {
 
 /// Define a Struct the maps to the Orders table in the databases
 #[derive(Debug, WeldsModel)]
-#[welds(db(Sqlite))]
 #[welds(table = "orders")]
 #[welds(BelongsTo(product, Product, "product_id"))]
 pub struct Order {
@@ -26,7 +24,15 @@ pub struct Order {
     pub id: i32,
     pub product_id: Option<i32>,
     #[welds(rename = "price")]
-    pub sell_price: Option<f32>,
+    pub sale_price: Option<f32>,
+}
+
+/// Define a struct that we want to put the combined selected data into
+/// NOTE: This struct doesn't have a table linked to it.
+#[derive(Debug, WeldsModel)]
+pub struct ProductSale {
+    pub product_name: String,
+    pub sale_price: Option<f32>,
 }
 
 #[async_std::main]
@@ -42,46 +48,28 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Create some data to play with
     create_data(client).await?;
 
-    // We are writing a SELECT that pulls out only the name and price columns from Product
-    // along with the sell_price from order.
-    let q = Product::all()
-        .where_col(|p| p.active.equal(true))
-        .select(|p| p.name)
-        .select(|p| p.price)
-        .left_join(|p| p.orders, Order::select(|o| o.sell_price))
-        .order_by_desc(|p| p.price)
-        .limit(20);
+    // For this example lets select out only the product names
+    // and the price it sold for.
+    //
+    // We will pull the price it sold for off the orders table,
+    // and the name of the product off of the product table
 
-    println!("SQL: {}", q.to_sql(client.syntax()));
-    let mut rows = q.run(client).await?;
+    //start by selecting the price it was sold at.
+    let q = Order::select(|o| o.sale_price)
+        // now join to get the product name
+        .join(
+            |o| o.product,
+            // selecting out the name column and renaming it
+            Product::select_as(|p| p.name, "product_name"),
+        );
 
-    // Simple basic struct to put our data in
-    #[derive(Debug)]
-    struct View {
-        name: String,
-        price: Option<f32>,
-        sell_price: Option<f32>,
+    // Run the query and "collect" the rows out into your struct
+    let product_sales: Vec<ProductSale> = q.run(client).await?.collect_into()?;
+
+    //Print the selected columns
+    for product_sale in product_sales {
+        println!("Product Sale: {:?}", product_sale);
     }
-
-    // Making a closure to describe how to read in the row
-    // nice so that we can use the "?" operator when reading the row
-    let from_row = |row: welds::Row| {
-        let r: Result<View, welds::WeldsError> = Ok(View {
-            name: row.get("name")?,
-            price: row.get("price")?,
-            sell_price: row.get("sell_price")?,
-        });
-        r
-    };
-
-    // Pull the data out of the rows into whatever thing you want
-    let data: Result<Vec<View>, _> = rows.drain(..).map(from_row).collect();
-    let data = data?;
-
-    //print
-    data.iter().for_each(|row| {
-        println!("Row: {:?}", row);
-    });
 
     Ok(())
 }
@@ -105,7 +93,7 @@ async fn create_data(conn: &dyn Client) -> Result<(), Box<dyn std::error::Error>
         .map(|i| Order {
             id: 0,
             product_id: Some((i + 1) * 2), //skip every other product
-            sell_price: Some((i as f32) + 0.5),
+            sale_price: Some((i as f32) + 0.5),
         })
         .collect();
     welds::query::insert::bulk_insert(conn, &orders).await?;

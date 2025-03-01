@@ -152,26 +152,6 @@ impl<T> DbState<T> {
     }
 }
 
-// helper, method extensions, to make it really simple to map DB results into useful result sets
-pub trait VecStateExt<T> {
-    fn to_vms(self) -> Arc<Vec<Arc<T>>>;
-    fn into_inners(self) -> Vec<T>;
-}
-
-impl<T> VecStateExt<T> for Vec<DbState<T>> {
-    /// convert from DbState wrapped data to Arc wrapped data.
-    /// Very useful when passing to a View layer such as Yew (Server Side)
-    fn to_vms(mut self) -> Arc<Vec<Arc<T>>> {
-        let vec: Vec<_> = self.drain(..).map(|x| x.into_vm()).collect();
-        Arc::new(vec)
-    }
-
-    /// convert from DbState wrapped data to Unwrapped Models
-    fn into_inners(mut self) -> Vec<T> {
-        self.drain(..).map(|x| x.into_inner()).collect()
-    }
-}
-
 impl<T> Deref for DbState<T> {
     type Target = T;
     fn deref(&self) -> &Self::Target {

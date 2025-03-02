@@ -1,4 +1,4 @@
-use sqlite_test::models::order::{self, Order, SmallOrder};
+use sqlite_test::models::order::{Order, SmallOrder};
 use sqlite_test::models::product::{BadProduct1, BadProduct2, Product};
 use sqlite_test::models::StringThing;
 use sqlite_test::models::{Thing1, Thing2, Thing3};
@@ -501,5 +501,18 @@ fn should_be_able_to_write_a_custom_set2() {
         let sql = q.to_sql(Syntax::Sqlite);
         eprintln!("SQL: {}", sql);
         q.run(&conn).await.unwrap();
+    })
+}
+
+#[test]
+fn should_be_able_to_filter_by_multiple_values() {
+    async_std::task::block_on(async {
+        let conn = get_conn().await;
+        let query = Product::all().where_col(|p| p.id.in_list(&[2, 3, 4]));
+        let results = query.run(&conn).await.unwrap();
+        assert_eq!(results.len(), 3);
+        let query = Product::all().where_col(|p| p.name.in_list(&["cat", "dog"]));
+        let results = query.run(&conn).await.unwrap();
+        assert_eq!(results.len(), 2);
     })
 }

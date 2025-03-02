@@ -1,4 +1,4 @@
-use super::clause::{self, AsOptField};
+use super::clause::{self, AsOptField, ClauseColValIn};
 use super::select_cols::SelectBuilder;
 pub use super::update::bulk::UpdateBuilder;
 use crate::model_traits::{HasSchema, TableColumns, TableInfo, UniqueIdentifier};

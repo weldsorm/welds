@@ -1,4 +1,4 @@
-use super::{AsFieldName, AsOptField, ClauseColVal, ClauseColValEqual};
+use super::{AsFieldName, AsOptField, ClauseColVal, ClauseColValEqual, ClauseColValIn};
 use crate::query::optional::HasSomeNone;
 use crate::query::optional::Optional;
 use std::marker::PhantomData;
@@ -135,5 +135,23 @@ where
             val,
         };
         Box::new(cv)
+    }
+
+    /// Will write SQL "IN" to check that the value is in a list
+    pub fn in_list<P>(self, slice: &[P]) -> Box<ClauseColValIn<T>>
+    where
+        P: Into<T> + Clone,
+        T: Param,
+    {
+        let mut list = Vec::default();
+        for param in slice {
+            list.push(param.clone().into());
+        }
+        let c = ClauseColValIn::<T> {
+            col: self.col,
+            operator: "IN",
+            list,
+        };
+        Box::new(c)
     }
 }

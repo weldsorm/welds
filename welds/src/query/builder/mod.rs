@@ -91,36 +91,6 @@ where
         self
     }
 
-    /// Filter results by a vec of multiple values using `WHERE IN (x,y,z)`.
-    /// ```
-    /// let selected_flavours = vec!["chocolate", "vanilla", "mint"];
-    /// let query = IceCream::all().where_in(|ic| ic.flavour, selected_flavours);
-    /// ```
-    pub fn where_in<V, FN, P>(
-        mut self,
-        col: impl Fn(<T as HasSchema>::Schema) -> FN,
-        params: Vec<P>,
-    ) -> Self
-    where
-        FN: AsFieldName<V>,
-        V: 'static + Clone + Send + Sync + Param,
-        P: 'static + Clone + Send + Sync + Into<V>,
-        Vec<P>: Sync + Send + Clone,
-    {
-        let field = col(Default::default());
-        let mut list = Vec::default();
-        for param in params {
-            list.push(param.clone().into());
-        }
-        let c = ClauseColValIn::<V> {
-            col: field.colname().to_string(),
-            operator: "IN",
-            list
-        };
-        self.wheres.push(Box::new(c));
-        self
-    }
-
     /// write custom sql for the right side of a clause in a where block
     ///
     /// NOTE: use '?' for params. They will be swapped out for the correct Syntax

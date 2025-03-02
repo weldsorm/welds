@@ -137,18 +137,19 @@ where
 
     fn clause(&self, _syntax: Syntax, alias: &str, next_params: &NextParam) -> Option<String> {
         let col = format!("{}.{}", alias, self.col);
-        let mut parts = vec![col.as_str()];
-        let np = next_params.next();
+        let mut parts = vec![col];
 
-        parts.push(" ");
-        parts.push(self.operator);
-        parts.push(" ");
-        parts.push("(");
+        parts.push(" ".to_string());
+        parts.push(self.operator.to_string());
+        parts.push(" ".to_string());
+        parts.push("(".to_string());
         for (i, _in) in self.list.iter().enumerate() {
-            if i > 0 { parts.push(",") }
-            parts.push(&np);
+            if i > 0 {
+                parts.push(",".to_string())
+            }
+            parts.push(next_params.next());
         }
-        parts.push(")");
+        parts.push(")".to_string());
         let clause: String = parts.join("");
         Some(clause)
     }

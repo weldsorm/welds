@@ -503,3 +503,18 @@ fn should_be_able_to_write_a_custom_set2() {
         q.run(&conn).await.unwrap();
     })
 }
+
+#[test]
+fn should_be_able_to_filter_by_multiple_values() {
+    async_std::task::block_on(async {
+        let conn = get_conn().await;
+
+        let query = Product::all().where_in(|p| p.name, vec!["cat","dog"]);
+        let results = query.run(&conn).await.unwrap();
+        assert_eq!(results.len(), 2);
+
+        let query = Product::all().where_in(|p| p.id, vec![2,3,4]);
+        let results = query.run(&conn).await.unwrap();
+        assert_eq!(results.len(), 3);
+    })
+}

@@ -1,4 +1,4 @@
-use super::clause::{self, AsOptField};
+use super::clause::{self, AsOptField, ClauseColValIn};
 use super::select_cols::SelectBuilder;
 pub use super::update::bulk::UpdateBuilder;
 use crate::model_traits::{HasSchema, TableColumns, TableInfo, UniqueIdentifier};
@@ -88,6 +88,36 @@ where
     {
         let qba = lam(Default::default());
         self.wheres.push(qba);
+        self
+    }
+
+    /// Filter results by a vec of multiple values using `WHERE IN (x,y,z)`.
+    /// ```
+    /// let selected_flavours = vec!["chocolate", "vanilla", "mint"];
+    /// let query = IceCream::all().where_in(|ic| ic.flavour, selected_flavours);
+    /// ```
+    pub fn where_in<V, FN, P>(
+        mut self,
+        col: impl Fn(<T as HasSchema>::Schema) -> FN,
+        params: Vec<P>,
+    ) -> Self
+    where
+        FN: AsFieldName<V>,
+        V: 'static + Clone + Send + Sync + Param,
+        P: 'static + Clone + Send + Sync + Into<V>,
+        Vec<P>: Sync + Send + Clone,
+    {
+        let field = col(Default::default());
+        let mut list = Vec::default();
+        for param in params {
+            list.push(param.clone().into());
+        }
+        let c = ClauseColValIn::<V> {
+            col: field.colname().to_string(),
+            operator: "IN",
+            list
+        };
+        self.wheres.push(Box::new(c));
         self
     }
 

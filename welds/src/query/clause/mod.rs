@@ -48,6 +48,12 @@ pub struct ClauseColValEqual<T> {
     pub val: Option<T>,
 }
 
+pub struct ClauseColValIn<T> {
+    pub col: String,
+    pub operator: &'static str,
+    pub list: Vec<T>,
+}
+
 pub struct ClauseColValList<T> {
     pub col: String,
     pub operator: &'static str,

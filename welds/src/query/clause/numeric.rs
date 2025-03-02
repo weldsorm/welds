@@ -1,4 +1,4 @@
-use super::{AsFieldName, ClauseColVal, ClauseColValEqual, ClauseColValList};
+use super::{AsFieldName, ClauseColVal, ClauseColValEqual, ClauseColValIn, ClauseColValList};
 use std::marker::PhantomData;
 use welds_connections::Param;
 
@@ -157,5 +157,23 @@ where
             list,
         };
         Box::new(cv)
+    }
+
+    /// Will write SQL "IN" to check that the value is in a list
+    pub fn in_list<P>(self, slice: &[P]) -> Box<ClauseColValIn<T>>
+    where
+        P: Into<T> + Clone,
+        T: Param,
+    {
+        let mut list = Vec::default();
+        for param in slice {
+            list.push(param.clone().into());
+        }
+        let c = ClauseColValIn::<T> {
+            col: self.col,
+            operator: "IN",
+            list,
+        };
+        Box::new(c)
     }
 }

@@ -159,6 +159,7 @@ pub mod query;
 pub mod relations;
 pub mod state;
 pub mod writers;
+pub mod helpers;
 
 pub mod prelude;
 

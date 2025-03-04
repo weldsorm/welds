@@ -60,6 +60,7 @@ pub trait UniqueIdentifier {
     fn id_column() -> Column;
 }
 
+use std::hash::Hash;
 use crate::errors::Result;
 use crate::query::clause::ParamArgs;
 
@@ -80,6 +81,13 @@ pub trait UpdateFromRow {
 /// Used to link a models schema to the model
 pub trait HasSchema: Sync + Send {
     type Schema: Default + TableInfo;
+}
+
+pub trait PkValue {
+    type PkVal: Hash + Eq + 'static;
+
+    /// Returns the value of a model's primary key(s)
+    fn pk_value(&self) -> Self::PkVal;
 }
 
 mod tableident;

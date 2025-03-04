@@ -516,3 +516,42 @@ fn should_be_able_to_filter_by_multiple_values() {
         assert_eq!(results.len(), 2);
     })
 }
+
+#[test]
+fn should_model_one_to_one_associations() {
+    use sqlite_test::models::User;
+    use sqlite_test::models::Profile;
+
+    async_std::task::block_on(async {
+        let conn = get_conn().await;
+
+        let mut profile = Profile::new();
+        profile.id = 1;
+        profile.image_url = "example.com/cat.jpeg".to_owned();
+        profile.save(&conn).await.unwrap();
+
+        let mut user = User::new();
+        user.id = 1;
+        user.profile_id = Some(1);
+        user.name = "Jimmy".to_owned();
+        user.save(&conn).await.unwrap();
+
+        let result = User::all()
+            .where_relation(
+                |u| u.profile,
+                Profile::where_col(|p| p.image_url.equal("example.com/cat.jpeg"))
+            )
+            .run(&conn).await.unwrap();
+
+        assert_eq!(result.len(), 1);
+
+        let result = Profile::all()
+            .where_relation(
+                |p| p.user,
+                User::where_col(|u| u.name.equal("Jimmy"))
+            )
+            .run(&conn).await.unwrap();
+
+        assert_eq!(result.len(), 1);
+    })
+}

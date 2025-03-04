@@ -9,7 +9,9 @@ pub struct TableDef {
     pub(crate) ty: DataType,
     pub(crate) columns: Vec<ColumnDef>, // What are the columns on this table
     pub(crate) has_many: Vec<RelationDef>,
+    pub(crate) has_one: Vec<RelationDef>,
     pub(crate) belongs_to: Vec<RelationDef>,
+    pub(crate) belongs_to_one: Vec<RelationDef>,
     pub(crate) syntax: Syntax,
 }
 
@@ -28,6 +30,12 @@ impl TableDef {
     }
     pub fn belongs_to(&self) -> &[RelationDef] {
         &self.belongs_to
+    }
+    pub fn has_one(&self) -> &[RelationDef] {
+        &self.has_one
+    }
+    pub fn belongs_to_one(&self) -> &[RelationDef] {
+        &self.belongs_to_one
     }
     pub fn syntax(&self) -> Syntax {
         self.syntax
@@ -204,6 +212,8 @@ pub mod mock {
                 columns: Vec::default(),
                 has_many: Vec::default(),
                 belongs_to: Vec::default(),
+                has_one: Vec::default(),
+                belongs_to_one: Vec::default(),
             })
         }
 

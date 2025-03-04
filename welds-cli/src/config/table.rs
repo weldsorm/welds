@@ -12,6 +12,8 @@ pub struct Table {
     pub r#type: String,            // This could be a table or view
     pub columns: Vec<Column>,      // What are the columns on this table
     pub belongs_to: Vec<Relation>, // list of objects this object belongs to
+    pub belongs_to_one: Vec<Relation>, // the objects this object belongs to
+    pub has_one: Vec<Relation>,    // which object this object has one of
     pub has_many: Vec<Relation>,   // what objects this object has many of
     pub database: DbProvider,      // what DB this object was scanned from.
 }
@@ -33,6 +35,8 @@ impl Table {
             columns: vec![],
             r#type: type_str(table_def.ty()).to_string(),
             belongs_to: table_def.belongs_to().iter().map(|x| x.into()).collect(),
+            belongs_to: table_def.belongs_to_one().iter().map(|x| x.into()).collect(),
+            has_one: table_def.has_one().iter().map(|x| x.into()).collect(),
             has_many: table_def.has_many().iter().map(|x| x.into()).collect(),
             database: provider,
         };
@@ -48,6 +52,8 @@ impl Table {
         self.schema = table_def.ident().schema().map(|s| s.to_string());
         self.r#type = type_str(table_def.ty()).to_string();
         self.belongs_to = table_def.belongs_to().iter().map(|x| x.into()).collect();
+        self.belongs_to_one = table_def.belongs_to_one().iter().map(|x| x.into()).collect();
+        self.has_one = table_def.has_one().iter().map(|x| x.into()).collect();
         self.has_many = table_def.has_many().iter().map(|x| x.into()).collect();
         self.update_cols_from(table_def.columns());
         self.database = provider;

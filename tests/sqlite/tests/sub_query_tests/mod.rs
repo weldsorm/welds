@@ -1,3 +1,5 @@
+use super::get_conn;
+use welds::connections::TransactStart;
 use welds::Syntax;
 use welds::WeldsModel;
 
@@ -96,5 +98,183 @@ fn three_levels_down() {
             .to_sql(Syntax::Sqlite);
 
         assert_eq!(q, "SELECT t3.\"pid\", t3.\"name\" FROM Products t3 WHERE ( t3.pid = ? AND EXISTS ( SELECT product_id FROM orders t2 WHERE t2.oid = ? AND t2.product_id = t3.pid AND EXISTS ( SELECT pid FROM Products t1 WHERE t1.pid = ? AND t1.pid = t2.product_id ) ) )");
+    })
+}
+
+#[test]
+fn should_be_able_to_query_one_to_one_with_where_relation_from_source() {
+    use sqlite_test::models::Profile;
+    use sqlite_test::models::User;
+
+    async_std::task::block_on(async {
+        let conn = get_conn().await;
+        let trans = conn.begin().await.unwrap();
+
+        // make some play data
+        let mut profile1 = Profile::new();
+        profile1.id = 1;
+        profile1.image_url = "example.com/cat.jpeg".to_owned();
+        profile1.save(&conn).await.unwrap();
+
+        let mut profile2 = Profile::new();
+        profile2.id = 2;
+        profile2.image_url = "example.com/cat.jpeg".to_owned();
+        profile2.save(&conn).await.unwrap();
+
+        let mut user1 = User::new();
+        user1.profile_id = Some(1);
+        user1.name = "Jimmy".to_owned();
+        user1.save(&conn).await.unwrap();
+
+        let mut user2 = User::new();
+        user2.profile_id = None;
+        user2.name = "Jimmy".to_owned();
+        user2.save(&conn).await.unwrap();
+
+        // run the query
+        let sub_query_profile = Profile::where_col(|p| p.image_url.equal("example.com/cat.jpeg"));
+        let query = User::all().where_relation(|u| u.profile, sub_query_profile);
+        eprintln!("QUERY: {}", query.to_sql(Syntax::Sqlite));
+        let data = query.run(&conn).await.unwrap();
+
+        // Make sure we only get the expected row
+        assert_eq!(data.len(), 1);
+        assert_eq!(data[0].as_ref(), user1.as_ref());
+
+        trans.rollback().await.unwrap();
+    })
+}
+
+#[test]
+fn should_be_able_to_query_one_to_one_with_where_relation_from_desc() {
+    use sqlite_test::models::Profile;
+    use sqlite_test::models::User;
+
+    async_std::task::block_on(async {
+        let conn = get_conn().await;
+        let trans = conn.begin().await.unwrap();
+
+        // make some play data
+        let mut profile1 = Profile::new();
+        profile1.id = 1;
+        profile1.image_url = "example.com/cat.jpeg".to_owned();
+        profile1.save(&conn).await.unwrap();
+
+        let mut profile2 = Profile::new();
+        profile2.id = 2;
+        profile2.image_url = "example.com/cat.jpeg".to_owned();
+        profile2.save(&conn).await.unwrap();
+
+        let mut user1 = User::new();
+        user1.profile_id = Some(1);
+        user1.name = "Jimmy".to_owned();
+        user1.save(&conn).await.unwrap();
+
+        let mut user2 = User::new();
+        user2.profile_id = None;
+        user2.name = "Jimmy".to_owned();
+        user2.save(&conn).await.unwrap();
+
+        // run the query
+        let sub_query_user = User::where_col(|u| u.name.equal("Jimmy"));
+        let query = Profile::all().where_relation(|u| u.user, sub_query_user);
+        eprintln!("QUERY: {}", query.to_sql(Syntax::Sqlite));
+        let data = query.run(&conn).await.unwrap();
+
+        // Make sure we only get the expected row
+        assert_eq!(data.len(), 1);
+        assert_eq!(data[0].as_ref(), profile1.as_ref());
+
+        trans.rollback().await.unwrap();
+    })
+}
+
+#[test]
+fn should_be_able_to_query_one_to_one_with_map_query_from_source() {
+    use sqlite_test::models::Profile;
+    use sqlite_test::models::User;
+
+    async_std::task::block_on(async {
+        let conn = get_conn().await;
+        let trans = conn.begin().await.unwrap();
+
+        // make some play data
+        let mut profile1 = Profile::new();
+        profile1.id = 1;
+        profile1.image_url = "example.com/cat.jpeg".to_owned();
+        profile1.save(&conn).await.unwrap();
+
+        let mut profile2 = Profile::new();
+        profile2.id = 2;
+        profile2.image_url = "example.com/cat.jpeg".to_owned();
+        profile2.save(&conn).await.unwrap();
+
+        let mut user1 = User::new();
+        user1.profile_id = Some(1);
+        user1.name = "Jimmy".to_owned();
+        user1.save(&conn).await.unwrap();
+
+        let mut user2 = User::new();
+        user2.profile_id = None;
+        user2.name = "Jimmy".to_owned();
+        user2.save(&conn).await.unwrap();
+
+        // run the query
+        let query = User::all()
+            .map_query(|u| u.profile)
+            .where_col(|p| p.image_url.equal("example.com/cat.jpeg"));
+        eprintln!("QUERY: {}", query.to_sql(Syntax::Sqlite));
+        let data = query.run(&conn).await.unwrap();
+
+        // Make sure we only get the expected row
+        assert_eq!(data.len(), 1);
+        assert_eq!(data[0].as_ref(), profile1.as_ref());
+
+        trans.rollback().await.unwrap();
+    })
+}
+
+#[test]
+fn should_be_able_to_query_one_to_one_with_map_query_from_desc() {
+    use sqlite_test::models::Profile;
+    use sqlite_test::models::User;
+
+    async_std::task::block_on(async {
+        let conn = get_conn().await;
+        let trans = conn.begin().await.unwrap();
+
+        // make some play data
+        let mut profile1 = Profile::new();
+        profile1.id = 1;
+        profile1.image_url = "example.com/cat.jpeg".to_owned();
+        profile1.save(&conn).await.unwrap();
+
+        let mut profile2 = Profile::new();
+        profile2.id = 2;
+        profile2.image_url = "example.com/cat.jpeg".to_owned();
+        profile2.save(&conn).await.unwrap();
+
+        let mut user1 = User::new();
+        user1.profile_id = Some(1);
+        user1.name = "Jimmy".to_owned();
+        user1.save(&conn).await.unwrap();
+
+        let mut user2 = User::new();
+        user2.profile_id = None;
+        user2.name = "Jimmy".to_owned();
+        user2.save(&conn).await.unwrap();
+
+        // run the query
+        let query = Profile::all()
+            .map_query(|p| p.user)
+            .where_col(|u| u.name.equal("Jimmy"));
+        eprintln!("QUERY: {}", query.to_sql(Syntax::Sqlite));
+        let data = query.run(&conn).await.unwrap();
+
+        // Make sure we only get the expected row
+        assert_eq!(data.len(), 1);
+        assert_eq!(data[0].as_ref(), user1.as_ref());
+
+        trans.rollback().await.unwrap();
     })
 }

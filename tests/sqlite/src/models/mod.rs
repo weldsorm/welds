@@ -35,17 +35,17 @@ pub struct StringThing {
     pub value: String,
 }
 
-#[derive(Debug, WeldsModel)]
+#[derive(Debug, WeldsModel, PartialEq, Eq)]
 #[welds(table = "Users")]
 #[welds(HasOne(profile, Profile, "profile_id"))]
 pub struct User {
     #[welds(primary_key)]
     pub id: i32,
     pub profile_id: Option<i32>,
-    pub name: String
+    pub name: String,
 }
 
-#[derive(Debug, WeldsModel)]
+#[derive(Debug, WeldsModel, PartialEq, Eq)]
 #[welds(table = "Profiles")]
 #[welds(BelongsToOne(user, User, "id"))]
 pub struct Profile {

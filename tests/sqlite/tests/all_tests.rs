@@ -245,8 +245,8 @@ fn should_be_able_to_create_a_new_product() {
 fn should_be_able_to_scan_for_all_tables() {
     async_std::task::block_on(async {
         let conn = get_conn().await;
-        let tables = welds::detect::find_tables(&conn).await.unwrap();
-        assert_eq!(14, tables.len());
+        let tables = welds::detect::find_all_tables(&conn).await.unwrap();
+        assert_eq!(16, tables.len());
     })
 }
 

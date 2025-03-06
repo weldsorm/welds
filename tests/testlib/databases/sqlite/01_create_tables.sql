@@ -38,3 +38,14 @@ CREATE TABLE extra_types (
     datetime_col DATETIME NOT NULL,
     datetimetz_col DATETIME NOT NULL
 );
+
+CREATE TABLE Users (
+    id INTEGER PRIMARY KEY,
+    profile_id INTEGER,
+    name TEXT
+);
+
+CREATE TABLE Profiles (
+    id INTEGER PRIMARY KEY,
+    image_url TEXT
+);

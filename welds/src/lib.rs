@@ -31,6 +31,7 @@
 //!
 //! Welds Supports:
 //! - BelongsTo
+//! - HasOne
 //! - HasMany
 //!
 //! They are both in the format:

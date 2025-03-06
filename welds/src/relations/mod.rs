@@ -1,4 +1,5 @@
-use crate::model_traits::UniqueIdentifier;
+use crate::model_traits::{HasSchema, UniqueIdentifier};
+use std::hash::Hash;
 use std::marker::PhantomData;
 
 pub struct BelongsTo<T> {
@@ -135,6 +136,19 @@ pub trait Relationship<R> {
     where
         T: UniqueIdentifier,
         R2: UniqueIdentifier;
+}
+
+pub trait Related<R> {}
+
+pub trait BelongsToFkValue<R>: Sized
+where
+    Self: HasSchema + Related<BelongsTo<R>>,
+    R: HasSchema + Related<HasMany<Self>>
+{
+    type FkVal: Hash + Eq + 'static;
+
+    /// Returns the value of a model's foreign key for relationship with <T>
+    fn fk_value<T>(&self) -> Self::FkVal;
 }
 
 pub trait HasRelations {

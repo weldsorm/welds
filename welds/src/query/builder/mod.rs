@@ -4,6 +4,7 @@ pub use super::update::bulk::UpdateBuilder;
 use crate::model_traits::{HasSchema, TableColumns, TableInfo, UniqueIdentifier};
 use crate::query::clause::exists::ExistIn;
 use crate::query::clause::{AsFieldName, AssignmentAdder, ClauseAdder, OrderBy};
+use crate::query::include::IncludeBuilder;
 use crate::relations::{HasRelations, Relationship};
 use crate::writers::alias::TableAlias;
 use std::marker::PhantomData;
@@ -456,5 +457,23 @@ where
     {
         let ub = UpdateBuilder::new(self);
         ub.set_manual(lam, sql, params)
+    }
+
+    /// Include other related objects in a returned Dataset
+    pub fn include<R, Ship>(
+        self,
+        relationship: impl Fn(<T as HasRelations>::Relation) -> Ship,
+    ) -> IncludeBuilder<T>
+    where
+        T: HasRelations,
+        Ship: Relationship<R>,
+        R: HasSchema,
+        R: Send + Sync + HasSchema,
+        <R as HasSchema>::Schema: TableInfo + TableColumns + UniqueIdentifier,
+        <T as HasSchema>::Schema: TableInfo + TableColumns + UniqueIdentifier,
+        <T as HasRelations>::Relation: Default,
+    {
+        let ib = IncludeBuilder::new(self);
+        ib.include(relationship)
     }
 }

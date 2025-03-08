@@ -35,6 +35,14 @@ where
         T: TryFrom<Row>,
         WeldsError: From<<T as TryFrom<Row>>::Error>,
     {
+        let primary = self.qb.run(client).await?;
+
+        // Don't know how we are going to include the related queries until DataSet knowns how it
+        // wan't them
+        // let base2 = self.qb.run(client).await?;
+        // let base3 = self.qb.run(client).await?;
+
         todo!()
+        Ok(DataSet::new(primary))
     }
 }

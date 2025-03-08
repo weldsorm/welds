@@ -1,20 +1,22 @@
+use crate::model_traits::{HasSchema, TableColumns, TableInfo, UniqueIdentifier};
+use crate::state::DbState;
+use std::ops::Deref;
+
 #[cfg(test)]
 mod tests;
-
-use crate::model_traits::{HasSchema, TableColumns, TableInfo, UniqueIdentifier};
-use crate::query::clause::AsFieldName;
-use crate::state::DbState;
-use std::ops::{Deref, DerefMut};
 
 /// A Collection object that hold a set of data that has been
 /// selected out of the database and its related objects
 pub struct DataSet<T> {
     // not sure if we want to use state or not
-    primary_set: Vec<DbState<T>>,
-    //primary_set: Vec<T>,
+    primary: Vec<DbState<T>>,
 }
 
 impl<T> DataSet<T> {
+    pub(crate) fn new(primary: Vec<DbState<T>>) -> Self {
+        Self { primary }
+    }
+
     fn iter(&self) -> DataSetIter<T> {
         DataSetIter {
             index: 0,
@@ -31,7 +33,7 @@ struct DataSetIter<'t, T> {
 impl<'t, T> Iterator for DataSetIter<'t, T> {
     type Item = DataAccessGuard<'t, T>;
     fn next(&mut self) -> Option<Self::Item> {
-        let obj = self.inner.primary_set.get(self.index)?;
+        let obj = self.inner.primary.get(self.index)?;
         self.index += 1;
         Some(DataAccessGuard { inner: obj })
     }
@@ -57,7 +59,7 @@ where
     /// Include other related objects in a returned Dataset
     pub fn get<'g, R, Ship>(
         self,
-        relationship: impl Fn(<T as HasRelations>::Relation) -> Ship,
+        _relationship: impl Fn(<T as HasRelations>::Relation) -> Ship,
     ) -> Option<Vec<&'g R>>
     where
         'g: 't,

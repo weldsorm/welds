@@ -4,12 +4,16 @@ use crate::query::clause::{AsFieldName, ClauseAdder};
 use crate::relations::{HasRelations, Relationship};
 
 mod exec;
+mod related_query;
+use related_query::RelatedQuery;
+pub(crate) use related_query::RelatedSet;
 #[cfg(test)]
 mod tests;
 
 /// An un-executed Query Selecting a model AND its relationship objects.
 pub struct IncludeBuilder<T> {
     qb: QueryBuilder<T>,
+    related: Vec<Box<dyn RelatedQuery<T>>>,
 }
 
 impl<T> IncludeBuilder<T>
@@ -17,13 +21,16 @@ where
     T: Send + HasSchema,
 {
     pub fn new(qb: QueryBuilder<T>) -> Self {
-        Self { qb }
+        Self {
+            qb,
+            related: Vec::default(),
+        }
     }
 
     /// Include other related objects in a returned Dataset
     pub fn include<R, Ship>(
         self,
-        relationship: impl Fn(<T as HasRelations>::Relation) -> Ship,
+        _relationship: impl Fn(<T as HasRelations>::Relation) -> Ship,
     ) -> IncludeBuilder<T>
     where
         T: HasRelations,

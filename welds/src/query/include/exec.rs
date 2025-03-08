@@ -2,11 +2,7 @@ use crate::dataset::DataSet;
 use crate::errors::Result;
 use crate::errors::WeldsError;
 use crate::model_traits::{HasSchema, TableColumns, TableInfo};
-use crate::query::clause::ParamArgs;
-use crate::query::helpers::{build_tail, build_where_clauses, join_sql_parts};
 use crate::query::include::IncludeBuilder;
-use crate::writers::ColumnWriter;
-use crate::writers::NextParam;
 use crate::Client;
 use crate::Row;
 use crate::Syntax;
@@ -37,12 +33,11 @@ where
     {
         let primary = self.qb.run(client).await?;
 
-        // Don't know how we are going to include the related queries until DataSet knowns how it
-        // wan't them
-        // let base2 = self.qb.run(client).await?;
-        // let base3 = self.qb.run(client).await?;
+        let mut related = Vec::default();
+        for related_query in &self.related {
+            related.push(related_query.run(&self.qb).await?);
+        }
 
-        todo!()
-        Ok(DataSet::new(primary))
+        Ok(DataSet::new(primary, related))
     }
 }

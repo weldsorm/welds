@@ -1,0 +1,124 @@
+use crate::connections::Row;
+use crate::errors::Result;
+use crate::errors::WeldsError;
+use crate::model_traits::{HasSchema, TableColumns, TableInfo, UniqueIdentifier};
+use crate::query::builder::QueryBuilder;
+use crate::query::clause::exists::ExistIn;
+use crate::state::DbState;
+use crate::Client;
+use async_trait::async_trait;
+
+//use crate::dataset::DataSet;
+//use crate::errors::WeldsError;
+//use crate::model_traits::{HasSchema, TableColumns, TableInfo};
+//use crate::query::include::IncludeBuilder;
+//use crate::state::DbState;
+//use crate::Client;
+//use crate::Row;
+//use crate::Syntax;
+//use std::any::Any;
+//use std::any::TypeId;
+
+#[async_trait]
+pub(crate) trait RelatedQuery<R> {
+    async fn run(
+        &self,
+        primary_query: &QueryBuilder<R>,
+        client: &dyn Client,
+    ) -> Result<Box<dyn RelatedSetAccesser>>;
+}
+
+pub(crate) struct IncludeQuery<T> {
+    // The model that is being included
+    pub(crate) row_type: std::marker::PhantomData<T>,
+    pub(crate) out_col: String,
+    pub(crate) inner_tn: String,
+    pub(crate) inner_col: String,
+}
+
+#[async_trait]
+impl<R, T> RelatedQuery<T> for IncludeQuery<R>
+where
+    for<'r> &'r IncludeQuery<R>: Send,
+    for<'b> &'b QueryBuilder<T>: Send,
+    T: 'static + Send,
+    R: 'static,
+    <R as HasSchema>::Schema: TableInfo + TableColumns + UniqueIdentifier,
+    R: Send + Sync + HasSchema,
+    R: TryFrom<Row>,
+    WeldsError: From<<R as TryFrom<Row>>::Error>,
+{
+    async fn run(
+        &self,
+        primary_query: &QueryBuilder<T>,
+        client: &dyn Client,
+    ) -> Result<Box<dyn RelatedSetAccesser>> {
+        let primary_query = primary_query.clone();
+
+        let mut qb: QueryBuilder<R> = QueryBuilder::new();
+        qb.set_aliases(&primary_query.alias_asigner);
+
+        let exist_in = ExistIn::new(
+            primary_query,
+            self.out_col.clone(),
+            self.inner_tn.clone(),
+            self.inner_col.clone(),
+        );
+        qb.exist_ins.push(exist_in);
+        let rows = qb.run(client).await?;
+
+        Ok(Box::new(RelatedSet::<R> { data: rows }))
+    }
+}
+
+pub(crate) struct RelatedSet<R> {
+    data: Vec<DbState<R>>,
+}
+
+pub(crate) trait RelatedSetAccesser {
+    // fn as_any(&self) -> &dyn Any;
+    // fn as_any_mut(&mut self) -> &mut dyn Any;
+}
+
+impl<T: 'static> RelatedSetAccesser for T {
+    //fn as_any(&self) -> &dyn Any {
+    //    self
+    //}
+
+    //fn as_any_mut(&mut self) -> &mut dyn Any {
+    //    self
+    //}
+}
+
+//  pub(crate) struct RelatedSetDb<T> {
+//      data: Vec<T>,
+//  }
+//
+//  trait SetDowncast {
+//      fn is<T: 'static>(&self) -> bool;
+//      fn downcast_ref<T: 'static>(&self) -> Option<&T>;
+//      fn downcast_mut<T: 'static>(&mut self) -> Option<&mut T>;
+//  }
+//
+//  impl SetDowncast for Box<dyn RelatedSet> {
+//      fn is<T: 'static>(&self) -> bool {
+//          // Check if the boxed object is of type T
+//          self.as_any().type_id() == TypeId::of::<T>()
+//      }
+//
+//      fn downcast_ref<T: 'static>(&self) -> Option<&T> {
+//          if self.is::<T>() {
+//              Some(unsafe { &*(self.as_any() as *const dyn Any as *const T) })
+//          } else {
+//              None
+//          }
+//      }
+//
+//      fn downcast_mut<T: 'static>(&mut self) -> Option<&mut T> {
+//          if self.is::<T>() {
+//              Some(unsafe { &mut *(self.as_any_mut() as *mut dyn Any as *mut T) })
+//          } else {
+//              None
+//          }
+//      }
+//  }

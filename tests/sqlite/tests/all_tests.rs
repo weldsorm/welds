@@ -516,3 +516,14 @@ fn should_be_able_to_filter_by_multiple_values() {
         assert_eq!(results.len(), 2);
     })
 }
+
+#[test]
+fn should_be_able_to_select_all_products_with_there_orders() {
+    async_std::task::block_on(async {
+        let conn = get_conn().await;
+        let total = Product::all().count(&conn).await.unwrap();
+        let query = Product::all().include(|x| x.orders);
+        let results = query.run(&conn).await.unwrap();
+        assert_eq!(results.len(), total as usize);
+    })
+}

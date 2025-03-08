@@ -3,12 +3,15 @@ mod tests;
 
 use crate::model_traits::{HasSchema, TableColumns, TableInfo, UniqueIdentifier};
 use crate::query::clause::AsFieldName;
+use crate::state::DbState;
 use std::ops::{Deref, DerefMut};
 
 /// A Collection object that hold a set of data that has been
 /// selected out of the database and its related objects
 pub struct DataSet<T> {
-    primary_set: Vec<T>,
+    // not sure if we want to use state or not
+    primary_set: Vec<DbState<T>>,
+    //primary_set: Vec<T>,
 }
 
 impl<T> DataSet<T> {

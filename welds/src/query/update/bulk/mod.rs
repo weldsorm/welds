@@ -13,6 +13,7 @@ use crate::writers::NextParam;
 use crate::Client;
 use crate::Syntax;
 use std::marker::PhantomData;
+use std::sync::Arc;
 use welds_connections::Param;
 
 /// An un-executed Sql Update.
@@ -21,7 +22,7 @@ use welds_connections::Param;
 pub struct UpdateBuilder<T> {
     _t: PhantomData<T>,
     pub(crate) query_builder: QueryBuilder<T>,
-    pub(crate) sets: Vec<Box<dyn AssignmentAdder>>,
+    pub(crate) sets: Vec<Arc<Box<dyn AssignmentAdder>>>,
 }
 
 impl<T> UpdateBuilder<T>
@@ -68,7 +69,8 @@ where
         let val: V = value.into();
         let field = lam(Default::default());
         let col_raw = field.colname().to_string();
-        self.sets.push(Box::new(SetColVal { col_raw, val }));
+        self.sets
+            .push(Arc::new(Box::new(SetColVal { col_raw, val })));
         self
     }
 
@@ -100,7 +102,7 @@ where
         <T as HasSchema>::Schema: Default,
     {
         let clase = lam(Default::default());
-        self.sets.push(clase);
+        self.sets.push(Arc::new(clase));
         self
     }
 
@@ -113,7 +115,7 @@ where
     {
         let field = lam(Default::default());
         let col_raw = field.colname().to_string();
-        self.sets.push(Box::new(SetColNull { col_raw }));
+        self.sets.push(Arc::new(Box::new(SetColNull { col_raw })));
         self
     }
 
@@ -160,7 +162,7 @@ where
             sql: sql.to_string(),
             params: params.into_inner(),
         };
-        self.sets.push(Box::new(adder));
+        self.sets.push(Arc::new(Box::new(adder)));
 
         self
     }
@@ -224,7 +226,7 @@ fn build_head<'s, 'args, 'p, S>(
     next_params: &NextParam,
     alias: &str,
     args: &'args mut Option<ParamArgs<'p>>,
-    sets: &'s [Box<dyn AssignmentAdder>],
+    sets: &'s [Arc<Box<dyn AssignmentAdder>>],
 ) -> Option<String>
 where
     's: 'p,

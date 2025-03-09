@@ -8,12 +8,13 @@ use crate::Syntax;
 use std::sync::Arc;
 
 /// Used to generated a SQL EXISTS OR IN clause for writing sub-queries
+#[derive(Clone)]
 pub struct ExistIn {
     outer_column: String,
     inner_column: String,
     inner_tablename: String,
     pub(crate) inner_tablealias: String,
-    wheres: Vec<Box<dyn ClauseAdder>>,
+    wheres: Vec<Arc<Box<dyn ClauseAdder>>>,
     inner_exists_ins: Vec<Self>,
     limit: Option<i64>,
     offset: Option<i64>,

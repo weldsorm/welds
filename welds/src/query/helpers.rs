@@ -5,6 +5,7 @@ use crate::query::clause::exists::ExistIn;
 use crate::query::clause::ClauseAdder;
 use crate::writers::NextParam;
 use crate::Syntax;
+use std::sync::Arc;
 
 pub(crate) fn join_sql_parts(parts: &[Option<String>]) -> String {
     // Join al the parts into
@@ -20,7 +21,7 @@ pub(crate) fn build_where<'lam, 'exist, 'args, 'p>(
     syntax: Syntax,
     next_params: &NextParam,
     alias: &str,
-    wheres: &'lam [Box<dyn ClauseAdder>],
+    wheres: &'lam [Arc<Box<dyn ClauseAdder>>],
     args: &'args mut Option<ParamArgs<'p>>,
     exist_ins: &'exist [ExistIn],
 ) -> Option<String>
@@ -39,7 +40,7 @@ pub(crate) fn build_where_clauses<'lam, 'exist, 'args, 'p>(
     syntax: Syntax,
     next_params: &NextParam,
     alias: &str,
-    wheres: &'lam [Box<dyn ClauseAdder>],
+    wheres: &'lam [Arc<Box<dyn ClauseAdder>>],
     args: &'args mut Option<ParamArgs<'p>>,
     exist_ins: &'exist [ExistIn],
 ) -> Vec<String>

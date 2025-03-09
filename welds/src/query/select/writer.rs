@@ -11,6 +11,7 @@ use crate::writers::ColumnWriter;
 use crate::writers::CountWriter;
 use crate::writers::NextParam;
 use crate::Syntax;
+use std::sync::Arc;
 
 /// take all info from a query and translates it into SQL
 /// can build the params Vec as needed
@@ -48,7 +49,7 @@ impl SelectWriter {
     /// Will fill in the args to be sent to the database if provided
     pub fn sql_count<'lam, 'exist, 'args, 'p>(
         &self,
-        wheres: &'lam [Box<dyn ClauseAdder>],
+        wheres: &'lam [Arc<Box<dyn ClauseAdder>>],
         exist_ins: &'exist [ExistIn],
         limit: &Option<i64>,
         offset: &Option<i64>,
@@ -79,7 +80,7 @@ impl SelectWriter {
     pub fn sql<'col, 'lam, 'exist, 'args, 'p>(
         &self,
         columns: &'col [Column],
-        wheres: &'lam [Box<dyn ClauseAdder>],
+        wheres: &'lam [Arc<Box<dyn ClauseAdder>>],
         exist_ins: &'exist [ExistIn],
         limit: &Option<i64>,
         offset: &Option<i64>,

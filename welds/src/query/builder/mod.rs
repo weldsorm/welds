@@ -33,6 +33,21 @@ pub struct QueryBuilder<T> {
     pub(crate) alias_asigner: Arc<TableAlias>,
 }
 
+impl<T> Clone for QueryBuilder<T> {
+    fn clone(&self) -> Self {
+        Self {
+            _t: Default::default(),
+            wheres: self.wheres.clone(),
+            limit: self.limit,
+            offset: self.offset,
+            orderby: self.orderby.clone(),
+            exist_ins: self.exist_ins.clone(),
+            alias: self.alias.clone(),
+            alias_asigner: self.alias_asigner.clone(),
+        }
+    }
+}
+
 impl<T> Default for QueryBuilder<T>
 where
     T: Send + HasSchema,

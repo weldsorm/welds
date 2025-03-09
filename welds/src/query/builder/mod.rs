@@ -1,4 +1,4 @@
-use super::clause::{self, AsOptField, ClauseColValIn};
+use super::clause::{self, AsOptField};
 use super::select_cols::SelectBuilder;
 pub use super::update::bulk::UpdateBuilder;
 use crate::model_traits::{HasSchema, TableColumns, TableInfo, UniqueIdentifier};
@@ -24,7 +24,7 @@ pub type ManualWhereParam = ManualParam;
 /// Can be mapped into other queries to  make more complex queries.
 pub struct QueryBuilder<T> {
     _t: PhantomData<T>,
-    pub(crate) wheres: Vec<Box<dyn ClauseAdder>>,
+    pub(crate) wheres: Vec<Arc<Box<dyn ClauseAdder>>>,
     pub(crate) exist_ins: Vec<ExistIn>,
     pub(crate) limit: Option<i64>,
     pub(crate) offset: Option<i64>,
@@ -87,7 +87,7 @@ where
         <T as HasSchema>::Schema: Default,
     {
         let qba = lam(Default::default());
-        self.wheres.push(qba);
+        self.wheres.push(Arc::new(qba));
         self
     }
 
@@ -137,7 +137,7 @@ where
             sql: sql.to_string(),
             params: params.into_inner(),
         };
-        self.wheres.push(Box::new(c));
+        self.wheres.push(Arc::new(Box::new(c)));
         self
     }
 
@@ -177,7 +177,7 @@ where
             sql: sql.to_string(),
             params: params.into_inner(),
         };
-        self.wheres.push(Box::new(c));
+        self.wheres.push(Arc::new(Box::new(c)));
         self
     }
 

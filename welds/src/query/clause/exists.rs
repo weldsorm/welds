@@ -13,7 +13,7 @@ pub struct ExistIn {
     inner_column: String,
     inner_tablename: String,
     pub(crate) inner_tablealias: String,
-    wheres: Vec<Box<dyn ClauseAdder>>,
+    wheres: Vec<Arc<Box<dyn ClauseAdder>>>,
     inner_exists_ins: Vec<Self>,
     limit: Option<i64>,
     offset: Option<i64>,

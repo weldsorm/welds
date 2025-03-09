@@ -15,7 +15,7 @@ pub(crate) struct JoinBuilder {
     pub(crate) inner_alias: String,
     pub(crate) inner_table: String,
     pub(crate) inner_key: String,
-    pub(crate) wheres: Vec<Box<dyn ClauseAdder>>,
+    pub(crate) wheres: Vec<Arc<Box<dyn ClauseAdder>>>,
     pub(crate) selects: Vec<SelectColumn>,
     pub(crate) ty: Join,
     pub(crate) subs: Vec<JoinBuilder>,

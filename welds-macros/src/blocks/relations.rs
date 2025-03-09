@@ -29,6 +29,10 @@ pub(crate) fn write(info: &Info) -> TokenStream {
 
         impl #wp::relations::HasRelations for #defstruct {
             type Relation = #relations_struct;
+
+            fn relations() -> Self::Relation {
+                Self::Relation::default()
+            }
         }
 
         pub struct #relations_struct {
@@ -83,32 +87,68 @@ fn belongsdef(info: &Info, relation: &Relation) -> TokenStream {
     let defstruct = &info.defstruct;
     let other = &relation.foreign_struct;
 
-    if &kind.to_string() == "BelongsTo" {
-        if let Some(col) = cols.iter().find(|&c| c.field.to_string() == fk.to_string()) {
-            let fk_name = &col.field;
-            let fk_type = &col.field_type;
+    match cols.iter().find(|&c| c.field.to_string() == fk.to_string()) {
+        Some(fk_column) => {
+            let fk_name = &fk_column.field;
+            let fk_type = &fk_column.field_type;
 
-            let fk_value_type = if col.is_option {
+            let fk_value_type = if fk_column.is_option {
                 quote! { Option<#fk_type> }
             } else {
                 quote! { #fk_type }
             };
 
-            return quote! {
+            let fk_value_inner = if fk_column.is_option {
+                quote! { self.#fk_name.clone().unwrap_or_default() }
+            } else {
+                quote! { self.#fk_name.clone() }
+            };
 
-                impl #wp::relations::BelongsToFkValue<#other> for #defstruct {
-                    type FkVal = #fk_value_type;
+            match kind.to_string().as_str() {
+                "BelongsTo" => {
+                    return quote! {
 
-                    fn fk_value<R>(&self) -> Self::FkVal
-                    where
-                        <Self as #wp::model_traits::HasSchema>::Schema: #wp::model_traits::TableInfo + #wp::model_traits::TableColumns,
-                    {
-                        self.#fk_name.clone()
+                        impl #wp::relations::BelongsToFkValue<#other> for #defstruct {
+                            type FkVal = #fk_value_type;
+
+                            fn fk_value<R>(&self) -> Self::FkVal
+                            where
+                                <Self as #wp::model_traits::HasSchema>::Schema: #wp::model_traits::TableInfo + #wp::model_traits::TableColumns,
+                            {
+                                self.#fk_name.clone()
+                            }
+                        }
+
                     }
                 }
+                "HasOne" => {
+                    return quote! {
 
+                        impl #wp::relations::HasOneFkValue<#other> for #defstruct {
+                            type HasOneFkVal = #fk_value_type;
+                            type HasOneFkValInner = #fk_type;
+
+                            fn fk_value<R>(&self) -> Self::HasOneFkVal
+                            where
+                                <Self as #wp::model_traits::HasSchema>::Schema: #wp::model_traits::TableInfo + #wp::model_traits::TableColumns,
+                            {
+                                self.#fk_name.clone()
+                            }
+
+                            fn fk_value_inner<R>(&self) -> Self::HasOneFkValInner
+                            where
+                                <Self as #wp::model_traits::HasSchema>::Schema: #wp::model_traits::TableInfo + #wp::model_traits::TableColumns,
+                            {
+                                #fk_value_inner
+                            }
+                        }
+
+                    }
+                }
+                _ => {}
             }
         }
+        None => {},
     }
 
     quote! {}

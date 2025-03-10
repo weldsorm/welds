@@ -1,5 +1,5 @@
 use crate::model_traits::{HasSchema, TableColumns, TableInfo, UniqueIdentifier};
-use crate::query::include::{RelatedSet, RelatedSetAccesser};
+use crate::query::include::related_query::{RelatedSet, RelatedSetAccesser, SetDowncast};
 use crate::state::DbState;
 use std::ops::Deref;
 
@@ -19,7 +19,7 @@ impl<T> DataSet<T> {
         Self { primary, related }
     }
 
-    fn iter(&self) -> DataSetIter<T> {
+    pub fn iter(&self) -> DataSetIter<T> {
         DataSetIter {
             index: 0,
             inner: self,
@@ -27,7 +27,7 @@ impl<T> DataSet<T> {
     }
 }
 
-struct DataSetIter<'t, T> {
+pub struct DataSetIter<'t, T> {
     index: usize,
     inner: &'t DataSet<T>,
 }
@@ -55,7 +55,7 @@ impl<T> DataSet<T> {
     }
 }
 
-struct DataAccessGuard<'t, T> {
+pub struct DataAccessGuard<'t, T> {
     inner: &'t T,
     sets: &'t DataSet<T>,
 }
@@ -77,24 +77,23 @@ where
     pub fn get<'g, R, Ship>(
         self,
         _relationship: impl Fn(<T as HasRelations>::Relation) -> Ship,
-    ) -> Option<&'g [R]>
+    ) -> Option<&'g [DbState<R>]>
     where
         'g: 't,
+        't: 'g,
         T: HasRelations,
         Ship: Relationship<R>,
         R: HasSchema,
-        R: Send + Sync + HasSchema,
+        R: 'static + Send + Sync + HasSchema,
         <R as HasSchema>::Schema: TableInfo + TableColumns + UniqueIdentifier,
         <T as HasSchema>::Schema: TableInfo + TableColumns + UniqueIdentifier,
         <T as HasRelations>::Relation: Default,
     {
         // find the set of data that would fit
         for set in &self.sets.related {
-            // let into_t: Option<&[R]> = set.try_into().ok();
-            // //let into_t: Option<&[R]> = set.try_into().ok();
-            // if let Some(slice) = into_t {
-            //     return Some(slice);
-            // }
+            if let Some(slice) = set.downcast_ref() {
+                return Some(slice);
+            }
         }
         None
     }

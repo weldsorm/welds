@@ -7,17 +7,8 @@ use crate::query::clause::exists::ExistIn;
 use crate::state::DbState;
 use crate::Client;
 use async_trait::async_trait;
-
-//use crate::dataset::DataSet;
-//use crate::errors::WeldsError;
-//use crate::model_traits::{HasSchema, TableColumns, TableInfo};
-//use crate::query::include::IncludeBuilder;
-//use crate::state::DbState;
-//use crate::Client;
-//use crate::Row;
-//use crate::Syntax;
-//use std::any::Any;
-//use std::any::TypeId;
+use std::any::Any;
+use std::any::TypeId;
 
 #[async_trait]
 pub(crate) trait RelatedQuery<R> {
@@ -76,49 +67,48 @@ pub(crate) struct RelatedSet<R> {
 }
 
 pub(crate) trait RelatedSetAccesser {
-    // fn as_any(&self) -> &dyn Any;
-    // fn as_any_mut(&mut self) -> &mut dyn Any;
+    fn as_any(&self) -> &dyn Any;
+    fn as_any_mut(&mut self) -> &mut dyn Any;
 }
 
-impl<T: 'static> RelatedSetAccesser for T {
-    //fn as_any(&self) -> &dyn Any {
-    //    self
-    //}
+impl<R: 'static> RelatedSetAccesser for RelatedSet<R> {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
 
-    //fn as_any_mut(&mut self) -> &mut dyn Any {
-    //    self
-    //}
+    fn as_any_mut(&mut self) -> &mut dyn Any {
+        self
+    }
 }
 
-//  pub(crate) struct RelatedSetDb<T> {
-//      data: Vec<T>,
-//  }
-//
-//  trait SetDowncast {
-//      fn is<T: 'static>(&self) -> bool;
-//      fn downcast_ref<T: 'static>(&self) -> Option<&T>;
-//      fn downcast_mut<T: 'static>(&mut self) -> Option<&mut T>;
-//  }
-//
-//  impl SetDowncast for Box<dyn RelatedSet> {
-//      fn is<T: 'static>(&self) -> bool {
-//          // Check if the boxed object is of type T
-//          self.as_any().type_id() == TypeId::of::<T>()
-//      }
-//
-//      fn downcast_ref<T: 'static>(&self) -> Option<&T> {
-//          if self.is::<T>() {
-//              Some(unsafe { &*(self.as_any() as *const dyn Any as *const T) })
-//          } else {
-//              None
-//          }
-//      }
-//
-//      fn downcast_mut<T: 'static>(&mut self) -> Option<&mut T> {
-//          if self.is::<T>() {
-//              Some(unsafe { &mut *(self.as_any_mut() as *mut dyn Any as *mut T) })
-//          } else {
-//              None
-//          }
-//      }
-//  }
+pub(crate) trait SetDowncast {
+    fn is<T: 'static>(&self) -> bool;
+    fn downcast_ref<R: 'static>(&self) -> Option<&[DbState<R>]>;
+    fn downcast_mut<R: 'static>(&mut self) -> Option<&mut [DbState<R>]>;
+}
+
+impl SetDowncast for Box<dyn RelatedSetAccesser> {
+    fn is<R: 'static>(&self) -> bool {
+        // Check if the boxed object is of type T
+        self.as_any().type_id() == TypeId::of::<RelatedSet<R>>()
+    }
+
+    fn downcast_ref<R: 'static>(&self) -> Option<&[DbState<R>]> {
+        if self.is::<R>() {
+            let rs: &RelatedSet<R> =
+                unsafe { &*(self.as_any() as *const dyn Any as *const RelatedSet<R>) };
+            Some(&rs.data)
+        } else {
+            None
+        }
+    }
+
+    fn downcast_mut<R: 'static>(&mut self) -> Option<&mut [DbState<R>]> {
+        if self.is::<R>() {
+            let rs = unsafe { &mut *(self.as_any_mut() as *mut dyn Any as *mut RelatedSet<R>) };
+            Some(&mut rs.data)
+        } else {
+            None
+        }
+    }
+}

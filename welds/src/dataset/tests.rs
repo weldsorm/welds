@@ -1,4 +1,5 @@
 use super::DataSet;
+use crate::state::DbState;
 use crate::WeldsModel;
 
 #[derive(Debug, Default, WeldsModel)]
@@ -22,16 +23,16 @@ struct Order {
     pub price: i32,
 }
 
-fn mock_dataset() -> DataSet<Product> {
-    todo!()
-}
-
-#[test]
-fn should_be_able_to_iter_over_dataset() {
-    let set = mock_dataset();
-    for p in set.iter() {
-        // make sure we can access the Products content
-        println!("p: {}", p.id);
-        let orders: Option<Vec<&Order>> = p.get(|p| p.orders);
-    }
-}
+//fn mock_dataset() -> DataSet<Product> {
+//    todo!()
+//}
+//
+//#[test]
+//fn should_be_able_to_iter_over_dataset() {
+//    let set = mock_dataset();
+//    for p in set.iter() {
+//        // make sure we can access the Products content
+//        println!("p: {}", p.id);
+//        let orders: Option<&[DbState<Order>]> = p.get(|p| p.orders);
+//    }
+//}

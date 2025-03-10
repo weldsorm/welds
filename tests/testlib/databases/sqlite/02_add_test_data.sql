@@ -50,3 +50,31 @@ Insert INTO Products (
 , true
 );
 
+
+
+Insert INTO Orders (
+  id,
+  price,
+  product_id,
+  product_id2,
+  code
+) VALUES (
+1
+, 11.11
+, 1
+, null
+, ''
+), (
+2
+, 22.22
+, 1
+, null
+, ''
+), (
+3
+, 33.33
+, 2
+, null
+, ''
+);
+

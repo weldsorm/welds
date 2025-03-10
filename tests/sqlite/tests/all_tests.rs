@@ -523,7 +523,14 @@ fn should_be_able_to_select_all_products_with_there_orders() {
         let conn = get_conn().await;
         let total = Product::all().count(&conn).await.unwrap();
         let query = Product::all().include(|x| x.orders);
-        let results = query.run(&conn).await.unwrap();
-        assert_eq!(results.len(), total as usize);
+        let products = query.run(&conn).await.unwrap();
+
+        for product in products.iter() {
+            let orders: &[DbState<Order>] = product.get(|p| p.orders).unwrap();
+            println!("Order Count: {}", orders.len());
+        }
+
+        assert_eq!(products.len(), total as usize);
+        assert!(false);
     })
 }

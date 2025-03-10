@@ -474,7 +474,9 @@ where
         ub.set_manual(lam, sql, params)
     }
 
-    /// Include other related objects in a returned Dataset
+    /// Include an other related to this one. `BelongsTo` `HasMany`.
+    /// querying will continue over your current Object, but the related object will be
+    /// accessible in the resulting dataset off of each instance of your model
     pub fn include<R, Ship>(
         self,
         relationship: impl Fn(<T as HasRelations>::Relation) -> Ship,

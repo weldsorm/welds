@@ -217,7 +217,7 @@ where
         let inner_tn = <R as HasSchema>::Schema::identifier();
         let inner_tn = inner_tn.join(".");
         let inner_col = ship.their_key::<R::Schema, T::Schema>();
-        let mut exist_in = ExistIn::new(filter, out_col, inner_tn, inner_col);
+        let mut exist_in = ExistIn::new(&filter, out_col, inner_tn, inner_col);
         exist_in.set_aliases(&self.alias_asigner);
         self.exist_ins.push(exist_in);
         self
@@ -225,7 +225,7 @@ where
 
     /// Results in a query that is mapped into the query of one of its relationships
     pub fn map_query<R, Ship>(
-        self,
+        &self,
         relationship: impl Fn(<T as HasRelations>::Relation) -> Ship,
     ) -> QueryBuilder<R>
     where

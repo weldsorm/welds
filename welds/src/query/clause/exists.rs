@@ -23,7 +23,7 @@ pub struct ExistIn {
 
 impl ExistIn {
     pub(crate) fn new<T>(
-        sb: QueryBuilder<T>,
+        sb: &QueryBuilder<T>,
         outer_column: String,
         inner_tablename: String,
         inner_column: String,
@@ -32,12 +32,12 @@ impl ExistIn {
             outer_column,
             inner_column,
             inner_tablename,
-            inner_tablealias: sb.alias,
-            wheres: sb.wheres,
-            inner_exists_ins: sb.exist_ins,
+            inner_tablealias: sb.alias.clone(),
+            wheres: sb.wheres.clone(),
+            inner_exists_ins: sb.exist_ins.clone(),
             limit: sb.limit,
             offset: sb.offset,
-            orderby: sb.orderby,
+            orderby: sb.orderby.clone(),
         }
     }
 

@@ -59,7 +59,7 @@ where
         qb.set_aliases(&primary_query.alias_asigner);
 
         let exist_in = ExistIn::new(
-            primary_query,
+            &primary_query,
             self.out_col.clone(),
             self.inner_tn.clone(),
             self.inner_col.clone(),

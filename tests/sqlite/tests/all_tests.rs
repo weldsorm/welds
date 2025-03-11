@@ -521,16 +521,22 @@ fn should_be_able_to_filter_by_multiple_values() {
 fn should_be_able_to_select_all_products_with_there_orders() {
     async_std::task::block_on(async {
         let conn = get_conn().await;
-        let total = Product::all().count(&conn).await.unwrap();
         let query = Product::all().include(|x| x.orders);
         let products = query.run(&conn).await.unwrap();
 
-        for product in products.iter() {
-            let orders: &[DbState<Order>] = product.get(|p| p.orders).unwrap();
-            println!("Order Count: {}", orders.len());
-        }
+        // first product has 2 orders
+        let p1 = products.get(0).unwrap();
+        let p1_orders = p1.get(|x| x.orders).unwrap();
+        assert_eq!(p1_orders.len(), 2);
 
-        assert_eq!(products.len(), total as usize);
-        assert!(false);
+        // second product has 1 orders
+        let p1 = products.get(1).unwrap();
+        let p1_orders = p1.get(|x| x.orders).unwrap();
+        assert_eq!(p1_orders.len(), 1);
+
+        // third product has 0 orders
+        let p1 = products.get(2).unwrap();
+        let p1_orders = p1.get(|x| x.orders).unwrap();
+        assert_eq!(p1_orders.len(), 0);
     })
 }

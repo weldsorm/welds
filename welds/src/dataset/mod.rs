@@ -39,7 +39,7 @@ impl<'t, T> Iterator for DataSetIter<'t, T> {
         self.index += 1;
         Some(DataAccessGuard {
             inner: obj,
-            sets: &self.inner,
+            sets: self.inner,
         })
     }
 }
@@ -49,9 +49,19 @@ impl<T> DataSet<T> {
     pub fn len(&self) -> usize {
         self.primary.len()
     }
+
     /// Returns true if this dataset doesn't contain any data
     pub fn is_empty(&self) -> bool {
         self.primary.is_empty()
+    }
+
+    /// access a <T> at a given index.
+    pub fn get(&self, index: usize) -> Option<DataAccessGuard<T>> {
+        let obj = self.primary.get(index)?;
+        Some(DataAccessGuard {
+            inner: obj,
+            sets: self,
+        })
     }
 }
 

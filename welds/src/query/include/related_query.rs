@@ -4,6 +4,7 @@ use crate::errors::WeldsError;
 use crate::model_traits::{HasSchema, TableColumns, TableInfo, UniqueIdentifier};
 use crate::query::builder::QueryBuilder;
 use crate::query::clause::exists::ExistIn;
+use crate::relations::Relationship;
 use crate::state::DbState;
 use crate::Client;
 use async_trait::async_trait;
@@ -19,19 +20,24 @@ pub(crate) trait RelatedQuery<R> {
     ) -> Result<Box<dyn RelatedSetAccesser>>;
 }
 
-pub(crate) struct IncludeQuery<T> {
+pub(crate) struct IncludeQuery<R, Ship>
+where
+    Ship: Relationship<R>,
+{
     // The model that is being included
-    pub(crate) row_type: std::marker::PhantomData<T>,
+    pub(crate) row_type: std::marker::PhantomData<R>,
     pub(crate) out_col: String,
     pub(crate) inner_tn: String,
     pub(crate) inner_col: String,
+    pub(crate) ship: Ship,
 }
 
 #[async_trait]
-impl<R, T> RelatedQuery<T> for IncludeQuery<R>
+impl<R, T, Ship> RelatedQuery<T> for IncludeQuery<R, Ship>
 where
-    for<'r> &'r IncludeQuery<R>: Send,
+    for<'r> &'r IncludeQuery<R, Ship>: Send,
     for<'b> &'b QueryBuilder<T>: Send,
+    Ship: 'static + Relationship<R>,
     T: 'static + Send,
     R: 'static,
     <R as HasSchema>::Schema: TableInfo + TableColumns + UniqueIdentifier,
@@ -58,12 +64,19 @@ where
         qb.exist_ins.push(exist_in);
         let rows = qb.run(client).await?;
 
-        Ok(Box::new(RelatedSet::<R> { data: rows }))
+        Ok(Box::new(RelatedSet::<R, Ship> {
+            data: rows,
+            ship: self.ship.clone(),
+        }))
     }
 }
 
-pub(crate) struct RelatedSet<R> {
-    data: Vec<DbState<R>>,
+pub(crate) struct RelatedSet<R, Ship>
+where
+    Ship: Relationship<R>,
+{
+    pub(crate) data: Vec<DbState<R>>,
+    pub(crate) ship: Ship,
 }
 
 pub(crate) trait RelatedSetAccesser {
@@ -71,7 +84,10 @@ pub(crate) trait RelatedSetAccesser {
     fn as_any_mut(&mut self) -> &mut dyn Any;
 }
 
-impl<R: 'static> RelatedSetAccesser for RelatedSet<R> {
+impl<R: 'static, Ship: 'static> RelatedSetAccesser for RelatedSet<R, Ship>
+where
+    Ship: Relationship<R>,
+{
     fn as_any(&self) -> &dyn Any {
         self
     }
@@ -82,31 +98,40 @@ impl<R: 'static> RelatedSetAccesser for RelatedSet<R> {
 }
 
 pub(crate) trait SetDowncast {
-    fn is<T: 'static>(&self) -> bool;
-    fn downcast_ref<R: 'static>(&self) -> Option<&[DbState<R>]>;
-    fn downcast_mut<R: 'static>(&mut self) -> Option<&mut [DbState<R>]>;
+    fn is<R: 'static, Ship: 'static + Relationship<R>>(&self) -> bool;
+    fn downcast_ref<R: 'static, Ship: 'static + Relationship<R>>(
+        &self,
+    ) -> Option<&RelatedSet<R, Ship>>;
+    fn downcast_mut<R: 'static, Ship: 'static + Relationship<R>>(
+        &mut self,
+    ) -> Option<&mut RelatedSet<R, Ship>>;
 }
 
 impl SetDowncast for Box<dyn RelatedSetAccesser> {
-    fn is<R: 'static>(&self) -> bool {
+    fn is<R: 'static, Ship: 'static + Relationship<R>>(&self) -> bool {
         // Check if the boxed object is of type T
-        self.as_any().type_id() == TypeId::of::<RelatedSet<R>>()
+        self.as_any().type_id() == TypeId::of::<RelatedSet<R, Ship>>()
     }
 
-    fn downcast_ref<R: 'static>(&self) -> Option<&[DbState<R>]> {
-        if self.is::<R>() {
-            let rs: &RelatedSet<R> =
-                unsafe { &*(self.as_any() as *const dyn Any as *const RelatedSet<R>) };
-            Some(&rs.data)
+    fn downcast_ref<R: 'static, Ship: 'static + Relationship<R>>(
+        &self,
+    ) -> Option<&RelatedSet<R, Ship>> {
+        if self.is::<R, Ship>() {
+            let rs: &RelatedSet<R, Ship> =
+                unsafe { &*(self.as_any() as *const dyn Any as *const RelatedSet<R, Ship>) };
+            Some(rs)
         } else {
             None
         }
     }
 
-    fn downcast_mut<R: 'static>(&mut self) -> Option<&mut [DbState<R>]> {
-        if self.is::<R>() {
-            let rs = unsafe { &mut *(self.as_any_mut() as *mut dyn Any as *mut RelatedSet<R>) };
-            Some(&mut rs.data)
+    fn downcast_mut<R: 'static, Ship: 'static + Relationship<R>>(
+        &mut self,
+    ) -> Option<&mut RelatedSet<R, Ship>> {
+        if self.is::<R, Ship>() {
+            let rs: &mut RelatedSet<R, Ship> =
+                unsafe { &mut *(self.as_any_mut() as *mut dyn Any as *mut RelatedSet<R, Ship>) };
+            Some(rs)
         } else {
             None
         }

@@ -37,7 +37,7 @@ where
     ) -> IncludeBuilder<T>
     where
         T: 'static + HasRelations,
-        Ship: Relationship<R>,
+        Ship: 'static + Sync + Relationship<R>,
         R: HasSchema,
         R: 'static,
         R: Send + Sync + HasSchema,
@@ -53,11 +53,12 @@ where
         let inner_tn = <T as HasSchema>::Schema::identifier().join(".");
         let inner_col = ship.my_key::<R::Schema, T::Schema>();
 
-        let include_query: IncludeQuery<R> = IncludeQuery::<R> {
+        let include_query: IncludeQuery<R, Ship> = IncludeQuery::<R, Ship> {
             row_type: Default::default(),
             out_col,
             inner_tn,
             inner_col,
+            ship: ship.clone(),
         };
 
         self.related.push(Box::new(include_query));

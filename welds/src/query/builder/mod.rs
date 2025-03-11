@@ -483,7 +483,7 @@ where
     ) -> IncludeBuilder<T>
     where
         T: 'static + HasRelations,
-        Ship: Relationship<R>,
+        Ship: 'static + Sync + Relationship<R>,
         R: HasSchema,
         R: 'static,
         R: Send + Sync + HasSchema,

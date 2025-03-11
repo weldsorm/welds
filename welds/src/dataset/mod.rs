@@ -1,5 +1,5 @@
 use crate::model_traits::{HasSchema, TableColumns, TableInfo, UniqueIdentifier};
-use crate::query::include::related_query::{RelatedSet, RelatedSetAccesser, SetDowncast};
+use crate::query::include::related_query::{RelatedSetAccesser, SetDowncast};
 use crate::state::DbState;
 use std::ops::Deref;
 
@@ -86,13 +86,13 @@ where
     /// Include other related objects in a returned Dataset
     pub fn get<'g, R, Ship>(
         self,
-        _relationship: impl Fn(<T as HasRelations>::Relation) -> Ship,
+        relationship: impl Fn(<T as HasRelations>::Relation) -> Ship,
     ) -> Option<&'g [DbState<R>]>
     where
         'g: 't,
         't: 'g,
         T: HasRelations,
-        Ship: Relationship<R>,
+        Ship: 'static + Relationship<R>,
         R: HasSchema,
         R: 'static + Send + Sync + HasSchema,
         <R as HasSchema>::Schema: TableInfo + TableColumns + UniqueIdentifier,
@@ -101,8 +101,12 @@ where
     {
         // find the set of data that would fit
         for set in &self.sets.related {
-            if let Some(slice) = set.downcast_ref() {
-                return Some(slice);
+            if let Some(related_set) = set.downcast_ref::<R, Ship>() {
+                // check that we are working with the same relationship
+                let ship = relationship(Default::default());
+                if related_set.ship == ship {
+                    return Some(&related_set.data);
+                }
             }
         }
         None

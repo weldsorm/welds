@@ -15,7 +15,25 @@ impl<T> BelongsTo<T> {
     }
 }
 
-impl<R> Relationship<R> for BelongsTo<R> {
+// writing these by hand to ignore PhantomData
+impl<T> PartialEq for BelongsTo<T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.foreign_key == other.foreign_key
+    }
+    fn ne(&self, other: &Self) -> bool {
+        self.foreign_key != other.foreign_key
+    }
+}
+impl<T> Clone for BelongsTo<T> {
+    fn clone(&self) -> Self {
+        Self {
+            _t: Default::default(),
+            foreign_key: self.foreign_key.clone(),
+        }
+    }
+}
+
+impl<R: Send> Relationship<R> for BelongsTo<R> {
     fn my_key<ME, THEM>(&self) -> String
     where
         ME: UniqueIdentifier,
@@ -46,7 +64,24 @@ impl<T> HasMany<T> {
     }
 }
 
-impl<R> Relationship<R> for HasMany<R> {
+impl<T> PartialEq for HasMany<T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.foreign_key == other.foreign_key
+    }
+    fn ne(&self, other: &Self) -> bool {
+        self.foreign_key != other.foreign_key
+    }
+}
+impl<T> Clone for HasMany<T> {
+    fn clone(&self) -> Self {
+        Self {
+            _t: Default::default(),
+            foreign_key: self.foreign_key.clone(),
+        }
+    }
+}
+
+impl<R: Send> Relationship<R> for HasMany<R> {
     fn my_key<ME, THEM>(&self) -> String
     where
         ME: UniqueIdentifier,
@@ -68,6 +103,23 @@ pub struct HasOne<T> {
     foreign_key: &'static str,
 }
 
+impl<T> PartialEq for HasOne<T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.foreign_key == other.foreign_key
+    }
+    fn ne(&self, other: &Self) -> bool {
+        self.foreign_key != other.foreign_key
+    }
+}
+impl<T> Clone for HasOne<T> {
+    fn clone(&self) -> Self {
+        Self {
+            _t: Default::default(),
+            foreign_key: self.foreign_key.clone(),
+        }
+    }
+}
+
 impl<T> HasOne<T> {
     pub fn using(fk: &'static str) -> HasOne<T> {
         HasOne {
@@ -77,7 +129,7 @@ impl<T> HasOne<T> {
     }
 }
 
-impl<R> Relationship<R> for HasOne<R> {
+impl<R: Send> Relationship<R> for HasOne<R> {
     fn my_key<ME, THEM>(&self) -> String
     where
         ME: UniqueIdentifier,
@@ -99,6 +151,24 @@ pub struct BelongsToOne<T> {
     foreign_key: &'static str,
 }
 
+impl<T> PartialEq for BelongsToOne<T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.foreign_key == other.foreign_key
+    }
+    fn ne(&self, other: &Self) -> bool {
+        self.foreign_key != other.foreign_key
+    }
+}
+
+impl<T> Clone for BelongsToOne<T> {
+    fn clone(&self) -> Self {
+        BelongsToOne {
+            _t: Default::default(),
+            foreign_key: self.foreign_key.clone(),
+        }
+    }
+}
+
 impl<T> BelongsToOne<T> {
     pub fn using(fk: &'static str) -> BelongsToOne<T> {
         BelongsToOne {
@@ -108,7 +178,7 @@ impl<T> BelongsToOne<T> {
     }
 }
 
-impl<R> Relationship<R> for BelongsToOne<R> {
+impl<R: Send> Relationship<R> for BelongsToOne<R> {
     fn my_key<ME, THEM>(&self) -> String
     where
         ME: UniqueIdentifier,
@@ -125,7 +195,7 @@ impl<R> Relationship<R> for BelongsToOne<R> {
     }
 }
 
-pub trait Relationship<R> {
+pub trait Relationship<R>: Clone + PartialEq + Send {
     fn their_key<R2, T>(&self) -> String
     where
         T: UniqueIdentifier,

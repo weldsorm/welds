@@ -20,15 +20,12 @@ impl<T> PartialEq for BelongsTo<T> {
     fn eq(&self, other: &Self) -> bool {
         self.foreign_key == other.foreign_key
     }
-    fn ne(&self, other: &Self) -> bool {
-        self.foreign_key != other.foreign_key
-    }
 }
 impl<T> Clone for BelongsTo<T> {
     fn clone(&self) -> Self {
         Self {
             _t: Default::default(),
-            foreign_key: self.foreign_key.clone(),
+            foreign_key: self.foreign_key,
         }
     }
 }
@@ -68,15 +65,12 @@ impl<T> PartialEq for HasMany<T> {
     fn eq(&self, other: &Self) -> bool {
         self.foreign_key == other.foreign_key
     }
-    fn ne(&self, other: &Self) -> bool {
-        self.foreign_key != other.foreign_key
-    }
 }
 impl<T> Clone for HasMany<T> {
     fn clone(&self) -> Self {
         Self {
             _t: Default::default(),
-            foreign_key: self.foreign_key.clone(),
+            foreign_key: self.foreign_key,
         }
     }
 }
@@ -107,15 +101,12 @@ impl<T> PartialEq for HasOne<T> {
     fn eq(&self, other: &Self) -> bool {
         self.foreign_key == other.foreign_key
     }
-    fn ne(&self, other: &Self) -> bool {
-        self.foreign_key != other.foreign_key
-    }
 }
 impl<T> Clone for HasOne<T> {
     fn clone(&self) -> Self {
         Self {
             _t: Default::default(),
-            foreign_key: self.foreign_key.clone(),
+            foreign_key: self.foreign_key,
         }
     }
 }
@@ -155,16 +146,13 @@ impl<T> PartialEq for BelongsToOne<T> {
     fn eq(&self, other: &Self) -> bool {
         self.foreign_key == other.foreign_key
     }
-    fn ne(&self, other: &Self) -> bool {
-        self.foreign_key != other.foreign_key
-    }
 }
 
 impl<T> Clone for BelongsToOne<T> {
     fn clone(&self) -> Self {
         BelongsToOne {
             _t: Default::default(),
-            foreign_key: self.foreign_key.clone(),
+            foreign_key: self.foreign_key,
         }
     }
 }

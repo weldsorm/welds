@@ -1,3 +1,5 @@
+use crate::relations::Relationship;
+
 /// ***********************************************************************************
 /// These are all the trait and struct used to connect a rust Struct to a database driver
 /// ***********************************************************************************
@@ -73,6 +75,7 @@ pub trait ColumnDefaultCheck {
     fn col_is_default(&self, column: &str) -> Result<bool>;
 }
 
+/// Update self from the contents of a row
 pub trait UpdateFromRow {
     fn update_from_row(&mut self, row: &mut crate::Row) -> crate::errors::Result<()>;
 }
@@ -81,6 +84,14 @@ pub trait UpdateFromRow {
 pub trait HasSchema: Sync + Send {
     type Schema: Default + TableInfo;
 }
+
+//  /// used to compare two models and see if a relationship holds
+//  pub trait CheckRelationship {
+//      /// returns true if a relations holds between two objects
+//      fn check<R, Ship>(&self, other: &R, relations: &Ship) -> bool
+//      where
+//          Ship: Relationship<R>;
+//  }
 
 mod tableident;
 pub use tableident::TableIdent;

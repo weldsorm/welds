@@ -530,13 +530,13 @@ fn should_be_able_to_select_all_products_with_there_orders() {
         assert_eq!(p1_orders.len(), 2);
 
         // second product has 1 orders
-        let p1 = products.get(1).unwrap();
-        let p1_orders = p1.get(|x| x.orders).unwrap();
-        assert_eq!(p1_orders.len(), 1);
+        let p2 = products.get(1).unwrap();
+        let p2_orders = p2.get(|x| x.orders).unwrap();
+        assert_eq!(p2_orders.len(), 1);
 
         // third product has 0 orders
-        let p1 = products.get(2).unwrap();
-        let p1_orders = p1.get(|x| x.orders).unwrap();
-        assert_eq!(p1_orders.len(), 0);
+        let p3 = products.get(2).unwrap();
+        let p3_orders = p3.get(|x| x.orders).unwrap();
+        assert_eq!(p3_orders.len(), 0);
     })
 }

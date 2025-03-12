@@ -70,10 +70,10 @@ pub struct DataAccessGuard<'t, T> {
     sets: &'t DataSet<T>,
 }
 
-impl<'t, T> Deref for DataAccessGuard<'t, T> {
+impl<T> Deref for DataAccessGuard<'_, T> {
     type Target = T;
     fn deref(&self) -> &Self::Target {
-        &self.inner
+        self.inner
     }
 }
 
@@ -87,7 +87,8 @@ where
     pub fn get<'g, R, Ship>(
         self,
         relationship: impl Fn(<T as HasRelations>::Relation) -> Ship,
-    ) -> Option<&'g [DbState<R>]>
+    ) -> Option<Vec<&'g DbState<R>>>
+    //) -> Option<&'g [DbState<R>]>
     where
         'g: 't,
         't: 'g,
@@ -105,7 +106,13 @@ where
                 // check that we are working with the same relationship
                 let ship = relationship(Default::default());
                 if related_set.ship == ship {
-                    return Some(&related_set.data);
+                    let set = Vec::default();
+                    for d in &related_set.data {
+                        //ship.
+                        //
+                    }
+                    return Some(set);
+                    //return Some(&related_set.data);
                 }
             }
         }

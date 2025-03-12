@@ -18,6 +18,7 @@ pub(crate) fn write(info: &Info) -> TokenStream {
 
     quote! {
 
+        // build the HasRelations struct used for lambda selection of relationships
         impl #wp::relations::HasRelations for #defstruct {
             type Relation = #relations_struct;
         }
@@ -34,9 +35,18 @@ pub(crate) fn write(info: &Info) -> TokenStream {
             }
         }
 
+        impl #wp::model_traits::CheckRelationship for #defstruct {
+            fn check<R, Ship>(&self, other: &R, relations: &Ship) -> bool
+            where
+                Ship: #wp::relations::Relationship<R> {
+                    todo!()
+            }
+        }
+
     }
 }
 
+// write the definition of a HasRelations field
 fn fielddef(info: &Info, relation: &Relation) -> TokenStream {
     let wp = &info.welds_path;
     let kind = &relation.kind;
@@ -47,11 +57,12 @@ fn fielddef(info: &Info, relation: &Relation) -> TokenStream {
     }
 }
 
+// write the default assignment for the HasRelations field
 fn defaultdef(info: &Info, relation: &Relation) -> TokenStream {
     let wp = &info.welds_path;
     let kind = &relation.kind;
     let field = &relation.field;
-    let fk = &relation.foreign_key;
+    let fk = &relation.foreign_key_db;
     quote! {
         #field: #wp::relations::#kind::using(#fk)
     }

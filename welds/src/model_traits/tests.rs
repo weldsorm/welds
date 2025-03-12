@@ -1,5 +1,3 @@
-use super::DataSet;
-use crate::state::DbState;
 use crate::WeldsModel;
 
 #[derive(Debug, Default, WeldsModel)]
@@ -23,20 +21,14 @@ struct Order {
     pub price: i32,
 }
 
-// use crate::relations::Relationship;
-// fn check(o: Order, other: R, ship: Relationship<R>) {
-// }
-
-//fn mock_dataset() -> DataSet<Product> {
-//    todo!()
-//}
-//
-//#[test]
-//fn should_be_able_to_iter_over_dataset() {
-//    let set = mock_dataset();
-//    for p in set.iter() {
-//        // make sure we can access the Products content
-//        println!("p: {}", p.id);
-//        let orders: Option<&[DbState<Order>]> = p.get(|p| p.orders);
-//    }
-//}
+#[test]
+fn should_be_able_to_read_the_pk() {
+    futures::executor::block_on(async move {
+        let p = Product {
+            id: 33,
+            name: Default::default(),
+        };
+        let value = super::PrimaryKeyValue::value(&p);
+        assert_eq!(33, value);
+    });
+}

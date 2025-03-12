@@ -5,6 +5,9 @@ use crate::relations::Relationship;
 /// ***********************************************************************************
 pub mod hooks;
 
+#[cfg(test)]
+mod tests;
+
 /// tells welds what tablename and schema name should used to get data for an Entity
 /// This does on the Schema Object NOT the model
 pub trait TableInfo {
@@ -85,13 +88,20 @@ pub trait HasSchema: Sync + Send {
     type Schema: Default + TableInfo;
 }
 
-//  /// used to compare two models and see if a relationship holds
-//  pub trait CheckRelationship {
-//      /// returns true if a relations holds between two objects
-//      fn check<R, Ship>(&self, other: &R, relations: &Ship) -> bool
-//      where
-//          Ship: Relationship<R>;
-//  }
+/// used to compare two models and see if a relationship holds
+pub trait CheckRelationship {
+    /// returns true if a relations holds between two objects
+    fn check<R, Ship>(&self, other: &R, relations: &Ship) -> bool
+    where
+        Ship: Relationship<R>;
+}
+
+/// Returns the Value of the PK of a model
+pub trait PrimaryKeyValue {
+    type PrimaryKeyType: std::hash::Hash + Eq + PartialEq + 'static;
+    /// Returns the value of a model's primary key(s)
+    fn value(&self) -> Self::PrimaryKeyType;
+}
 
 mod tableident;
 pub use tableident::TableIdent;

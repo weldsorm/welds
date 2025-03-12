@@ -1,3 +1,4 @@
+use crate::model_traits::CheckRelationship;
 use crate::model_traits::{HasSchema, TableColumns, TableInfo, UniqueIdentifier};
 use crate::query::include::related_query::{RelatedSetAccesser, SetDowncast};
 use crate::state::DbState;
@@ -35,7 +36,7 @@ pub struct DataSetIter<'t, T> {
 impl<'t, T> Iterator for DataSetIter<'t, T> {
     type Item = DataAccessGuard<'t, T>;
     fn next(&mut self) -> Option<Self::Item> {
-        let obj = self.inner.primary.get(self.index)?;
+        let obj: &DbState<T> = self.inner.primary.get(self.index)?;
         self.index += 1;
         Some(DataAccessGuard {
             inner: obj,
@@ -66,7 +67,7 @@ impl<T> DataSet<T> {
 }
 
 pub struct DataAccessGuard<'t, T> {
-    inner: &'t T,
+    inner: &'t DbState<T>,
     sets: &'t DataSet<T>,
 }
 
@@ -82,13 +83,13 @@ use crate::relations::{HasRelations, Relationship};
 impl<'t, T> DataAccessGuard<'t, T>
 where
     T: HasSchema,
+    T: CheckRelationship,
 {
     /// Include other related objects in a returned Dataset
     pub fn get<'g, R, Ship>(
         self,
         relationship: impl Fn(<T as HasRelations>::Relation) -> Ship,
     ) -> Option<Vec<&'g DbState<R>>>
-    //) -> Option<&'g [DbState<R>]>
     where
         'g: 't,
         't: 'g,
@@ -100,19 +101,20 @@ where
         <T as HasSchema>::Schema: TableInfo + TableColumns + UniqueIdentifier,
         <T as HasRelations>::Relation: Default,
     {
+        let t: &T = self.inner.as_ref();
         // find the set of data that would fit
-        for set in &self.sets.related {
-            if let Some(related_set) = set.downcast_ref::<R, Ship>() {
+        for rset in &self.sets.related {
+            if let Some(related_set) = rset.downcast_ref::<R, Ship>() {
                 // check that we are working with the same relationship
                 let ship = relationship(Default::default());
                 if related_set.ship == ship {
-                    let set = Vec::default();
+                    let mut set = Vec::default();
                     for d in &related_set.data {
-                        //ship.
-                        //
+                        if CheckRelationship::check(t, d.as_ref(), &ship) {
+                            set.push(d);
+                        }
                     }
                     return Some(set);
-                    //return Some(&related_set.data);
                 }
             }
         }

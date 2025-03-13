@@ -87,7 +87,7 @@ where
 {
     /// Include other related objects in a returned Dataset
     pub fn get<'g, R, Ship>(
-        self,
+        &self,
         relationship: impl Fn(<T as HasRelations>::Relation) -> Ship,
     ) -> Option<Vec<&'g DbState<R>>>
     where

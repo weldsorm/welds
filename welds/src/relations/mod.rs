@@ -195,6 +195,12 @@ pub trait Relationship<R>: Clone + PartialEq + Send {
         R2: UniqueIdentifier;
 }
 
+pub trait RelationValue<R> {
+    type ValueType: PartialEq + 'static;
+
+    fn relation_value(&self) -> Self::ValueType;
+}
+
 pub trait HasRelations {
     type Relation: Default;
 }

@@ -78,7 +78,7 @@ impl<T> Deref for DataAccessGuard<'_, T> {
     }
 }
 
-use crate::relations::{HasRelations, Relationship};
+use crate::relations::{HasRelations, RelationValue, Relationship};
 
 impl<'t, T> DataAccessGuard<'t, T>
 where
@@ -93,9 +93,9 @@ where
     where
         'g: 't,
         't: 'g,
-        T: HasRelations,
+        T: HasRelations + RelationValue<R>,
         Ship: 'static + Relationship<R>,
-        R: HasSchema,
+        R: HasSchema + RelationValue<T>,
         R: 'static + Send + Sync + HasSchema,
         <R as HasSchema>::Schema: TableInfo + TableColumns + UniqueIdentifier,
         <T as HasSchema>::Schema: TableInfo + TableColumns + UniqueIdentifier,
@@ -110,7 +110,7 @@ where
                 if related_set.ship == ship {
                     let mut set = Vec::default();
                     for d in &related_set.data {
-                        if CheckRelationship::check(t, d.as_ref(), &ship) {
+                        if CheckRelationship::check(t, d.as_ref()) {
                             set.push(d);
                         }
                     }

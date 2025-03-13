@@ -16,7 +16,12 @@ pub(crate) fn write(info: &Info) -> TokenStream {
     let default_fields: Vec<_> = relations.iter().map(|x| defaultdef(info, x)).collect();
     let default_fields = quote! { #(#default_fields), * };
 
+    let relation_value_impl: Vec<_> = relations.iter().map(|x| relation_value_def(info, x)).collect();
+    let relation_value_impl = quote! { #(#relation_value_impl) * };
+
     quote! {
+
+        #relation_value_impl
 
         // build the HasRelations struct used for lambda selection of relationships
         impl #wp::relations::HasRelations for #defstruct {
@@ -36,10 +41,19 @@ pub(crate) fn write(info: &Info) -> TokenStream {
         }
 
         impl #wp::model_traits::CheckRelationship for #defstruct {
-            fn check<R, Ship>(&self, other: &R, relations: &Ship) -> bool
+            fn check<R>(&self, other: &R) -> bool
             where
-                Ship: #wp::relations::Relationship<R> {
-                    todo!()
+                R: #wp::relations::RelationValue<Self>,
+                Self: #wp::relations::RelationValue<R>,
+            {
+                let self_value = <Self as RelationValue<R>>::relation_value(self);
+                let other_value = <R as RelationValue<Self>>::relation_value(other);
+
+                if let Some(downcast_other_value) = (&other_value as &dyn std::any::Any).downcast_ref::<<Self as RelationValue<R>>::ValueType>() {
+                    return &self_value == downcast_other_value
+                }
+
+                false
             }
         }
 
@@ -66,4 +80,67 @@ fn defaultdef(info: &Info, relation: &Relation) -> TokenStream {
     quote! {
         #field: #wp::relations::#kind::using(#fk)
     }
+}
+
+fn relation_value_def(info: &Info, relation: &Relation) -> TokenStream {
+    let wp = &info.welds_path;
+    let cols = &info.columns;
+    let kind = &relation.kind;
+    let fk = &relation.foreign_key_rust;
+    let defstruct = &info.defstruct;
+    let other = &relation.foreign_struct;
+
+    match cols.iter().find(|&c| c.field.to_string() == fk.to_string()) {
+        Some(fk_column) => {
+            let fk_name = &fk_column.field;
+            let fk_type = &fk_column.field_type;
+
+            let fk_value_inner = if fk_column.is_option {
+                quote! { self.#fk_name.clone().unwrap_or_default() }
+            } else {
+                quote! { self.#fk_name.clone() }
+            };
+
+            match kind.to_string().as_str() {
+                "HasOne" | "BelongsTo" => {
+                    return quote! {
+
+                        impl #wp::relations::RelationValue<#other> for #defstruct {
+                            type ValueType = #fk_type;
+
+                            fn relation_value(&self) -> Self::ValueType
+                            where
+                                <Self as #wp::model_traits::HasSchema>::Schema: #wp::model_traits::TableInfo + #wp::model_traits::TableColumns,
+                            {
+                                #fk_value_inner
+                            }
+                        }
+
+                    }
+                }
+                _ => {}
+            }
+        }
+        None => {
+            let pk_name = &info.pks[0].field;
+            let pk_type = &info.pks[0].field_type;
+
+            return quote! {
+
+                impl #wp::relations::RelationValue<#other> for #defstruct {
+                    type ValueType = #pk_type;
+
+                    fn relation_value(&self) -> Self::ValueType
+                    where
+                        <Self as #wp::model_traits::HasSchema>::Schema: #wp::model_traits::TableInfo + #wp::model_traits::TableColumns,
+                    {
+                        self.#pk_name.clone()
+                    }
+                }
+
+            }
+        },
+    }
+
+    quote! {}
 }

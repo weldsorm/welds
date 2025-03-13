@@ -1,4 +1,4 @@
-use crate::relations::Relationship;
+use crate::relations::{RelationValue, Relationship};
 
 /// ***********************************************************************************
 /// These are all the trait and struct used to connect a rust Struct to a database driver
@@ -91,9 +91,11 @@ pub trait HasSchema: Sync + Send {
 /// used to compare two models and see if a relationship holds
 pub trait CheckRelationship {
     /// returns true if a relations holds between two objects
-    fn check<R, Ship>(&self, other: &R, relations: &Ship) -> bool
+    fn check<R>(&self, other: &R) -> bool
     where
-        Ship: Relationship<R>;
+        R: RelationValue<Self>,
+        Self: RelationValue<R>,
+        Self: Sized;
 }
 
 /// Returns the Value of the PK of a model

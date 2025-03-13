@@ -16,7 +16,10 @@ pub(crate) fn write(info: &Info) -> TokenStream {
     let default_fields: Vec<_> = relations.iter().map(|x| defaultdef(info, x)).collect();
     let default_fields = quote! { #(#default_fields), * };
 
-    let relation_value_impl: Vec<_> = relations.iter().map(|x| relation_value_def(info, x)).collect();
+    let relation_value_impl: Vec<_> = relations
+        .iter()
+        .map(|x| relation_value_def(info, x))
+        .collect();
     let relation_value_impl = quote! { #(#relation_value_impl) * };
 
     quote! {
@@ -46,10 +49,10 @@ pub(crate) fn write(info: &Info) -> TokenStream {
                 R: #wp::relations::RelationValue<Self>,
                 Self: #wp::relations::RelationValue<R>,
             {
-                let self_value = <Self as RelationValue<R>>::relation_value(self);
-                let other_value = <R as RelationValue<Self>>::relation_value(other);
+                let self_value = <Self as #wp::relations::RelationValue<R>>::relation_value(self);
+                let other_value = <R as #wp::relations::RelationValue<Self>>::relation_value(other);
 
-                if let Some(downcast_other_value) = (&other_value as &dyn std::any::Any).downcast_ref::<<Self as RelationValue<R>>::ValueType>() {
+                if let Some(downcast_other_value) = (&other_value as &dyn std::any::Any).downcast_ref::<<Self as #wp::relations::RelationValue<R>>::ValueType>() {
                     return &self_value == downcast_other_value
                 }
 
@@ -138,8 +141,8 @@ fn relation_value_def(info: &Info, relation: &Relation) -> TokenStream {
                     }
                 }
 
-            }
-        },
+            };
+        }
     }
 
     quote! {}

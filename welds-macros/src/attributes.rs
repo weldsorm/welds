@@ -31,6 +31,7 @@ pub(crate) fn get_columns(ast: &syn::DeriveInput) -> Vec<Column> {
                 ignore,
                 dbname,
                 field_type,
+                full_field_type: f.ty.clone(),
                 is_option,
             }
         })
@@ -61,6 +62,7 @@ pub(crate) fn get_pks(ast: &syn::DeriveInput) -> Vec<Column> {
                 ignore: false,
                 dbname,
                 field_type,
+                full_field_type: f.ty.clone(),
                 is_option,
             }
         })
@@ -141,7 +143,8 @@ pub(crate) fn get_relations(ast: &syn::DeriveInput) -> Result<Vec<Relation>> {
         .map(|m| Relation::new(m, "BelongsToOne"))
         .collect();
     let mut relations4 = relations4?;
-    let relations: Vec<_> = relations1.drain(..)
+    let relations: Vec<_> = relations1
+        .drain(..)
         .chain(relations2.drain(..))
         .chain(relations3.drain(..))
         .chain(relations4.drain(..))

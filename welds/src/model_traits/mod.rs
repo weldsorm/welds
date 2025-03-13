@@ -1,4 +1,4 @@
-use crate::relations::{RelationValue, Relationship};
+use crate::relations::RelationValue;
 
 /// ***********************************************************************************
 /// These are all the trait and struct used to connect a rust Struct to a database driver
@@ -102,7 +102,14 @@ pub trait CheckRelationship {
 pub trait PrimaryKeyValue {
     type PrimaryKeyType: std::hash::Hash + Eq + PartialEq + 'static;
     /// Returns the value of a model's primary key(s)
-    fn value(&self) -> Self::PrimaryKeyType;
+    fn primary_key_value(&self) -> Self::PrimaryKeyType;
+}
+
+/// Used to check if a Foreign Key is equal to a value
+pub trait ForeignKeyPartialEq<Rhs> {
+    /// return true if the Foreign Key value equals the passed in value
+    /// false if the values don't match OR object doesn't have the field
+    fn eq(&self, foreign_key_field: &str, other: &Rhs) -> bool;
 }
 
 mod tableident;

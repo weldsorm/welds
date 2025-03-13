@@ -19,7 +19,7 @@ pub(crate) fn write(info: &Info) -> TokenStream {
         impl #wp::model_traits::PrimaryKeyValue for #defstruct {
             type PrimaryKeyType = #pk_type;
 
-            fn value(&self) -> Self::PrimaryKeyType
+            fn primary_key_value(&self) -> Self::PrimaryKeyType
             where
                 <Self as #wp::model_traits::HasSchema>::Schema: #wp::model_traits::TableColumns,
             {

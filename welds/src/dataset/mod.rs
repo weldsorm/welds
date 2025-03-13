@@ -83,7 +83,6 @@ use crate::relations::{HasRelations, RelationValue, Relationship};
 impl<'t, T> DataAccessGuard<'t, T>
 where
     T: HasSchema,
-    T: CheckRelationship,
 {
     /// Include other related objects in a returned Dataset
     pub fn get<'g, R, Ship>(
@@ -94,6 +93,7 @@ where
         'g: 't,
         't: 'g,
         T: HasRelations + RelationValue<R>,
+        T: CheckRelationship,
         Ship: 'static + Relationship<R>,
         R: HasSchema + RelationValue<T>,
         R: 'static + Send + Sync + HasSchema,

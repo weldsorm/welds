@@ -521,7 +521,7 @@ fn should_be_able_to_filter_by_multiple_values() {
 fn should_be_able_to_select_all_products_with_there_orders() {
     async_std::task::block_on(async {
         let conn = get_conn().await;
-        let query = Product::all().include(|x| x.orders);
+        let query = Product::all().include(|x| x.orders).order_by_asc(|x| x.id);
         let products = query.run(&conn).await.unwrap();
 
         // first product has 2 orders
@@ -538,5 +538,32 @@ fn should_be_able_to_select_all_products_with_there_orders() {
         let p3 = products.get(2).unwrap();
         let p3_orders = p3.get(|x| x.orders);
         assert_eq!(p3_orders.len(), 0);
+    })
+}
+
+#[test]
+fn should_be_able_to_select_all_orders_with_there_products() {
+    async_std::task::block_on(async {
+        let conn = get_conn().await;
+        let query = Order::all().include(|x| x.product).order_by_asc(|x| x.id);
+        let orders = query.run(&conn).await.unwrap();
+
+        // From the test data:
+        // order 1 and 2 point to product 1
+        // order 3 point to product 2
+        let o1 = orders.get(0).unwrap();
+        let o1_products = o1.get(|x| x.product);
+        assert_eq!(o1_products.len(), 1);
+        assert_eq!(o1_products[0].id, 1);
+
+        let o2 = orders.get(1).unwrap();
+        let o2_products = o2.get(|x| x.product);
+        assert_eq!(o2_products.len(), 1);
+        assert_eq!(o2_products[0].id, 1);
+
+        let o3 = orders.get(2).unwrap();
+        let o3_products = o3.get(|x| x.product);
+        assert_eq!(o3_products.len(), 1);
+        assert_eq!(o3_products[0].id, 2);
     })
 }

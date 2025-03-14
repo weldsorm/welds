@@ -78,3 +78,13 @@ Insert INTO Orders (
 , ''
 );
 
+INSERT INTO Profiles (id, image_url) VALUES
+(1, "cat.jpeg"),
+(2, "dog.jpeg"),
+(3, "bird.png");
+
+INSERT INTO Users (id, profile_id, name) VALUES
+(1, 1, "Alice"),
+(2, NULL, "Bob"),
+(3, 2, "Catherine"),
+(4, 3, "Danny");

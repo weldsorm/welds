@@ -84,11 +84,13 @@ impl<'t, T> DataAccessGuard<'t, T>
 where
     T: HasSchema,
 {
-    /// Include other related objects in a returned Dataset
+    /// Gets other objects related to this object.
+    /// This is a subset of the included objects that are linked to self.
+    /// Returns an empty list if the relationship was NOT included in the query.
     pub fn get<'g, R, Ship>(
         &self,
         relationship: impl Fn(<T as HasRelations>::Relation) -> Ship,
-    ) -> Option<Vec<&'g DbState<R>>>
+    ) -> Vec<&'g DbState<R>>
     where
         'g: 't,
         't: 'g,
@@ -114,10 +116,10 @@ where
                             set.push(d);
                         }
                     }
-                    return Some(set);
+                    return set;
                 }
             }
         }
-        None
+        Vec::default()
     }
 }

@@ -100,7 +100,7 @@ pub trait CheckRelationship {
 
 /// Returns the Value of the PK of a model
 pub trait PrimaryKeyValue {
-    type PrimaryKeyType: std::hash::Hash + Eq + PartialEq + 'static;
+    type PrimaryKeyType;
     /// Returns the value of a model's primary key(s)
     fn primary_key_value(&self) -> Self::PrimaryKeyType;
 }

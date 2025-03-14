@@ -88,3 +88,19 @@ INSERT INTO Users (id, profile_id, name) VALUES
 (2, NULL, "Bob"),
 (3, 2, "Catherine"),
 (4, 3, "Danny");
+
+INSERT INTO Cities (id, name) VALUES
+(1, "Birmingham"),
+(2, "Liverpool"),
+(3, "Manchester");
+
+INSERT INTO Teams (id, city_id, name) VALUES
+(1, 2, "Liverpool FC"),
+(2, 3, "Manchester City"),
+(3, 3, "Manchester United");
+
+INSERT INTO Players (id, team_id, name) VALUES
+(1, 1, "Andy Anderson"),
+(2, 2, "Bobby Biggs"),
+(3, 3, "Chris Christoferson"),
+(4, 3, "Danny Dier");

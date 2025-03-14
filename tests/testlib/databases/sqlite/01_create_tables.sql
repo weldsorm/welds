@@ -49,3 +49,20 @@ CREATE TABLE Profiles (
     id INTEGER PRIMARY KEY,
     image_url TEXT
 );
+
+CREATE TABLE Teams (
+    id INTEGER PRIMARY KEY,
+    city_id INTEGER NOT NULL,
+    name TEXT
+);
+
+CREATE TABLE Players (
+    id INTEGER PRIMARY KEY,
+    team_id INTEGER NOT NULL,
+    name TEXT
+);
+
+CREATE TABLE Cities (
+    id INTEGER PRIMARY KEY,
+    name TEXT
+);

@@ -247,7 +247,7 @@ fn should_be_able_to_scan_for_all_tables() {
     async_std::task::block_on(async {
         let conn = get_conn().await;
         let tables = welds::detect::find_all_tables(&conn).await.unwrap();
-        assert_eq!(16, tables.len());
+        assert_eq!(19, tables.len());
     })
 }
 

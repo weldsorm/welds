@@ -109,20 +109,12 @@ impl SetDowncast for Box<dyn RelatedSetAccesser> {
     fn downcast_ref<R: 'static, Ship: 'static + Relationship<R>>(
         &self,
     ) -> Option<&RelatedSet<R, Ship>> {
-        if let Some(rs) = self.as_any().downcast_ref::<RelatedSet<R, Ship>>() {
-            Some(rs)
-        } else {
-            None
-        }
+        self.as_any().downcast_ref::<RelatedSet<R, Ship>>()
     }
 
     fn downcast_mut<R: 'static, Ship: 'static + Relationship<R>>(
         &mut self,
     ) -> Option<&mut RelatedSet<R, Ship>> {
-        if let Some(rs) = self.as_any_mut().downcast_mut::<RelatedSet<R, Ship>>() {
-            Some(rs)
-        } else {
-            None
-        }
+        self.as_any_mut().downcast_mut::<RelatedSet<R, Ship>>()
     }
 }

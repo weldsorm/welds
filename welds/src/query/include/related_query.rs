@@ -5,7 +5,7 @@ use crate::model_traits::{HasSchema, TableColumns, TableInfo, UniqueIdentifier};
 use crate::query::builder::QueryBuilder;
 use crate::query::clause::exists::ExistIn;
 use crate::relations::Relationship;
-use crate::state::DbState;
+use crate::exts::VecStateExt;
 use crate::Client;
 use async_trait::async_trait;
 use std::any::Any;
@@ -65,7 +65,7 @@ where
         let rows = qb.run(client).await?;
 
         Ok(Box::new(RelatedSet::<R, Ship> {
-            data: rows,
+            data: rows.into_inners(),
             ship: self.ship.clone(),
         }))
     }
@@ -75,7 +75,7 @@ pub(crate) struct RelatedSet<R, Ship>
 where
     Ship: Relationship<R>,
 {
-    pub(crate) data: Vec<DbState<R>>,
+    pub(crate) data: Vec<R>,
     pub(crate) ship: Ship,
 }
 

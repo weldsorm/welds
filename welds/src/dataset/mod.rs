@@ -88,7 +88,7 @@ where
     pub fn get<'g, R, Ship>(
         &self,
         relationship: impl Fn(<T as HasRelations>::Relation) -> Ship,
-    ) -> Option<Vec<&'g DbState<R>>>
+    ) -> Vec<&'g R>
     where
         'g: 't,
         't: 'g,
@@ -110,14 +110,14 @@ where
                 if related_set.ship == ship {
                     let mut set = Vec::default();
                     for d in &related_set.data {
-                        if CheckRelationship::check(t, d.as_ref()) {
+                        if CheckRelationship::check(t, d) {
                             set.push(d);
                         }
                     }
-                    return Some(set);
+                    return set;
                 }
             }
         }
-        None
+        Vec::default()
     }
 }

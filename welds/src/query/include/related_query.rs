@@ -9,7 +9,6 @@ use crate::exts::VecStateExt;
 use crate::Client;
 use async_trait::async_trait;
 use std::any::Any;
-use std::any::TypeId;
 
 #[async_trait]
 pub(crate) trait RelatedQuery<R> {
@@ -98,7 +97,6 @@ where
 }
 
 pub(crate) trait SetDowncast {
-    fn is<R: 'static, Ship: 'static + Relationship<R>>(&self) -> bool;
     fn downcast_ref<R: 'static, Ship: 'static + Relationship<R>>(
         &self,
     ) -> Option<&RelatedSet<R, Ship>>;
@@ -108,17 +106,10 @@ pub(crate) trait SetDowncast {
 }
 
 impl SetDowncast for Box<dyn RelatedSetAccesser> {
-    fn is<R: 'static, Ship: 'static + Relationship<R>>(&self) -> bool {
-        // Check if the boxed object is of type T
-        self.as_any().type_id() == TypeId::of::<RelatedSet<R, Ship>>()
-    }
-
     fn downcast_ref<R: 'static, Ship: 'static + Relationship<R>>(
         &self,
     ) -> Option<&RelatedSet<R, Ship>> {
-        if self.is::<R, Ship>() {
-            let rs: &RelatedSet<R, Ship> =
-                unsafe { &*(self.as_any() as *const dyn Any as *const RelatedSet<R, Ship>) };
+        if let Some(rs) = self.as_any().downcast_ref::<RelatedSet<R, Ship>>() {
             Some(rs)
         } else {
             None
@@ -128,9 +119,7 @@ impl SetDowncast for Box<dyn RelatedSetAccesser> {
     fn downcast_mut<R: 'static, Ship: 'static + Relationship<R>>(
         &mut self,
     ) -> Option<&mut RelatedSet<R, Ship>> {
-        if self.is::<R, Ship>() {
-            let rs: &mut RelatedSet<R, Ship> =
-                unsafe { &mut *(self.as_any_mut() as *mut dyn Any as *mut RelatedSet<R, Ship>) };
+        if let Some(rs) = self.as_any_mut().downcast_mut::<RelatedSet<R, Ship>>() {
             Some(rs)
         } else {
             None

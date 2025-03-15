@@ -16,6 +16,8 @@ pub(crate) fn write(info: &Info) -> TokenStream {
     let default_fields: Vec<_> = relations.iter().map(|x| defaultdef(info, x)).collect();
     let default_fields = quote! { #(#default_fields), * };
 
+    // we define a impl RelationValue<_> for each Relationship defined on the struct
+    // [#welds(HasMany, .., ..)]
     let relation_value_impl: Vec<_> = relations
         .iter()
         .map(|x| relation_value_def(info, x))
@@ -85,65 +87,84 @@ fn defaultdef(info: &Info, relation: &Relation) -> TokenStream {
     }
 }
 
+// writes impl RelationValue for a given Relation
 fn relation_value_def(info: &Info, relation: &Relation) -> TokenStream {
+    let kind = &relation.kind;
+
+    // first we need to see if the FK is on this table other the other table.
+    // That way we know where to get the value we are looking for
+    let kind_name = kind.to_string();
+    let fk_on_other = &kind_name == "HasOne" || &kind_name == "BelongsTo";
+
+    if fk_on_other {
+        relation_value_def_from_fk(info, relation)
+    } else {
+        relation_value_def_from_pk(info, relation)
+    }
+}
+
+// writes impl RelationValue for a given Relation
+// Reading the value from a foreign_key field
+fn relation_value_def_from_fk(info: &Info, relation: &Relation) -> TokenStream {
     let wp = &info.welds_path;
     let cols = &info.columns;
-    let kind = &relation.kind;
-    let fk = &relation.foreign_key_rust;
+    //let kind = &relation.kind;
     let defstruct = &info.defstruct;
     let other = &relation.foreign_struct;
+    let fk = &relation.foreign_key_rust;
 
-    match cols.iter().find(|&c| c.field.to_string() == fk.to_string()) {
-        Some(fk_column) => {
-            let fk_name = &fk_column.field;
-            let fk_type = &fk_column.field_type;
+    let fk_col = cols.iter().find(|x| x.field == fk);
+    // If the fk column is missing, panic to give a compile time error.
+    // The user has defined a relationship that points to a rust field that doesn't exist.
+    let fk_column = fk_col.unwrap_or_else(|| panic!("The model {} is missing the field {}. This field was expected because it was defined in a Welds Relationship", defstruct, fk));
 
-            let fk_value_inner = if fk_column.is_option {
-                quote! { self.#fk_name.clone().unwrap_or_default() }
-            } else {
-                quote! { self.#fk_name.clone() }
-            };
+    // build the inner content that reads the field.
+    let fk_name = &fk_column.field;
+    let fk_type = &fk_column.field_type;
+    let fk_value_inner = if fk_column.is_option {
+        quote! { self.#fk_name.clone().unwrap_or_default() }
+    } else {
+        quote! { self.#fk_name.clone() }
+    };
 
-            match kind.to_string().as_str() {
-                "HasOne" | "BelongsTo" => {
-                    return quote! {
-
-                        impl #wp::relations::RelationValue<#other> for #defstruct {
-                            type ValueType = #fk_type;
-
-                            fn relation_value(&self) -> Self::ValueType
-                            where
-                                <Self as #wp::model_traits::HasSchema>::Schema: #wp::model_traits::TableInfo + #wp::model_traits::TableColumns,
-                            {
-                                #fk_value_inner
-                            }
-                        }
-
-                    }
-                }
-                _ => {}
+    quote! {
+        impl #wp::relations::RelationValue<#other> for #defstruct {
+            type ValueType = #fk_type;
+            fn relation_value(&self) -> Self::ValueType
+            where
+                <Self as #wp::model_traits::HasSchema>::Schema: #wp::model_traits::TableInfo + #wp::model_traits::TableColumns,
+            {
+                #fk_value_inner
             }
         }
-        None => {
-            let pk_name = &info.pks[0].field;
-            let pk_type = &info.pks[0].field_type;
-
-            return quote! {
-
-                impl #wp::relations::RelationValue<#other> for #defstruct {
-                    type ValueType = #pk_type;
-
-                    fn relation_value(&self) -> Self::ValueType
-                    where
-                        <Self as #wp::model_traits::HasSchema>::Schema: #wp::model_traits::TableInfo + #wp::model_traits::TableColumns,
-                    {
-                        self.#pk_name.clone()
-                    }
-                }
-
-            };
-        }
     }
+}
 
-    quote! {}
+// writes impl RelationValue for a given Relation
+// Reading the value from the primary_key field
+fn relation_value_def_from_pk(info: &Info, relation: &Relation) -> TokenStream {
+    let wp = &info.welds_path;
+    let other = &relation.foreign_struct;
+    let defstruct = &info.defstruct;
+    // If the model doesn't have a primary_key, panic to give the user a compile time error
+    // The user has defined a relationship that points to a rust field that doesn't exist.
+    let pk_column = info.pks.first();
+    let pk_column = pk_column.unwrap_or_else(|| panic!("The model {} is missing a primary key. This field was expected because it was defined in a Welds Relationship", defstruct));
+
+    let pk_name = &pk_column.field;
+    let pk_type = &pk_column.field_type;
+
+    quote! {
+
+        impl #wp::relations::RelationValue<#other> for #defstruct {
+            type ValueType = #pk_type;
+            fn relation_value(&self) -> Self::ValueType
+            where
+                <Self as #wp::model_traits::HasSchema>::Schema: #wp::model_traits::TableInfo + #wp::model_traits::TableColumns,
+            {
+                self.#pk_name.clone()
+            }
+        }
+
+    }
 }

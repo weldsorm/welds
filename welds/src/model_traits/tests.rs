@@ -95,26 +95,26 @@ fn should_be_able_to_read_the_pk() {
     });
 }
 
-#[test]
-fn should_be_able_to_equal_fks() {
-    futures::executor::block_on(async move {
-        let order = Order {
-            id: 33,
-            product_id: 234,
-            buyer_id: "B1".to_string(),
-            price: 11,
-        };
-        assert!(!super::ForeignKeyPartialEq::eq(&order, "product_id", &2),);
-        assert!(super::ForeignKeyPartialEq::eq(&order, "product_id", &234),);
-        assert!(!super::ForeignKeyPartialEq::eq(
-            &order,
-            "buyer_id",
-            &"B2".to_string()
-        ),);
-        assert!(super::ForeignKeyPartialEq::eq(
-            &order,
-            "buyer_id",
-            &"B1".to_string()
-        ),);
-    });
-}
+// #[test]
+// fn should_be_able_to_equal_fks() {
+//     futures::executor::block_on(async move {
+//         let order = Order {
+//             id: 33,
+//             product_id: 234,
+//             buyer_id: "B1".to_string(),
+//             price: 11,
+//         };
+//         assert!(!super::ForeignKeyPartialEq::eq(&order, "product_id", &2),);
+//         assert!(super::ForeignKeyPartialEq::eq(&order, "product_id", &234),);
+//         assert!(!super::ForeignKeyPartialEq::eq(
+//             &order,
+//             "buyer_id",
+//             &"B2".to_string()
+//         ),);
+//         assert!(super::ForeignKeyPartialEq::eq(
+//             &order,
+//             "buyer_id",
+//             &"B1".to_string()
+//         ),);
+//     });
+// }

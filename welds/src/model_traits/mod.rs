@@ -105,12 +105,12 @@ pub trait PrimaryKeyValue {
     fn primary_key_value(&self) -> Self::PrimaryKeyType;
 }
 
-/// Used to check if a Foreign Key is equal to a value
-pub trait ForeignKeyPartialEq<Rhs> {
-    /// return true if the Foreign Key value equals the passed in value
-    /// false if the values don't match OR object doesn't have the field
-    fn eq(&self, foreign_key_field: &str, other: &Rhs) -> bool;
-}
+//  /// Used to check if a Foreign Key is equal to a value
+//  pub trait ForeignKeyPartialEq<Rhs> {
+//      /// return true if the Foreign Key value equals the passed in value
+//      /// false if the values don't match OR object doesn't have the field
+//      fn eq(&self, foreign_key_field: &str, other: &Rhs) -> bool;
+//  }
 
 mod tableident;
 pub use tableident::TableIdent;

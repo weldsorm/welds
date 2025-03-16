@@ -12,11 +12,11 @@ mod tests;
 pub struct DataSet<T> {
     // not sure if we want to use state or not
     primary: Vec<DbState<T>>,
-    related: Vec<Box<dyn RelatedSetAccesser>>,
+    related: Vec<Box<dyn RelatedSetAccesser + Send>>,
 }
 
 impl<T> DataSet<T> {
-    pub(crate) fn new(primary: Vec<DbState<T>>, related: Vec<Box<dyn RelatedSetAccesser>>) -> Self {
+    pub(crate) fn new(primary: Vec<DbState<T>>, related: Vec<Box<dyn RelatedSetAccesser + Send>>) -> Self {
         Self { primary, related }
     }
 

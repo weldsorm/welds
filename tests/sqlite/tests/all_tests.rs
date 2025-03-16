@@ -516,3 +516,14 @@ fn should_be_able_to_filter_by_multiple_values() {
         assert_eq!(results.len(), 2);
     })
 }
+
+#[test]
+fn should_be_able_to_fetch_a_single_object() {
+    async_std::task::block_on(async {
+        let conn = get_conn().await;
+        let result: DbState<Product> = Product::where_col(|p| p.id.gt(1))
+            .fetch_one(&conn)
+            .await
+            .unwrap();
+    })
+}

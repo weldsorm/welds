@@ -14,7 +14,7 @@ mod tests;
 /// An un-executed Query Selecting a model AND its relationship objects.
 pub struct IncludeBuilder<T> {
     qb: QueryBuilder<T>,
-    related: Vec<Box<dyn RelatedQuery<T>>>,
+    related: Vec<Box<dyn RelatedQuery<T> + Sync + Send>>,
 }
 
 impl<T> IncludeBuilder<T>

@@ -12,11 +12,11 @@ mod tests;
 pub struct DataSet<T> {
     // not sure if we want to use state or not
     primary: Vec<DbState<T>>,
-    related: Vec<Box<dyn RelatedSetAccesser>>,
+    related: Vec<Box<dyn RelatedSetAccesser + Send>>,
 }
 
 impl<T> DataSet<T> {
-    pub(crate) fn new(primary: Vec<DbState<T>>, related: Vec<Box<dyn RelatedSetAccesser>>) -> Self {
+    pub(crate) fn new(primary: Vec<DbState<T>>, related: Vec<Box<dyn RelatedSetAccesser + Send>>) -> Self {
         Self { primary, related }
     }
 
@@ -69,6 +69,12 @@ impl<T> DataSet<T> {
 pub struct DataAccessGuard<'t, T> {
     inner: &'t DbState<T>,
     sets: &'t DataSet<T>,
+}
+
+impl<'t, T> DataAccessGuard<'t, T> {
+    pub fn as_ref(&self) -> &'t T {
+        self.inner.as_ref()
+    }
 }
 
 impl<T> Deref for DataAccessGuard<'_, T> {

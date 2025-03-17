@@ -16,7 +16,7 @@ pub(crate) trait RelatedQuery<R> {
         &self,
         primary_query: &QueryBuilder<R>,
         client: &dyn Client,
-    ) -> Result<Box<dyn RelatedSetAccesser>>;
+    ) -> Result<Box<dyn RelatedSetAccesser + Send>>;
 }
 
 pub(crate) struct IncludeQuery<R, Ship>
@@ -48,7 +48,7 @@ where
         &self,
         primary_query: &QueryBuilder<T>,
         client: &dyn Client,
-    ) -> Result<Box<dyn RelatedSetAccesser>> {
+    ) -> Result<Box<dyn RelatedSetAccesser + Send>> {
         let primary_query = primary_query.clone();
 
         let mut qb: QueryBuilder<R> = QueryBuilder::new();
@@ -105,7 +105,7 @@ pub(crate) trait SetDowncast {
     ) -> Option<&mut RelatedSet<R, Ship>>;
 }
 
-impl SetDowncast for Box<dyn RelatedSetAccesser> {
+impl SetDowncast for Box<dyn RelatedSetAccesser + Send> {
     fn downcast_ref<R: 'static, Ship: 'static + Relationship<R>>(
         &self,
     ) -> Option<&RelatedSet<R, Ship>> {

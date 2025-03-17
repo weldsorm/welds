@@ -71,6 +71,12 @@ pub struct DataAccessGuard<'t, T> {
     sets: &'t DataSet<T>,
 }
 
+impl<'t, T> DataAccessGuard<'t, T> {
+    pub fn as_ref(&self) -> &'t T {
+        self.inner.as_ref()
+    }
+}
+
 impl<T> Deref for DataAccessGuard<'_, T> {
     type Target = T;
     fn deref(&self) -> &Self::Target {

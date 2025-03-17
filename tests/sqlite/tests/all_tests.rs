@@ -519,7 +519,6 @@ fn should_be_able_to_filter_by_multiple_values() {
 }
 
 #[test]
-<<<<<<< HEAD
 fn should_be_able_to_select_all_products_with_there_orders() {
     async_std::task::block_on(async {
         let conn = get_conn().await;

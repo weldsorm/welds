@@ -118,6 +118,18 @@ where
         }
         Ok(objs)
     }
+
+    pub async fn fetch_one<'q, 'c>(&self, client: &'c dyn Client) -> Result<DbState<T>>
+    where
+        'q: 'c,
+        <T as HasSchema>::Schema: TableInfo + TableColumns,
+        T: TryFrom<Row>,
+        WeldsError: From<<T as TryFrom<Row>>::Error>,
+    {
+        let mut query = self.clone();
+        query.limit = Some(1);
+        query.run(client).await?.into_iter().nth(0).ok_or(WeldsError::RowNowFound)
+    }
 }
 
 #[cfg(test)]

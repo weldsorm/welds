@@ -519,6 +519,7 @@ fn should_be_able_to_filter_by_multiple_values() {
 }
 
 #[test]
+<<<<<<< HEAD
 fn should_be_able_to_select_all_products_with_there_orders() {
     async_std::task::block_on(async {
         let conn = get_conn().await;
@@ -566,5 +567,16 @@ fn should_be_able_to_select_all_orders_with_there_products() {
         let o3_products = o3.get(|x| x.product);
         assert_eq!(o3_products.len(), 1);
         assert_eq!(o3_products[0].id, 2);
+    })
+}
+
+#[test]
+fn should_be_able_to_fetch_a_single_object() {
+    async_std::task::block_on(async {
+        let conn = get_conn().await;
+        let result: DbState<Product> = Product::where_col(|p| p.id.gt(1))
+            .fetch_one(&conn)
+            .await
+            .unwrap();
     })
 }

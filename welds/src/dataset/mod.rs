@@ -165,4 +165,40 @@ where
         }
         Vec::default()
     }
+
+    pub fn get_owned<'g, R, Ship>(
+        &self,
+        relationship: impl Fn(<T as HasRelations>::Relation) -> Ship,
+    ) -> Vec<R>
+    where
+        'g: 't,
+        't: 'g,
+        T: HasRelations + RelationValue<R>,
+        T: CheckRelationship,
+        Ship: 'static + Relationship<R>,
+        R: HasSchema + RelationValue<T> + ToOwned<Owned = R>,
+        R: 'static + Send + Sync + HasSchema,
+        <R as HasSchema>::Schema: TableInfo + TableColumns + UniqueIdentifier,
+        <T as HasSchema>::Schema: TableInfo + TableColumns + UniqueIdentifier,
+        <T as HasRelations>::Relation: Default,
+    {
+        let t: &T = self.inner.as_ref();
+        // find the set of data that would fit
+        for rset in &self.sets.related {
+            if let Some(related_set) = rset.downcast_ref::<R, Ship>() {
+                // check that we are working with the same relationship
+                let ship = relationship(Default::default());
+                if related_set.ship == ship {
+                    let mut set = Vec::default();
+                    for d in related_set.data.iter() {
+                        if CheckRelationship::check(t, d) {
+                            set.push(d.to_owned());
+                        }
+                    }
+                    return set;
+                }
+            }
+        }
+        Vec::default()
+    }
 }

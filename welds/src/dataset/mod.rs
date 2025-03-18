@@ -9,6 +9,40 @@ mod tests;
 
 /// A Collection object that hold a set of data that has been
 /// selected out of the database and its related objects
+///
+/// ```
+/// use welds::prelude::*;
+///
+/// #[derive(Debug, Default, WeldsModel)]
+/// #[welds(table = "customers")]
+/// #[welds(HasMany(orders, Order, "customer_id"))]
+/// struct Customer {
+///     #[welds(primary_key)]
+///     pub id: i32,
+/// }
+///
+/// #[derive(Debug, Default, WeldsModel)]
+/// #[welds(table = "orders")]
+/// #[welds(BelongsTo(customer, Customer, "customer_id"))]
+/// struct Order {
+///     #[welds(primary_key)]
+///     pub id: i32,
+///     pub customer_id: i32,
+/// }
+///
+/// async fn example(db: &dyn Client) -> welds::errors::Result<()> {
+///     // make a minimal number of database calls to get both queries.
+///     let dataset = Customer::all().include(|x| x.orders).run(db).await?;
+///     for customer in dataset.iter() {
+///         println!("CUSTOMER: {:?}", customer.id );
+///         for order in customer.get(|c| c.orders).into_iter() {
+///             println!("\tORDER: {:?}", order.id );
+///         }
+///     }
+///     Ok(())
+/// }
+/// ```
+///
 pub struct DataSet<T> {
     // not sure if we want to use state or not
     primary: Vec<DbState<T>>,
@@ -16,7 +50,10 @@ pub struct DataSet<T> {
 }
 
 impl<T> DataSet<T> {
-    pub(crate) fn new(primary: Vec<DbState<T>>, related: Vec<Box<dyn RelatedSetAccesser + Send>>) -> Self {
+    pub(crate) fn new(
+        primary: Vec<DbState<T>>,
+        related: Vec<Box<dyn RelatedSetAccesser + Send>>,
+    ) -> Self {
         Self { primary, related }
     }
 
@@ -71,8 +108,8 @@ pub struct DataAccessGuard<'t, T> {
     sets: &'t DataSet<T>,
 }
 
-impl<'t, T> DataAccessGuard<'t, T> {
-    pub fn as_ref(&self) -> &'t T {
+impl<T: Sized> AsRef<T> for DataAccessGuard<'_, T> {
+    fn as_ref(&self) -> &T {
         self.inner.as_ref()
     }
 }

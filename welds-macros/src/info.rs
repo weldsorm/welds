@@ -90,11 +90,12 @@ mod tests {
             let name: String = name.into();
             let field: Ident = Ident::new(&name, Span::call_site());
             let ty: String = ty.into();
-            let field_type = syn::parse_str(&ty).unwrap();
+            let field_type: syn::Type = syn::parse_str(&ty).unwrap();
             let col = Column {
                 field,
                 ignore: false,
                 dbname: name,
+                full_field_type: field_type.clone(),
                 field_type,
                 is_option: null,
             };
@@ -106,12 +107,13 @@ mod tests {
             let name: String = name.into();
             let field: Ident = Ident::new(&name, Span::call_site());
             let ty: String = ty.into();
-            let field_type = syn::parse_str(&ty).unwrap();
+            let field_type: syn::Type = syn::parse_str(&ty).unwrap();
 
             let col = Column {
                 field,
                 ignore: false,
                 dbname: name,
+                full_field_type: field_type.clone(),
                 field_type,
                 is_option: false,
             };

@@ -729,3 +729,56 @@ fn should_be_able_to_filter_by_multiple_values() {
         assert_eq!(results.len(), 2);
     })
 }
+
+#[test]
+fn should_be_able_to_select_all_products_with_there_orders() {
+    async_std::task::block_on(async {
+        let conn = get_conn().await;
+        let query = Product::all()
+            .include(|x| x.order)
+            .order_by_asc(|x| x.product_id);
+        let products = query.run(&conn).await.unwrap();
+
+        // first product has 2 orders
+        let p1 = products.get(0).unwrap();
+        let p1_orders = p1.get(|x| x.order);
+        assert_eq!(p1_orders.len(), 2);
+
+        // second product has 1 orders
+        let p2 = products.get(1).unwrap();
+        let p2_orders = p2.get(|x| x.order);
+        assert_eq!(p2_orders.len(), 1);
+
+        // third product has 0 orders
+        let p3 = products.get(2).unwrap();
+        let p3_orders = p3.get(|x| x.order);
+        assert_eq!(p3_orders.len(), 0);
+    })
+}
+
+#[test]
+fn should_be_able_to_select_all_orders_with_there_products() {
+    async_std::task::block_on(async {
+        let conn = get_conn().await;
+        let query = Order::all().include(|x| x.product).order_by_asc(|x| x.id);
+        let orders = query.run(&conn).await.unwrap();
+
+        // From the test data:
+        // order 1 and 2 point to product 1
+        // order 3 point to product 2
+        let o1 = orders.get(0).unwrap();
+        let o1_products = o1.get(|x| x.product);
+        assert_eq!(o1_products.len(), 1, "Expected only one product");
+        assert_eq!(o1_products[0].product_id, 2, "Got wrong Product");
+
+        let o2 = orders.get(1).unwrap();
+        let o2_products = o2.get(|x| x.product);
+        assert_eq!(o2_products.len(), 1);
+        assert_eq!(o2_products[0].product_id, 1);
+
+        let o3 = orders.get(2).unwrap();
+        let o3_products = o3.get(|x| x.product);
+        assert_eq!(o3_products.len(), 1);
+        assert_eq!(o3_products[0].product_id, 1);
+    })
+}

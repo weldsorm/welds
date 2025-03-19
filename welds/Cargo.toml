@@ -40,6 +40,7 @@ welds-macros = { path="../welds-macros", version = "^0.4.12" }
 welds = { path="./", features=["full", "mock"] }
 futures = {version= "0.3" }
 welds-connections = { path="../welds-connections", version = "^0.4.12", features=["full"] }
+welds-macros = { path="../welds-macros", version = "^0.4.12" }
 # used for the examples
 sqlx = { version = "0.8", features = [ "runtime-async-std", "tls-rustls", "macros"] }
 async-std = { version = "1", features = ["attributes"] }

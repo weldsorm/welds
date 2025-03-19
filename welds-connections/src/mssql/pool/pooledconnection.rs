@@ -52,6 +52,7 @@ impl Drop for PooledConnection {
 #[async_trait]
 impl Client for PooledConnection {
     async fn execute(&self, sql: &str, params: &[&(dyn Param + Sync)]) -> Result<ExecuteResult> {
+        log::trace!("MSSQL EXECUTE: {}", sql);
         let mut guard = self.tiberius_conn.lock().await;
         let conn: &mut TiberiusConn = guard.as_mut().unwrap();
 
@@ -67,6 +68,7 @@ impl Client for PooledConnection {
     }
 
     async fn fetch_rows(&self, sql: &str, params: &[&(dyn Param + Sync)]) -> Result<Vec<Row>> {
+        log::trace!("MSSQL FETCH_ROWS: {}", sql);
         let mut guard = self.tiberius_conn.lock().await;
         let conn: &mut TiberiusConn = guard.as_mut().unwrap();
 
@@ -74,7 +76,6 @@ impl Client for PooledConnection {
         for &p in params {
             args = MssqlParam::add_param(p, args);
         }
-        log::debug!("MSSQL_QUERY: {}", sql);
         let stream = conn.query(sql, &args).await?;
 
         let mssql_rows = stream.into_results().await?;
@@ -96,12 +97,12 @@ impl Client for PooledConnection {
         let conn: &mut TiberiusConn = guard.as_mut().unwrap();
         for fetch in args {
             let sql = fetch.sql;
+            log::trace!("MSSQL FETCH_MANY: {}", sql);
             let params = fetch.params;
             let mut args: Vec<&dyn ToSql> = Vec::new();
             for &p in params {
                 args = MssqlParam::add_param(p, args);
             }
-            log::debug!("MSSQL_QUERY: {}", sql);
             let stream = conn.query(sql, &args).await?;
             let mssql_rows = stream.into_results().await?;
             let mut all = Vec::default();

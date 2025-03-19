@@ -1,7 +1,12 @@
+use crate::relations::RelationValue;
+
 /// ***********************************************************************************
 /// These are all the trait and struct used to connect a rust Struct to a database driver
 /// ***********************************************************************************
 pub mod hooks;
+
+#[cfg(test)]
+mod tests;
 
 /// tells welds what tablename and schema name should used to get data for an Entity
 /// This does on the Schema Object NOT the model
@@ -73,6 +78,7 @@ pub trait ColumnDefaultCheck {
     fn col_is_default(&self, column: &str) -> Result<bool>;
 }
 
+/// Update self from the contents of a row
 pub trait UpdateFromRow {
     fn update_from_row(&mut self, row: &mut crate::Row) -> crate::errors::Result<()>;
 }
@@ -81,6 +87,30 @@ pub trait UpdateFromRow {
 pub trait HasSchema: Sync + Send {
     type Schema: Default + TableInfo;
 }
+
+/// used to compare two models and see if a relationship holds
+pub trait CheckRelationship {
+    /// returns true if a relations holds between two objects
+    fn check<R>(&self, other: &R) -> bool
+    where
+        R: RelationValue<Self>,
+        Self: RelationValue<R>,
+        Self: Sized;
+}
+
+/// Returns the Value of the PK of a model
+pub trait PrimaryKeyValue {
+    type PrimaryKeyType;
+    /// Returns the value of a model's primary key(s)
+    fn primary_key_value(&self) -> Self::PrimaryKeyType;
+}
+
+//  /// Used to check if a Foreign Key is equal to a value
+//  pub trait ForeignKeyPartialEq<Rhs> {
+//      /// return true if the Foreign Key value equals the passed in value
+//      /// false if the values don't match OR object doesn't have the field
+//      fn eq(&self, foreign_key_field: &str, other: &Rhs) -> bool;
+//  }
 
 mod tableident;
 pub use tableident::TableIdent;

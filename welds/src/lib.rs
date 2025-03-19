@@ -153,6 +153,7 @@
 
 pub mod errors;
 pub use errors::WeldsError;
+pub mod dataset;
 pub mod exts;
 pub mod model_traits;
 pub mod query;

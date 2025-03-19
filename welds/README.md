@@ -102,9 +102,7 @@ welds-connections features needed for mssql (tiberius):
  - [Hooks, Callback when models (Save/Update/Delete)](https://github.com/weldsorm/welds/blob/main/welds/examples/hooks.rs)
  - [Scopes for your Models](https://github.com/weldsorm/welds/blob/main/welds/examples/scopes.rs)
  - [Migrations](https://github.com/weldsorm/welds/blob/main/welds/examples/migrations.rs)
+ - [Wrapping operations in Transactions](https://github.com/weldsorm/welds/blob/main/welds/examples/transactions.rs)
  - [Checking DB schema matches compiled structs](https://github.com/weldsorm/welds/blob/main/welds/examples/verify_tables.rs)
 
 For more good examples [check out the examples repo](https://github.com/weldsorm/welds/tree/main/welds/examples).
-
-
-

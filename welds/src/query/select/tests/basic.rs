@@ -101,3 +101,18 @@ fn should_exec_basic_with_where() {
         &ran_sql
     );
 }
+
+#[test]
+fn sqlite_syntax_should_be_translated_to_like() {
+    let q = QueryBuilder::<Product>::new().where_col(|c| c.name.ilike("bla"));
+    let ran_sql = futures::executor::block_on(async move {
+        let client = welds_connections::noop::build(Syntax::Sqlite);
+        q.run(&client).await.unwrap();
+        client.last_sql()
+    })
+    .unwrap();
+    assert_eq!(
+        "SELECT t1.\"dbname\" FROM da_schemaname.da_tablename t1 WHERE ( t1.dbname like ? )",
+        &ran_sql
+    );
+}

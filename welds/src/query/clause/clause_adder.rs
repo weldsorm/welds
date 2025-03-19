@@ -30,7 +30,7 @@ where
         }
     }
 
-    fn clause(&self, _syntax: Syntax, alias: &str, next_params: &NextParam) -> Option<String> {
+    fn clause(&self, syntax: Syntax, alias: &str, next_params: &NextParam) -> Option<String> {
         // build the column name
         let col = format!("{}.{}", alias, self.col);
         let mut parts = vec![col.as_str()];
@@ -46,8 +46,22 @@ where
             return Some(clause);
         }
 
+        // override the "ilike" operator for sqlite
+        let operator = match syntax {
+            Syntax::Sqlite => {
+                if self.operator == "ilike" {
+                    "like"
+                } else if self.operator == "not ilike" {
+                    "not like"
+                } else {
+                    self.operator
+                }
+            }
+            _ => self.operator,
+        };
+
         // normal path
-        parts.push(self.operator);
+        parts.push(operator);
         let np = next_params.next();
         parts.push(&np);
         let clause: String = parts.join(" ");

@@ -7,7 +7,7 @@ use welds::WeldsModel;
 #[derive(Debug, WeldsModel)]
 #[welds(schema = "welds", table = "Orders")]
 #[welds(BelongsTo(product, super::super::product::Product, "product_id"))]
-#[welds(BelongsTo(product2, super::super::product::Product, "product_id2"))]
+#[welds(BelongsTo(product2, super::super::product::Product, "product_id_2"))]
 pub struct Order {
     #[welds(primary_key)]
     pub id: i32,

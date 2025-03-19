@@ -18,7 +18,7 @@ pub struct Profile {
     pub id: i32,
     pub image_url: String,
 }
-#[derive(Debug, WeldsModel)]
+#[derive(Debug, Clone, WeldsModel)]
 #[welds(table = "Teams")]
 #[welds(HasMany(players, Player, "team_id"))]
 #[welds(BelongsTo(city, City, "city_id"))]
@@ -28,7 +28,7 @@ pub struct Team {
     pub city_id: i32,
     pub name: String,
 }
-#[derive(Debug, WeldsModel)]
+#[derive(Debug, Clone, WeldsModel)]
 #[welds(table = "Players")]
 #[welds(BelongsTo(team, Team, "team_id"))]
 pub struct Player {
@@ -214,6 +214,31 @@ fn should_return_borrowed_objects_from_iterator() {
                 )
             })
             .collect::<Vec<(&Team, Vec<&Player>)>>();
+
+        assert_eq!(output[0].0.id, 1)
+    })
+}
+
+#[test]
+fn should_return_owned_objects_from_iterator() {
+    async_std::task::block_on(async {
+        let conn = get_conn().await;
+
+        let dataset = Team::all()
+            .include(|x| x.players)
+            .run(&conn)
+            .await
+            .unwrap();
+
+        let output = dataset
+            .iter()
+            .map(|data| {
+                (
+                    data.clone(),
+                    data.get_owned(|x| x.players)
+                )
+            })
+            .collect::<Vec<(Team, Vec<Player>)>>();
 
         assert_eq!(output[0].0.id, 1)
     })

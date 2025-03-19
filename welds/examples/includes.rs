@@ -31,6 +31,7 @@ pub struct City {
 }
 
 // Output struct with borrowed objects (Example 1)
+#[derive(Debug)]
 pub struct TeamWithRelated<'a> {
     team: &'a Team,
     players: Vec<&'a Player>,
@@ -38,6 +39,7 @@ pub struct TeamWithRelated<'a> {
 }
 
 // Output struct with owned objects (Example 2)
+#[derive(Debug)]
 pub struct CityWithTeams {
     city: City,
     teams: Vec<Team>,
@@ -53,67 +55,58 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     client.execute(schema, &[]).await?;
 
     // Add some test data for teams, players and cities
-    create_test_data(&client).await;
+    create_test_data(&client).await?;
 
     // Example 1
 
     // Fetch all teams who's name starts with "L", and include their related players and cities.
     // The associations are Team->HasMany->Player and Team->BelongsTo->City
-    let teams_dataset = Team::where_col(|t| t.name.ilike("L%"))
+    let teams_dataset = Team::where_col(|t| t.name.like("L%"))
         .include(|t| t.players)
         .include(|t| t.city)
-        .run(&client).await?;
+        .run(&client)
+        .await?;
 
     // Build a collection of TeamWithRelated objects for each Team, with their related
     // sets of Player and City objects. See TeamWithRelated struct definition.
     let collection: Vec<TeamWithRelated> = teams_dataset
         .iter()
-        .map(|team_data| {
-            TeamWithRelated {
-                team: team_data.as_ref(),
-                players: team_data.get(|t| t.players),
-                city: team_data.get(|t| t.city)[0]
-            }
-        }).collect();
+        .map(|team_data| TeamWithRelated {
+            team: team_data.as_ref(),
+            players: team_data.get(|t| t.players),
+            city: team_data.get(|t| t.city)[0],
+        })
+        .collect();
 
     dbg!(collection);
 
     // Example 2
 
     // Fetch all cities and their related teams (City->HasMany->Team)
-    let cities_dataset = City::all()
-        .include(|c| c.teams)
-        .run(&client).await?;
+    let cities_dataset = City::all().include(|c| c.teams).run(&client).await?;
 
     // Build a Vec of CityWithTeams objects containing each City and it's corresponding Team(s).
     // The output struct owns it's inner data (see CityWithTeams definition) instead of borrowing.
     let collection: Vec<CityWithTeams> = cities_dataset
         .iter()
-        .map(|city_data| {
-            CityWithTeams {
-                city: city_data.clone(),
-                teams: city_data.get_owned(|c| c.teams)
-            }
-        }).collect();
+        .map(|city_data| CityWithTeams {
+            city: city_data.clone(),
+            teams: city_data.get_owned(|c| c.teams),
+        })
+        .collect();
 
     dbg!(collection);
 
     // Example 3
 
     // Fetch all players with their related teams (Player->BelongsTo->Team).
-    let players_dataset = Player::all()
-        .include(|p| p.team)
-        .run(&client).await?;
+    let players_dataset = Player::all().include(|p| p.team).run(&client).await?;
 
     // Build a simple Vec of tuples, containing each Player with their related Team
     let collection: Vec<(&Player, &Team)> = players_dataset
         .iter()
-        .map(|player_data| {
-            (
-                player_data.as_ref(),
-                player_data.get(|p| p.team)[0]
-            )
-        }).collect();
+        .map(|player_data| (player_data.as_ref(), player_data.get(|p| p.team)[0]))
+        .collect();
 
     dbg!(collection);
 

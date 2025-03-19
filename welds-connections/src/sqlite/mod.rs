@@ -50,6 +50,7 @@ use sqlx::types::Type;
 #[async_trait]
 impl Client for SqliteClient {
     async fn execute(&self, sql: &str, params: &[&(dyn Param + Sync)]) -> Result<ExecuteResult> {
+        log::trace!("SQLITE EXECUTE: {}", sql);
         let mut query = sqlx::query::<Sqlite>(sql);
         for param in params {
             query = SqliteParam::add_param(*param, query);
@@ -61,6 +62,7 @@ impl Client for SqliteClient {
     }
 
     async fn fetch_rows(&self, sql: &str, params: &[&(dyn Param + Sync)]) -> Result<Vec<Row>> {
+        log::trace!("SQLITE FETCH_ROWS: {}", sql);
         let mut query = sqlx::query::<Sqlite>(sql);
         for param in params {
             query = SqliteParam::add_param(*param, query);
@@ -78,6 +80,7 @@ impl Client for SqliteClient {
         let mut conn = self.pool.acquire().await?;
         for fetch in fetches {
             let sql = fetch.sql;
+            log::trace!("SQLITE FETCH_MANY: {}", sql);
             let params = fetch.params;
             let mut query = sqlx::query::<Sqlite>(sql);
             for param in params {

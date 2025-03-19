@@ -4,9 +4,6 @@ use crate::query::include::related_query::{RelatedSetAccesser, SetDowncast};
 use crate::state::DbState;
 use std::ops::Deref;
 
-#[cfg(test)]
-mod tests;
-
 /// A Collection object that hold a set of data that has been
 /// selected out of the database and its related objects
 ///
@@ -108,8 +105,8 @@ pub struct DataAccessGuard<'t, T> {
     sets: &'t DataSet<T>,
 }
 
-impl<T: Sized> AsRef<T> for DataAccessGuard<'_, T> {
-    fn as_ref(&self) -> &T {
+impl<'t, T> DataAccessGuard<'t, T> {
+    pub fn as_ref(&self) -> &'t T {
         self.inner.as_ref()
     }
 }

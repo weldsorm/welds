@@ -30,6 +30,7 @@ welds-macros = { path="../welds-macros", version = "^0.4.12" }
 "mock" = []
 "check" = ["detect", "colored"]
 "migrations" = ["detect"]
+"tracing" = ["welds-connections/tracing"]
 
 
 #[profile.dev.package.sqlx-macros]

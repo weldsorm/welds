@@ -6,7 +6,7 @@ pub use transaction::Transaction;
 pub mod errors;
 pub mod row;
 pub mod transaction;
-
+pub mod trace;
 pub mod any;
 #[cfg(feature = "mssql")]
 pub mod mssql;

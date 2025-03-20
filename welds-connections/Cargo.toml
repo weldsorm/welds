@@ -24,6 +24,7 @@ description = "An async ORM for (postgres, mssql, mysql, sqlite)"
 "mssql-rust_decimal" = ["tiberius/rust_decimal"]
 "mssql-bigdecimal" = ["tiberius/bigdecimal"]
 "noop" = []
+"tracing" = ["dep:tracing"]
 "full" = ["postgres", "mysql", "sqlite", "mssql", "noop"]
 
 

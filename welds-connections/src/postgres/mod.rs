@@ -1,5 +1,5 @@
 use super::transaction::{TransT, Transaction};
-use super::Row;
+use super::{trace, Row};
 use super::TransactStart;
 use super::{Client, Param};
 use crate::errors::Result;
@@ -56,7 +56,7 @@ impl Client for PostgresClient {
         for param in params {
             query = PostgresParam::add_param(*param, query);
         }
-        let r = query.execute(&*self.pool).await?;
+        let r = trace::db_error(query.execute(&*self.pool).await)?;
         Ok(ExecuteResult {
             rows_affected: r.rows_affected(),
         })
@@ -68,7 +68,7 @@ impl Client for PostgresClient {
         for param in params {
             query = PostgresParam::add_param(*param, query);
         }
-        let mut raw_rows = query.fetch_all(&*self.pool).await?;
+        let mut raw_rows = trace::db_error(query.fetch_all(&*self.pool).await)?;
         let rows: Vec<Row> = raw_rows.drain(..).map(Row::from).collect();
         Ok(rows)
     }
@@ -87,7 +87,7 @@ impl Client for PostgresClient {
             for param in params {
                 query = PostgresParam::add_param(*param, query);
             }
-            let mut raw_rows = query.fetch_all(&mut *conn).await?;
+            let mut raw_rows = trace::db_error(query.fetch_all(&mut *conn).await)?;
             let rows: Vec<Row> = raw_rows.drain(..).map(Row::from).collect();
             datasets.push(rows);
         }

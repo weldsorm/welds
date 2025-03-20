@@ -15,7 +15,7 @@ pub trait BeforeCreate {
     /// you can force a cancel by returning `welds::errors::weldsError::ActionCanceled`
     ///
     /// you can also return any anyhow errors. Useful for things like validation
-    fn before(&mut self) -> Result<()>;
+    fn before(&mut self) -> impl std::future::Future<Output = Result<()>> + Send;
 }
 
 pub trait BeforeUpdate {
@@ -24,7 +24,7 @@ pub trait BeforeUpdate {
     /// you can force a cancel by returning `welds::errors::weldsError::ActionCanceled`
     ///
     /// you can also return any anyhow errors. Useful for things like validation
-    fn before(&mut self) -> Result<()>;
+    fn before(&mut self) -> impl std::future::Future<Output = Result<()>> + Send;
 }
 
 pub trait BeforeDelete {
@@ -33,26 +33,26 @@ pub trait BeforeDelete {
     /// you can force a cancel by returning `welds::errors::weldsError::ActionCanceled`
     ///
     /// you can also return any anyhow errors. Useful for things like validation
-    fn before(&self) -> Result<()>;
+    fn before(&self) -> impl std::future::Future<Output = Result<()>> + Send;
 }
 
 pub trait AfterCreate {
     /// A way go get informed when a model is created in the database.
     ///
     /// is called after a model is created
-    fn after(&self);
+    fn after(&self) -> impl std::future::Future<Output = Result<()>> + Send;
 }
 
 pub trait AfterUpdate {
     /// A way go get informed when a model is updated in the database.
     ///
     /// is called after a model is created
-    fn after(&self);
+    fn after(&self) -> impl std::future::Future<Output = Result<()>> + Send;
 }
 
 pub trait AfterDelete {
     /// A way go get informed when a model is deleted from the database.
     ///
     /// is called after a model is deleted
-    fn after(&self);
+    fn after(&self) -> impl std::future::Future<Output = Result<()>> + Send;
 }

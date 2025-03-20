@@ -7,8 +7,6 @@ pub(crate) struct Relation {
     pub(crate) kind: Ident,
     pub(crate) field: Ident,
     pub(crate) foreign_struct: syn::Path,
-    // the field name of the FK in rust
-    pub(crate) foreign_key_rust: String,
     // the field name of the FK in the DB
     pub(crate) foreign_key_db: String,
 }
@@ -65,7 +63,6 @@ impl Relation {
             kind,
             field,
             foreign_struct: model.clone(),
-            foreign_key_rust: foreign_key.clone(),
             foreign_key_db: foreign_key.clone(),
         })
     }

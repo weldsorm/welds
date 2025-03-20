@@ -95,7 +95,6 @@ mod tests {
                 field,
                 ignore: false,
                 dbname: name,
-                full_field_type: field_type.clone(),
                 field_type,
                 is_option: null,
             };
@@ -113,7 +112,6 @@ mod tests {
                 field,
                 ignore: false,
                 dbname: name,
-                full_field_type: field_type.clone(),
                 field_type,
                 is_option: false,
             };

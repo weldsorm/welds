@@ -1,6 +1,5 @@
 use super::*;
 use crate::detect::table_def::mock::MockTableDef;
-use crate::migrations::types::Type;
 use crate::migrations::MigrationWriter;
 use crate::Syntax;
 

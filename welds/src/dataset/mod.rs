@@ -1,6 +1,7 @@
-use crate::model_traits::CheckRelationship;
 use crate::model_traits::{HasSchema, TableColumns, TableInfo, UniqueIdentifier};
 use crate::query::include::related_query::{RelatedSetAccesser, SetDowncast};
+use crate::relations::RelationshipCompare;
+use crate::relations::{HasRelations, Relationship};
 use crate::state::DbState;
 use std::ops::Deref;
 
@@ -118,8 +119,6 @@ impl<T> Deref for DataAccessGuard<'_, T> {
     }
 }
 
-use crate::relations::{HasRelations, RelationValue, Relationship};
-
 impl<'t, T> DataAccessGuard<'t, T>
 where
     T: HasSchema,
@@ -134,14 +133,13 @@ where
     where
         'g: 't,
         't: 'g,
-        T: HasRelations + RelationValue<R>,
-        T: CheckRelationship,
+        T: HasRelations,
         Ship: 'static + Relationship<R>,
-        R: HasSchema + RelationValue<T>,
+        R: HasSchema,
         R: 'static + Send + Sync + HasSchema,
         <R as HasSchema>::Schema: TableInfo + TableColumns + UniqueIdentifier,
         <T as HasSchema>::Schema: TableInfo + TableColumns + UniqueIdentifier,
-        <T as HasRelations>::Relation: Default,
+        Ship: RelationshipCompare<T, R>,
     {
         let t: &T = self.inner.as_ref();
         // find the set of data that would fit
@@ -152,7 +150,7 @@ where
                 if related_set.ship == ship {
                     let mut set = Vec::default();
                     for d in &related_set.data {
-                        if CheckRelationship::check(t, d) {
+                        if ship.is_related(t, d) {
                             set.push(d);
                         }
                     }
@@ -163,6 +161,9 @@ where
         Vec::default()
     }
 
+    /// Gets other objects related to this object.
+    /// This is a subset of the included objects that are linked to self.
+    /// Returns an empty list if the relationship was NOT included in the query.
     pub fn get_owned<'g, R, Ship>(
         &self,
         relationship: impl Fn(<T as HasRelations>::Relation) -> Ship,
@@ -170,14 +171,14 @@ where
     where
         'g: 't,
         't: 'g,
-        T: HasRelations + RelationValue<R>,
-        T: CheckRelationship,
+        T: HasRelations,
         Ship: 'static + Relationship<R>,
-        R: HasSchema + RelationValue<T> + ToOwned<Owned = R>,
+        R: HasSchema + ToOwned<Owned = R>,
+        R: HasSchema,
         R: 'static + Send + Sync + HasSchema,
         <R as HasSchema>::Schema: TableInfo + TableColumns + UniqueIdentifier,
         <T as HasSchema>::Schema: TableInfo + TableColumns + UniqueIdentifier,
-        <T as HasRelations>::Relation: Default,
+        Ship: RelationshipCompare<T, R>,
     {
         let t: &T = self.inner.as_ref();
         // find the set of data that would fit
@@ -187,8 +188,8 @@ where
                 let ship = relationship(Default::default());
                 if related_set.ship == ship {
                     let mut set = Vec::default();
-                    for d in related_set.data.iter() {
-                        if CheckRelationship::check(t, d) {
+                    for d in &related_set.data {
+                        if ship.is_related(t, d) {
                             set.push(d.to_owned());
                         }
                     }

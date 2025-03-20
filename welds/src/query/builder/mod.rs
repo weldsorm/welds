@@ -16,6 +16,9 @@ pub use super::clause::manualparam::ManualParam;
 #[deprecated(note = "please use `ManualParam` instead")]
 pub type ManualWhereParam = ManualParam;
 
+#[cfg(test)]
+mod tests;
+
 /// An un-executed Query.
 ///
 /// Build out a query that can be executed on the database.

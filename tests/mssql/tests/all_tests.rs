@@ -333,7 +333,16 @@ async fn should_be_able_to_write_a_custom_set() {
         .map_query(|p| p.order)
         .where_col(|c| c.id.equal(2342534))
         .set_manual(|x| x.product_id, "product_id + ?", params);
-    let sql = q.to_sql(Syntax::Postgres);
+    let sql = q.to_sql(Syntax::Mssql);
+    eprintln!("SQL: {}", sql);
+    q.run(&conn).await.unwrap();
+}
+
+#[tokio::test]
+async fn should_be_able_to_write_mapquery_with_a_column_rename() {
+    let conn = get_conn().await;
+    let q = Order::all().map_query(|o| o.product2);
+    let sql = q.to_sql(Syntax::Mssql);
     eprintln!("SQL: {}", sql);
     q.run(&conn).await.unwrap();
 }

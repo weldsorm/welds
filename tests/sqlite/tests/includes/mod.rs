@@ -199,20 +199,11 @@ fn should_return_borrowed_objects_from_iterator() {
     async_std::task::block_on(async {
         let conn = get_conn().await;
 
-        let dataset = Team::all()
-            .include(|x| x.players)
-            .run(&conn)
-            .await
-            .unwrap();
+        let dataset = Team::all().include(|x| x.players).run(&conn).await.unwrap();
 
         let output = dataset
             .iter()
-            .map(|data| {
-                (
-                    data.as_ref(),
-                    data.get(|x| x.players)
-                )
-            })
+            .map(|data| (data.as_ref(), data.get(|x| x.players)))
             .collect::<Vec<(&Team, Vec<&Player>)>>();
 
         assert_eq!(output[0].0.id, 1)
@@ -224,20 +215,11 @@ fn should_return_owned_objects_from_iterator() {
     async_std::task::block_on(async {
         let conn = get_conn().await;
 
-        let dataset = Team::all()
-            .include(|x| x.players)
-            .run(&conn)
-            .await
-            .unwrap();
+        let dataset = Team::all().include(|x| x.players).run(&conn).await.unwrap();
 
         let output = dataset
             .iter()
-            .map(|data| {
-                (
-                    data.clone(),
-                    data.get_owned(|x| x.players)
-                )
-            })
+            .map(|data| (data.clone(), data.get_owned(|x| x.players)))
             .collect::<Vec<(Team, Vec<Player>)>>();
 
         assert_eq!(output[0].0.id, 1)

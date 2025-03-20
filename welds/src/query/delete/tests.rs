@@ -1,6 +1,5 @@
 use crate::state::DbState;
 use crate::Syntax;
-use welds_connections::Row;
 
 // Testing that the tail end of the SQL is correct
 // Limits / skips / orders

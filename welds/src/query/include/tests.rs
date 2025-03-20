@@ -1,4 +1,3 @@
-use crate::Syntax;
 use crate::WeldsModel;
 
 #[derive(Debug, Default, WeldsModel)]
@@ -25,6 +24,6 @@ struct Order {
 #[test]
 fn should_be_able_to_build_a_query_including_both_objects() {
     futures::executor::block_on(async move {
-        let q = Product::all().include(|p| p.orders);
+        let _q = Product::all().include(|p| p.orders);
     });
 }

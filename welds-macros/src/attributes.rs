@@ -31,7 +31,6 @@ pub(crate) fn get_columns(ast: &syn::DeriveInput) -> Vec<Column> {
                 ignore,
                 dbname,
                 field_type,
-                full_field_type: f.ty.clone(),
                 is_option,
             }
         })
@@ -62,7 +61,6 @@ pub(crate) fn get_pks(ast: &syn::DeriveInput) -> Vec<Column> {
                 ignore: false,
                 dbname,
                 field_type,
-                full_field_type: f.ty.clone(),
                 is_option,
             }
         })

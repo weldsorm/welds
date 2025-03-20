@@ -3,7 +3,7 @@ use crate::WeldsModel;
 #[derive(Debug, Default, WeldsModel)]
 #[welds(table = "products")]
 #[welds_path(crate)] // needed only within the welds crate.
-#[welds(HasMany(orders, Order, "product_id"))]
+#[welds(HasMany(orders, OrderA, "product_id"))]
 struct Product {
     #[welds(primary_key)]
     pub id: i32,
@@ -13,7 +13,7 @@ struct Product {
 #[derive(Debug, Default, WeldsModel)]
 #[welds(table = "buyers")]
 #[welds_path(crate)] // needed only within the welds crate.
-#[welds(HasMany(orders, Order, "buyer_id"))]
+#[welds(HasMany(orders, OrderA, "buyer_id"))]
 struct Buyer {
     #[welds(primary_key)]
     pub id: String,
@@ -25,12 +25,24 @@ struct Buyer {
 #[welds_path(crate)] // needed only within the welds crate.
 #[welds(BelongsTo(product, Product, "product_id"))]
 #[welds(BelongsTo(buyer, Buyer, "buyer_id"))]
-struct Order {
+struct OrderA {
     #[welds(primary_key)]
     pub id: i32,
     pub product_id: i32,
     pub buyer_id: String,
     pub price: i32,
+}
+
+#[derive(Debug, Default, WeldsModel)]
+#[welds(table = "orders")]
+#[welds_path(crate)] // needed only within the welds crate.
+#[welds(BelongsTo(product, Product, "product_id"))]
+#[welds(BelongsTo(product2, Product, "product_id2"))]
+struct OrderB {
+    #[welds(primary_key)]
+    pub id: i32,
+    pub product_id: Option<i32>,
+    pub product_id2: i32,
 }
 
 // use crate::model_traits::CheckRelationship;
@@ -95,26 +107,39 @@ fn should_be_able_to_read_the_pk() {
     });
 }
 
-// #[test]
-// fn should_be_able_to_equal_fks() {
-//     futures::executor::block_on(async move {
-//         let order = Order {
-//             id: 33,
-//             product_id: 234,
-//             buyer_id: "B1".to_string(),
-//             price: 11,
-//         };
-//         assert!(!super::ForeignKeyPartialEq::eq(&order, "product_id", &2),);
-//         assert!(super::ForeignKeyPartialEq::eq(&order, "product_id", &234),);
-//         assert!(!super::ForeignKeyPartialEq::eq(
-//             &order,
-//             "buyer_id",
-//             &"B2".to_string()
-//         ),);
-//         assert!(super::ForeignKeyPartialEq::eq(
-//             &order,
-//             "buyer_id",
-//             &"B1".to_string()
-//         ),);
-//     });
-// }
+#[test]
+fn should_be_able_to_equal_fks() {
+    futures::executor::block_on(async move {
+        let order = OrderA {
+            id: 33,
+            product_id: 234,
+            buyer_id: "B1".to_string(),
+            price: 11,
+        };
+        assert!(!super::ForeignKeyPartialEq::eq(&order, "product_id", &2),);
+        assert!(super::ForeignKeyPartialEq::eq(&order, "product_id", &234),);
+        assert!(!super::ForeignKeyPartialEq::eq(
+            &order,
+            "buyer_id",
+            &"B2".to_string()
+        ),);
+        assert!(super::ForeignKeyPartialEq::eq(
+            &order,
+            "buyer_id",
+            &"B1".to_string()
+        ),);
+    });
+}
+
+#[test]
+fn should_be_able_to_equal_fks_optional() {
+    futures::executor::block_on(async move {
+        let order2 = OrderB {
+            id: 33,
+            product_id: Some(234),
+            product_id2: 234,
+        };
+        assert!(super::ForeignKeyPartialEq::eq(&order2, "product_id", &234));
+        assert!(super::ForeignKeyPartialEq::eq(&order2, "product_id2", &234));
+    });
+}

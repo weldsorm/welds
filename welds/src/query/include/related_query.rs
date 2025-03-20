@@ -1,11 +1,11 @@
 use crate::connections::Row;
 use crate::errors::Result;
 use crate::errors::WeldsError;
+use crate::exts::VecStateExt;
 use crate::model_traits::{HasSchema, TableColumns, TableInfo, UniqueIdentifier};
 use crate::query::builder::QueryBuilder;
 use crate::query::clause::exists::ExistIn;
 use crate::relations::Relationship;
-use crate::exts::VecStateExt;
 use crate::Client;
 use async_trait::async_trait;
 use std::any::Any;
@@ -80,7 +80,7 @@ where
 
 pub(crate) trait RelatedSetAccesser {
     fn as_any(&self) -> &dyn Any;
-    fn as_any_mut(&mut self) -> &mut dyn Any;
+    //fn as_any_mut(&mut self) -> &mut dyn Any;
 }
 
 impl<R: 'static, Ship: 'static> RelatedSetAccesser for RelatedSet<R, Ship>
@@ -91,18 +91,18 @@ where
         self
     }
 
-    fn as_any_mut(&mut self) -> &mut dyn Any {
-        self
-    }
+    //fn as_any_mut(&mut self) -> &mut dyn Any {
+    //    self
+    //}
 }
 
 pub(crate) trait SetDowncast {
     fn downcast_ref<R: 'static, Ship: 'static + Relationship<R>>(
         &self,
     ) -> Option<&RelatedSet<R, Ship>>;
-    fn downcast_mut<R: 'static, Ship: 'static + Relationship<R>>(
-        &mut self,
-    ) -> Option<&mut RelatedSet<R, Ship>>;
+    // fn downcast_mut<R: 'static, Ship: 'static + Relationship<R>>(
+    //     &mut self,
+    // ) -> Option<&mut RelatedSet<R, Ship>>;
 }
 
 impl SetDowncast for Box<dyn RelatedSetAccesser + Send> {
@@ -112,9 +112,9 @@ impl SetDowncast for Box<dyn RelatedSetAccesser + Send> {
         self.as_any().downcast_ref::<RelatedSet<R, Ship>>()
     }
 
-    fn downcast_mut<R: 'static, Ship: 'static + Relationship<R>>(
-        &mut self,
-    ) -> Option<&mut RelatedSet<R, Ship>> {
-        self.as_any_mut().downcast_mut::<RelatedSet<R, Ship>>()
-    }
+    // fn downcast_mut<R: 'static, Ship: 'static + Relationship<R>>(
+    //     &mut self,
+    // ) -> Option<&mut RelatedSet<R, Ship>> {
+    //     self.as_any_mut().downcast_mut::<RelatedSet<R, Ship>>()
+    // }
 }

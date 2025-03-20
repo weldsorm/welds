@@ -16,7 +16,7 @@ struct Product {
 
 impl TryFrom<Row> for Product {
     type Error = crate::WeldsError;
-    fn try_from(value: Row) -> std::result::Result<Self, Self::Error> {
+    fn try_from(_value: Row) -> std::result::Result<Self, Self::Error> {
         Ok(Product { a: 0, b: 0 })
     }
 }

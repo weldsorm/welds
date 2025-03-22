@@ -13,7 +13,7 @@ where
     T: UpdateFromRow,
     T: AfterUpdate + BeforeUpdate,
 {
-    BeforeUpdate::before(obj)?;
+    BeforeUpdate::before(obj).await?;
 
     let syntax = client.syntax();
     let mut args: ParamArgs = Vec::default();
@@ -55,7 +55,7 @@ where
 
     client.execute(&sql, &args).await?;
 
-    AfterUpdate::after(obj);
+    AfterUpdate::after(obj).await.ok();
     Ok(())
 }
 

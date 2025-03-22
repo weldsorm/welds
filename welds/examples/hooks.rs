@@ -5,7 +5,7 @@ use welds::prelude::*;
 #[welds(table = "products")]
 // Wiring up a bunch of hooks for when this model touches the database.
 #[welds(BeforeCreate(before_create))]
-#[welds(AfterCreate(after_create))]
+#[welds(AfterCreate(after_create, async = true))]
 #[welds(AfterCreate(after_create_second))]
 #[welds(BeforeUpdate(before_update))]
 #[welds(AfterUpdate(after_update))]
@@ -33,8 +33,9 @@ fn before_create(product: &mut Product) -> welds::errors::Result<()> {
     Ok(())
 }
 
-fn after_create(product: &Product) {
-    println!("After Create: {:?}", product);
+// Example async callback
+async fn after_create(product: &Product) {
+    print_message(product).await;
 }
 
 fn after_create_second(product: &Product) {
@@ -92,4 +93,8 @@ fn new_product() -> DbState<Product> {
         price: Some(3.15),
         active: true,
     })
+}
+
+async fn print_message(product: &Product) {
+    println!("After Create: {:?}", product);
 }

@@ -15,7 +15,7 @@ where
     <T as HasSchema>::Schema: TableInfo + TableColumns,
     T: AfterDelete + BeforeDelete,
 {
-    BeforeDelete::before(obj)?;
+    BeforeDelete::before(obj).await?;
     let syntax = client.syntax();
     let col_writer = ColumnWriter::new(syntax);
     let next_params = NextParam::new(syntax);
@@ -40,7 +40,7 @@ where
     let sql = format!("DELETE FROM {} where {}", identifier, wheres);
 
     client.execute(&sql, &args).await?;
-    AfterDelete::after(obj);
+    AfterDelete::after(obj).await.ok();
 
     Ok(())
 }

@@ -18,7 +18,7 @@ where
     T: UpdateFromRow,
     T: BeforeCreate + AfterCreate,
 {
-    BeforeCreate::before(obj)?;
+    BeforeCreate::before(obj).await?;
 
     let syntax = client.syntax();
     let mut args: ParamArgs = Vec::default();
@@ -88,7 +88,7 @@ where
 
     // If we are providing the DB with the ID, (string/uuid) it doesn't need to return the id, and will not
     if !id_return_required {
-        AfterCreate::after(obj);
+        AfterCreate::after(obj).await.ok();
         return Ok(());
     }
 
@@ -96,7 +96,7 @@ where
     let mut row =
         row.ok_or_else(|| InsertFailed("Insert didn't return inserted ID/Row".to_owned()))?;
     UpdateFromRow::update_from_row(obj, &mut row)?;
-    AfterCreate::after(obj);
+    AfterCreate::after(obj).await.ok();
 
     Ok(())
 }

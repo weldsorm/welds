@@ -11,6 +11,7 @@ pub mod bulk_delete;
 pub mod bulk_update;
 pub mod extra_types;
 pub mod includes;
+pub mod callbacks;
 pub mod migrations;
 pub mod select_col;
 pub mod sub_query_tests;

@@ -41,14 +41,18 @@ pub(crate) fn write_before_create(info: &Info) -> TokenStream {
         .filter(|h| h.kind == HookKind::BeforeCreate)
         .map(|h| {
             let func = &h.callback;
-            quote! { #func(self)?; }
+            if h.is_async {
+                quote! { #func(self).await?; }
+            } else {
+                quote! { #func(self)?; }
+            }
         })
         .collect();
     let hook_calls = quote! { #(#hook_calls)* };
 
     quote! {
         impl #wp::model_traits::hooks::BeforeCreate for #def {
-            fn before(&mut self) -> #wp::errors::Result<()> {
+            async fn before(&mut self) -> #wp::errors::Result<()> {
                 #hook_calls
                 Ok(())
             }
@@ -67,15 +71,20 @@ pub(crate) fn write_after_create(info: &Info) -> TokenStream {
         .filter(|h| h.kind == HookKind::AfterCreate)
         .map(|h| {
             let func = &h.callback;
-            quote! { #func(self); }
+            if h.is_async {
+                quote! { #func(self).await; }
+            } else {
+                quote! { #func(self); }
+            }
         })
         .collect();
     let hook_calls = quote! { #(#hook_calls)* };
 
     quote! {
         impl #wp::model_traits::hooks::AfterCreate for #def {
-            fn after(&self) {
+            async fn after(&self) -> #wp::errors::Result<()> {
                 #hook_calls
+                Ok(())
             }
         }
     }
@@ -94,14 +103,18 @@ pub(crate) fn write_before_update(info: &Info) -> TokenStream {
         .filter(|h| h.kind == HookKind::BeforeUpdate)
         .map(|h| {
             let func = &h.callback;
-            quote! { #func(self)?; }
+            if h.is_async {
+                quote! { #func(self).await?; }
+            } else {
+                quote! { #func(self)?; }
+            }
         })
         .collect();
     let hook_calls = quote! { #(#hook_calls)* };
 
     quote! {
         impl #wp::model_traits::hooks::BeforeUpdate for #def {
-            fn before(&mut self) -> #wp::errors::Result<()> {
+            async fn before(&mut self) -> #wp::errors::Result<()> {
                 #hook_calls
                 Ok(())
             }
@@ -120,15 +133,20 @@ pub(crate) fn write_after_update(info: &Info) -> TokenStream {
         .filter(|h| h.kind == HookKind::AfterUpdate)
         .map(|h| {
             let func = &h.callback;
-            quote! { #func(self); }
+            if h.is_async {
+                quote! { #func(self).await; }
+            } else {
+                quote! { #func(self); }
+            }
         })
         .collect();
     let hook_calls = quote! { #(#hook_calls)* };
 
     quote! {
         impl #wp::model_traits::hooks::AfterUpdate for #def {
-            fn after(&self) {
+            async fn after(&self) -> #wp::errors::Result<()> {
                 #hook_calls
+                Ok(())
             }
         }
     }
@@ -147,14 +165,18 @@ pub(crate) fn write_before_delete(info: &Info) -> TokenStream {
         .filter(|h| h.kind == HookKind::BeforeDelete)
         .map(|h| {
             let func = &h.callback;
-            quote! { #func(self)?; }
+            if h.is_async {
+                quote! { #func(self).await?; }
+            } else {
+                quote! { #func(self)?; }
+            }
         })
         .collect();
     let hook_calls = quote! { #(#hook_calls)* };
 
     quote! {
         impl #wp::model_traits::hooks::BeforeDelete for #def {
-            fn before(&self) -> #wp::errors::Result<()> {
+            async fn before(&self) -> #wp::errors::Result<()> {
                 #hook_calls
                 Ok(())
             }
@@ -173,15 +195,20 @@ pub(crate) fn write_after_delete(info: &Info) -> TokenStream {
         .filter(|h| h.kind == HookKind::AfterDelete)
         .map(|h| {
             let func = &h.callback;
-            quote! { #func(self); }
+            if h.is_async {
+                quote! { #func(self).await; }
+            } else {
+                quote! { #func(self); }
+            }
         })
         .collect();
     let hook_calls = quote! { #(#hook_calls)* };
 
     quote! {
         impl #wp::model_traits::hooks::AfterDelete for #def {
-            fn after(&self) {
+            async fn after(&self) -> #wp::errors::Result<()> {
                 #hook_calls
+                Ok(())
             }
         }
     }

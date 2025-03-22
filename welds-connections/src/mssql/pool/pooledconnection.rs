@@ -61,7 +61,8 @@ impl Client for PooledConnection {
             args = MssqlParam::add_param(p, args);
         }
         log::debug!("MSSQL_EXEC: {}", sql);
-        let r = conn.execute(sql, &args).await?;
+        let r = conn.execute(sql, &args).await;
+        let r = crate::trace::db_error(r)?;
         Ok(ExecuteResult {
             rows_affected: r.rows_affected().iter().sum(),
         })
@@ -76,7 +77,8 @@ impl Client for PooledConnection {
         for &p in params {
             args = MssqlParam::add_param(p, args);
         }
-        let stream = conn.query(sql, &args).await?;
+        let stream = conn.query(sql, &args).await;
+        let stream = crate::trace::db_error(stream)?;
 
         let mssql_rows = stream.into_results().await?;
         let mut all = Vec::default();
@@ -103,7 +105,8 @@ impl Client for PooledConnection {
             for &p in params {
                 args = MssqlParam::add_param(p, args);
             }
-            let stream = conn.query(sql, &args).await?;
+            let stream = conn.query(sql, &args).await;
+            let stream = crate::trace::db_error(stream)?;
             let mssql_rows = stream.into_results().await?;
             let mut all = Vec::default();
             for batch in mssql_rows {

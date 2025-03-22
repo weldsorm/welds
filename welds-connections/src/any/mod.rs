@@ -10,6 +10,7 @@ use async_trait::async_trait;
 
 /// This is a wrapper around a connection that could be Any underlying database
 /// only for the connection type features that have been enabled
+#[derive(Clone)]
 pub enum AnyClient {
     #[cfg(feature = "sqlite")]
     Sqlite(crate::sqlite::SqliteClient),

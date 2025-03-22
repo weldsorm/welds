@@ -10,6 +10,7 @@ use sqlx::query::Query;
 use sqlx::{MySql, MySqlPool};
 use std::sync::Arc;
 
+#[derive(Clone)]
 pub struct MysqlClient {
     pool: Arc<MySqlPool>,
 }

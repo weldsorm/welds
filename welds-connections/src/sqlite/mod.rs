@@ -1,6 +1,6 @@
 use super::transaction::{TransT, Transaction};
-use super::{trace, Row};
 use super::TransactStart;
+use super::{trace, Row};
 use super::{Client, Param};
 use crate::errors::Result;
 use crate::ExecuteResult;
@@ -10,6 +10,7 @@ use sqlx::sqlite::SqliteArguments;
 use sqlx::{Sqlite, SqlitePool};
 use std::sync::Arc;
 
+#[derive(Clone)]
 pub struct SqliteClient {
     pool: Arc<SqlitePool>,
 }

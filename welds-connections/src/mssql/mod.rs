@@ -13,6 +13,7 @@ use pool::Pool;
 
 pub(crate) mod transaction;
 
+#[derive(Clone)]
 pub struct MssqlClient {
     pool: Arc<Pool>,
 }

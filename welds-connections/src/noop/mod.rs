@@ -9,11 +9,13 @@ use std::sync::{Arc, Mutex};
 // It is used for testing
 //
 // You can change its syntax and get the last SQL that we "ran"
+#[derive(Clone)]
 pub struct NoopClient {
     syntax: Syntax,
     last_sql: Arc<Mutex<Option<String>>>,
     args_count: Arc<Mutex<Option<u64>>>,
 }
+
 pub fn build(syntax: Syntax) -> NoopClient {
     NoopClient {
         syntax,

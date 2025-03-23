@@ -1,6 +1,6 @@
 use crate::model_traits::TableIdent;
 use thiserror::Error;
-use welds_connections::Error as ConnError;
+pub use welds_connections::Error as ConnError;
 
 pub type Result<T> = std::result::Result<T, WeldsError>;
 

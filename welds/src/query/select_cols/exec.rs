@@ -101,6 +101,9 @@ where
                     cols.push(col);
                 }
             }
+            SelectKind::All => {
+                cols.push(format!("{}.*", alias));
+            }
             SelectKind::Count => {
                 let col = format!("COUNT({}.{}) AS {}", alias, colname, fieldname);
                 cols.push(col);

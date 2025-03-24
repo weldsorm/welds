@@ -59,6 +59,16 @@ where
         self
     }
 
+    /// Select all columns, equivalent to `SELECT table_name.*`
+    pub fn select_all(mut self) -> SelectBuilder<T> {
+        self.selects.push(SelectColumn {
+            col_name: Default::default(),
+            field_name: Default::default(),
+            kind: SelectKind::All,
+        });
+        self
+    }
+
     /// Add a columns to the specific list of columns that will be selected
     /// uses a sql "AS" to rename the returns column so it can match
     /// the struct you are selecting into

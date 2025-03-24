@@ -8,5 +8,6 @@ pub(crate) enum SelectKind {
     Column,
     Count,
     Max,
-    Min
+    Min,
+    All,
 }

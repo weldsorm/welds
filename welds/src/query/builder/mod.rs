@@ -359,6 +359,12 @@ where
         sb.select_as(lam, as_name)
     }
 
+    /// Select all columns, equivalent to `SELECT table_name.*`
+    pub fn select_all(self) -> SelectBuilder<T> {
+        let sb = SelectBuilder::new(self);
+        sb.select_all()
+    }
+
     pub fn select_count<V, FN: AsFieldName<V>>(
         self,
         lam: impl Fn(<T as HasSchema>::Schema) -> FN,

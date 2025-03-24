@@ -64,6 +64,9 @@ impl JoinBuilder {
                         list.push(col);
                     }
                 }
+                SelectKind::All => {
+                    list.push(format!("{}.*", alias));
+                }
                 SelectKind::Count => {
                     let col = format!("COUNT({}.{}) AS {}", alias, colname, fieldname);
                     list.push(col);

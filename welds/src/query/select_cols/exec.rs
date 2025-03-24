@@ -3,6 +3,7 @@ use crate::model_traits::{HasSchema, TableColumns, TableInfo};
 use crate::query::clause::ParamArgs;
 use crate::query::helpers::{build_tail, build_where_clauses, join_sql_parts};
 use crate::query::select_cols::SelectBuilder;
+use crate::query::select_cols::select_column::SelectKind;
 use crate::writers::ColumnWriter;
 use crate::writers::NextParam;
 use crate::Client;
@@ -45,6 +46,7 @@ where
             build_head_select(syntax, self),
             build_joins(syntax, self),
             where_sql,
+            build_group_by(syntax, self),
             build_tail(syntax, &self.qb),
         ])
         .trim()
@@ -89,12 +91,28 @@ where
     for col in &sb.selects {
         let colname = writer.excape(&col.col_name);
         let fieldname = writer.excape(&col.field_name);
-        if colname == fieldname {
-            let col = format!("{}.{}", alias, colname);
-            cols.push(col);
-        } else {
-            let col = format!("{}.{} AS {}", alias, colname, fieldname);
-            cols.push(col);
+        match col.kind {
+            SelectKind::Column => {
+                if colname == fieldname {
+                    let col = format!("{}.{}", alias, colname);
+                    cols.push(col);
+                } else {
+                    let col = format!("{}.{} AS {}", alias, colname, fieldname);
+                    cols.push(col);
+                }
+            }
+            SelectKind::Count => {
+                let col = format!("COUNT({}.{}) AS {}", alias, colname, fieldname);
+                cols.push(col);
+            }
+            SelectKind::Max => {
+                let col = format!("MAX({}.{}) AS {}", alias, colname, fieldname);
+                cols.push(col);
+            }
+            SelectKind::Min => {
+                let col = format!("MIN({}.{}) AS {}", alias, colname, fieldname);
+                cols.push(col);
+            }
         }
     }
 
@@ -125,4 +143,22 @@ where
         join.append_jointable(syntax, &mut list, alias);
     }
     Some(list.join(" "))
+}
+
+fn build_group_by<T>(syntax: Syntax, sb: &SelectBuilder<T>) -> Option<String>
+where
+    T: HasSchema,
+    <T as HasSchema>::Schema: TableInfo + TableColumns,
+{
+    if sb.group_bys.is_empty() { return None }
+
+    let writer = ColumnWriter::new(syntax);
+    let alias = &sb.qb.alias;
+    let mut cols: Vec<String> = Vec::default();
+
+    for group_by in &sb.group_bys {
+        cols.push(format!("{}.{}", alias, writer.excape(&group_by.col_name)))
+    }
+
+    Some(format!("GROUP BY {}", cols.join(", ")))
 }

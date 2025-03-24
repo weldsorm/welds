@@ -359,6 +359,33 @@ where
         sb.select_as(lam, as_name)
     }
 
+    pub fn select_count<V, FN: AsFieldName<V>>(
+        self,
+        lam: impl Fn(<T as HasSchema>::Schema) -> FN,
+        as_name: &'static str,
+    ) -> SelectBuilder<T> {
+        let sb = SelectBuilder::new(self);
+        sb.select_count(lam, as_name)
+    }
+
+    pub fn select_max<V, FN: AsFieldName<V>>(
+        self,
+        lam: impl Fn(<T as HasSchema>::Schema) -> FN,
+        as_name: &'static str,
+    ) -> SelectBuilder<T> {
+        let sb = SelectBuilder::new(self);
+        sb.select_max(lam, as_name)
+    }
+
+    pub fn select_min<V, FN: AsFieldName<V>>(
+        self,
+        lam: impl Fn(<T as HasSchema>::Schema) -> FN,
+        as_name: &'static str,
+    ) -> SelectBuilder<T> {
+        let sb = SelectBuilder::new(self);
+        sb.select_min(lam, as_name)
+    }
+
     /// Changes this query Into a sql UPDATE.
     /// Sets the value from the lambda in the database
     ///

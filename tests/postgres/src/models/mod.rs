@@ -44,3 +44,22 @@ pub struct UuidIdFromDev {
     pub id: uuid::Uuid,
     pub name: String,
 }
+
+#[derive(WeldsModel)]
+#[welds(table = "teams")]
+#[welds(HasMany(players, Player, "team_id"))]
+pub struct Team {
+    #[welds(primary_key)]
+    pub id: i32,
+    pub name: String
+}
+
+#[derive(WeldsModel)]
+#[welds(table = "players")]
+#[welds(BelongsTo(team, Team, "team_id"))]
+pub struct Player {
+    #[welds(primary_key)]
+    pub id: i32,
+    pub team_id: i32,
+    pub name: String
+}

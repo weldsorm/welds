@@ -7,6 +7,8 @@ use postgres_test::models::StringThing;
 use postgres_test::models::Thing1;
 use postgres_test::models::UuidIdFromDb;
 use postgres_test::models::UuidIdFromDev;
+use postgres_test::models::Team;
+use postgres_test::models::Player;
 use welds::connections::postgres::PostgresClient;
 use welds::connections::TransactStart;
 use welds::state::{DbState, DbStatus};
@@ -781,4 +783,20 @@ fn should_be_able_to_select_all_orders_with_there_products() {
         assert_eq!(o3_products.len(), 1);
         assert_eq!(o3_products[0].product_id, 1);
     })
+}
+
+#[test]
+fn should_be_able_to_join_and_order() {
+    async_std::task::block_on(async {
+        let conn = get_conn().await;
+
+        let query = Team::all()
+            .select_as(|t| t.id, "team_id")
+            .left_join(|t| t.players,
+                Player::select_as(|p| p.id, "player_id")
+            )
+            .order_by_asc(|t| t.id);
+
+        query.run(&conn).await.unwrap();
+    });
 }

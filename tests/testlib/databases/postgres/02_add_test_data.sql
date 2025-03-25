@@ -92,8 +92,18 @@ INSERT INTO Orders (
 , 1000000.09
 );
 
+INSERT INTO teams (id, city_id, name) VALUES
+(1, 2, 'Liverpool FC'),
+(2, 3, 'Manchester City'),
+(3, 3, 'Manchester United');
+
+INSERT INTO players (id, team_id, name) VALUES
+(1, 1, 'Andy Anderson'),
+(2, 2, 'Bobby Biggs'),
+(3, 3, 'Chris Christoferson'),
+(4, 3, 'Danny Dier');
+
 
 -- RESET THE NEXT IDs
 SELECT setval('products_product_id_seq', COALESCE((SELECT MAX(product_id)+1 FROM products), 1), false);
 SELECT setval('orders_id_seq', COALESCE((SELECT MAX(id)+1 FROM orders), 1), false);
-

@@ -73,4 +73,14 @@ CREATE TABLE extra_types (
     datetimetz_col TIMESTAMPTZ NOT NULL
 );
 
+CREATE TABLE teams (
+    id serial PRIMARY KEY,
+    city_id INTEGER NOT NULL,
+    name text
+);
 
+CREATE TABLE players (
+    id serial PRIMARY KEY,
+    team_id INTEGER NOT NULL,
+    name text
+);

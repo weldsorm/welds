@@ -13,13 +13,13 @@ impl OrderBy {
     }
 }
 
-pub(crate) fn to_sql(parts: &[OrderBy]) -> String {
+pub(crate) fn to_sql(parts: &[OrderBy], alias: &str) -> String {
     if parts.is_empty() {
         return "".to_owned();
     }
     let bys: Vec<String> = parts
         .iter()
-        .map(|p| format!("{} {}", p.field, p.direction))
+        .map(|p| format!("{}.{} {}", alias, p.field, p.direction))
         .collect();
     let bys = bys.join(", ");
     format!("ORDER BY {}", bys)

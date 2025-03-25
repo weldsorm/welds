@@ -56,13 +56,13 @@ impl ExistIn {
         )
     }
 
-    fn tails(&self, syntax: Syntax) -> String {
+    fn tails(&self, syntax: Syntax, alias: &str) -> String {
         use crate::query::tail;
-        tail::write(syntax, &self.limit, &self.offset, &self.orderby).unwrap_or_default()
+        tail::write(syntax, alias, &self.limit, &self.offset, &self.orderby).unwrap_or_default()
     }
 
     fn exists_clause(&self, syntax: Syntax, _tablealias: &str, inner_clauses: &str) -> String {
-        let tails = self.tails(syntax);
+        let tails = self.tails(syntax, &self.inner_tablealias);
         format!(
             "EXISTS ( SELECT {} FROM {} {} WHERE {} {})",
             self.inner_column, self.inner_tablename, self.inner_tablealias, inner_clauses, tails
@@ -72,7 +72,7 @@ impl ExistIn {
     fn in_clause(&self, syntax: Syntax, tablealias: &str, inner_clauses: &str) -> String {
         let outcol = format!("{}.{}", tablealias, self.outer_column);
         let innercol = format!("{}.{}", self.inner_tablealias, self.inner_column);
-        let tails = self.tails(syntax);
+        let tails = self.tails(syntax, &self.inner_tablealias);
         let mut wheres = "".to_string();
         if !inner_clauses.is_empty() {
             wheres = format!("WHERE {}", inner_clauses);

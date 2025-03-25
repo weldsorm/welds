@@ -45,7 +45,7 @@ fn should_be_able_to_delete_with_limit() {
             .order_by_asc(|x| x.oid)
             .limit(3)
             .delete_sql(Syntax::Sqlite);
-        assert_eq!(q, "DELETE FROM orders WHERE (  orders.oid IN (SELECT t1.\"oid\" FROM orders t1 ORDER BY oid ASC LIMIT 3 OFFSET 0 )  )" );
+        assert_eq!(q, "DELETE FROM orders WHERE (  orders.oid IN (SELECT t1.\"oid\" FROM orders t1 ORDER BY t1.oid ASC LIMIT 3 OFFSET 0 )  )" );
     })
 }
 

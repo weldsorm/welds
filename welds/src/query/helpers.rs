@@ -72,5 +72,5 @@ pub(crate) fn build_tail<T>(syntax: Syntax, select: &QueryBuilder<T>) -> Option<
 where
     T: HasSchema,
 {
-    super::tail::write(syntax, &select.limit, &select.offset, &select.orderby)
+    super::tail::write(syntax, &select.alias, &select.limit, &select.offset, &select.orderby)
 }

@@ -7,6 +7,7 @@ use std::collections::VecDeque;
 /// writes the Limit Skip OrderBy of a statement
 pub(crate) fn write(
     syntax: Syntax,
+    alias: &str,
     limit: &Option<i64>,
     offset: &Option<i64>,
     orders: &[OrderBy],
@@ -24,7 +25,7 @@ pub(crate) fn write(
     }
 
     if !orders.is_empty() {
-        parts.push_front(orderby::to_sql(orders));
+        parts.push_front(orderby::to_sql(orders, alias));
     }
 
     if parts.is_empty() {

@@ -71,7 +71,7 @@ impl SelectWriter {
                 args,
                 exist_ins,
             ),
-            tail::write(self.syntax, limit, offset, orders),
+            tail::write(self.syntax, &self.tablealias, limit, offset, orders),
         ])
     }
 
@@ -102,7 +102,7 @@ impl SelectWriter {
                 args,
                 exist_ins,
             ),
-            tail::write(self.syntax, limit, offset, orders),
+            tail::write(self.syntax, &self.tablealias, limit, offset, orders),
         ])
     }
 }

@@ -41,3 +41,15 @@ fn should_be_able_to_select_both_sets_of_ids() {
         assert_eq!(sql, "SELECT t1.\"id\" AS \"pid\", t2.\"id\" AS \"oid\" FROM products t1 JOIN orders t2 ON t1.\"id\" = t2.\"product_id\"");
     });
 }
+
+#[test]
+fn should_be_able_to_select_join_with_order_by() {
+    futures::executor::block_on(async move {
+        let q = Product::all()
+            .select(|x| x.id)
+            .join(|x| x.orders, Order::all().select_as(|o| o.price, "price"))
+            .order_by_asc(|x| x.id);
+        let sql = q.to_sql(Syntax::Postgres);
+        assert_eq!(sql, "SELECT t1.\"id\", t2.\"price\" FROM products t1 JOIN orders t2 ON t1.\"id\" = t2.\"product_id\" ORDER BY t1.id ASC");
+    });
+}

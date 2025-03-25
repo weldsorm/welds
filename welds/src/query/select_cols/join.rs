@@ -3,7 +3,6 @@ use super::SelectColumn;
 use crate::model_traits::{HasSchema, TableInfo};
 use crate::query::clause::ClauseAdder;
 use crate::query::clause::ParamArgs;
-use crate::query::select_cols::select_column::SelectKind;
 use crate::writers::alias::TableAlias;
 use crate::writers::ColumnWriter;
 use crate::writers::NextParam;
@@ -48,39 +47,10 @@ impl JoinBuilder {
     }
 
     pub(super) fn append_columns(&self, syntax: Syntax, list: &mut Vec<String>) {
-        let writer = ColumnWriter::new(syntax);
         let alias = &self.inner_alias;
         // Add these columns
-        for col in &self.selects {
-            let colname = writer.excape(&col.col_name);
-            let fieldname = writer.excape(&col.field_name);
-            match col.kind {
-                SelectKind::Column => {
-                    if colname == fieldname {
-                        let col = format!("{}.{}", alias, colname);
-                        list.push(col);
-                    } else {
-                        let col = format!("{}.{} AS {}", alias, colname, fieldname);
-                        list.push(col);
-                    }
-                }
-                SelectKind::All => {
-                    list.push(format!("{}.*", alias));
-                }
-                SelectKind::Count => {
-                    let col = format!("COUNT({}.{}) AS {}", alias, colname, fieldname);
-                    list.push(col);
-                }
-                SelectKind::Max => {
-                    let col = format!("MAX({}.{}) AS {}", alias, colname, fieldname);
-                    list.push(col);
-                }
-                SelectKind::Min => {
-                    let col = format!("MIN({}.{}) AS {}", alias, colname, fieldname);
-                    list.push(col);
-                }
-            }
-
+        for select in &self.selects {
+            list.push(select.write(syntax, alias))
         }
         for sub in &self.subs {
             sub.append_columns(syntax, list);

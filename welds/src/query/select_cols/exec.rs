@@ -3,9 +3,7 @@ use crate::model_traits::{HasSchema, TableColumns, TableInfo};
 use crate::query::clause::ParamArgs;
 use crate::query::helpers::{build_tail, build_where_clauses, join_sql_parts};
 use crate::query::select_cols::SelectBuilder;
-use crate::query::select_cols::select_column::SelectKind;
-use crate::writers::ColumnWriter;
-use crate::writers::NextParam;
+use crate::writers::{ColumnWriter, NextParam};
 use crate::Client;
 use crate::Row;
 use crate::Syntax;
@@ -80,7 +78,6 @@ where
     T: HasSchema,
     <T as HasSchema>::Schema: TableInfo + TableColumns,
 {
-    let writer = ColumnWriter::new(syntax);
     let mut head: Vec<&str> = Vec::default();
     head.push("SELECT");
 
@@ -88,35 +85,8 @@ where
     let alias = &sb.qb.alias;
 
     // Add these columns
-    for col in &sb.selects {
-        let colname = writer.excape(&col.col_name);
-        let fieldname = writer.excape(&col.field_name);
-        match col.kind {
-            SelectKind::Column => {
-                if colname == fieldname {
-                    let col = format!("{}.{}", alias, colname);
-                    cols.push(col);
-                } else {
-                    let col = format!("{}.{} AS {}", alias, colname, fieldname);
-                    cols.push(col);
-                }
-            }
-            SelectKind::All => {
-                cols.push(format!("{}.*", alias));
-            }
-            SelectKind::Count => {
-                let col = format!("COUNT({}.{}) AS {}", alias, colname, fieldname);
-                cols.push(col);
-            }
-            SelectKind::Max => {
-                let col = format!("MAX({}.{}) AS {}", alias, colname, fieldname);
-                cols.push(col);
-            }
-            SelectKind::Min => {
-                let col = format!("MIN({}.{}) AS {}", alias, colname, fieldname);
-                cols.push(col);
-            }
-        }
+    for select in &sb.selects {
+        cols.push(select.write(syntax, alias))
     }
 
     // Add columns from joins

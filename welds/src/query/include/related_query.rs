@@ -17,6 +17,7 @@ pub(crate) trait RelatedQuery<R> {
         primary_query: &QueryBuilder<R>,
         client: &dyn Client,
     ) -> Result<Box<dyn RelatedSetAccesser + Send>>;
+    fn to_sql(&self, primary_query: &QueryBuilder<R>, syntax: crate::Syntax) -> String;
 }
 
 pub(crate) struct IncludeQuery<R, Ship>
@@ -67,6 +68,20 @@ where
             data: rows.into_inners(),
             ship: self.ship.clone(),
         }))
+    }
+
+    fn to_sql(&self, primary_query: &QueryBuilder<T>, syntax: crate::Syntax) -> String {
+        let primary_query = primary_query.clone();
+        let mut qb: QueryBuilder<R> = QueryBuilder::new();
+        qb.set_aliases(&primary_query.alias_asigner);
+        let exist_in = ExistIn::new(
+            &primary_query,
+            self.out_col.clone(),
+            self.inner_tn.clone(),
+            self.inner_col.clone(),
+        );
+        qb.exist_ins.push(exist_in);
+        qb.to_sql(syntax)
     }
 }
 

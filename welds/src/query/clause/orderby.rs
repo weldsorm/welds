@@ -13,13 +13,13 @@ impl OrderBy {
     }
 }
 
-pub(crate) fn to_sql(parts: &[OrderBy]) -> String {
+pub(crate) fn to_sql(parts: &[OrderBy], table_alias: &str) -> String {
     if parts.is_empty() {
         return "".to_owned();
     }
     let bys: Vec<String> = parts
         .iter()
-        .map(|p| format!("{} {}", p.field, p.direction))
+        .map(|p| format!("{}.{} {}", table_alias, p.field, p.direction))
         .collect();
     let bys = bys.join(", ");
     format!("ORDER BY {}", bys)
@@ -31,8 +31,8 @@ fn single_order_by_field() {
         field: "f1".to_owned(),
         direction: "desc".to_owned(),
     }];
-    let clause = to_sql(&parts);
-    assert_eq!(clause.as_str(), "ORDER BY f1 desc")
+    let clause = to_sql(&parts, "t1");
+    assert_eq!(clause.as_str(), "ORDER BY t1.f1 desc")
 }
 
 #[test]
@@ -47,6 +47,6 @@ fn order_by_field_two_fields() {
             direction: "asc".to_owned(),
         },
     ];
-    let clause = to_sql(&parts);
-    assert_eq!(clause.as_str(), "ORDER BY f1 desc, f2 asc")
+    let clause = to_sql(&parts, "t33");
+    assert_eq!(clause.as_str(), "ORDER BY t33.f1 desc, t33.f2 asc")
 }

@@ -10,6 +10,7 @@ pub(crate) fn write(
     limit: &Option<i64>,
     offset: &Option<i64>,
     orders: &[OrderBy],
+    table_alias: &str,
 ) -> Option<String> {
     let w = LimitSkipWriter::new(syntax);
     let mut parts = VecDeque::default();
@@ -24,7 +25,7 @@ pub(crate) fn write(
     }
 
     if !orders.is_empty() {
-        parts.push_front(orderby::to_sql(orders));
+        parts.push_front(orderby::to_sql(orders, table_alias));
     }
 
     if parts.is_empty() {

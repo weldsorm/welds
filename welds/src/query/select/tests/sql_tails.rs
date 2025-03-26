@@ -70,7 +70,7 @@ fn should_order_by_asc() {
     })
     .unwrap();
     assert_eq!(
-        "SELECT t1.\"a\", t1.\"b\" FROM nums t1 ORDER BY a ASC",
+        "SELECT t1.\"a\", t1.\"b\" FROM nums t1 ORDER BY t1.a ASC",
         &ran_sql
     );
 }
@@ -87,7 +87,7 @@ fn should_order_by_two_columns() {
     })
     .unwrap();
     assert_eq!(
-        "SELECT t1.\"a\", t1.\"b\" FROM nums t1 ORDER BY a ASC, b DESC",
+        "SELECT t1.\"a\", t1.\"b\" FROM nums t1 ORDER BY t1.a ASC, t1.b DESC",
         &ran_sql
     );
 }

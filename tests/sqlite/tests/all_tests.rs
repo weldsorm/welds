@@ -580,3 +580,17 @@ fn should_be_able_to_fetch_a_single_object() {
             .unwrap();
     })
 }
+
+//#[test]
+//fn should_be_able_to_join_limit_and_order_all_at_once() {
+//    async_std::task::block_on(async {
+//        let conn = get_conn().await;
+//        let q = Product::all().select(|x| x.id).join(
+//            |x| x.orders,
+//            Order::all()
+//                .select(|o| o.id)
+//                .limit(1)
+//                .order_by_asc(|o| o.id),
+//        );
+//    })
+//}

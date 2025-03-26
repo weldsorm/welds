@@ -73,7 +73,7 @@ impl ExistIn {
     fn in_clause(&self, syntax: Syntax, tablealias: &str, inner_clauses: &str) -> String {
         let outcol = format!("{}.{}", tablealias, self.outer_column);
         let innercol = format!("{}.{}", self.inner_tablealias, self.inner_column);
-        let tails = self.tails(syntax, tablealias);
+        let tails = self.tails(syntax, &self.inner_tablealias);
         let mut wheres = "".to_string();
         if !inner_clauses.is_empty() {
             wheres = format!("WHERE {}", inner_clauses);

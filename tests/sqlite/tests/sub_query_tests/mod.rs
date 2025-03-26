@@ -38,6 +38,19 @@ fn exist_in_mapping_query_source_belongs() {
 }
 
 #[test]
+fn should_be_able_to_join_limit_and_order_all_at_once() {
+    async_std::task::block_on(async {
+        let sql = Order2::all()
+            .limit(1)
+            .order_by_asc(|o| o.oid)
+            .map_query(|o| o.product)
+            .to_sql(Syntax::Sqlite);
+        let expected = "SELECT t2.\"pid\", t2.\"name\" FROM Products t2 WHERE (  t2.pid IN (SELECT t1.product_id FROM orders t1  ORDER BY t1.oid ASC LIMIT 1 OFFSET 0 )  )";
+        assert_eq!(expected, sql);
+    })
+}
+
+#[test]
 fn exist_in_mapping_query_source_many() {
     async_std::task::block_on(async {
         let q1 = Product2::all()
@@ -134,7 +147,6 @@ fn should_be_able_to_query_one_to_one_with_where_relation_from_desc() {
 
         assert_eq!(data.len(), 1);
         assert_eq!(data[0].id, 3);
-
     })
 }
 

@@ -9,10 +9,13 @@ pub(crate) struct SelectColumn {
 
 pub(crate) enum SelectKind {
     Column,
-    Count,
-    Max,
-    Min,
     All,
+    #[cfg(feature = "group-by")]
+    Count,
+    #[cfg(feature = "group-by")]
+    Max,
+    #[cfg(feature = "group-by")]
+    Min,
 }
 
 impl SelectColumn {
@@ -32,12 +35,15 @@ impl SelectColumn {
             SelectKind::All => {
                 format!("{}.*", alias)
             }
+            #[cfg(feature = "group-by")]
             SelectKind::Count => {
                 format!("COUNT({}.{}) AS {}", alias, colname, fieldname)
             }
+            #[cfg(feature = "group-by")]
             SelectKind::Max => {
                 format!("MAX({}.{}) AS {}", alias, colname, fieldname)
             }
+            #[cfg(feature = "group-by")]
             SelectKind::Min => {
                 format!("MIN({}.{}) AS {}", alias, colname, fieldname)
             }

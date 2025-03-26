@@ -30,6 +30,7 @@ welds-macros = { path="../welds-macros", version = "^0.4.14" }
 "mock" = []
 "check" = ["detect", "colored"]
 "migrations" = ["detect"]
+"group-by" = []
 "tracing" = ["welds-connections/tracing"]
 
 

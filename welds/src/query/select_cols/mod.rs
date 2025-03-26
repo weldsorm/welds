@@ -86,6 +86,7 @@ where
         self
     }
 
+    #[cfg(feature = "group-by")]
     pub fn select_count<V, FN: AsFieldName<V>>(
         mut self,
         lam: impl Fn(<T as HasSchema>::Schema) -> FN,
@@ -100,6 +101,7 @@ where
         self
     }
 
+    #[cfg(feature = "group-by")]
     pub fn select_max<V, FN: AsFieldName<V>>(
         mut self,
         lam: impl Fn(<T as HasSchema>::Schema) -> FN,
@@ -114,6 +116,7 @@ where
         self
     }
 
+    #[cfg(feature = "group-by")]
     pub fn select_min<V, FN: AsFieldName<V>>(
         mut self,
         lam: impl Fn(<T as HasSchema>::Schema) -> FN,
@@ -222,6 +225,7 @@ where
         self
     }
 
+    #[cfg(feature = "group-by")]
     pub fn group_by<V, FN: AsFieldName<V>>(
         mut self,
         lam: impl Fn(<T as HasSchema>::Schema) -> FN,

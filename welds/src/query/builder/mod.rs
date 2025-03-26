@@ -362,6 +362,7 @@ where
         SelectBuilder::new(self).select_all()
     }
 
+    #[cfg(feature = "group-by")]
     pub fn select_count<V, FN: AsFieldName<V>>(
         self,
         lam: impl Fn(<T as HasSchema>::Schema) -> FN,
@@ -370,6 +371,7 @@ where
         SelectBuilder::new(self).select_count(lam, as_name)
     }
 
+    #[cfg(feature = "group-by")]
     pub fn select_max<V, FN: AsFieldName<V>>(
         self,
         lam: impl Fn(<T as HasSchema>::Schema) -> FN,
@@ -378,6 +380,7 @@ where
         SelectBuilder::new(self).select_max(lam, as_name)
     }
 
+    #[cfg(feature = "group-by")]
     pub fn select_min<V, FN: AsFieldName<V>>(
         self,
         lam: impl Fn(<T as HasSchema>::Schema) -> FN,

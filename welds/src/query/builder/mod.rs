@@ -343,8 +343,7 @@ where
         self,
         lam: impl Fn(<T as HasSchema>::Schema) -> FN,
     ) -> SelectBuilder<T> {
-        let sb = SelectBuilder::new(self);
-        sb.select(lam)
+        SelectBuilder::new(self).select(lam)
     }
 
     /// Select only the specific columns
@@ -355,14 +354,12 @@ where
         lam: impl Fn(<T as HasSchema>::Schema) -> FN,
         as_name: &'static str,
     ) -> SelectBuilder<T> {
-        let sb = SelectBuilder::new(self);
-        sb.select_as(lam, as_name)
+        SelectBuilder::new(self).select_as(lam, as_name)
     }
 
     /// Select all columns, equivalent to `SELECT table_name.*`
     pub fn select_all(self) -> SelectBuilder<T> {
-        let sb = SelectBuilder::new(self);
-        sb.select_all()
+        SelectBuilder::new(self).select_all()
     }
 
     pub fn select_count<V, FN: AsFieldName<V>>(
@@ -370,8 +367,7 @@ where
         lam: impl Fn(<T as HasSchema>::Schema) -> FN,
         as_name: &'static str,
     ) -> SelectBuilder<T> {
-        let sb = SelectBuilder::new(self);
-        sb.select_count(lam, as_name)
+        SelectBuilder::new(self).select_count(lam, as_name)
     }
 
     pub fn select_max<V, FN: AsFieldName<V>>(
@@ -379,8 +375,7 @@ where
         lam: impl Fn(<T as HasSchema>::Schema) -> FN,
         as_name: &'static str,
     ) -> SelectBuilder<T> {
-        let sb = SelectBuilder::new(self);
-        sb.select_max(lam, as_name)
+        SelectBuilder::new(self).select_max(lam, as_name)
     }
 
     pub fn select_min<V, FN: AsFieldName<V>>(
@@ -388,8 +383,7 @@ where
         lam: impl Fn(<T as HasSchema>::Schema) -> FN,
         as_name: &'static str,
     ) -> SelectBuilder<T> {
-        let sb = SelectBuilder::new(self);
-        sb.select_min(lam, as_name)
+        SelectBuilder::new(self).select_min(lam, as_name)
     }
 
     /// Changes this query Into a sql UPDATE.
@@ -422,8 +416,7 @@ where
         FIELD: AsFieldName<V>,
         V: 'static + Sync + Send + Clone + Param,
     {
-        let ub = UpdateBuilder::new(self);
-        ub.set(lam, value)
+        UpdateBuilder::new(self).set(lam, value)
     }
 
     /// Changes this query Into a sql UPDATE.
@@ -454,8 +447,7 @@ where
     where
         <T as HasSchema>::Schema: Default,
     {
-        let ub = UpdateBuilder::new(self);
-        ub.set_col(lam)
+        UpdateBuilder::new(self).set_col(lam)
     }
 
     /// Nulls out the value from the lambda in the database
@@ -468,8 +460,7 @@ where
         FIELD: AsFieldName<V> + AsOptField,
         V: 'static + Sync + Send + Clone + Param,
     {
-        let ub = UpdateBuilder::new(self);
-        ub.set_null(lam)
+        UpdateBuilder::new(self).set_null(lam)
     }
 
     /// Write custom sql for the right side of a SET clause
@@ -506,8 +497,7 @@ where
         FIELD: AsFieldName<V>,
         V: 'static + Sync + Send + Clone + Param,
     {
-        let ub = UpdateBuilder::new(self);
-        ub.set_manual(lam, sql, params)
+        UpdateBuilder::new(self).set_manual(lam, sql, params)
     }
 
     /// Include an other related to this one. `BelongsTo` `HasMany`.
@@ -529,7 +519,6 @@ where
         R: TryFrom<crate::connections::Row>,
         crate::errors::WeldsError: From<<R as TryFrom<crate::connections::Row>>::Error>,
     {
-        let ib = IncludeBuilder::new(self);
-        ib.include(relationship)
+        IncludeBuilder::new(self).include(relationship)
     }
 }

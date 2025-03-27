@@ -1,4 +1,3 @@
-use crate::errors;
 #[cfg(feature = "tracing")]
 use tracing;
 

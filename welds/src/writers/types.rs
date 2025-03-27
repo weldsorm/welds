@@ -288,6 +288,7 @@ const POSTGRES_PAIRS: &[Pair] = &[
 ];
 
 /// Returns true if two types are a match
+#[allow(dead_code)]
 pub(crate) fn are_equivalent_types(pairs: &[Pair], db: &str, rust: &str) -> bool {
     let db = db.trim().to_uppercase();
     for pair in pairs {
@@ -300,6 +301,7 @@ pub(crate) fn are_equivalent_types(pairs: &[Pair], db: &str, rust: &str) -> bool
 
 /// Override the type of a column to the type that should be used
 /// to crate its PK value. e.g.
+#[allow(dead_code)]
 pub(crate) fn pk_override(syntax: Syntax, db_type: &str) -> Option<&'static str> {
     // Use the Serial type to create the PKs, the type will be reported back as int..
     if let Syntax::Postgres = syntax {

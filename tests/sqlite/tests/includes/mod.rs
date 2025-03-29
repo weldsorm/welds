@@ -68,7 +68,7 @@ fn should_load_included_with_has_one() {
 
         let expected = vec![
             (1, vec![1]),
-            (2, vec![]), // Profile is optional and User 2 has no profile (None/NULL)
+            (2, vec![]), // User 2 has no associated profile (None/NULL)
             (3, vec![2]),
             (4, vec![3]),
         ];

@@ -46,7 +46,7 @@ pub struct User {
 
 #[derive(Debug, WeldsModel, PartialEq, Eq)]
 #[welds(table = "Profiles")]
-#[welds(BelongsToOne(user, User, "user_id"))]
+#[welds(BelongsTo(user, User, "user_id"))]
 pub struct Profile {
     #[welds(primary_key)]
     pub id: i32,

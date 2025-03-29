@@ -90,16 +90,6 @@ fn compiletime_asserts(info: &Info) {
                 defstruct,
             );
         }
-        // Compile time check that the pk column exists.
-        if &relation_kind_name == "BelongsToOne" {
-            let found = columns.iter().find(|x| x.dbname == relation.foreign_key_db);
-            assert!(
-                found.is_some(),
-                "The model {} has a BelongsToOne relationships pointing to the Foreign key {}, but this column is not defined on the model",
-                defstruct,
-                relation.foreign_key_db
-            );
-        }
         // Compile time check that the column exists.
         if &relation_kind_name == "HasOne" {
             assert!(

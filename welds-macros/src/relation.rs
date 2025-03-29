@@ -16,7 +16,6 @@ impl Relation {
         let badformat = || match kind {
             "BelongsTo" => Err(FORMAT_ERR_BELONGS_TO.to_owned()),
             "HasMany" => Err(FORMAT_ERR_HAS_MANY.to_owned()),
-            "BelongsToOne" => Err(FORMAT_ERR_BELONGS_TO_ONE.to_owned()),
             _ => Err(FORMAT_ERR_HAS_ONE.to_owned()),
         };
 
@@ -75,10 +74,6 @@ HasMany should be in for format of
 const FORMAT_ERR_HAS_ONE: &str = "Invalid Format For HasOne:
 HasOne should be in for format of
 [ welds(HasOne(field, struct, foreign_key_str) )]";
-
-const FORMAT_ERR_BELONGS_TO_ONE: &str = "Invalid Format For BelongsToOne:
-BelongsToOne should be in for format of
-[ welds(BelongsToOne(field, struct, foreign_key_str) )]";
 
 const FORMAT_ERR_BELONGS_TO: &str = "Invalid Format For BelongsTo:
 BelongsTo should be in for format of

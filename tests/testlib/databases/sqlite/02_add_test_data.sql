@@ -78,16 +78,16 @@ Insert INTO Orders (
 , ''
 );
 
-INSERT INTO Profiles (id, image_url) VALUES
-(1, "cat.jpeg"),
-(2, "dog.jpeg"),
-(3, "bird.png");
+INSERT INTO Profiles (id, user_id, image_url) VALUES
+(1, 1, "cat.jpeg"),
+(2, 3, "dog.jpeg"),
+(3, 4, "bird.png");
 
-INSERT INTO Users (id, profile_id, name) VALUES
-(1, 1, "Alice"),
-(2, NULL, "Bob"),
-(3, 2, "Catherine"),
-(4, 3, "Danny");
+INSERT INTO Users (id, name) VALUES
+(1, "Alice"),
+(2, "Bob"),
+(3, "Catherine"),
+(4, "Danny");
 
 INSERT INTO Cities (id, name) VALUES
 (1, "Birmingham"),

@@ -1,0 +1,37 @@
+name: Welds CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        test_path:
+          - ./tests
+          - ./tests/mssql
+          - ./tests/mysql
+          - ./tests/postgres
+          - ./tests/sqlite
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-
+      - name: Run tests ${{ matrix.test_path }}
+        working-directory: ${{ matrix.test_path }}
+        run: cargo test

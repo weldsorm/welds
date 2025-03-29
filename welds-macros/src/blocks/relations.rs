@@ -92,20 +92,20 @@ fn compiletime_asserts(info: &Info) {
         }
         // Compile time check that the pk column exists.
         if &relation_kind_name == "BelongsToOne" {
+            let found = columns.iter().find(|x| x.dbname == relation.foreign_key_db);
             assert!(
-                !info.pks.is_empty(),
-                "The model {} has a BelongsToOne relationships defined, but no primary_key column is defined",
+                found.is_some(),
+                "The model {} has a BelongsToOne relationships pointing to the Foreign key {}, but this column is not defined on the model",
                 defstruct,
+                relation.foreign_key_db
             );
         }
         // Compile time check that the column exists.
         if &relation_kind_name == "HasOne" {
-            let found = columns.iter().find(|x| x.dbname == relation.foreign_key_db);
             assert!(
-                found.is_some(),
-                "The model {} has a HasOne relationships pointing to the Foreign key {}, but this column is not defined on the model",
+                !info.pks.is_empty(),
+                "The model {} has a HasOne relationships defined, but no primary_key column is defined",
                 defstruct,
-                relation.foreign_key_db
             );
         }
     }

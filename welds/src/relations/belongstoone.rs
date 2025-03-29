@@ -41,29 +41,29 @@ impl<R: Send> Relationship<R> for BelongsToOne<R> {
         ME: UniqueIdentifier,
         THEM: UniqueIdentifier,
     {
-        THEM::id_column().name().to_owned()
+        self.foreign_key.to_owned()
     }
     fn their_key<ME, THEM>(&self) -> String
     where
         ME: UniqueIdentifier,
         THEM: UniqueIdentifier,
     {
-        self.foreign_key.to_owned()
+        ME::id_column().name().to_owned()
     }
 }
 
 impl<T, R> RelationshipCompare<T, R> for BelongsToOne<R>
 where
     Self: Relationship<R>,
-    T: PrimaryKeyValue + HasSchema,
-    T::Schema: UniqueIdentifier,
-    R: HasSchema,
+    R: PrimaryKeyValue + HasSchema,
     R::Schema: UniqueIdentifier,
-    R: ForeignKeyPartialEq<T::PrimaryKeyType>,
+    T: HasSchema,
+    T::Schema: UniqueIdentifier,
+    T: ForeignKeyPartialEq<R::PrimaryKeyType>,
 {
     fn is_related(&self, source: &T, other: &R) -> bool {
-        let pk = source.primary_key_value();
-        let fk_field: String = Self::their_key::<R::Schema, T::Schema>(self);
-        other.eq(&fk_field, &pk)
+        let pk = other.primary_key_value();
+        let fk_field: String = Self::my_key::<R::Schema, T::Schema>(self);
+        source.eq(&fk_field, &pk)
     }
 }

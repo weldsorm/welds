@@ -11,7 +11,6 @@ pub struct TableDef {
     pub(crate) has_many: Vec<RelationDef>,
     pub(crate) has_one: Vec<RelationDef>,
     pub(crate) belongs_to: Vec<RelationDef>,
-    pub(crate) belongs_to_one: Vec<RelationDef>,
     pub(crate) syntax: Syntax,
 }
 
@@ -33,9 +32,6 @@ impl TableDef {
     }
     pub fn has_one(&self) -> &[RelationDef] {
         &self.has_one
-    }
-    pub fn belongs_to_one(&self) -> &[RelationDef] {
-        &self.belongs_to_one
     }
     pub fn syntax(&self) -> Syntax {
         self.syntax
@@ -213,7 +209,6 @@ pub mod mock {
                 has_many: Vec::default(),
                 belongs_to: Vec::default(),
                 has_one: Vec::default(),
-                belongs_to_one: Vec::default(),
             })
         }
 

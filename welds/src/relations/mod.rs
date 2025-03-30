@@ -9,9 +9,6 @@ pub use hasmany::HasMany;
 mod hasone;
 pub use hasone::HasOne;
 
-mod belongstoone;
-pub use belongstoone::BelongsToOne;
-
 /// Describes how a relationship should be wired up.
 /// Gives info about what DB columns to use on both Models
 pub trait Relationship<R>: Clone + PartialEq + Send {

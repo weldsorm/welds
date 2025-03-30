@@ -141,7 +141,6 @@ fn link_fks_into_tables(fks: &[FkScanRow], tables: &mut [TableDef]) {
     let mut belongs_to = build_lookup(fks, |x| &x.me);
     let mut has_many = build_lookup(fks, |x| &x.other);
     let mut has_one = build_lookup(fks, |x| &x.other);
-    let mut belongs_to_one = build_lookup(fks, |x| &x.other);
 
     // Add all the FKs to their appropriate tables
     for table in tables {
@@ -175,15 +174,6 @@ fn link_fks_into_tables(fks: &[FkScanRow], tables: &mut [TableDef]) {
                 table.has_one.push(ref_def);
             });
         }
-        if let Some(bto) = belongs_to_one.remove(&ident) {
-            bto.iter().for_each(|&x| {
-                let other_table = x.me.ident.clone();
-                let fk = x.me.column.as_str();
-                let pk = x.other.column.as_str();
-                let ref_def = RelationDef::new(other_table, fk, pk);
-                table.belongs_to_one.push(ref_def);
-            });
-        }
     }
 }
 
@@ -209,7 +199,6 @@ fn build_table_defs(syntax: Syntax, rows: Vec<TableScanRow>) -> Vec<TableDef> {
             has_many: Vec::default(),
             has_one: Vec::default(),
             belongs_to: Vec::default(),
-            belongs_to_one: Vec::default(),
         });
     }
     tables

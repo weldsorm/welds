@@ -41,12 +41,12 @@ CREATE TABLE extra_types (
 
 CREATE TABLE Users (
     id INTEGER PRIMARY KEY,
-    profile_id INTEGER,
     name TEXT
 );
 
 CREATE TABLE Profiles (
     id INTEGER PRIMARY KEY,
+    user_id INTEGER NOT NULL,
     image_url TEXT
 );
 

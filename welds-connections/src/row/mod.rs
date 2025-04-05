@@ -73,6 +73,7 @@ impl From<MySqlRow> for Row {
 }
 
 #[cfg(feature = "sqlite")]
+#[allow(unreachable_patterns)]
 impl Row {
     pub fn as_sqlite_row(self) -> Option<SqliteRow> {
         match self.inner {
@@ -83,6 +84,7 @@ impl Row {
 }
 
 #[cfg(feature = "postgres")]
+#[allow(unreachable_patterns)]
 impl Row {
     pub fn as_postgres_row(self) -> Option<PgRow> {
         match self.inner {
@@ -93,6 +95,7 @@ impl Row {
 }
 
 #[cfg(feature = "mysql")]
+#[allow(unreachable_patterns)]
 impl Row {
     pub fn as_mysql_row(self) -> Option<MySqlRow> {
         match self.inner {
@@ -103,6 +106,7 @@ impl Row {
 }
 
 #[cfg(feature = "mssql")]
+#[allow(unreachable_patterns)]
 impl Row {
     pub fn as_mssql_row(self) -> Option<MssqlRowWrapper> {
         match self.inner {

@@ -57,7 +57,6 @@ fn build_relations(table: &Table, all: &[Table]) -> TokenStream {
     let hm = quote::format_ident!("HasMany");
     let ho = quote::format_ident!("HasOne");
     let bt = quote::format_ident!("BelongsTo");
-    let bto = quote::format_ident!("BelongsToOne");
     for relation in &table.has_many {
         if let Some(q) = build_relation(&hm, relation, all) {
             list.push(q);
@@ -70,11 +69,6 @@ fn build_relations(table: &Table, all: &[Table]) -> TokenStream {
     }
     for relation in &table.belongs_to {
         if let Some(q) = build_relation(&bt, relation, all) {
-            list.push(q);
-        }
-    }
-    for relation in &table.belongs_to_one {
-        if let Some(q) = build_relation(&bto, relation, all) {
             list.push(q);
         }
     }

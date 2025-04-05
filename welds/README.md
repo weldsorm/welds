@@ -1,7 +1,12 @@
 
 <div align="center">
   <img src="https://raw.githubusercontent.com/weldsorm/welds/main/page/src/assets/images/banner.png"/>
-  <h3>An async ORM written in rust using sqlx and/or Tiberius.</h3>
+  <h3>
+    An async ORM written in rust using sqlx and/or Tiberius
+    <a href="https://crates.io/crates/welds"><img alt="crate" src="https://img.shields.io/badge/crates.io-latest-blue"></a>
+    <a href="https://docs.rs/welds/latest/welds/"><img alt="docs" src="https://img.shields.io/badge/docs.rs-latest-blue"></a>
+    <a href="https://book.weldsorm.com"><img alt="book" src="https://img.shields.io/badge/welds_book-latest-blue"></a>
+  </h3>
 </div>
 
 

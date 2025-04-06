@@ -1,5 +1,5 @@
 use crate::get_conn;
-use welds::WeldsModel;
+use welds::{WeldsError, WeldsModel};
 use welds::exts::VecRowExt;
 
 #[derive(Debug, Clone, WeldsModel)]
@@ -91,5 +91,23 @@ fn should_join_data_with_group_by_and_max() {
             collection[2],
             TeamWithLatestPlayer { team_id: 3, player_id: 4, latest_player: "Danny Dier".to_string() }
         );
+    })
+}
+
+#[test]
+fn should_return_an_error_if_group_by_clause_is_missing() {
+    async_std::task::block_on(async {
+        let conn = get_conn().await;
+
+        let result = Team::all()
+            .select_max(|t| t.id, "max_id")
+            .run(&conn).await;
+
+        match result {
+            Ok(_) => panic!(),
+            Err(e) => {
+                assert_eq!(e.to_string(), WeldsError::ColumnMissingFromGroupBy.to_string())
+            }
+        }
     })
 }

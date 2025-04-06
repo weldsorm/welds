@@ -4,7 +4,7 @@ use crate::query::clause::ParamArgs;
 use crate::query::helpers::{build_tail, build_where_clauses, join_sql_parts};
 use crate::query::select_cols::SelectBuilder;
 use crate::writers::{ColumnWriter, NextParam};
-use crate::Client;
+use crate::{Client, WeldsError};
 use crate::Row;
 use crate::Syntax;
 
@@ -64,12 +64,22 @@ where
     where
         <T as HasSchema>::Schema: TableInfo + TableColumns,
     {
+        self.validate_group_by()?;
         let syntax = client.syntax();
         let mut args: Option<ParamArgs> = Some(Vec::default());
         let sql = self.sql_internal(syntax, &mut args);
         let args = args.unwrap();
         let rows = client.fetch_rows(&sql, &args).await?;
         Ok(rows)
+    }
+
+    fn validate_group_by(&self) -> Result<()> {
+        #[cfg(feature = "group-by")]
+        if self.group_bys.is_empty() && self.selects.iter().any(|s| s.is_aggregate()) {
+            return Err(WeldsError::ColumnMissingFromGroupBy)
+        }
+
+        Ok(())
     }
 }
 

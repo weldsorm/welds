@@ -7,6 +7,13 @@ pub(crate) struct SelectColumn {
     pub(crate) kind: SelectKind,
 }
 
+impl SelectColumn {
+    pub fn is_aggregate(&self) -> bool {
+        ![SelectKind::All, SelectKind::Column].contains(&self.kind)
+    }
+}
+
+#[derive(PartialEq)]
 pub(crate) enum SelectKind {
     Column,
     All,

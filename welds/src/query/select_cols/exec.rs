@@ -75,11 +75,15 @@ where
 
     fn validate_group_by(&self) -> Result<()> {
         #[cfg(feature = "group-by")]
-        if self.group_bys.is_empty() && self.selects.iter().any(|s| s.is_aggregate()) {
+        if self.requires_group_by() && self.group_bys.is_empty() {
             return Err(WeldsError::ColumnMissingFromGroupBy)
         }
 
         Ok(())
+    }
+
+    fn requires_group_by(&self) -> bool {
+        self.selects.iter().any(|s| s.is_aggregate()) && self.selects.iter().any(|s| !s.is_aggregate())
     }
 }
 

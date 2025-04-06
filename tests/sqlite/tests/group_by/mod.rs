@@ -95,11 +95,25 @@ fn should_join_data_with_group_by_and_max() {
 }
 
 #[test]
-fn should_return_an_error_if_group_by_clause_is_missing() {
+fn should_allow_simple_aggregate_functions_without_other_selects() {
     async_std::task::block_on(async {
         let conn = get_conn().await;
 
         let result = Team::all()
+            .select_max(|t| t.id, "max_id")
+            .run(&conn).await;
+
+        assert!(result.is_ok())
+    })
+}
+
+#[test]
+fn should_return_an_error_if_group_by_clause_is_required() {
+    async_std::task::block_on(async {
+        let conn = get_conn().await;
+
+        let result = Team::all()
+            .select(|t| t.name)
             .select_max(|t| t.id, "max_id")
             .run(&conn).await;
 

@@ -184,3 +184,25 @@ fn should_be_able_to_join_and_group_by() {
         );
     });
 }
+
+#[test]
+fn should_be_able_to_group_by_multiple_columns_from_either_side_of_a_join() {
+    async_std::task::block_on(async {
+        let query = Order2::all()
+            .select(|o| o.oid)
+            .left_join(|o| o.product, {
+                Product2::all()
+                    .select_count(|p| p.pid, "product_count")
+                    .group_by(|p| p.name)
+            })
+            .group_by(|o| o.oid);
+
+        assert_eq!(
+            query.to_sql(Syntax::Sqlite),
+            "SELECT t1.\"oid\", COUNT(t2.\"pid\") AS \"product_count\" \
+            FROM orders t1 \
+            LEFT JOIN Products t2 ON t1.\"product_id\" = t2.\"pid\" \
+            GROUP BY t2.\"name\", t1.\"oid\""
+        );
+    });
+}

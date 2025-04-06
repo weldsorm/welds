@@ -140,10 +140,10 @@ where
     if sb.group_bys.is_empty() { return None }
 
     let writer = ColumnWriter::new(syntax);
-    let alias = &sb.qb.alias;
     let mut cols: Vec<String> = Vec::default();
 
     for group_by in &sb.group_bys {
+        let alias = group_by.table_alias.as_ref().unwrap_or_else(|| &sb.qb.alias);
         cols.push(format!("{}.{}", alias, writer.excape(&group_by.col_name)))
     }
 

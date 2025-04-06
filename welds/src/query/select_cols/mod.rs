@@ -217,6 +217,9 @@ where
     {
         let ship = relationship(Default::default());
         sb.set_aliases(&self.qb.alias_asigner);
+        let _joined_group_bys = sb.group_bys.drain(..)
+            .map(|gb| self.group_bys.push(gb.set_alias(&sb.qb.alias)))
+            .collect::<Vec<_>>();
         let outer_key = ship.my_key::<R::Schema, T::Schema>();
         let inner_key = ship.their_key::<R::Schema, T::Schema>();
         let mut jb = JoinBuilder::new(sb, outer_key, inner_key);
@@ -231,9 +234,7 @@ where
         lam: impl Fn(<T as HasSchema>::Schema) -> FN,
     ) -> Self {
         let field = lam(Default::default());
-        self.group_bys.push(GroupBy {
-            col_name: field.colname().to_string(),
-        });
+        self.group_bys.push(GroupBy::new(field.colname()));
         self
     }
 

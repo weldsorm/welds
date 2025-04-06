@@ -3,11 +3,8 @@ use crate::errors::Result;
 use async_trait::async_trait;
 pub use row::Row;
 pub use transaction::Transaction;
-pub mod errors;
-pub mod row;
-pub mod transaction;
-pub mod trace;
 pub mod any;
+pub mod errors;
 #[cfg(feature = "mssql")]
 pub mod mssql;
 #[cfg(feature = "mysql")]
@@ -16,8 +13,11 @@ pub mod mysql;
 pub mod noop;
 #[cfg(feature = "postgres")]
 pub mod postgres;
+pub mod row;
 #[cfg(feature = "sqlite")]
 pub mod sqlite;
+pub mod trace;
+pub mod transaction;
 
 pub struct Fetch<'s, 'args, 't> {
     pub sql: &'s str,
@@ -89,6 +89,7 @@ pub async fn connect(cs: impl Into<String>) -> Result<any::AnyClient> {
         let client = mssql::connect(&cs).await?;
         return Ok(any::AnyClient::Mssql(client));
     }
+    log::error!("Database backend unknown for given connection string. Did you enable the backend feature for this connection type in welds?");
     Err(errors::Error::InvalidDatabaseUrl)
 }
 

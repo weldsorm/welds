@@ -31,7 +31,7 @@ pub struct Player {
 pub struct TeamWithPlayerCount {
     pub id: i32,
     pub name: String,
-    pub player_count: i32
+    pub player_count: i32,
 }
 
 #[async_std::main]
@@ -45,20 +45,27 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Populate the DB some example data
     let data = include_str!("../../tests/testlib/databases/sqlite/02_add_test_data.sql");
-    client.execute(data).await?;
+    client.execute(data, &[]).await?;
 
     // Example query; select all columns from teams table where team name starts with "L",
     // left join to the players table, select COUNT(players.id) as "player_count",
     // group by team id and order by team name:
     let query = Team::where_col(|team| team.name.like("L%"))
         .select_all()
-        .left_join(|team| team.players, Player::all().select_count(|player| player.id, "player_count"))
+        .left_join(
+            |team| team.players,
+            Player::all().select_count(|player| player.id, "player_count"),
+        )
         .group_by(|team| team.id)
         .order_by_asc(|team| team.name);
 
     // Collect the resulting rows into a Vec of TeamWithPlayerCount structs containing
     // each team's id, name, and player_count
-    let collection: Vec<TeamWithPlayerCount> = query.run(&client).await?.collection_into()?;
+    let collection: Vec<TeamWithPlayerCount> = query.run(&client).await?.collect_into()?;
+
+    for row in collection {
+        println!("Count: {:?}", row);
+    }
 
     Ok(())
 }

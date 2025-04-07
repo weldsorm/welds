@@ -18,6 +18,8 @@ pub mod row;
 pub mod sqlite;
 pub mod trace;
 pub mod transaction;
+#[cfg(any(feature = "mysql", feature = "sqlite", feature = "postgres"))]
+pub use sqlx::Type as WeldsType;
 
 pub struct Fetch<'s, 'args, 't> {
     pub sql: &'s str,

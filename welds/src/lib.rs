@@ -180,3 +180,7 @@ pub use welds_connections::{Client, Row, Syntax, TransactStart};
 
 /// Re-export the Macro used to make models
 pub use welds_macros::WeldsModel;
+
+/// Re-export sqlx::Type as WeldsType for using custom types in models
+#[cfg(any(feature = "mysql", feature = "sqlite", feature = "postgres"))]
+pub use welds_connections::WeldsType;

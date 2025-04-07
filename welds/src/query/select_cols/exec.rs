@@ -1,3 +1,4 @@
+use welds_connections::trace;
 use crate::errors::Result;
 use crate::model_traits::{HasSchema, TableColumns, TableInfo};
 use crate::query::clause::ParamArgs;
@@ -64,7 +65,7 @@ where
     where
         <T as HasSchema>::Schema: TableInfo + TableColumns,
     {
-        self.validate_group_by()?;
+        trace::db_error(self.validate_group_by())?;
         let syntax = client.syntax();
         let mut args: Option<ParamArgs> = Some(Vec::default());
         let sql = self.sql_internal(syntax, &mut args);

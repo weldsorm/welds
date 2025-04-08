@@ -9,7 +9,7 @@ edition = "2021"
 [dependencies]
 testlib = { path = "../testlib" }
 welds-connections = { path = "../../welds-connections", features = [ 'mssql', 'mssql-chrono']  }
-welds = { path = "../../welds", features = [ 'mssql', 'detect', 'check', 'migrations']  }
+welds = { path = "../../welds", features = [ 'mssql', 'detect', 'check', 'migrations', "unstable-api"]  }
 tokio = { version = "1", features = ["full"] }
 log = "0.4.21"
 env_logger = "0.11.3"

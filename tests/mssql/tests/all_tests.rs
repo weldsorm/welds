@@ -9,6 +9,7 @@ use welds::TransactStart;
 use welds::{Client, Syntax};
 
 mod extra_types;
+mod group_by;
 mod migrations;
 
 async fn get_conn() -> MssqlClient {

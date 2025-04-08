@@ -72,3 +72,55 @@ Insert INTO welds.Orders (
 
 SET IDENTITY_INSERT welds.Orders OFF;
 GO
+
+
+SET IDENTITY_INSERT welds.Profiles ON;
+GO
+INSERT INTO welds.Profiles (id, user_id, image_url) VALUES
+(1, 1, "cat.jpeg"),
+(2, 3, "dog.jpeg"),
+(3, 4, "bird.png");
+SET IDENTITY_INSERT welds.Profiles OFF;
+GO
+
+
+SET IDENTITY_INSERT welds.Users ON;
+GO
+INSERT INTO welds.Users (id, name) VALUES
+(1, "Alice"),
+(2, "Bob"),
+(3, "Catherine"),
+(4, "Danny");
+SET IDENTITY_INSERT welds.Users OFF;
+GO
+
+
+SET IDENTITY_INSERT welds.Cities ON;
+GO
+INSERT INTO welds.Cities (id, name) VALUES
+(1, "Birmingham"),
+(2, "Liverpool"),
+(3, "Manchester");
+SET IDENTITY_INSERT welds.Cities OFF;
+GO
+
+
+SET IDENTITY_INSERT welds.Teams ON;
+GO
+INSERT INTO welds.Teams (id, city_id, name) VALUES
+(1, 2, "Liverpool FC"),
+(2, 3, "Manchester City"),
+(3, 3, "Manchester United");
+SET IDENTITY_INSERT welds.Teams OFF;
+GO
+
+
+SET IDENTITY_INSERT welds.Players ON;
+GO
+INSERT INTO welds.Players (id, team_id, name) VALUES
+(1, 1, "Andy Anderson"),
+(2, 2, "Bobby Biggs"),
+(3, 3, "Chris Christoferson"),
+(4, 3, "Danny Dier");
+SET IDENTITY_INSERT welds.Players OFF;
+GO

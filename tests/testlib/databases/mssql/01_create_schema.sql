@@ -7,7 +7,7 @@ CREATE TABLE _welds_migrations(
   id BIGINT NOT NULL IDENTITY PRIMARY KEY,
   name VARCHAR ( 512 ) NOT NULL,
   when_applied BIGINT NOT NULL,
-  rollback_sql TEXT NOT NULL,
+  rollback_sql varchar(max) NOT NULL,
 );
 
 CREATE TABLE welds.Products (
@@ -62,3 +62,33 @@ CREATE TABLE welds.extra_types (
     datetime_col DATETIME2 NOT NULL,
     datetimetz_col DATETIMEOFFSET NOT NULL
 );
+
+
+CREATE TABLE welds.Users (
+		id INT IDENTITY PRIMARY KEY,
+    name varchar(max)
+);
+
+CREATE TABLE welds.Profiles (
+		id INT IDENTITY PRIMARY KEY,
+    user_id INT NOT NULL,
+    image_url varchar(max)
+);
+
+CREATE TABLE welds.Teams (
+		id INT IDENTITY PRIMARY KEY,
+    city_id INT NOT NULL,
+    name varchar(max)
+);
+
+CREATE TABLE welds.Players (
+		id INT IDENTITY PRIMARY KEY,
+    team_id INT NOT NULL,
+    name varchar(max)
+);
+
+CREATE TABLE welds.Cities (
+		id INT IDENTITY PRIMARY KEY,
+    name varchar(max)
+);
+

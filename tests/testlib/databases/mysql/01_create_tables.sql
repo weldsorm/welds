@@ -47,6 +47,40 @@ CREATE TABLE extra_types (
     datetimetz_col TIMESTAMP NOT NULL
 );
 
+CREATE TABLE Users (
+  	id INT NOT NULL AUTO_INCREMENT,
+    name TEXT,
+	  PRIMARY KEY(id)
+);
+
+CREATE TABLE Profiles (
+  	id INT NOT NULL AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    image_url TEXT,
+	  PRIMARY KEY(id)
+);
+
+CREATE TABLE Teams (
+  	id INT NOT NULL AUTO_INCREMENT,
+    city_id INT NOT NULL,
+    name TEXT,
+	  PRIMARY KEY(id)
+);
+
+CREATE TABLE Players (
+  	id INT NOT NULL AUTO_INCREMENT,
+    team_id INT NOT NULL,
+    name TEXT,
+	  PRIMARY KEY(id)
+);
+
+CREATE TABLE Cities (
+  	id INT NOT NULL AUTO_INCREMENT,
+    name TEXT,
+	  PRIMARY KEY(id)
+);
+
+
 USE mysql;
 CREATE TABLE Orders (
   id INT NOT NULL AUTO_INCREMENT,

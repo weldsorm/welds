@@ -144,6 +144,7 @@
 //! - migrations - adds all the migration structs and traits
 //! - full - all the features excluding (mock)
 //! - mock - Use for testing ONLY. Enables mocking out database schemas
+//! - group-by - Enables use of group_by and aggregate functions
 //!
 //!
 //! # Important Notes:

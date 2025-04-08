@@ -20,16 +20,17 @@ thiserror = "1.0"
 welds-macros = { path="../welds-macros", version = "^0.4.14" }
 
 [features]
-"default" = []
+"default" = ["group-by"]
 "postgres" = ["welds-connections/postgres"]
 "mysql" = ["welds-connections/mysql"]
 "mssql" = ["welds-connections/mssql"]
 "sqlite" = ["welds-connections/sqlite"]
-"full" = ["postgres", "mysql", "mssql", "sqlite", "check", "detect", "migrations" ]
+"full" = ["postgres", "mysql", "mssql", "sqlite", "check", "detect", "migrations", "group-by"]
 "detect" = []
 "mock" = []
 "check" = ["detect", "colored"]
 "migrations" = ["detect"]
+"group-by" = []
 "tracing" = ["welds-connections/tracing"]
 
 

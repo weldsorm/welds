@@ -6,6 +6,8 @@ pub type Result<T> = std::result::Result<T, WeldsError>;
 
 #[derive(Error, Debug)]
 pub enum WeldsError {
+    #[error("A group by clause is required for this query")]
+    ColumnMissingFromGroupBy,
     #[error("An Error From the Database: {0}")]
     Database(ConnError),
     #[error("Could not find tablebase table {0}")]

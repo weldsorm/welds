@@ -1,6 +1,8 @@
 use crate::model_traits::{HasSchema, TableColumns, TableInfo, UniqueIdentifier};
 use crate::query::builder::QueryBuilder;
 use crate::query::clause::{AsFieldName, ClauseAdder};
+use crate::query::select_cols::select_column::SelectKind;
+use crate::query::select_cols::group_by::GroupBy;
 use crate::relations::{HasRelations, Relationship};
 use crate::writers::alias::TableAlias;
 pub use join::Join;
@@ -11,6 +13,7 @@ use std::sync::Arc;
 mod exec;
 mod join;
 mod select_column;
+mod group_by;
 
 #[cfg(test)]
 mod tests;
@@ -26,6 +29,7 @@ pub struct SelectBuilder<T> {
     qb: QueryBuilder<T>,
     selects: Vec<SelectColumn>,
     joins: Vec<JoinBuilder>,
+    group_bys: Vec<GroupBy>,
 }
 
 impl<T> SelectBuilder<T>
@@ -37,6 +41,7 @@ where
             qb,
             selects: Vec::default(),
             joins: Vec::default(),
+            group_bys: Vec::default(),
         }
     }
 
@@ -49,6 +54,17 @@ where
         self.selects.push(SelectColumn {
             col_name: field.colname().to_string(),
             field_name: field.fieldname().to_string(),
+            kind: SelectKind::Column,
+        });
+        self
+    }
+
+    /// Select all columns, equivalent to `SELECT table_name.*`
+    pub fn select_all(mut self) -> SelectBuilder<T> {
+        self.selects.push(SelectColumn {
+            col_name: Default::default(),
+            field_name: Default::default(),
+            kind: SelectKind::All,
         });
         self
     }
@@ -65,6 +81,52 @@ where
         self.selects.push(SelectColumn {
             col_name: field.colname().to_string(),
             field_name: as_name.to_string(),
+            kind: SelectKind::Column,
+        });
+        self
+    }
+
+    #[cfg(feature = "group-by")]
+    pub fn select_count<V, FN: AsFieldName<V>>(
+        mut self,
+        lam: impl Fn(<T as HasSchema>::Schema) -> FN,
+        as_name: &'static str,
+    ) -> SelectBuilder<T> {
+        let field = lam(Default::default());
+        self.selects.push(SelectColumn {
+            col_name: field.colname().to_string(),
+            field_name: as_name.to_string(),
+            kind: SelectKind::Count,
+        });
+        self
+    }
+
+    #[cfg(feature = "group-by")]
+    pub fn select_max<V, FN: AsFieldName<V>>(
+        mut self,
+        lam: impl Fn(<T as HasSchema>::Schema) -> FN,
+        as_name: &'static str,
+    ) -> SelectBuilder<T> {
+        let field = lam(Default::default());
+        self.selects.push(SelectColumn {
+            col_name: field.colname().to_string(),
+            field_name: as_name.to_string(),
+            kind: SelectKind::Max,
+        });
+        self
+    }
+
+    #[cfg(feature = "group-by")]
+    pub fn select_min<V, FN: AsFieldName<V>>(
+        mut self,
+        lam: impl Fn(<T as HasSchema>::Schema) -> FN,
+        as_name: &'static str,
+    ) -> SelectBuilder<T> {
+        let field = lam(Default::default());
+        self.selects.push(SelectColumn {
+            col_name: field.colname().to_string(),
+            field_name: as_name.to_string(),
+            kind: SelectKind::Min,
         });
         self
     }
@@ -155,11 +217,24 @@ where
     {
         let ship = relationship(Default::default());
         sb.set_aliases(&self.qb.alias_asigner);
+        let _joined_group_bys = sb.group_bys.drain(..)
+            .map(|gb| self.group_bys.push(gb.set_alias(&sb.qb.alias)))
+            .collect::<Vec<_>>();
         let outer_key = ship.my_key::<R::Schema, T::Schema>();
         let inner_key = ship.their_key::<R::Schema, T::Schema>();
         let mut jb = JoinBuilder::new(sb, outer_key, inner_key);
         jb.ty = join_type;
         self.joins.push(jb);
+        self
+    }
+
+    #[cfg(feature = "group-by")]
+    pub fn group_by<V, FN: AsFieldName<V>>(
+        mut self,
+        lam: impl Fn(<T as HasSchema>::Schema) -> FN,
+    ) -> Self {
+        let field = lam(Default::default());
+        self.group_bys.push(GroupBy::new(field.colname()));
         self
     }
 

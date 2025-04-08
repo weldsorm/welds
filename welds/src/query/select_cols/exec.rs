@@ -1,11 +1,11 @@
+use welds_connections::trace;
 use crate::errors::Result;
 use crate::model_traits::{HasSchema, TableColumns, TableInfo};
 use crate::query::clause::ParamArgs;
 use crate::query::helpers::{build_tail, build_where_clauses, join_sql_parts};
 use crate::query::select_cols::SelectBuilder;
-use crate::writers::ColumnWriter;
-use crate::writers::NextParam;
-use crate::Client;
+use crate::writers::{ColumnWriter, NextParam};
+use crate::{Client, WeldsError};
 use crate::Row;
 use crate::Syntax;
 
@@ -45,6 +45,7 @@ where
             build_head_select(syntax, self),
             build_joins(syntax, self),
             where_sql,
+            build_group_by(syntax, self),
             build_tail(syntax, &self.qb),
         ])
         .trim()
@@ -64,12 +65,26 @@ where
     where
         <T as HasSchema>::Schema: TableInfo + TableColumns,
     {
+        trace::db_error(self.validate_group_by())?;
         let syntax = client.syntax();
         let mut args: Option<ParamArgs> = Some(Vec::default());
         let sql = self.sql_internal(syntax, &mut args);
         let args = args.unwrap();
         let rows = client.fetch_rows(&sql, &args).await?;
         Ok(rows)
+    }
+
+    fn validate_group_by(&self) -> Result<()> {
+        #[cfg(feature = "group-by")]
+        if self.requires_group_by() && self.group_bys.is_empty() {
+            return Err(WeldsError::ColumnMissingFromGroupBy)
+        }
+
+        Ok(())
+    }
+
+    fn requires_group_by(&self) -> bool {
+        self.selects.iter().any(|s| s.is_aggregate()) && self.selects.iter().any(|s| !s.is_aggregate())
     }
 }
 
@@ -78,7 +93,6 @@ where
     T: HasSchema,
     <T as HasSchema>::Schema: TableInfo + TableColumns,
 {
-    let writer = ColumnWriter::new(syntax);
     let mut head: Vec<&str> = Vec::default();
     head.push("SELECT");
 
@@ -86,16 +100,8 @@ where
     let alias = &sb.qb.alias;
 
     // Add these columns
-    for col in &sb.selects {
-        let colname = writer.excape(&col.col_name);
-        let fieldname = writer.excape(&col.field_name);
-        if colname == fieldname {
-            let col = format!("{}.{}", alias, colname);
-            cols.push(col);
-        } else {
-            let col = format!("{}.{} AS {}", alias, colname, fieldname);
-            cols.push(col);
-        }
+    for select in &sb.selects {
+        cols.push(select.write(syntax, alias))
     }
 
     // Add columns from joins
@@ -125,4 +131,22 @@ where
         join.append_jointable(syntax, &mut list, alias);
     }
     Some(list.join(" "))
+}
+
+fn build_group_by<T>(syntax: Syntax, sb: &SelectBuilder<T>) -> Option<String>
+where
+    T: HasSchema,
+    <T as HasSchema>::Schema: TableInfo + TableColumns,
+{
+    if sb.group_bys.is_empty() { return None }
+
+    let writer = ColumnWriter::new(syntax);
+    let mut cols: Vec<String> = Vec::default();
+
+    for group_by in &sb.group_bys {
+        let alias = group_by.table_alias.as_ref().unwrap_or_else(|| &sb.qb.alias);
+        cols.push(format!("{}.{}", alias, writer.excape(&group_by.col_name)))
+    }
+
+    Some(format!("GROUP BY {}", cols.join(", ")))
 }

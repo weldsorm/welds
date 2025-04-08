@@ -1,11 +1,11 @@
+pub use crate::migrations::Manual;
+pub use crate::migrations::MigrationFn;
+pub use crate::migrations::MigrationStep;
+pub use crate::migrations::MigrationWriter;
+pub use crate::migrations::TableState;
 pub use crate::migrations::create_table;
 pub use crate::migrations::down;
 pub use crate::migrations::down_last;
 pub use crate::migrations::tablemod::change_table;
 pub use crate::migrations::types::{Index, OnDelete, Type};
 pub use crate::migrations::up;
-pub use crate::migrations::Manual;
-pub use crate::migrations::MigrationFn;
-pub use crate::migrations::MigrationStep;
-pub use crate::migrations::MigrationWriter;
-pub use crate::migrations::TableState;

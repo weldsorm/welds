@@ -1,14 +1,14 @@
 use super::super::{
     builder::QueryBuilder,
-    clause::{wherein::WhereIn, ClauseAdder},
+    clause::{ClauseAdder, wherein::WhereIn},
     helpers::{build_where, join_sql_parts},
 };
+use crate::Syntax;
 use crate::errors::Result;
 use crate::model_traits::UniqueIdentifier;
 use crate::model_traits::{HasSchema, TableColumns, TableInfo};
 use crate::query::clause::ParamArgs;
 use crate::writers::NextParam;
-use crate::Syntax;
 use welds_connections::Client;
 
 // ******************************************************************************************

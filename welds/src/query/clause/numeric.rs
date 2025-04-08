@@ -1,8 +1,8 @@
+#[cfg(feature = "postgres")]
+use super::ClauseColValList;
 use super::{AsFieldName, ClauseColVal, ClauseColValEqual, ClauseColValIn};
 use std::marker::PhantomData;
 use welds_connections::Param;
-#[cfg(feature = "postgres")]
-use super::ClauseColValList;
 
 /// Clauses for numeric types such as int, float, etc
 pub struct Numeric<T> {

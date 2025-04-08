@@ -89,7 +89,9 @@ pub async fn connect(cs: impl Into<String>) -> Result<any::AnyClient> {
         let client = mssql::connect(&cs).await?;
         return Ok(any::AnyClient::Mssql(client));
     }
-    log::error!("Database backend unknown for given connection string. Did you enable the backend feature for this connection type in welds?");
+    log::error!(
+        "Database backend unknown for given connection string. Did you enable the backend feature for this connection type in welds?"
+    );
     Err(errors::Error::InvalidDatabaseUrl)
 }
 

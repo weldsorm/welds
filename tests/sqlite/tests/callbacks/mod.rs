@@ -1,7 +1,7 @@
+use crate::get_conn;
+use std::sync::Mutex;
 use welds::WeldsModel;
 use welds::errors::Result;
-use std::sync::Mutex;
-use crate::get_conn;
 
 #[derive(WeldsModel)]
 #[welds(table = "Teams")]
@@ -105,7 +105,12 @@ fn should_handle_all_callbacks() {
 
         assert_eq!(
             CALLED.lock().unwrap().as_slice(),
-            ["before_create", "before_create_async", "after_create", "after_create_async"]
+            [
+                "before_create",
+                "before_create_async",
+                "after_create",
+                "after_create_async"
+            ]
         );
 
         clear_called();
@@ -116,7 +121,12 @@ fn should_handle_all_callbacks() {
 
         assert_eq!(
             CALLED.lock().unwrap().as_slice(),
-            ["before_update", "before_update_async", "after_update", "after_update_async"]
+            [
+                "before_update",
+                "before_update_async",
+                "after_update",
+                "after_update_async"
+            ]
         );
 
         clear_called();
@@ -126,7 +136,12 @@ fn should_handle_all_callbacks() {
 
         assert_eq!(
             CALLED.lock().unwrap().as_slice(),
-            ["before_delete", "before_delete_async", "after_delete", "after_delete_async"]
+            [
+                "before_delete",
+                "before_delete_async",
+                "after_delete",
+                "after_delete_async"
+            ]
         );
 
         clear_called();

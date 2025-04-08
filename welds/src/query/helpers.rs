@@ -1,10 +1,10 @@
 use super::builder::QueryBuilder;
 use super::clause::ParamArgs;
-use crate::model_traits::HasSchema;
-use crate::query::clause::exists::ExistIn;
-use crate::query::clause::ClauseAdder;
-use crate::writers::NextParam;
 use crate::Syntax;
+use crate::model_traits::HasSchema;
+use crate::query::clause::ClauseAdder;
+use crate::query::clause::exists::ExistIn;
+use crate::writers::NextParam;
 use std::sync::Arc;
 
 pub(crate) fn join_sql_parts(parts: &[Option<String>]) -> String {

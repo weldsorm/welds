@@ -1,4 +1,6 @@
+use crate::Syntax;
 use crate::detect::TableDef;
+use crate::migrations::MigrationWriter;
 use crate::migrations::types::Type;
 use crate::migrations::utils::find_column_or_unwrap;
 use crate::migrations::writers::add_column;
@@ -6,8 +8,6 @@ use crate::migrations::writers::alter_column_type_down;
 use crate::migrations::writers::alter_column_type_up;
 use crate::migrations::writers::drop_column;
 use crate::migrations::writers::rename_column;
-use crate::migrations::MigrationWriter;
-use crate::Syntax;
 
 pub struct Change {
     pub(super) tabledef: TableDef,

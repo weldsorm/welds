@@ -1,9 +1,9 @@
+use crate::Client;
 use crate::detect::ColumnDef;
 use crate::errors::Result;
 use crate::model_traits::Column;
 use crate::model_traits::{HasSchema, TableColumns, TableInfo};
-use crate::writers::types::{are_equivalent_types, get_pairs, Pair};
-use crate::Client;
+use crate::writers::types::{Pair, are_equivalent_types, get_pairs};
 
 mod issue;
 use crate::model_traits::TableIdent;

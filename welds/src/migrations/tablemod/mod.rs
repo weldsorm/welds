@@ -45,7 +45,10 @@ pub fn change_table(table_state: &TableState, tablename: impl Into<String>) -> R
         Err(WeldsError::MissingTable(ident.clone()))?;
     }
     if search.len() > 1 {
-        let err = format!("The table {} is ambiguous. This table was found under multiple schemanames. Please include the schema name when migrating.",tablename);
+        let err = format!(
+            "The table {} is ambiguous. This table was found under multiple schemanames. Please include the schema name when migrating.",
+            tablename
+        );
         Err(WeldsError::MigrationError(err))?;
     }
     let found: &TableDef = search.pop().unwrap();

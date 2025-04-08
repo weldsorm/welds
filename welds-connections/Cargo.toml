@@ -2,7 +2,7 @@
 name = "welds-connections"
 authors = ["Lex Childs <lexchilds@gmail.com>"]
 version = "0.4.14"
-edition = "2021"
+edition = "2024"
 license = "BSD-3-Clause"
 categories = ["database"]
 keywords = ["orm", "postgres", "mssql", "mysql", "sqlite"]

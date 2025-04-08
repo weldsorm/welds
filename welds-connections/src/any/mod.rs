@@ -3,8 +3,8 @@ use super::ExecuteResult;
 use super::Param;
 use super::Row;
 use super::Syntax;
-use crate::errors::Result;
 use crate::Fetch;
+use crate::errors::Result;
 use crate::{TransactStart, Transaction};
 use async_trait::async_trait;
 

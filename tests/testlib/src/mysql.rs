@@ -1,4 +1,4 @@
-use rand::{distributions::Alphanumeric, Rng};
+use rand::{Rng, distributions::Alphanumeric};
 use static_init::dynamic;
 use std::process::{Command, Stdio};
 use std::thread::sleep; // 0.8

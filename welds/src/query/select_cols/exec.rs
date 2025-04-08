@@ -1,11 +1,11 @@
+use crate::Row;
+use crate::Syntax;
 use crate::errors::Result;
 use crate::model_traits::{HasSchema, TableColumns, TableInfo};
 use crate::query::clause::ParamArgs;
 use crate::query::helpers::{build_tail, build_where_clauses, join_sql_parts};
 use crate::query::select_cols::SelectBuilder;
 use crate::writers::{ColumnWriter, NextParam};
-use crate::Row;
-use crate::Syntax;
 use crate::{Client, WeldsError};
 use welds_connections::trace;
 

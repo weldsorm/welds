@@ -1,11 +1,11 @@
 use super::create_index;
+use crate::Syntax;
 use crate::detect::TableDef;
 use crate::migrations::create_table::ColumnBuilder;
 use crate::migrations::create_table::IdBuilder;
 use crate::migrations::create_table::TableBuilder;
 use crate::migrations::types::Type;
 use crate::writers::types::pk_override;
-use crate::Syntax;
 
 pub fn from_def(syntax: Syntax, def: &TableDef) -> Vec<String> {
     // if we are making migrations from a tabledef must match the syntax

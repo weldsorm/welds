@@ -1,6 +1,6 @@
+use crate::GenerateOption;
 use crate::config::{Config, Table};
 use crate::errors::Result;
-use crate::GenerateOption;
 use proc_macro2::{Ident, Span};
 use quote::quote;
 use rust_format::{Formatter, RustFmt};

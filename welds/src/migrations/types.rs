@@ -1,6 +1,6 @@
-use crate::writers::types::get_pairs;
-use crate::writers::types::Pair;
 use crate::Syntax;
+use crate::writers::types::Pair;
+use crate::writers::types::get_pairs;
 use std::iter::Iterator;
 
 #[derive(Debug, Clone, PartialEq, Eq)]

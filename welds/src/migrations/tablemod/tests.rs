@@ -1,7 +1,7 @@
 use super::*;
+use crate::Syntax;
 use crate::detect::table_def::mock::MockTableDef;
 use crate::migrations::MigrationWriter;
-use crate::Syntax;
 
 fn mock_table(syntax: Syntax) -> Table {
     Table::mock(

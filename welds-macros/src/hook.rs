@@ -26,13 +26,14 @@ impl Hook {
         let badformat = || {
             Err("Expected Hook to be one of the following format(s):\n\
             [ welds(BeforeCreate(fn_to_call_before_create)) ]\n\
-            [ welds(BeforeCreate(fn_to_call_before_create, async = true)) ]".to_owned())
+            [ welds(BeforeCreate(fn_to_call_before_create, async = true)) ]"
+                .to_owned())
         };
 
         let inner: Vec<_> = list.nested.iter().collect();
 
         if inner.len() > 2 {
-            return badformat()
+            return badformat();
         }
 
         let mut is_async = false;
@@ -41,15 +42,15 @@ impl Hook {
             match inner[1] {
                 syn::NestedMeta::Meta(syn::Meta::NameValue(option)) => {
                     if &option.path.segments[0].ident.to_string() != "async" {
-                        return badformat()
+                        return badformat();
                     }
                     match &option.lit {
                         Lit::Bool(bool) => {
                             is_async = bool.value;
-                        },
-                        _ => return badformat()
+                        }
+                        _ => return badformat(),
                     }
-                },
+                }
                 _ => return badformat(),
             };
         }
@@ -66,7 +67,7 @@ impl Hook {
         Ok(Self {
             kind,
             callback: callback.clone(),
-            is_async
+            is_async,
         })
     }
 }

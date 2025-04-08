@@ -1,13 +1,13 @@
+use crate::Row;
 use crate::errors::Result;
 use crate::errors::WeldsError::InsertFailed;
 use crate::model_traits::hooks::{AfterCreate, BeforeCreate};
 use crate::model_traits::{ColumnDefaultCheck, UpdateFromRow};
 use crate::model_traits::{HasSchema, TableColumns, TableInfo, WriteToArgs};
 use crate::query::clause::ParamArgs;
+use crate::writers::NextParam;
 use crate::writers::column::ColumnWriter;
 use crate::writers::insert::{ColArg, InsertWriter};
-use crate::writers::NextParam;
-use crate::Row;
 use welds_connections::Client;
 use welds_connections::Fetch;
 

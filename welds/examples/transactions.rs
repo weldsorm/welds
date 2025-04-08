@@ -1,6 +1,6 @@
 use welds::errors::Result;
 use welds::errors::WeldsError;
-use welds::migrations::{create_table, types::Type, up, MigrationStep, TableState};
+use welds::migrations::{MigrationStep, TableState, create_table, types::Type, up};
 use welds::prelude::*;
 use welds_connections::Transaction;
 

@@ -1,6 +1,6 @@
+use crate::Syntax;
 use crate::query::builder::ManualParam;
 use crate::query::builder::QueryBuilder;
-use crate::Syntax;
 
 // Testing that the tail end of the SQL is correct
 // Limits / skips / orders

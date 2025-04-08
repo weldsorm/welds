@@ -2,7 +2,7 @@ use anyhow::Result;
 use clap::Parser;
 use std::env;
 use std::path::PathBuf;
-use weldscli_lib::{commands::Commands::*, GenerateOption};
+use weldscli_lib::{GenerateOption, commands::Commands::*};
 
 #[tokio::main]
 async fn main() -> Result<()> {

@@ -1,12 +1,12 @@
 use super::get_conn;
+use welds::Client;
 use welds::detect::find_table;
 use welds::errors::Result;
-use welds::migrations::types::Type;
 use welds::migrations::MigrationFn;
 use welds::migrations::MigrationStep;
-use welds::migrations::{change_table, create_table, TableState};
+use welds::migrations::types::Type;
+use welds::migrations::{TableState, change_table, create_table};
 use welds::migrations::{down_last, up};
-use welds::Client;
 
 /************************************************
 * two migrations shouldn't have the same name

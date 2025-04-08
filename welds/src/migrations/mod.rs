@@ -1,10 +1,10 @@
+use crate::Client;
+use crate::Syntax;
+use crate::TransactStart;
 use crate::detect::{self, TableDef};
 use crate::errors::Result;
 use crate::errors::WeldsError;
 use crate::state::DbState;
-use crate::Client;
-use crate::Syntax;
-use crate::TransactStart;
 use std::collections::HashSet;
 
 // All the things a dev needs to start writing migrations

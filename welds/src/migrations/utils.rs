@@ -90,10 +90,13 @@ mod tests {
         // Test SQL command with nested quotes
         let input = "INSERT INTO books (title, description) VALUES ('SQL; The \"Easy\" Way', 'A book for \"beginners\"; covers basics and more.'); SELECT id FROM books;";
         let commands = split_sql_commands(input);
-        assert_eq!(commands, vec![
-            "INSERT INTO books (title, description) VALUES ('SQL; The \"Easy\" Way', 'A book for \"beginners\"; covers basics and more.')",
-            "SELECT id FROM books"
-        ]);
+        assert_eq!(
+            commands,
+            vec![
+                "INSERT INTO books (title, description) VALUES ('SQL; The \"Easy\" Way', 'A book for \"beginners\"; covers basics and more.')",
+                "SELECT id FROM books"
+            ]
+        );
     }
 
     #[test]

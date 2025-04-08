@@ -1,8 +1,8 @@
 use super::{AssignmentManual, ClauseColValEqual, SetColNull, SetColVal};
 use super::{Param, ParamArgs};
+use crate::Syntax;
 use crate::writers::ColumnWriter;
 use crate::writers::NextParam;
-use crate::Syntax;
 
 /// A `AssignmentAdder` is a trait used to write the "assignment" part of an update
 pub trait AssignmentAdder: Send + Sync {

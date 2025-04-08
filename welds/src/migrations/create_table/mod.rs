@@ -1,8 +1,8 @@
 use super::types::{Index, OnDelete, Type};
-use crate::migrations::writers;
-use crate::migrations::MigrationWriter;
-use crate::model_traits::TableIdent;
 use crate::Syntax;
+use crate::migrations::MigrationWriter;
+use crate::migrations::writers;
+use crate::model_traits::TableIdent;
 
 impl MigrationWriter for TableBuilder {
     fn down_sql(&self, _syntax: Syntax) -> Vec<String> {

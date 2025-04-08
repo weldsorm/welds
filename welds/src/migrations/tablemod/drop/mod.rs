@@ -1,7 +1,7 @@
-use crate::detect::TableDef;
-use crate::migrations::writers;
-use crate::migrations::MigrationWriter;
 use crate::Syntax;
+use crate::detect::TableDef;
+use crate::migrations::MigrationWriter;
+use crate::migrations::writers;
 
 impl MigrationWriter for Drop {
     fn down_sql(&self, syntax: Syntax) -> Vec<String> {

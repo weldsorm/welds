@@ -5,16 +5,16 @@ pub struct Row {
     inner: RowInner,
 }
 
+#[cfg(any(feature = "mysql", feature = "sqlite", feature = "postgres"))]
+use sqlx::Decode;
+#[cfg(any(feature = "mysql", feature = "sqlite", feature = "postgres"))]
+use sqlx::Type;
 #[cfg(feature = "mysql")]
 use sqlx::mysql::MySqlRow;
 #[cfg(feature = "postgres")]
 use sqlx::postgres::PgRow;
 #[cfg(feature = "sqlite")]
 use sqlx::sqlite::SqliteRow;
-#[cfg(any(feature = "mysql", feature = "sqlite", feature = "postgres"))]
-use sqlx::Decode;
-#[cfg(any(feature = "mysql", feature = "sqlite", feature = "postgres"))]
-use sqlx::Type;
 
 #[cfg(feature = "mssql")]
 use tiberius::Row as MssqlRow;

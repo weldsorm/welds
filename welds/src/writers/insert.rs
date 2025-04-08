@@ -1,7 +1,7 @@
 pub struct ColArg(pub String, pub String);
 use super::column::ColumnWriter;
-use crate::model_traits::Column;
 use crate::Syntax;
+use crate::model_traits::Column;
 
 type Sql = (String, Option<String>);
 

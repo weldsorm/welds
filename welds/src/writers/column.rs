@@ -1,5 +1,5 @@
-use crate::model_traits::Column;
 use crate::Syntax;
+use crate::model_traits::Column;
 
 pub struct ColumnWriter {
     syntax: Syntax,

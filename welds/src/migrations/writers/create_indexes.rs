@@ -1,8 +1,8 @@
+use crate::Syntax;
 use crate::migrations::create_table::ColumnBuilder;
 use crate::migrations::types::Index;
 use crate::migrations::types::OnDelete;
 use crate::model_traits::TableIdent;
-use crate::Syntax;
 
 pub fn write(syntax: Syntax, table: &TableIdent, col: &ColumnBuilder) -> String {
     let tablename = table.to_string();
@@ -55,5 +55,7 @@ fn write_fk(
     let tablename = table.to_string();
     let colname = col.name.as_str();
 
-    format!("ALTER TABLE {tablename} ADD CONSTRAINT {indexname} FOREIGN KEY ({colname}) REFERENCES {foreign_table} ({foreign_column}) ON DELETE {on_delete_str}")
+    format!(
+        "ALTER TABLE {tablename} ADD CONSTRAINT {indexname} FOREIGN KEY ({colname}) REFERENCES {foreign_table} ({foreign_column}) ON DELETE {on_delete_str}"
+    )
 }

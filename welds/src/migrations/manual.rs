@@ -1,5 +1,5 @@
-use crate::migrations::utils::split_sql_commands;
 use crate::migrations::MigrationWriter;
+use crate::migrations::utils::split_sql_commands;
 
 pub struct Manual {
     up: String,

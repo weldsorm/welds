@@ -1,11 +1,11 @@
+use sqlite_test::models::StringThing;
 use sqlite_test::models::order::{Order, SmallOrder};
 use sqlite_test::models::product::{BadProduct1, BadProduct2, Product};
-use sqlite_test::models::StringThing;
 use sqlite_test::models::{Thing1, Thing2, Thing3};
-use welds::connections::sqlite::SqliteClient;
-use welds::connections::TransactStart;
-use welds::state::{DbState, DbStatus};
 use welds::Syntax;
+use welds::connections::TransactStart;
+use welds::connections::sqlite::SqliteClient;
+use welds::state::{DbState, DbStatus};
 
 pub mod bulk_delete;
 pub mod bulk_update;

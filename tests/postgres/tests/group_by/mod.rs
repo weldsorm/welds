@@ -1,6 +1,6 @@
 use super::get_conn;
-use welds::prelude::*;
 use welds::exts::VecRowExt;
+use welds::prelude::*;
 
 #[derive(Debug, Clone, WeldsModel)]
 #[welds(table = "teams")]
@@ -42,25 +42,39 @@ fn should_join_data_with_group_by_and_count() {
         let query = Team::all()
             .select_as(|t| t.id, "team_id")
             .select_as(|t| t.name, "team_name")
-            .left_join(|t| t.players,
-                Player::all().select_count(|p| p.id, "player_count")
+            .left_join(
+                |t| t.players,
+                Player::all().select_count(|p| p.id, "player_count"),
             )
             .group_by(|t| t.id)
             .order_by_asc(|t| t.id);
 
-        let collection: Vec<TeamWithPlayerCount> = query.run(&conn).await.unwrap().collect_into().unwrap();
+        let collection: Vec<TeamWithPlayerCount> =
+            query.run(&conn).await.unwrap().collect_into().unwrap();
 
         assert_eq!(
             collection[0],
-            TeamWithPlayerCount { team_id: 1, team_name: "Liverpool FC".to_string(), player_count: 1 }
+            TeamWithPlayerCount {
+                team_id: 1,
+                team_name: "Liverpool FC".to_string(),
+                player_count: 1
+            }
         );
         assert_eq!(
             collection[1],
-            TeamWithPlayerCount { team_id: 2, team_name: "Manchester City".to_string(), player_count: 1 }
+            TeamWithPlayerCount {
+                team_id: 2,
+                team_name: "Manchester City".to_string(),
+                player_count: 1
+            }
         );
         assert_eq!(
             collection[2],
-            TeamWithPlayerCount { team_id: 3, team_name: "Manchester United".to_string(), player_count: 2 }
+            TeamWithPlayerCount {
+                team_id: 3,
+                team_name: "Manchester United".to_string(),
+                player_count: 2
+            }
         );
     })
 }
@@ -72,25 +86,36 @@ fn should_join_data_with_group_by_and_max() {
 
         let query = Team::all()
             .select_as(|t| t.id, "team_id")
-            .left_join(|t| t.players,
-                Player::all().select_max(|p| p.id, "player_id")
+            .left_join(
+                |t| t.players,
+                Player::all().select_max(|p| p.id, "player_id"),
             )
             .group_by(|t| t.id)
             .order_by_asc(|t| t.id);
 
-        let collection: Vec<TeamWithLatestPlayer> = query.run(&conn).await.unwrap().collect_into().unwrap();
+        let collection: Vec<TeamWithLatestPlayer> =
+            query.run(&conn).await.unwrap().collect_into().unwrap();
 
         assert_eq!(
             collection[0],
-            TeamWithLatestPlayer { team_id: 1, player_id: 1 }
+            TeamWithLatestPlayer {
+                team_id: 1,
+                player_id: 1
+            }
         );
         assert_eq!(
             collection[1],
-            TeamWithLatestPlayer { team_id: 2, player_id: 2 }
+            TeamWithLatestPlayer {
+                team_id: 2,
+                player_id: 2
+            }
         );
         assert_eq!(
             collection[2],
-            TeamWithLatestPlayer { team_id: 3, player_id: 4 }
+            TeamWithLatestPlayer {
+                team_id: 3,
+                player_id: 4
+            }
         );
     })
 }

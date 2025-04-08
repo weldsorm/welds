@@ -1,12 +1,12 @@
-use mysql_test::models::order::Order;
-use mysql_test::models::product::{BadProductColumns, BadProductMissingTable, Product};
 use mysql_test::models::StringThing;
 use mysql_test::models::Thing1;
+use mysql_test::models::order::Order;
+use mysql_test::models::product::{BadProductColumns, BadProductMissingTable, Product};
 use std::env;
-use welds::connections::mysql::MysqlClient;
-use welds::state::{DbState, DbStatus};
 use welds::Syntax;
 use welds::TransactStart;
+use welds::connections::mysql::MysqlClient;
+use welds::state::{DbState, DbStatus};
 
 mod extra_types;
 mod group_by;

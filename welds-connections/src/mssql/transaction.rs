@@ -1,11 +1,11 @@
 use super::pool::ConnectionStatus;
 use super::pool::PooledConnection;
-use crate::errors::Error::ClosedTransaction;
-use crate::errors::Result;
 use crate::Client;
 use crate::ExecuteResult;
 use crate::Param;
 use crate::Row;
+use crate::errors::Error::ClosedTransaction;
+use crate::errors::Result;
 use async_trait::async_trait;
 use std::marker::PhantomData;
 

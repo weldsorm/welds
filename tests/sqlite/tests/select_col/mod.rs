@@ -136,10 +136,7 @@ fn should_be_able_to_select_all_columns() {
     async_std::task::block_on(async {
         let query = Order2::all().select_all();
 
-        assert_eq!(
-            query.to_sql(Syntax::Sqlite),
-            "SELECT t1.* FROM orders t1"
-        );
+        assert_eq!(query.to_sql(Syntax::Sqlite), "SELECT t1.* FROM orders t1");
     });
 }
 
@@ -172,7 +169,10 @@ fn should_be_able_to_join_and_group_by() {
     async_std::task::block_on(async {
         let query = Order2::all()
             .select(|o| o.oid)
-            .left_join(|o| o.product, Product2::all().select_count(|p| p.pid, "product_count"))
+            .left_join(
+                |o| o.product,
+                Product2::all().select_count(|p| p.pid, "product_count"),
+            )
             .group_by(|o| o.oid);
 
         assert_eq!(

@@ -1,16 +1,16 @@
+use crate::Syntax;
 use crate::model_traits::Column;
 use crate::model_traits::TableIdent;
-use crate::query::clause::exists::ExistIn;
 use crate::query::clause::ClauseAdder;
 use crate::query::clause::OrderBy;
 use crate::query::clause::ParamArgs;
+use crate::query::clause::exists::ExistIn;
 use crate::query::helpers::{build_where, join_sql_parts};
 use crate::query::tail;
-use crate::writers::alias::TableAlias;
 use crate::writers::ColumnWriter;
 use crate::writers::CountWriter;
 use crate::writers::NextParam;
-use crate::Syntax;
+use crate::writers::alias::TableAlias;
 use std::sync::Arc;
 
 /// take all info from a query and translates it into SQL

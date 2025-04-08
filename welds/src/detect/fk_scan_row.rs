@@ -1,5 +1,5 @@
-use crate::model_traits::TableIdent;
 use crate::Row;
+use crate::model_traits::TableIdent;
 
 #[derive(Debug)]
 pub struct FkScanRow {

@@ -1,7 +1,7 @@
-use crate::query::clause::orderby;
-use crate::query::clause::OrderBy;
-use crate::writers::limit_skip::LimitSkipWriter;
 use crate::Syntax;
+use crate::query::clause::OrderBy;
+use crate::query::clause::orderby;
+use crate::writers::limit_skip::LimitSkipWriter;
 use std::collections::VecDeque;
 
 /// writes the Limit Skip OrderBy of a statement

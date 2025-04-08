@@ -1,6 +1,6 @@
 use super::*;
-use crate::migrations::MigrationWriter;
 use crate::Syntax;
+use crate::migrations::MigrationWriter;
 
 #[test]
 fn should_create_basic_table() {

@@ -1,4 +1,5 @@
 use super::ClauseAdder;
+use crate::Syntax;
 use crate::model_traits::HasSchema;
 use crate::model_traits::TableColumns;
 use crate::model_traits::TableInfo;
@@ -8,7 +9,6 @@ use crate::query::clause::ParamArgs;
 use crate::query::helpers::{build_tail, build_where, join_sql_parts};
 use crate::writers::ColumnWriter;
 use crate::writers::NextParam;
-use crate::Syntax;
 
 /// Used to generated a SQL IN clause.
 /// This is used when deleting and updating to be able to apply limit

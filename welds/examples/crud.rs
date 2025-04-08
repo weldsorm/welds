@@ -1,4 +1,4 @@
-use welds::{prelude::*, Syntax, WeldsError};
+use welds::{Syntax, WeldsError, prelude::*};
 
 /// Define a struct the maps to the products table in the databases
 #[derive(Debug, WeldsModel)]

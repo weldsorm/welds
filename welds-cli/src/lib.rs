@@ -3,8 +3,8 @@ pub mod config;
 pub mod errors;
 pub mod generators;
 
-use anyhow::anyhow;
 use anyhow::Result;
+use anyhow::anyhow;
 use config::DbProvider;
 use std::path::PathBuf;
 use welds::model_traits::TableIdent;

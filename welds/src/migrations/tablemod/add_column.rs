@@ -1,9 +1,9 @@
+use crate::Syntax;
 use crate::detect::TableDef;
+use crate::migrations::MigrationWriter;
 use crate::migrations::types::Type;
 use crate::migrations::writers::add_column;
 use crate::migrations::writers::drop_column;
-use crate::migrations::MigrationWriter;
-use crate::Syntax;
 
 pub struct AddColumn {
     tabledef: TableDef,

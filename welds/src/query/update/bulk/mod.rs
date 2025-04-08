@@ -1,3 +1,5 @@
+use crate::Client;
+use crate::Syntax;
 use crate::errors::Result;
 use crate::model_traits::UniqueIdentifier;
 use crate::model_traits::{HasSchema, TableColumns, TableInfo};
@@ -10,8 +12,6 @@ use crate::query::clause::{AssignmentManual, ParamArgs};
 use crate::query::clause::{SetColNull, SetColVal};
 use crate::query::helpers::{build_where, join_sql_parts};
 use crate::writers::NextParam;
-use crate::Client;
-use crate::Syntax;
 use std::marker::PhantomData;
 use std::sync::Arc;
 use welds_connections::Param;

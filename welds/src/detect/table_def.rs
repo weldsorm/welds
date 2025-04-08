@@ -1,5 +1,5 @@
-use crate::model_traits::TableIdent;
 use crate::Syntax;
+use crate::model_traits::TableIdent;
 
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
 

@@ -1,8 +1,8 @@
+use crate::Client;
+use crate::Syntax;
 use crate::errors::Result;
 use crate::model_traits::TableIdent;
 use crate::query::clause::ParamArgs;
-use crate::Client;
-use crate::Syntax;
 use std::collections::HashMap;
 
 mod table_scan;

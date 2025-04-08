@@ -1,5 +1,5 @@
-use crate::state::DbState;
 use crate::Syntax;
+use crate::state::DbState;
 
 // Testing that the tail end of the SQL is correct
 // Limits / skips / orders

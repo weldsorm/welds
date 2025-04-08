@@ -1,3 +1,4 @@
+use crate::Client;
 use crate::connections::Row;
 use crate::errors::Result;
 use crate::errors::WeldsError;
@@ -6,7 +7,6 @@ use crate::model_traits::{HasSchema, TableColumns, TableInfo, UniqueIdentifier};
 use crate::query::builder::QueryBuilder;
 use crate::query::clause::exists::ExistIn;
 use crate::relations::Relationship;
-use crate::Client;
 use async_trait::async_trait;
 use std::any::Any;
 

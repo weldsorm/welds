@@ -1,16 +1,16 @@
+use postgres_test::models::StringThing;
+use postgres_test::models::Thing1;
+use postgres_test::models::UuidIdFromDb;
+use postgres_test::models::UuidIdFromDev;
 use postgres_test::models::enums::Color;
 use postgres_test::models::order::Order;
 use postgres_test::models::other::Other;
 use postgres_test::models::product::{BadProductColumns, BadProductMissingTable, Product};
 use postgres_test::models::table_with_array::TableWithArray;
-use postgres_test::models::StringThing;
-use postgres_test::models::Thing1;
-use postgres_test::models::UuidIdFromDb;
-use postgres_test::models::UuidIdFromDev;
-use welds::connections::postgres::PostgresClient;
-use welds::connections::TransactStart;
-use welds::state::{DbState, DbStatus};
 use welds::Syntax;
+use welds::connections::TransactStart;
+use welds::connections::postgres::PostgresClient;
+use welds::state::{DbState, DbStatus};
 
 mod extra_types;
 mod group_by;
@@ -184,7 +184,7 @@ fn should_be_able_to_drop_down_to_sqlx() {
         let client = get_conn().await;
         let conn = client.as_sqlx_pool();
         // Build some args to send to the database
-        use sqlx::{postgres::PgArguments, Arguments};
+        use sqlx::{Arguments, postgres::PgArguments};
         let mut args: PgArguments = Default::default();
         args.add(1_i32);
         // Go run a query from the database.

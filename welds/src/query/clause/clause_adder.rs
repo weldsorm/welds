@@ -1,7 +1,7 @@
 use super::{ClauseColManual, ClauseColVal, ClauseColValEqual, ClauseColValIn, ClauseColValList};
 use super::{Param, ParamArgs};
-use crate::writers::NextParam;
 use crate::Syntax;
+use crate::writers::NextParam;
 
 /// A `ClauseAdder` is a trait used to write the "clause" part of
 /// a where, join, etc..

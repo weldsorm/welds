@@ -5,9 +5,9 @@ use async_mutex::Mutex as AsyncMutex;
 use bb8::ManageConnection;
 use bb8_tiberius::ConnectionManager;
 use std::ops::DerefMut;
-use std::sync::mpsc::{channel, Receiver, Sender};
 use std::sync::Arc;
 use std::sync::Mutex;
+use std::sync::mpsc::{Receiver, Sender, channel};
 use tokio::task::yield_now;
 
 // ******************************************************************************

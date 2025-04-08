@@ -1,11 +1,11 @@
+use crate::Client;
+use crate::Row;
+use crate::Syntax;
 use crate::dataset::DataSet;
 use crate::errors::Result;
 use crate::errors::WeldsError;
 use crate::model_traits::{HasSchema, TableColumns, TableInfo};
 use crate::query::include::IncludeBuilder;
-use crate::Client;
-use crate::Row;
-use crate::Syntax;
 
 // ******************************************************************************************
 // This file contains all the stuff added onto the IncludeBuilder to allow it to run Execute the Query

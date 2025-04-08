@@ -1,5 +1,5 @@
-use crate::model_traits::TableIdent;
 use crate::Syntax;
+use crate::model_traits::TableIdent;
 
 /// writes the SQL to Renames a column on a table
 pub fn write(

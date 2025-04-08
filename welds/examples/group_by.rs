@@ -1,9 +1,17 @@
 use welds::prelude::*;
 
-// Enabling the `unstable-api` feature exposes some additional querying methods such as
+/***********************************************************************
+ *
+ * Enabling the `unstable-api` feature
+ *
+***********************************************************************/
+
+// group_by exposes some additional querying methods such as
 // `group_by()`, `select_count()` and `select_max()` for grouping and aggregating.
+//
 // Using these functions can result in queries which compile correctly but return
 // errors at runtime (if the syntax is wrong), so use them with care.
+//
 
 // Team model, with HasMany association to Player
 #[derive(Debug, Clone, WeldsModel)]

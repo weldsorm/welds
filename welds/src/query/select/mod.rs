@@ -128,7 +128,12 @@ where
     {
         let mut query = self.clone();
         query.limit = Some(1);
-        query.run(client).await?.into_iter().nth(0).ok_or(WeldsError::RowNowFound)
+        query
+            .run(client)
+            .await?
+            .into_iter()
+            .nth(0)
+            .ok_or(WeldsError::RowNowFound)
     }
 }
 

@@ -1,8 +1,8 @@
 use super::get_conn;
+use welds::Client;
 use welds::detect::find_table;
 use welds::errors::Result;
 use welds::migrations::prelude::*;
-use welds::Client;
 
 /************************************************
 * two migrations shouldn't have the same name

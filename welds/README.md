@@ -54,14 +54,14 @@ pub struct Product {
 ### Basic Select 
 ```rust
   let url = "postgres://postgres:password@localhost:5432";
-  let client = welds::connections::postgres::connect(url).await.unwrap();
+  let client = welds::connections::connect(url).await.unwrap();
 
   let products = Product::where_col(|p| p.price.equal(3.50)).run(&client).await?;
 ```
 
 ### Basic Filter Across tables
 ```rust
-  let client = welds::connections::mssql::connect(url).await.unwrap();
+  let client = welds::connections::connect(url).await.unwrap();
 
   let sellers = Product::where_col(|product| product.price.equal(3.50))
         .map_query(|product| product.seller )
@@ -71,7 +71,7 @@ pub struct Product {
 
 ### Create And Update
 ```rust
-  let client = welds::connections::sqlite::connect(url).await.unwrap();
+  let client = welds::connections::connect(url).await.unwrap();
 
   let mut cookies = Product::new();
   cookies.name = "cookies".to_owned();
@@ -100,6 +100,9 @@ welds-connections features needed for mssql (tiberius):
 * mssql-rust_decimal
 * mssql-bigdecimal
 
+## Documentation
+
+If you are looking for documentation on how to use welds, A good place to start is [The Welds Book](https://book.weldsorm.com).
 
 ## Other Examples
  - [Basic CRUD](https://github.com/weldsorm/welds/blob/main/welds/examples/crud.rs)
@@ -109,7 +112,7 @@ welds-connections features needed for mssql (tiberius):
  - [Fetch related objects with include](https://github.com/weldsorm/welds/blob/main/welds/examples/includes.rs)
  - [Hooks, Callback when models (Save/Update/Delete)](https://github.com/weldsorm/welds/blob/main/welds/examples/hooks.rs)
  - [Scopes for your Models](https://github.com/weldsorm/welds/blob/main/welds/examples/scopes.rs)
- - [Grouping and Aggregate Functions](https://github.com/weldsorm/welds/blob/main/welds/examples/aggregating.rs)
+ - [Grouping and Aggregate Functions](https://github.com/weldsorm/welds/blob/main/welds/examples/group_by.rs)
  - [Migrations](https://github.com/weldsorm/welds/blob/main/welds/examples/migrations.rs)
  - [Wrapping operations in Transactions](https://github.com/weldsorm/welds/blob/main/welds/examples/transactions.rs)
  - [Checking DB schema matches compiled structs](https://github.com/weldsorm/welds/blob/main/welds/examples/verify_tables.rs)

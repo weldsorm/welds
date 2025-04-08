@@ -1,9 +1,9 @@
+use crate::Client;
 use crate::errors::Result;
 use crate::model_traits::{HasSchema, TableColumns, TableInfo, WriteToArgs};
 use crate::query::clause::ParamArgs;
 use crate::writers::ColumnWriter;
 use crate::writers::NextParam;
-use crate::Client;
 //use crate::Syntax;
 
 /// Executes the query in the database Bulk Inserting values

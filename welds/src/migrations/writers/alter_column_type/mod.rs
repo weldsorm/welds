@@ -1,5 +1,5 @@
-use crate::detect::{ColumnDef, TableDef};
 use crate::Syntax;
+use crate::detect::{ColumnDef, TableDef};
 mod pg_writer;
 mod sqlite_writer;
 

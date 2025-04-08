@@ -1,12 +1,12 @@
 use super::SelectBuilder;
 use super::SelectColumn;
+use crate::Syntax;
 use crate::model_traits::{HasSchema, TableInfo};
 use crate::query::clause::ClauseAdder;
 use crate::query::clause::ParamArgs;
-use crate::writers::alias::TableAlias;
 use crate::writers::ColumnWriter;
 use crate::writers::NextParam;
-use crate::Syntax;
+use crate::writers::alias::TableAlias;
 use std::sync::Arc;
 
 pub(crate) struct JoinBuilder {

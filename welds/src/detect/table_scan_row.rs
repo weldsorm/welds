@@ -1,6 +1,6 @@
 use super::table_def::DataType;
-use crate::model_traits::TableIdent;
 use crate::Row;
+use crate::model_traits::TableIdent;
 
 pub struct TableScanRow {
     pub(super) schema: Option<String>,

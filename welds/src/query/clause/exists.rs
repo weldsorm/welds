@@ -1,10 +1,10 @@
 use super::ClauseAdder;
+use crate::Syntax;
 use crate::query::builder::QueryBuilder;
 use crate::query::clause::OrderBy;
 use crate::query::clause::ParamArgs;
-use crate::writers::alias::TableAlias;
 use crate::writers::NextParam;
-use crate::Syntax;
+use crate::writers::alias::TableAlias;
 use std::sync::Arc;
 
 /// Used to generated a SQL EXISTS OR IN clause for writing sub-queries

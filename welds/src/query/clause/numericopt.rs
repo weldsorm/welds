@@ -1,12 +1,10 @@
-use super::{
-    AsFieldName, AsOptField, ClauseColVal, ClauseColValEqual, ClauseColValIn,
-};
+#[cfg(feature = "postgres")]
+use super::ClauseColValList;
+use super::{AsFieldName, AsOptField, ClauseColVal, ClauseColValEqual, ClauseColValIn};
 use crate::query::optional::HasSomeNone;
 use crate::query::optional::Optional;
 use std::marker::PhantomData;
 use welds_connections::Param;
-#[cfg(feature = "postgres")]
-use super::ClauseColValList;
 
 pub struct NumericOpt<T> {
     col: String,

@@ -1,5 +1,5 @@
-use welds_connections::Syntax;
 use crate::writers::ColumnWriter;
+use welds_connections::Syntax;
 
 pub(crate) struct SelectColumn {
     pub(crate) col_name: String,
@@ -17,11 +17,11 @@ impl SelectColumn {
 pub(crate) enum SelectKind {
     Column,
     All,
-    #[cfg(feature = "group-by")]
+    #[cfg(feature = "unstable-api")]
     Count,
-    #[cfg(feature = "group-by")]
+    #[cfg(feature = "unstable-api")]
     Max,
-    #[cfg(feature = "group-by")]
+    #[cfg(feature = "unstable-api")]
     Min,
 }
 
@@ -42,15 +42,15 @@ impl SelectColumn {
             SelectKind::All => {
                 format!("{}.*", alias)
             }
-            #[cfg(feature = "group-by")]
+            #[cfg(feature = "unstable-api")]
             SelectKind::Count => {
                 format!("COUNT({}.{}) AS {}", alias, colname, fieldname)
             }
-            #[cfg(feature = "group-by")]
+            #[cfg(feature = "unstable-api")]
             SelectKind::Max => {
                 format!("MAX({}.{}) AS {}", alias, colname, fieldname)
             }
-            #[cfg(feature = "group-by")]
+            #[cfg(feature = "unstable-api")]
             SelectKind::Min => {
                 format!("MIN({}.{}) AS {}", alias, colname, fieldname)
             }

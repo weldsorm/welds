@@ -1,117 +1,71 @@
-use welds::errors::Result;
-use welds::migrations::prelude::*;
 use welds::prelude::*;
 
-#[derive(Debug, WeldsModel)]
-#[welds(table = "people")]
-#[welds(BelongsTo(team, Team, "team_id"))]
-pub struct Person {
-    #[welds(primary_key)]
-    pub id: i32,
-    pub team_id: i32,
-    pub firstname: String,
-    pub lastname: String,
-}
+// Enabling the `unstable-api` feature exposes some additional querying methods such as
+// `group_by()`, `select_count()` and `select_max()` for grouping and aggregating.
+// Using these functions can result in queries which compile correctly but return
+// errors at runtime (if the syntax is wrong), so use them with care.
 
-#[derive(Debug, WeldsModel)]
-#[welds(table = "teams")]
-#[welds(HasMany(people, Person, "team_id"))]
+// Team model, with HasMany association to Player
+#[derive(Debug, Clone, WeldsModel)]
+#[welds(table = "Teams")]
+#[welds(HasMany(players, Player, "team_id"))]
 pub struct Team {
     #[welds(primary_key)]
     pub id: i32,
-    pub color: String,
+    pub name: String,
 }
 
+// Player model, with BelongsTo association for Team
 #[derive(Debug, WeldsModel)]
-pub struct Counts {
-    count: i32,
+#[welds(table = "Players")]
+#[welds(BelongsTo(team, Team, "team_id"))]
+pub struct Player {
+    #[welds(primary_key)]
+    pub id: i32,
+    pub team_id: i32,
+    pub name: String,
 }
 
+// Struct for collecting results for Team query with a count of it's associated Player(s)
 #[derive(Debug, WeldsModel)]
-pub struct CountLastnames {
-    lastname: String,
-    count: i32,
+pub struct TeamWithPlayerCount {
+    pub id: i32,
+    pub name: String,
+    pub player_count: i32,
 }
 
 #[async_std::main]
-async fn main() -> Result<()> {
-    pretty_env_logger::init();
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let connection_string = "sqlite::memory:";
+    let client = welds::connections::connect(connection_string).await?;
 
-    // Setup a database database with some fake data
-    let client = welds::connections::connect("sqlite::memory:").await?;
-    up(&client, &[create_teams_table, create_peoples_table]).await?;
-    seed(&client).await?;
+    // Build an in memory DB with a schema
+    let schema = include_str!("../../tests/testlib/databases/sqlite/01_create_tables.sql");
+    client.execute(schema, &[]).await?;
 
-    let counts: Vec<Counts> = Person::all()
-        .select_count(|x| x.firstname, "count")
-        .run(&client)
-        .await?
-        .collect_into()?;
+    // Populate the DB some example data
+    let data = include_str!("../../tests/testlib/databases/sqlite/02_add_test_data.sql");
+    client.execute(data, &[]).await?;
 
-    // There is no group by, should only have one row returning the total counts
-    // Total counts should be the total number of people
-    assert_eq!(counts.len(), 1);
-    assert_eq!(counts[0].count, 1000);
-    println!("Total Names: {}", counts[0].count);
+    // Example query; select all columns from teams table where team name starts with "L",
+    // left join to the players table, select COUNT(players.id) as "player_count",
+    // group by team id and order by team name:
+    let query = Team::where_col(|team| team.name.like("L%"))
+        .select_all()
+        .left_join(
+            |team| team.players,
+            Player::all().select_count(|player| player.id, "player_count"),
+        )
+        .group_by(|team| team.id)
+        .order_by_asc(|team| team.name);
 
-    // Run the same query but this time group by the lastname
-    let counts: Vec<CountLastnames> = Person::all()
-        .select_count(|x| x.id, "count")
-        .select(|x| x.lastname)
-        .group_by(|x| x.lastname)
-        .run(&client)
-        .await?
-        .collect_into()?;
+    // Collect the resulting rows into a Vec of TeamWithPlayerCount structs containing
+    // each team's id, name, and player_count
+    let collection: Vec<TeamWithPlayerCount> = query.run(&client).await?.collect_into()?;
 
-    // Display the count for each lastname
-    for count in counts {
-        println!("Lastname Total: {} : {}", count.lastname, count.count);
+    for row in collection {
+        println!("Count: {:?}", row);
     }
 
-    Ok(())
-}
-
-// ********************************************************************
-// Setup junk
-// ********************************************************************
-
-fn create_teams_table(_: &TableState) -> Result<MigrationStep> {
-    let m = create_table("teams")
-        .id(|c| c("id", Type::Int))
-        .column(|c| c("color", Type::String));
-    Ok(MigrationStep::new("create_teams_table", m))
-}
-
-fn create_peoples_table(_: &TableState) -> Result<MigrationStep> {
-    let m = create_table("people")
-        .id(|c| c("id", Type::Int))
-        .column(|c| c("team_id", Type::Int))
-        .column(|c| c("firstname", Type::String))
-        .column(|c| c("lastname", Type::String));
-    Ok(MigrationStep::new("create_peoples_table", m))
-}
-
-// A simple migration to setup the peoples table.
-async fn seed(client: &dyn Client) -> Result<()> {
-    let teams: Vec<_> = (0..100)
-        .map(|i| Team {
-            id: 0,
-            // everyone has new unique firstname
-            color: (if i % 2 == 0 { "Green" } else { "blue" }).to_owned(),
-        })
-        .collect();
-    welds::query::insert::bulk_insert(client, &teams).await?;
-
-    let people: Vec<_> = (0..1000)
-        .map(|i| Person {
-            id: 0,
-            team_id: i % 10,
-            // everyone has new unique firstname
-            firstname: format!("Firstname(#{})", i),
-            // repeating last names
-            lastname: format!("Lastname(#{})", i % 10),
-        })
-        .collect();
-    welds::query::insert::bulk_insert(client, &people).await?;
     Ok(())
 }

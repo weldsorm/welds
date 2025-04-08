@@ -1,13 +1,13 @@
-use welds_connections::trace;
 use crate::errors::Result;
 use crate::model_traits::{HasSchema, TableColumns, TableInfo};
 use crate::query::clause::ParamArgs;
 use crate::query::helpers::{build_tail, build_where_clauses, join_sql_parts};
 use crate::query::select_cols::SelectBuilder;
 use crate::writers::{ColumnWriter, NextParam};
-use crate::{Client, WeldsError};
 use crate::Row;
 use crate::Syntax;
+use crate::{Client, WeldsError};
+use welds_connections::trace;
 
 // ******************************************************************************************
 // This file contains all the stuff added onto the SelectBuilder to allow it to run SELECTs
@@ -75,16 +75,16 @@ where
     }
 
     fn validate_group_by(&self) -> Result<()> {
-        #[cfg(feature = "group-by")]
+        #[cfg(feature = "unstable-api")]
         if self.requires_group_by() && self.group_bys.is_empty() {
-            return Err(WeldsError::ColumnMissingFromGroupBy)
+            return Err(WeldsError::ColumnMissingFromGroupBy);
         }
-
         Ok(())
     }
 
     fn requires_group_by(&self) -> bool {
-        self.selects.iter().any(|s| s.is_aggregate()) && self.selects.iter().any(|s| !s.is_aggregate())
+        self.selects.iter().any(|s| s.is_aggregate())
+            && self.selects.iter().any(|s| !s.is_aggregate())
     }
 }
 
@@ -138,13 +138,18 @@ where
     T: HasSchema,
     <T as HasSchema>::Schema: TableInfo + TableColumns,
 {
-    if sb.group_bys.is_empty() { return None }
+    if sb.group_bys.is_empty() {
+        return None;
+    }
 
     let writer = ColumnWriter::new(syntax);
     let mut cols: Vec<String> = Vec::default();
 
     for group_by in &sb.group_bys {
-        let alias = group_by.table_alias.as_ref().unwrap_or_else(|| &sb.qb.alias);
+        let alias = group_by
+            .table_alias
+            .as_ref()
+            .unwrap_or_else(|| &sb.qb.alias);
         cols.push(format!("{}.{}", alias, writer.excape(&group_by.col_name)))
     }
 

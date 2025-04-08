@@ -9,7 +9,6 @@ edition = "2021"
 [dependencies]
 testlib = { path = "../testlib" }
 welds-connections = { path = "../../welds-connections", features = [ 'mssql', 'mssql-chrono']  }
-#welds-connections = { path = "../../welds-connections", features = [ 'mssql', 'mssql-chrono', "mssql-json"]  }
 welds = { path = "../../welds", features = [ 'mssql', 'detect', 'check', 'migrations']  }
 tokio = { version = "1", features = ["full"] }
 log = "0.4.21"

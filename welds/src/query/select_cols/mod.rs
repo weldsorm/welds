@@ -1,8 +1,8 @@
 use crate::model_traits::{HasSchema, TableColumns, TableInfo, UniqueIdentifier};
 use crate::query::builder::QueryBuilder;
 use crate::query::clause::{AsFieldName, ClauseAdder};
-use crate::query::select_cols::select_column::SelectKind;
 use crate::query::select_cols::group_by::GroupBy;
+use crate::query::select_cols::select_column::SelectKind;
 use crate::relations::{HasRelations, Relationship};
 use crate::writers::alias::TableAlias;
 pub use join::Join;
@@ -11,9 +11,9 @@ use select_column::SelectColumn;
 use std::sync::Arc;
 
 mod exec;
+mod group_by;
 mod join;
 mod select_column;
-mod group_by;
 
 #[cfg(test)]
 mod tests;
@@ -86,7 +86,7 @@ where
         self
     }
 
-    #[cfg(feature = "group-by")]
+    #[cfg(feature = "unstable-api")]
     pub fn select_count<V, FN: AsFieldName<V>>(
         mut self,
         lam: impl Fn(<T as HasSchema>::Schema) -> FN,
@@ -101,7 +101,7 @@ where
         self
     }
 
-    #[cfg(feature = "group-by")]
+    #[cfg(feature = "unstable-api")]
     pub fn select_max<V, FN: AsFieldName<V>>(
         mut self,
         lam: impl Fn(<T as HasSchema>::Schema) -> FN,
@@ -116,7 +116,7 @@ where
         self
     }
 
-    #[cfg(feature = "group-by")]
+    #[cfg(feature = "unstable-api")]
     pub fn select_min<V, FN: AsFieldName<V>>(
         mut self,
         lam: impl Fn(<T as HasSchema>::Schema) -> FN,
@@ -217,7 +217,9 @@ where
     {
         let ship = relationship(Default::default());
         sb.set_aliases(&self.qb.alias_asigner);
-        let _joined_group_bys = sb.group_bys.drain(..)
+        let _joined_group_bys = sb
+            .group_bys
+            .drain(..)
             .map(|gb| self.group_bys.push(gb.set_alias(&sb.qb.alias)))
             .collect::<Vec<_>>();
         let outer_key = ship.my_key::<R::Schema, T::Schema>();
@@ -228,7 +230,7 @@ where
         self
     }
 
-    #[cfg(feature = "group-by")]
+    #[cfg(feature = "unstable-api")]
     pub fn group_by<V, FN: AsFieldName<V>>(
         mut self,
         lam: impl Fn(<T as HasSchema>::Schema) -> FN,

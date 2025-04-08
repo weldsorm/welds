@@ -60,6 +60,7 @@ where
     }
 
     /// Select all columns, equivalent to `SELECT table_name.*`
+    #[cfg(feature = "unstable-api")]
     pub fn select_all(mut self) -> SelectBuilder<T> {
         self.selects.push(SelectColumn {
             col_name: Default::default(),

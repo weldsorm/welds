@@ -358,6 +358,7 @@ where
     }
 
     /// Select all columns, equivalent to `SELECT table_name.*`
+    #[cfg(feature = "unstable-api")]
     pub fn select_all(self) -> SelectBuilder<T> {
         SelectBuilder::new(self).select_all()
     }

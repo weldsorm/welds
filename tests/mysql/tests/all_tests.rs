@@ -9,7 +9,7 @@ use welds::connections::mysql::MysqlClient;
 use welds::state::{DbState, DbStatus};
 
 mod extra_types;
-//mod group_by;
+mod group_by;
 mod migrations;
 
 async fn get_conn() -> MysqlClient {

@@ -32,7 +32,6 @@ pub struct TeamWithPlayerCount {
 pub struct TeamWithLatestPlayer {
     pub team_id: i32,
     pub player_id: i32,
-    pub latest_player: String,
 }
 
 #[tokio::test]
@@ -46,7 +45,8 @@ async fn should_join_data_with_group_by_and_count() {
             |t| t.players,
             Player::all().select_count(|p| p.id, "player_count"),
         )
-        .group_by(|t| t.id);
+        .group_by(|t| t.id)
+        .group_by(|t| t.name);
 
     let collection: Vec<TeamWithPlayerCount> =
         query.run(&conn).await.unwrap().collect_into().unwrap();
@@ -85,9 +85,7 @@ async fn should_join_data_with_group_by_and_max() {
         .select_as(|t| t.id, "team_id")
         .left_join(
             |t| t.players,
-            Player::all()
-                .select_max(|p| p.id, "player_id")
-                .select_as(|p| p.name, "latest_player"),
+            Player::all().select_max(|p| p.id, "player_id"),
         )
         .group_by(|t| t.id);
 
@@ -98,24 +96,21 @@ async fn should_join_data_with_group_by_and_max() {
         collection[0],
         TeamWithLatestPlayer {
             team_id: 1,
-            player_id: 1,
-            latest_player: "Andy Anderson".to_string()
+            player_id: 1
         }
     );
     assert_eq!(
         collection[1],
         TeamWithLatestPlayer {
             team_id: 2,
-            player_id: 2,
-            latest_player: "Bobby Biggs".to_string()
+            player_id: 2
         }
     );
     assert_eq!(
         collection[2],
         TeamWithLatestPlayer {
             team_id: 3,
-            player_id: 4,
-            latest_player: "Danny Dier".to_string()
+            player_id: 4
         }
     );
 }

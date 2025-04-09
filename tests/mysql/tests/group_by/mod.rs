@@ -85,13 +85,12 @@ fn should_join_data_with_group_by_and_max() {
         let conn = get_conn().await;
 
         let query = Team::all()
-            .select(|t| t.id)
-            //.select_as(|t| t.id, "team_id")
+            .select_as(|t| t.id, "team_id")
             .left_join(
                 |t| t.players,
                 Player::all()
                     .select_max(|p| p.id, "player_id")
-                    .select(|p| p.name)
+                    .select_as(|p| p.name, "latest_player")
                     .group_by(|p| p.name),
             )
             .group_by(|t| t.id);

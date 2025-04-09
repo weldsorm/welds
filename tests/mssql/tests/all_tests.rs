@@ -9,7 +9,7 @@ use welds::state::{DbState, DbStatus};
 use welds::{Client, Syntax};
 
 mod extra_types;
-mod group_by;
+//mod group_by;
 mod migrations;
 
 async fn get_conn() -> MssqlClient {

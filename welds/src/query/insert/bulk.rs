@@ -7,7 +7,28 @@ use crate::writers::NextParam;
 //use crate::Syntax;
 
 /// Executes the query in the database Bulk Inserting values
-pub async fn run<T>(conn: &dyn Client, data: &[T]) -> Result<()>
+/// The primary_keys will be inserted as part of the data
+pub async fn run_with_ids<T>(conn: &dyn Client, data: &[T]) -> Result<()>
+where
+    T: WriteToArgs + HasSchema,
+    <T as HasSchema>::Schema: TableInfo + TableColumns,
+{
+    run(conn, data, true).await
+    //
+}
+
+/// Executes the query in the database Bulk Inserting values
+/// The primary_keys will NOT be inserted as part of the data
+pub async fn run_without_ids<T>(conn: &dyn Client, data: &[T]) -> Result<()>
+where
+    T: WriteToArgs + HasSchema,
+    <T as HasSchema>::Schema: TableInfo + TableColumns,
+{
+    run(conn, data, false).await
+}
+
+/// Executes the query in the database Bulk Inserting values
+async fn run<T>(conn: &dyn Client, data: &[T], with_ids: bool) -> Result<()>
 where
     T: WriteToArgs + HasSchema,
     <T as HasSchema>::Schema: TableInfo + TableColumns,
@@ -25,7 +46,11 @@ where
     let col_writer = ColumnWriter::new(syntax);
     let all_columns = <<T as HasSchema>::Schema as TableColumns>::columns();
     let pks = <<T as HasSchema>::Schema as TableColumns>::primary_keys();
-    let columns: Vec<_> = all_columns.iter().filter(|c| !pks.contains(c)).collect();
+
+    let columns: Vec<_> = all_columns
+        .iter()
+        .filter(|c| with_ids || !pks.contains(c))
+        .collect();
 
     let identifier = <<T as HasSchema>::Schema>::identifier().join(".");
 

@@ -9,11 +9,12 @@ use welds::state::{DbState, DbStatus};
 use welds::{Client, Syntax};
 
 mod extra_types;
-//mod group_by;
+mod group_by;
 mod migrations;
 
 async fn get_conn() -> MssqlClient {
     let cs = testlib::mssql::conn_string();
+    //let cs = "server=127.0.0.1;user id=sa;password=welds!123;TrustServerCertificate=true;";
     let client: MssqlClient = connect(&cs).await.unwrap();
     client
 }
@@ -25,15 +26,15 @@ pub struct Test {
 
 #[tokio::test]
 async fn should_be_able_to_connect() {
-    let conn = get_conn().await;
-    assert!(true);
+    // no errors
+    let _conn = get_conn().await;
 }
 
 #[tokio::test]
 async fn should_select_with_raw_connection() {
-    let mut conn = get_conn().await;
+    let conn = get_conn().await;
     let sql = "SELECT id FROM welds.products where id != @p1 AND id != @p2";
-    let rows = conn.fetch_rows(&sql, &[&41, &43]).await;
+    let rows = conn.fetch_rows(sql, &[&41, &43]).await;
     let rows = rows.unwrap();
     assert!(!rows.is_empty());
 }
@@ -182,7 +183,7 @@ async fn should_be_able_to_filter_with_relations2() {
 #[tokio::test]
 async fn should_be_able_to_scan_for_all_tables() {
     let conn = get_conn().await;
-    let tables = welds::detect::find_tables(&conn).await.unwrap();
+    let tables = welds::detect::find_all_tables(&conn).await.unwrap();
     assert!(tables.len() >= 14);
 }
 
@@ -289,7 +290,7 @@ async fn should_be_able_to_create_a_model_with_a_string_id() {
 
 #[tokio::test]
 async fn should_be_able_to_write_custom_wheres() {
-    use welds::query::builder::ManualWhereParam;
+    use welds::query::builder::ManualParam;
     let conn = get_conn().await;
 
     // find a known in DB row
@@ -297,7 +298,7 @@ async fn should_be_able_to_write_custom_wheres() {
     let known = knowns.pop().unwrap();
     let known_id = known.id;
 
-    let params = ManualWhereParam::new().push(known_id);
+    let params = ManualParam::new().push(known_id);
     // run the custom where
     let found = Product::all()
         .where_manual(|c| c.id, " IN (?)", params)

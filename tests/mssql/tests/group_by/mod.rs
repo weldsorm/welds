@@ -29,6 +29,13 @@ pub struct TeamWithPlayerCount {
 }
 
 #[derive(Debug, PartialEq, WeldsModel)]
+pub struct TeamWithPlayer {
+    pub team_id: i32,
+    pub player_id: i32,
+    pub player_name: String,
+}
+
+#[derive(Debug, PartialEq, WeldsModel)]
 pub struct TeamWithLatestPlayer {
     pub team_id: i32,
     pub player_id: i32,
@@ -46,10 +53,13 @@ async fn should_join_data_with_group_by_and_count() {
             |t| t.players,
             Player::all().select_count(|p| p.id, "player_count"),
         )
+        .order_by_asc(|t| t.id)
         .group_by(|t| t.id);
 
     let collection: Vec<TeamWithPlayerCount> =
         query.run(&conn).await.unwrap().collect_into().unwrap();
+
+    assert_eq!(collection.len(), 3);
 
     assert_eq!(
         collection[0],
@@ -78,7 +88,7 @@ async fn should_join_data_with_group_by_and_count() {
 }
 
 #[tokio::test]
-async fn should_join_data_with_group_by_and_max() {
+async fn should_join_data_with_group_by_and_max_player() {
     let conn = get_conn().await;
 
     let query = Team::all()
@@ -87,12 +97,14 @@ async fn should_join_data_with_group_by_and_max() {
             |t| t.players,
             Player::all()
                 .select_max(|p| p.id, "player_id")
-                .select_as(|p| p.name, "latest_player"),
+                .select_max(|p| p.name, "latest_player"),
         )
+        .order_by_asc(|t| t.id)
         .group_by(|t| t.id);
 
     let collection: Vec<TeamWithLatestPlayer> =
         query.run(&conn).await.unwrap().collect_into().unwrap();
+    assert_eq!(collection.len(), 3);
 
     assert_eq!(
         collection[0],
@@ -116,6 +128,62 @@ async fn should_join_data_with_group_by_and_max() {
             team_id: 3,
             player_id: 4,
             latest_player: "Danny Dier".to_string()
+        }
+    );
+}
+
+#[tokio::test]
+async fn should_join_data_with_group_by_and_max_infered_column() {
+    let conn = get_conn().await;
+
+    let query = Team::all()
+        .select_as(|t| t.id, "team_id")
+        .left_join(
+            |t| t.players,
+            Player::all()
+                .select_max(|p| p.id, "player_id")
+                .select_as(|p| p.name, "player_name"),
+        )
+        .order_by_asc(|t| t.id)
+        .group_by(|t| t.id);
+
+    let collection: Vec<TeamWithPlayer> = query.run(&conn).await.unwrap().collect_into().unwrap();
+
+    assert_eq!(collection.len(), 4);
+
+    assert_eq!(
+        collection[0],
+        TeamWithPlayer {
+            team_id: 1,
+            player_id: 1,
+            player_name: "Andy Anderson".to_string()
+        }
+    );
+
+    assert_eq!(
+        collection[1],
+        TeamWithPlayer {
+            team_id: 2,
+            player_id: 2,
+            player_name: "Bobby Biggs".to_string()
+        }
+    );
+
+    assert_eq!(
+        collection[2],
+        TeamWithPlayer {
+            team_id: 3,
+            player_id: 3,
+            player_name: "Chris Christoferson".to_string()
+        }
+    );
+
+    assert_eq!(
+        collection[3],
+        TeamWithPlayer {
+            team_id: 3,
+            player_id: 4,
+            player_name: "Danny Dier".to_string()
         }
     );
 }

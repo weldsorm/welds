@@ -1,5 +1,6 @@
 use super::SelectBuilder;
 use super::SelectColumn;
+use super::select_column::SelectRender;
 use crate::Syntax;
 use crate::model_traits::{HasSchema, TableInfo};
 use crate::query::clause::ClauseAdder;
@@ -46,14 +47,14 @@ impl JoinBuilder {
         self.inner_alias = self.alias_asigner.next();
     }
 
-    pub(super) fn append_columns(&self, syntax: Syntax, list: &mut Vec<String>) {
+    pub(super) fn append_select_renders(&self, list: &mut Vec<SelectRender>) {
         let alias = &self.inner_alias;
         // Add these columns
         for select in &self.selects {
-            list.push(select.write(syntax, alias))
+            list.push(SelectRender::new(select, alias));
         }
         for sub in &self.subs {
-            sub.append_columns(syntax, list);
+            sub.append_select_renders(list);
         }
     }
 

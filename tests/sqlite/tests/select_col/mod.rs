@@ -197,12 +197,10 @@ fn should_be_able_to_group_by_multiple_columns_from_either_side_of_a_join() {
             })
             .group_by(|o| o.oid);
 
-        assert_eq!(
-            query.to_sql(Syntax::Sqlite),
-            "SELECT t1.\"oid\", COUNT(t2.\"pid\") AS \"product_count\" \
-            FROM orders t1 \
-            LEFT JOIN Products t2 ON t1.\"product_id\" = t2.\"pid\" \
-            GROUP BY t2.\"name\", t1.\"oid\""
-        );
+        let sql_a = "SELECT t1.\"oid\", COUNT(t2.\"pid\") AS \"product_count\" FROM orders t1 LEFT JOIN Products t2 ON t1.\"product_id\" = t2.\"pid\" GROUP BY t1.\"oid\", t2.\"name\"";
+        let sql_b = "SELECT t1.\"oid\", COUNT(t2.\"pid\") AS \"product_count\" FROM orders t1 LEFT JOIN Products t2 ON t1.\"product_id\" = t2.\"pid\" GROUP BY t2.\"name\", t1.\"oid\"";
+        let sql = query.to_sql(Syntax::Sqlite);
+        //both are valid
+        assert!(sql == sql_a || sql == sql_b);
     });
 }

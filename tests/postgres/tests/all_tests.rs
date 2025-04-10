@@ -20,6 +20,8 @@ async fn get_conn() -> PostgresClient {
     let conn = testlib::postgres::conn().await.unwrap();
     let client: PostgresClient = conn.into();
     client
+    //let cs = "postgres://postgres:password@localhost:5432";
+    //welds::connections::postgres::connect(cs).await.unwrap()
 }
 
 #[derive(Default, Debug, Clone)]

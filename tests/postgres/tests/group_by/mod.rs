@@ -1,9 +1,9 @@
-use super::get_conn;
+use crate::get_conn;
 use welds::exts::VecRowExt;
-use welds::prelude::*;
+use welds::{WeldsError, WeldsModel};
 
 #[derive(Debug, Clone, WeldsModel)]
-#[welds(table = "teams")]
+#[welds(table = "Teams")]
 #[welds(HasMany(players, Player, "team_id"))]
 pub struct Team {
     #[welds(primary_key)]
@@ -12,7 +12,7 @@ pub struct Team {
     pub name: String,
 }
 #[derive(Debug, Clone, WeldsModel)]
-#[welds(table = "players")]
+#[welds(table = "Players")]
 #[welds(BelongsTo(team, Team, "team_id"))]
 pub struct Player {
     #[welds(primary_key)]
@@ -29,9 +29,17 @@ pub struct TeamWithPlayerCount {
 }
 
 #[derive(Debug, PartialEq, WeldsModel)]
+pub struct TeamWithPlayer {
+    pub team_id: i32,
+    pub player_id: i32,
+    pub player_name: String,
+}
+
+#[derive(Debug, PartialEq, WeldsModel)]
 pub struct TeamWithLatestPlayer {
     pub team_id: i32,
     pub player_id: i32,
+    pub latest_player: String,
 }
 
 #[test]
@@ -46,11 +54,13 @@ fn should_join_data_with_group_by_and_count() {
                 |t| t.players,
                 Player::all().select_count(|p| p.id, "player_count"),
             )
-            .group_by(|t| t.id)
-            .order_by_asc(|t| t.id);
+            .order_by_asc(|t| t.id)
+            .group_by(|t| t.id);
 
         let collection: Vec<TeamWithPlayerCount> =
             query.run(&conn).await.unwrap().collect_into().unwrap();
+
+        assert_eq!(collection.len(), 3);
 
         assert_eq!(
             collection[0],
@@ -80,7 +90,7 @@ fn should_join_data_with_group_by_and_count() {
 }
 
 #[test]
-fn should_join_data_with_group_by_and_max() {
+fn should_join_data_with_group_by_and_max_player() {
     async_std::task::block_on(async {
         let conn = get_conn().await;
 
@@ -88,34 +98,133 @@ fn should_join_data_with_group_by_and_max() {
             .select_as(|t| t.id, "team_id")
             .left_join(
                 |t| t.players,
-                Player::all().select_max(|p| p.id, "player_id"),
+                Player::all()
+                    .select_max(|p| p.id, "player_id")
+                    .select_max(|p| p.name, "latest_player"),
             )
-            .group_by(|t| t.id)
-            .order_by_asc(|t| t.id);
+            .order_by_asc(|t| t.id)
+            .group_by(|t| t.id);
 
         let collection: Vec<TeamWithLatestPlayer> =
             query.run(&conn).await.unwrap().collect_into().unwrap();
+        assert_eq!(collection.len(), 3);
 
         assert_eq!(
             collection[0],
             TeamWithLatestPlayer {
                 team_id: 1,
-                player_id: 1
+                player_id: 1,
+                latest_player: "Andy Anderson".to_string()
             }
         );
         assert_eq!(
             collection[1],
             TeamWithLatestPlayer {
                 team_id: 2,
-                player_id: 2
+                player_id: 2,
+                latest_player: "Bobby Biggs".to_string()
             }
         );
         assert_eq!(
             collection[2],
             TeamWithLatestPlayer {
                 team_id: 3,
-                player_id: 4
+                player_id: 4,
+                latest_player: "Danny Dier".to_string()
             }
         );
+    })
+}
+
+#[test]
+fn should_join_data_with_group_by_and_max_infered_column() {
+    async_std::task::block_on(async {
+        let conn = get_conn().await;
+
+        let query = Team::all()
+            .select_as(|t| t.id, "team_id")
+            .left_join(
+                |t| t.players,
+                Player::all()
+                    .select_max(|p| p.id, "player_id")
+                    .select_as(|p| p.name, "player_name"),
+            )
+            .order_by_asc(|t| t.id)
+            .group_by(|t| t.id);
+
+        let collection: Vec<TeamWithPlayer> =
+            query.run(&conn).await.unwrap().collect_into().unwrap();
+
+        assert_eq!(collection.len(), 4);
+
+        assert_eq!(
+            collection[0],
+            TeamWithPlayer {
+                team_id: 1,
+                player_id: 1,
+                player_name: "Andy Anderson".to_string()
+            }
+        );
+
+        assert_eq!(
+            collection[1],
+            TeamWithPlayer {
+                team_id: 2,
+                player_id: 2,
+                player_name: "Bobby Biggs".to_string()
+            }
+        );
+
+        assert_eq!(
+            collection[2],
+            TeamWithPlayer {
+                team_id: 3,
+                player_id: 3,
+                player_name: "Chris Christoferson".to_string()
+            }
+        );
+
+        assert_eq!(
+            collection[3],
+            TeamWithPlayer {
+                team_id: 3,
+                player_id: 4,
+                player_name: "Danny Dier".to_string()
+            }
+        );
+    })
+}
+
+#[test]
+fn should_allow_simple_aggregate_functions_without_other_selects() {
+    async_std::task::block_on(async {
+        let conn = get_conn().await;
+
+        let result = Team::all().select_max(|t| t.id, "max_id").run(&conn).await;
+
+        assert!(result.is_ok())
+    })
+}
+
+#[test]
+fn should_return_an_error_if_group_by_clause_is_required() {
+    async_std::task::block_on(async {
+        let conn = get_conn().await;
+
+        let result = Team::all()
+            .select(|t| t.name)
+            .select_max(|t| t.id, "max_id")
+            .run(&conn)
+            .await;
+
+        match result {
+            Ok(_) => panic!(),
+            Err(e) => {
+                assert_eq!(
+                    e.to_string(),
+                    WeldsError::ColumnMissingFromGroupBy.to_string()
+                )
+            }
+        }
     })
 }

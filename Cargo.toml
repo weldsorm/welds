@@ -2,7 +2,8 @@
 default-members = ["welds", "welds-connections", "welds-macros"]
 members = ["welds", "welds-connections", "welds-macros"]
 
-workspace.resolver = "2"
+resolver = "3"
+#workspace.resolver = "2"
 
 [profile.dev.package.sqlx-macros]
 opt-level = 3

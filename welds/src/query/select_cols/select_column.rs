@@ -1,6 +1,7 @@
 use crate::writers::ColumnWriter;
 use welds_connections::Syntax;
 
+/// What is added to the query_builder, will be build into SQL
 pub(crate) struct SelectColumn {
     pub(crate) col_name: String,
     pub(crate) field_name: String,
@@ -9,11 +10,22 @@ pub(crate) struct SelectColumn {
 
 impl SelectColumn {
     pub fn is_aggregate(&self) -> bool {
-        ![SelectKind::All, SelectKind::Column].contains(&self.kind)
+        self.kind.is_aggregate()
+    }
+}
+impl SelectRender {
+    pub fn is_aggregate(&self) -> bool {
+        self.kind.is_aggregate()
     }
 }
 
-#[derive(PartialEq)]
+impl SelectKind {
+    pub fn is_aggregate(&self) -> bool {
+        ![SelectKind::All, SelectKind::Column].contains(&self)
+    }
+}
+
+#[derive(PartialEq, Clone, Debug)]
 pub(crate) enum SelectKind {
     Column,
     All,
@@ -25,8 +37,27 @@ pub(crate) enum SelectKind {
     Min,
 }
 
-impl SelectColumn {
-    pub(crate) fn write(&self, syntax: Syntax, alias: &str) -> String {
+/// used while writing SQL to help keep track of parts of the select
+/// it is the parts needed to know how to write each part of the select
+#[derive(Debug)]
+pub(crate) struct SelectRender {
+    pub(crate) col_name: String,
+    pub(crate) field_name: String,
+    pub(crate) alias: String,
+    pub(crate) kind: SelectKind,
+}
+
+impl SelectRender {
+    pub(crate) fn new(col: &SelectColumn, alias: impl Into<String>) -> Self {
+        Self {
+            col_name: col.col_name.to_owned(),
+            field_name: col.field_name.to_owned(),
+            alias: alias.into(),
+            kind: col.kind.clone(),
+        }
+    }
+
+    pub(crate) fn write(&self, syntax: Syntax) -> String {
         let writer = ColumnWriter::new(syntax);
         let colname = writer.excape(&self.col_name);
         let fieldname = writer.excape(&self.field_name);
@@ -34,25 +65,25 @@ impl SelectColumn {
         match self.kind {
             SelectKind::Column => {
                 if colname == fieldname {
-                    format!("{}.{}", alias, colname)
+                    format!("{}.{}", self.alias, colname)
                 } else {
-                    format!("{}.{} AS {}", alias, colname, fieldname)
+                    format!("{}.{} AS {}", self.alias, colname, fieldname)
                 }
             }
             SelectKind::All => {
-                format!("{}.*", alias)
+                format!("{}.*", self.alias)
             }
             #[cfg(feature = "unstable-api")]
             SelectKind::Count => {
-                format!("COUNT({}.{}) AS {}", alias, colname, fieldname)
+                format!("COUNT({}.{}) AS {}", self.alias, colname, fieldname)
             }
             #[cfg(feature = "unstable-api")]
             SelectKind::Max => {
-                format!("MAX({}.{}) AS {}", alias, colname, fieldname)
+                format!("MAX({}.{}) AS {}", self.alias, colname, fieldname)
             }
             #[cfg(feature = "unstable-api")]
             SelectKind::Min => {
-                format!("MIN({}.{}) AS {}", alias, colname, fieldname)
+                format!("MIN({}.{}) AS {}", self.alias, colname, fieldname)
             }
         }
     }

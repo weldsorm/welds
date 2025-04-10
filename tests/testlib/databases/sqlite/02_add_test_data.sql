@@ -79,28 +79,28 @@ Insert INTO Orders (
 );
 
 INSERT INTO Profiles (id, user_id, image_url) VALUES
-(1, 1, "cat.jpeg"),
-(2, 3, "dog.jpeg"),
-(3, 4, "bird.png");
+(1, 1, 'cat.jpeg'),
+(2, 3, 'dog.jpeg'),
+(3, 4, 'bird.png');
 
 INSERT INTO Users (id, name) VALUES
-(1, "Alice"),
-(2, "Bob"),
-(3, "Catherine"),
-(4, "Danny");
+(1, 'Alice'),
+(2, 'Bob'),
+(3, 'Catherine'),
+(4, 'Danny');
 
 INSERT INTO Cities (id, name) VALUES
-(1, "Birmingham"),
-(2, "Liverpool"),
-(3, "Manchester");
+(1, 'Birmingham'),
+(2, 'Liverpool'),
+(3, 'Manchester');
 
 INSERT INTO Teams (id, city_id, name) VALUES
-(1, 2, "Liverpool FC"),
-(2, 3, "Manchester City"),
-(3, 3, "Manchester United");
+(1, 2, 'Liverpool FC'),
+(2, 3, 'Manchester City'),
+(3, 3, 'Manchester United');
 
 INSERT INTO Players (id, team_id, name) VALUES
-(1, 1, "Andy Anderson"),
-(2, 2, "Bobby Biggs"),
-(3, 3, "Chris Christoferson"),
-(4, 3, "Danny Dier");
+(1, 1, 'Andy Anderson'),
+(2, 2, 'Bobby Biggs'),
+(3, 3, 'Chris Christoferson'),
+(4, 3, 'Danny Dier');

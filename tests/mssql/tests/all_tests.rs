@@ -14,6 +14,7 @@ mod migrations;
 
 async fn get_conn() -> MssqlClient {
     let cs = testlib::mssql::conn_string();
+    //let cs = "server=127.0.0.1;user id=sa;password=welds!123;TrustServerCertificate=true;";
     let client: MssqlClient = connect(&cs).await.unwrap();
     client
 }

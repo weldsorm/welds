@@ -5,7 +5,11 @@
 version: "3.4"
 services:
 
+  # external tools
   # export DATABASE_URL='mssql://sa:welds!123@127.0.0.1:1433'
+  #
+  # for within welds (ado.net style)
+  # export DATABASE_URL='server=127.0.0.1;user id=sa;password=welds!123;TrustServerCertificate=true;'
 
   db:
     build: .

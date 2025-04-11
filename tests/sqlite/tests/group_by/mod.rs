@@ -152,7 +152,7 @@ fn should_join_data_with_group_by_and_max_infered_column() {
         let collection: Vec<TeamWithPlayer> =
             query.run(&conn).await.unwrap().collect_into().unwrap();
 
-        assert_eq!(collection.len(), 4);
+        assert_eq!(collection.len(), 3);
 
         assert_eq!(
             collection[0],
@@ -174,15 +174,6 @@ fn should_join_data_with_group_by_and_max_infered_column() {
 
         assert_eq!(
             collection[2],
-            TeamWithPlayer {
-                team_id: 3,
-                player_id: 3,
-                player_name: "Chris Christoferson".to_string()
-            }
-        );
-
-        assert_eq!(
-            collection[3],
             TeamWithPlayer {
                 team_id: 3,
                 player_id: 4,

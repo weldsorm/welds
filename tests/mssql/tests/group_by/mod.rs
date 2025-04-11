@@ -56,35 +56,37 @@ async fn should_join_data_with_group_by_and_count() {
         .order_by_asc(|t| t.id)
         .group_by(|t| t.id);
 
-    let collection: Vec<TeamWithPlayerCount> =
-        query.run(&conn).await.unwrap().collect_into().unwrap();
+    let collection: Result<_, _> = query.run(&conn).await;
+    assert!(collection.is_err(), "For MSSQL, This is invalid SQL");
 
-    assert_eq!(collection.len(), 3);
+    //let collection: Vec<TeamWithPlayerCount> =
+    //    query.run(&conn).await.unwrap().collect_into().unwrap();
 
-    assert_eq!(
-        collection[0],
-        TeamWithPlayerCount {
-            team_id: 1,
-            team_name: "Liverpool FC".to_string(),
-            player_count: 1
-        }
-    );
-    assert_eq!(
-        collection[1],
-        TeamWithPlayerCount {
-            team_id: 2,
-            team_name: "Manchester City".to_string(),
-            player_count: 1
-        }
-    );
-    assert_eq!(
-        collection[2],
-        TeamWithPlayerCount {
-            team_id: 3,
-            team_name: "Manchester United".to_string(),
-            player_count: 2
-        }
-    );
+    // assert_eq!(collection.len(), 3);
+    // assert_eq!(
+    //     collection[0],
+    //     TeamWithPlayerCount {
+    //         team_id: 1,
+    //         team_name: "Liverpool FC".to_string(),
+    //         player_count: 1
+    //     }
+    // );
+    // assert_eq!(
+    //     collection[1],
+    //     TeamWithPlayerCount {
+    //         team_id: 2,
+    //         team_name: "Manchester City".to_string(),
+    //         player_count: 1
+    //     }
+    // );
+    // assert_eq!(
+    //     collection[2],
+    //     TeamWithPlayerCount {
+    //         team_id: 3,
+    //         team_name: "Manchester United".to_string(),
+    //         player_count: 2
+    //     }
+    // );
 }
 
 #[tokio::test]
@@ -147,45 +149,8 @@ async fn should_join_data_with_group_by_and_max_infered_column() {
         .order_by_asc(|t| t.id)
         .group_by(|t| t.id);
 
-    let collection: Vec<TeamWithPlayer> = query.run(&conn).await.unwrap().collect_into().unwrap();
-
-    assert_eq!(collection.len(), 4);
-
-    assert_eq!(
-        collection[0],
-        TeamWithPlayer {
-            team_id: 1,
-            player_id: 1,
-            player_name: "Andy Anderson".to_string()
-        }
-    );
-
-    assert_eq!(
-        collection[1],
-        TeamWithPlayer {
-            team_id: 2,
-            player_id: 2,
-            player_name: "Bobby Biggs".to_string()
-        }
-    );
-
-    assert_eq!(
-        collection[2],
-        TeamWithPlayer {
-            team_id: 3,
-            player_id: 3,
-            player_name: "Chris Christoferson".to_string()
-        }
-    );
-
-    assert_eq!(
-        collection[3],
-        TeamWithPlayer {
-            team_id: 3,
-            player_id: 4,
-            player_name: "Danny Dier".to_string()
-        }
-    );
+    let collection: Result<_, _> = query.run(&conn).await;
+    assert!(collection.is_err(), "This is invalid SQL");
 }
 
 #[tokio::test]

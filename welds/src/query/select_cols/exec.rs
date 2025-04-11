@@ -174,24 +174,26 @@ where
     let writer = ColumnWriter::new(syntax);
     let mut cols: Vec<String> = Vec::default();
 
-    // build a collection of all the columns to group by
-
-    // start with the ones that are required
+    // build a list of all the columns that are expected to be in a grouped by
     let mut must_group: HashSet<(&str, &str)> = columns
         .iter()
         .filter(|x| !x.is_aggregate())
         .map(|x| (x.alias.as_str(), x.col_name.as_str()))
         .collect();
 
-    // Add the group_by columns the user asked for
     for group_by in &sb.group_bys {
         let alias = group_by.table_alias.as_ref().unwrap_or(&sb.qb.alias);
-        must_group.insert((alias, group_by.col_name.as_str()));
+        cols.push(format!("{}.{}", alias, writer.excape(&group_by.col_name)));
+        must_group.remove(&(alias.as_str(), group_by.col_name.as_str()));
     }
 
-    // write out the group by
-    for (alias, col_name) in must_group.iter() {
-        cols.push(format!("{}.{}", alias, writer.excape(col_name)));
-    }
+    // We have detected column that the user has selected, that *should* be grouped by.
+    // This isn't an error in all databases, but could be an ambiguous query
+    //
+    //if !must_group.is_empty() {
+    //    let columns: Vec<_> = must_group.iter().collect();
+    //    log::warn!("group by missing columns {:?}", columns);
+    //}
+
     Some(format!("GROUP BY {}", cols.join(", ")))
 }

@@ -152,46 +152,8 @@ fn should_join_data_with_group_by_and_max_infered_column() {
             .order_by_asc(|t| t.id)
             .group_by(|t| t.id);
 
-        let collection: Vec<TeamWithPlayer> =
-            query.run(&conn).await.unwrap().collect_into().unwrap();
-
-        assert_eq!(collection.len(), 4);
-
-        assert_eq!(
-            collection[0],
-            TeamWithPlayer {
-                team_id: 1,
-                player_id: 1,
-                player_name: "Andy Anderson".to_string()
-            }
-        );
-
-        assert_eq!(
-            collection[1],
-            TeamWithPlayer {
-                team_id: 2,
-                player_id: 2,
-                player_name: "Bobby Biggs".to_string()
-            }
-        );
-
-        assert_eq!(
-            collection[2],
-            TeamWithPlayer {
-                team_id: 3,
-                player_id: 3,
-                player_name: "Chris Christoferson".to_string()
-            }
-        );
-
-        assert_eq!(
-            collection[3],
-            TeamWithPlayer {
-                team_id: 3,
-                player_id: 4,
-                player_name: "Danny Dier".to_string()
-            }
-        );
+        let collection: Result<_, _> = query.run(&conn).await;
+        assert!(collection.is_err(), "This is invalid SQL");
     })
 }
 

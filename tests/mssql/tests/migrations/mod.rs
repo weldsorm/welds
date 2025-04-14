@@ -1,3 +1,4 @@
+use serial_test::serial;
 use super::get_conn;
 use welds::Client;
 use welds::detect::find_table;
@@ -34,6 +35,7 @@ fn test_create_table_migration(_state: &TableState) -> Result<MigrationStep> {
 }
 
 #[tokio::test]
+#[serial]
 async fn should_be_able_to_create_a_table() {
     //env_logger::init();
     let client = get_conn().await;
@@ -83,6 +85,7 @@ fn drop_table_m2(state: &TableState) -> Result<MigrationStep> {
 }
 
 #[tokio::test]
+#[serial]
 async fn should_be_able_to_drop_a_table() {
     let client = get_conn().await;
     let client = &client;
@@ -133,6 +136,7 @@ fn rename_column_test_migration(state: &TableState) -> Result<MigrationStep> {
 }
 
 #[tokio::test]
+#[serial]
 async fn should_be_able_to_rename_a_column() {
     let client = get_conn().await;
     let client = &client;
@@ -179,6 +183,7 @@ fn change_type_test_migration(state: &TableState) -> Result<MigrationStep> {
 }
 
 #[tokio::test]
+#[serial]
 async fn should_be_able_to_change_a_type_without_dropping_data() {
     let client = get_conn().await;
     let client = &client;
@@ -245,6 +250,7 @@ fn drop_column_test_migration(state: &TableState) -> Result<MigrationStep> {
 }
 
 #[tokio::test]
+#[serial]
 async fn should_be_able_to_drop_a_column() {
     let client = get_conn().await;
     let client = &client;
@@ -288,6 +294,7 @@ fn add_column_test_migration(state: &TableState) -> Result<MigrationStep> {
 }
 
 #[tokio::test]
+#[serial]
 async fn should_be_able_to_add_a_column() {
     let client = get_conn().await;
     let client = &client;
@@ -330,6 +337,7 @@ fn manual_step(state: &TableState) -> Result<MigrationStep> {
 }
 
 #[tokio::test]
+#[serial]
 async fn should_be_able_to_run_manual_migration_step() {
     let client = get_conn().await;
     let client = &client;
@@ -352,6 +360,7 @@ fn creating_a_fk_to_nontable_should_fail(_state: &TableState) -> Result<Migratio
 }
 
 #[tokio::test]
+#[serial]
 async fn creating_a_fk_to_nontable_should_fail_test() {
     let client = get_conn().await;
     let client = &client;
@@ -378,6 +387,7 @@ fn creating_a_fk_to_table_should_be_ok_step_2(_state: &TableState) -> Result<Mig
 }
 
 #[tokio::test]
+#[serial]
 async fn creating_a_fk_to_table_should_be_ok_test() {
     let client = get_conn().await;
     let client = &client;

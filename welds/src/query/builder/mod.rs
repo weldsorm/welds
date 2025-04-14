@@ -333,8 +333,9 @@ where
     }
 
     /// Manually write the order by part of the query
-    pub fn order_manual(mut self, sql: &str) -> Self {
-        self.orderby.push(OrderBy::new(sql.to_string(), ""));
+    /// NOTE: use '$' for table prefix/alias. It will be swapped out for the prefix used at runtime
+    pub fn order_manual(mut self, sql: &'static str) -> Self {
+        self.orderby.push(OrderBy::new_manual(sql.to_string(), ""));
         self
     }
 

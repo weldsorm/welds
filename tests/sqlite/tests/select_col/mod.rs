@@ -204,3 +204,26 @@ fn should_be_able_to_group_by_multiple_columns_from_either_side_of_a_join() {
         assert!(sql == sql_a || sql == sql_b);
     });
 }
+
+#[test]
+fn should_be_able_to_write_order_by_with_table_and_column_aliases() {
+    async_std::task::block_on(async {
+        let query = Order2::all()
+            .select(|o| o.oid)
+            .select_as(|o| o.name, "aliased_column")
+            .left_join(|o| o.product, {
+                Product2::all().select(|p| p.pid)
+            })
+            .order_manual("$.oid DESC")
+            .order_manual("t2.pid DESC")
+            .order_manual("aliased_column ASC");
+
+        assert_eq!(
+            query.to_sql(Syntax::Sqlite),
+            "SELECT t1.\"oid\", t1.\"name2\" AS \"aliased_column\", t2.\"pid\" \
+            FROM orders t1 \
+            LEFT JOIN Products t2 ON t1.\"product_id\" = t2.\"pid\" \
+            ORDER BY t1.oid DESC, t2.pid DESC, aliased_column ASC"
+        );
+    });
+}

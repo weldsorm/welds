@@ -275,6 +275,13 @@ where
         self
     }
 
+    /// Manually write the order by part of the query.
+    /// NOTE: use '$' for table prefix/alias. It will be swapped out for the prefix used at runtime
+    pub fn order_manual(mut self, sql: &'static str) -> Self {
+        self.qb = self.qb.order_manual(sql);
+        self
+    }
+
     pub(crate) fn set_aliases(&mut self, alias_asigner: &Arc<TableAlias>) {
         self.qb.set_aliases(alias_asigner);
         for join in &mut self.joins {

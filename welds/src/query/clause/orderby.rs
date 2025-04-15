@@ -2,6 +2,7 @@
 pub struct OrderBy {
     pub(crate) field: String,
     pub(crate) direction: String,
+    pub(crate) manual: bool,
 }
 
 impl OrderBy {
@@ -9,6 +10,23 @@ impl OrderBy {
         Self {
             field: field.into(),
             direction: dir.into(),
+            manual: false,
+        }
+    }
+
+    pub(crate) fn new_manual(field: impl Into<String>, dir: impl Into<String>) -> Self {
+        Self {
+            field: field.into(),
+            direction: dir.into(),
+            manual: true,
+        }
+    }
+
+    pub(crate) fn write(&self, table_alias: &str) -> String {
+        if self.manual {
+            self.field.replace("$", table_alias)
+        } else {
+            format!("{}.{} {}", table_alias, self.field, self.direction)
         }
     }
 }
@@ -19,7 +37,7 @@ pub(crate) fn to_sql(parts: &[OrderBy], table_alias: &str) -> String {
     }
     let bys: Vec<String> = parts
         .iter()
-        .map(|p| format!("{}.{} {}", table_alias, p.field, p.direction))
+        .map(|order_by| order_by.write(table_alias))
         .collect();
     let bys = bys.join(", ");
     format!("ORDER BY {}", bys)
@@ -30,6 +48,7 @@ fn single_order_by_field() {
     let parts = vec![OrderBy {
         field: "f1".to_owned(),
         direction: "desc".to_owned(),
+        manual: false,
     }];
     let clause = to_sql(&parts, "t1");
     assert_eq!(clause.as_str(), "ORDER BY t1.f1 desc")
@@ -41,10 +60,12 @@ fn order_by_field_two_fields() {
         OrderBy {
             field: "f1".to_owned(),
             direction: "desc".to_owned(),
+            manual: false,
         },
         OrderBy {
             field: "f2".to_owned(),
             direction: "asc".to_owned(),
+            manual: false,
         },
     ];
     let clause = to_sql(&parts, "t33");

@@ -118,3 +118,136 @@ If you are looking for documentation on how to use welds, A good place to start 
  - [Checking DB schema matches compiled structs](https://github.com/weldsorm/welds/blob/main/welds/examples/verify_tables.rs)
 
 For more good examples [check out the examples repo](https://github.com/weldsorm/welds/tree/main/welds/examples).
+
+## Comparison with other ORMs
+
+<table>
+    <tr>
+        <th></th>
+        <th>Sqlx</th>
+        <th>Diesel</th>
+        <th>Diesel-async</th>
+        <th>SeaORM</th>
+        <th>Welds</th>
+    </tr>
+    <tr>
+        <td><strong>Architecture</strong></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>Async</td>
+        <td>✔️</td>
+        <td>:x:</td>
+        <td>✔️</td>
+        <td>✔️</td>
+        <td>✔️</td>
+    </tr>
+    <tr>
+        <td>Avoids maintaining separate schemas for every model</td>
+        <td>✔️</td>
+        <td>:x:</td>
+        <td>:x:</td>
+        <td>:x:</td>
+        <td>✔️</td>
+    </tr>
+    <tr>
+        <td>Provides a rich DSL for building queries</td>
+        <td>:x:</td>
+        <td>✔️</td>
+        <td>✔️</td>
+        <td>✔️</td>
+        <td>✔️</td>
+    </tr>
+    <tr>
+        <td><strong>Features</strong></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>Wrap multiple queries in transactions</td>
+        <td>✔️</td>
+        <td>✔️</td>
+        <td>✔️</td>
+        <td>✔️</td>
+        <td>✔️</td>
+    </tr>
+    <tr>
+        <td>Support custom types</td>
+        <td>✔️</td>
+        <td>✔️</td>
+        <td>✔️</td>
+        <td>✔️</td>
+        <td>✔️</td>
+    </tr>
+    <tr>
+        <td>Group by / aggregate functions DSL</td>
+        <td>:x:</td>
+        <td>✔️</td>
+        <td>✔️</td>
+        <td>✔️</td>
+        <td>✔️</td>
+    </tr>
+    <tr>
+        <td>Model callbacks / hooks</td>
+        <td>:x:</td>
+        <td>:x:</td>
+        <td>:x:</td>
+        <td>✔️</td>
+        <td>✔️</td>
+    </tr>
+    <tr>
+        <td>Fetch associated objects ("includes" feature)</td>
+        <td>:x:</td>
+        <td>:x:</td>
+        <td>:x:</td>
+        <td>Partial</td>
+        <td>✔️</td>
+    </tr>
+    <tr>
+        <td><strong>Supported databases</strong></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>Postgres</td>
+        <td>✔️</td>
+        <td>✔️</td>
+        <td>✔️</td>
+        <td>✔️</td>
+        <td>✔️</td>
+    </tr>
+    <tr>
+        <td>Mysql</td>
+        <td>✔️</td>
+        <td>✔️</td>
+        <td>✔️</td>
+        <td>✔️</td>
+        <td>✔️</td>
+    </tr>
+    <tr>
+        <td>Sqlite</td>
+        <td>✔️</td>
+        <td>✔️</td>
+        <td>:x:</td>
+        <td>✔️</td>
+        <td>✔️</td>
+    </tr>
+    <tr>
+        <td>Mssql</td>
+        <td>:x:</td>
+        <td>:x:</td>
+        <td>:x:</td>
+        <td>:x:</td>
+        <td>✔️</td>
+    </tr>
+</table>

@@ -66,6 +66,7 @@ where
         self
     }
 
+    #[cfg(feature = "unstable-api")]
     pub fn include_where<R, Ship>(
         mut self,
         relationship: impl Fn(<T as HasRelations>::Relation) -> Ship,

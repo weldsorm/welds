@@ -527,6 +527,7 @@ where
         IncludeBuilder::new(self).include(relationship)
     }
 
+    #[cfg(feature = "unstable-api")]
     pub fn include_where<R, Ship>(
         self,
         relationship: impl Fn(<T as HasRelations>::Relation) -> Ship,

@@ -5,10 +5,12 @@ use crate::errors::WeldsError;
 use crate::exts::VecStateExt;
 use crate::model_traits::{HasSchema, TableColumns, TableInfo, UniqueIdentifier};
 use crate::query::builder::QueryBuilder;
+use crate::query::clause::ClauseAdder;
 use crate::query::clause::exists::ExistIn;
 use crate::relations::Relationship;
 use async_trait::async_trait;
 use std::any::Any;
+use std::sync::Arc;
 
 #[async_trait]
 pub(crate) trait RelatedQuery<R> {
@@ -30,6 +32,7 @@ where
     pub(crate) inner_tn: String,
     pub(crate) inner_col: String,
     pub(crate) ship: Ship,
+    pub(crate) wheres: Vec<Arc<Box<dyn ClauseAdder>>>,
 }
 
 #[async_trait]
@@ -62,6 +65,8 @@ where
             self.inner_col.clone(),
         );
         qb.exist_ins.push(exist_in);
+        qb.wheres = self.wheres.clone();
+        
         let rows = qb.run(client).await?;
 
         Ok(Box::new(RelatedSet::<R, Ship> {

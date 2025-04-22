@@ -526,4 +526,24 @@ where
     {
         IncludeBuilder::new(self).include(relationship)
     }
+
+    pub fn include_where<R, Ship>(
+        self,
+        relationship: impl Fn(<T as HasRelations>::Relation) -> Ship,
+        qb: QueryBuilder<R>
+    ) -> IncludeBuilder<T>
+    where
+        T: 'static + HasRelations,
+        Ship: 'static + Sync + Relationship<R>,
+        R: HasSchema,
+        R: 'static,
+        R: Send + Sync + HasSchema,
+        <R as HasSchema>::Schema: TableInfo + TableColumns + UniqueIdentifier,
+        <T as HasSchema>::Schema: TableInfo + TableColumns + UniqueIdentifier,
+        <T as HasRelations>::Relation: Default,
+        R: TryFrom<crate::connections::Row>,
+        crate::errors::WeldsError: From<<R as TryFrom<crate::connections::Row>>::Error>,
+    {
+        IncludeBuilder::new(self).include_where(relationship, qb)
+    }
 }

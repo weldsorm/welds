@@ -225,3 +225,29 @@ fn should_return_owned_objects_from_iterator() {
         assert_eq!(output[0].0.id, 1)
     })
 }
+
+#[test]
+fn should_allow_filtering_with_where_includes() {
+    async_std::task::block_on(async {
+        let conn = get_conn().await;
+
+        let dataset = Team::all()
+            .include_where(|x| x.players, Player::where_col(|p| p.id.gt(2)))
+            .run(&conn).await.unwrap();
+        
+        let output = dataset
+            .iter()
+            .map(|data| {
+                (
+                    data.id,
+                    data.get(|x| x.players).into_iter().map(|x| x.id).collect::<Vec<i32>>(),
+                )
+            })
+            .collect::<Vec<(i32, Vec<i32>)>>();
+
+        let expected = vec![(1, vec![]), (2, vec![]), (3, vec![3, 4])];
+        
+        assert_eq!(expected, output)
+    })
+}
+

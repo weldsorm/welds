@@ -59,6 +59,43 @@ where
             inner_tn,
             inner_col,
             ship: ship.clone(),
+            wheres: Vec::default(),
+        };
+
+        self.related.push(Box::new(include_query));
+        self
+    }
+
+    #[cfg(feature = "unstable-api")]
+    pub fn include_where<R, Ship>(
+        mut self,
+        relationship: impl Fn(<T as HasRelations>::Relation) -> Ship,
+        qb: QueryBuilder<R>,
+    ) -> IncludeBuilder<T>
+    where
+        T: 'static + HasRelations,
+        Ship: 'static + Sync + Relationship<R>,
+        R: HasSchema,
+        R: 'static,
+        R: Send + Sync + HasSchema,
+        <R as HasSchema>::Schema: TableInfo + TableColumns + UniqueIdentifier,
+        <T as HasSchema>::Schema: TableInfo + TableColumns + UniqueIdentifier,
+        <T as HasRelations>::Relation: Default,
+        R: TryFrom<Row>,
+        WeldsError: From<<R as TryFrom<Row>>::Error>,
+    {
+        let ship = relationship(Default::default());
+        let out_col = ship.their_key::<R::Schema, T::Schema>();
+        let inner_tn = <T as HasSchema>::Schema::identifier().join(".");
+        let inner_col = ship.my_key::<R::Schema, T::Schema>();
+
+        let include_query: IncludeQuery<R, Ship> = IncludeQuery::<R, Ship> {
+            row_type: Default::default(),
+            out_col,
+            inner_tn,
+            inner_col,
+            ship: ship.clone(),
+            wheres: qb.wheres
         };
 
         self.related.push(Box::new(include_query));

@@ -28,7 +28,7 @@ where
         }
     }
 
-    /// Include an other related to this one. `BelongsTo` `HasMany`.
+    /// Include models related to this model in the returned data. `BelongsTo` `HasMany`.
     /// querying will continue over your current Object, but the related object will be
     /// accessible in the resulting dataset off of each instance of your model
     pub fn include<R, Ship>(
@@ -59,13 +59,18 @@ where
             inner_tn,
             inner_col,
             ship: ship.clone(),
-            wheres: Vec::default(),
+            qb: QueryBuilder::new(),
         };
 
         self.related.push(Box::new(include_query));
         self
     }
 
+    /// Include models related to this model in the returned data. `BelongsTo` `HasMany`.
+    /// querying will continue over your current Object, but the related object will be
+    /// accessible in the resulting dataset off of each instance of your model
+    ///
+    /// This is identical the `include` but allows for a filter to be applied to the included data
     #[cfg(feature = "unstable-api")]
     pub fn include_where<R, Ship>(
         mut self,
@@ -95,7 +100,7 @@ where
             inner_tn,
             inner_col,
             ship: ship.clone(),
-            wheres: qb.wheres
+            qb,
         };
 
         self.related.push(Box::new(include_query));

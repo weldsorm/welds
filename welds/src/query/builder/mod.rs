@@ -505,7 +505,7 @@ where
         UpdateBuilder::new(self).set_manual(lam, sql, params)
     }
 
-    /// Include an other related to this one. `BelongsTo` `HasMany`.
+    /// Include models related to this model in the returned data. `BelongsTo` `HasMany`.
     /// querying will continue over your current Object, but the related object will be
     /// accessible in the resulting dataset off of each instance of your model
     pub fn include<R, Ship>(
@@ -527,11 +527,16 @@ where
         IncludeBuilder::new(self).include(relationship)
     }
 
+    /// Include models related to this model in the returned data. `BelongsTo` `HasMany`.
+    /// querying will continue over your current Object, but the related object will be
+    /// accessible in the resulting dataset off of each instance of your model
+    ///
+    /// This is identical the `include` but allows for a filter to be applied to the included data
     #[cfg(feature = "unstable-api")]
     pub fn include_where<R, Ship>(
         self,
         relationship: impl Fn(<T as HasRelations>::Relation) -> Ship,
-        qb: QueryBuilder<R>
+        qb: QueryBuilder<R>,
     ) -> IncludeBuilder<T>
     where
         T: 'static + HasRelations,

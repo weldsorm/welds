@@ -43,7 +43,7 @@ fn down_should_recreate_the_table() {
     let table = mock_table(Syntax::Postgres);
     let m = table.drop();
     let expected = r#"
-    CREATE TABLE s2.cars ( id SERIAL PRIMARY KEY, name TEXT NOT NULL )"#;
+    CREATE TABLE s2.cars ( id SERIAL PRIMARY KEY NOT NULL, name TEXT NOT NULL )"#;
     let sql = MigrationWriter::down_sql(&m, Syntax::Postgres).join("; ");
     assert_eq!(sql, expected.trim());
 }

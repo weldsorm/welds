@@ -74,7 +74,7 @@ fn build_id_column(syntax: Syntax, col: &IdBuilder) -> String {
             Syntax::Sqlite => "PRIMARY KEY AUTOINCREMENT",
         }
     }
-    format!("{name} {ty} {tail}")
+    format!("{name} {ty} {tail} NOT NULL")
 }
 
 fn build_column(syntax: Syntax, col: &ColumnBuilder) -> String {

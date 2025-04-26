@@ -11,25 +11,25 @@ fn should_create_basic_table() {
     //mysql
     let sql = MigrationWriter::up_sql(&m, Syntax::Mysql).join("; ");
     let expected = r#"
-    CREATE TABLE s1.MyTable ( id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL )"#;
+    CREATE TABLE s1.MyTable ( id INT AUTO_INCREMENT PRIMARY KEY NOT NULL, name VARCHAR(255) NOT NULL )"#;
     assert_eq!(sql, expected.trim());
 
     //postgres
     let sql2 = MigrationWriter::up_sql(&m, Syntax::Postgres).join("; ");
     let expected = r#"
-    CREATE TABLE s1.MyTable ( id SERIAL PRIMARY KEY, name TEXT NOT NULL )"#;
+    CREATE TABLE s1.MyTable ( id SERIAL PRIMARY KEY NOT NULL, name TEXT NOT NULL )"#;
     assert_eq!(sql2, expected.trim());
 
     //mysql
     let sql = MigrationWriter::up_sql(&m, Syntax::Mssql).join("; ");
     let expected = r#"
-    CREATE TABLE s1.MyTable ( id INT IDENTITY(1,1) PRIMARY KEY, name NVARCHAR(MAX) NOT NULL )"#;
+    CREATE TABLE s1.MyTable ( id INT IDENTITY(1,1) PRIMARY KEY NOT NULL, name NVARCHAR(MAX) NOT NULL )"#;
     assert_eq!(sql, expected.trim());
 
     //sqlite
     let sql2 = MigrationWriter::up_sql(&m, Syntax::Sqlite).join("; ");
     let expected = r#"
-    CREATE TABLE s1.MyTable ( id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL )"#;
+    CREATE TABLE s1.MyTable ( id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, name TEXT NOT NULL )"#;
     assert_eq!(sql2, expected.trim());
 }
 

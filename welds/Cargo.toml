@@ -1,7 +1,7 @@
 [package]
 name = "welds"
 authors = ["Lex Childs <lexchilds@gmail.com>"]
-version = "0.4.15"
+version = "0.4.16"
 edition = "2024"
 license = "BSD-3-Clause"
 categories = ["database"]
@@ -11,12 +11,12 @@ repository = "https://github.com/weldsorm/welds"
 description = "An async ORM for (postgres, mssql, mysql, sqlite)"
 
 [dependencies]
-welds-connections = { path="../welds-connections", version = "^0.4.15" }
+welds-connections = { path="../welds-connections", version = "^0.4.16" }
 async-trait = "0.1"
 colored = { version="2", optional = true }
 anyhow = "1.0"
 thiserror = "1.0"
-welds-macros = { path="../welds-macros", version = "^0.4.15" }
+welds-macros = { path="../welds-macros", version = "^0.4.16" }
 
 [features]
 "default" = []
@@ -40,8 +40,8 @@ welds-macros = { path="../welds-macros", version = "^0.4.15" }
 [dev-dependencies]
 welds = { path="./", features=["full", "mock"] }
 futures = {version= "0.3" }
-welds-connections = { path="../welds-connections", version = "^0.4.14", features=["full"] }
-welds-macros = { path="../welds-macros", version = "^0.4.14" }
+welds-connections = { path="../welds-connections", version = "^0.4.16", features=["full"] }
+welds-macros = { path="../welds-macros", version = "^0.4.16" }
 # used for the examples
 sqlx = { version = "0.8", features = [ "runtime-async-std", "tls-rustls", "macros"] }
 async-std = { version = "1", features = ["attributes"] }

@@ -171,7 +171,7 @@ const MSSQL_PAIRS: &[Pair] = &[
     Pair::sized("VARCHAR", "String", "MAX"),
     Pair::new("TEXT", "String"),
     Pair::sized("VARBINARY", "Vec<u8>", "MAX"),
-    Pair::new("UNIQUEIDENTIFIER", "Uuid"),
+    Pair::new("UNIQUEIDENTIFIER", "uuid::Uuid"),
     Pair::sized("NVARCHAR", "serde_json::Value", "MAX"),
     Pair::new("DATETIMEOFFSET", "chrono::DateTime<chrono::Utc>"),
     Pair::new("DATETIME2", "chrono::NaiveDateTime"),
@@ -206,7 +206,7 @@ const MYSQL_PAIRS: &[Pair] = &[
     Pair::new("DATETIME", "chrono::NaiveDateTime"),
     Pair::new("DATE", "chrono::NaiveDate"),
     Pair::new("TIME", "chrono::NaiveTime"),
-    Pair::new("VARCHAR(36)", "sqlx::types::Uuid"),
+    Pair::new("VARCHAR(36)", "uuid::Uuid"),
     Pair::new("JSON", "serde_json::Value"),
 ];
 
@@ -247,7 +247,7 @@ const SQLITE_PAIRS: &[Pair] = &[
     Pair::new("INTEGER", "i16"),
     Pair::new("INTEGER", "i32"),
     Pair::new("REAL", "f32"),
-    Pair::new("TEXT", "sqlx::types::Uuid"),
+    Pair::new("TEXT", "uuid::Uuid"),
     Pair::new("TEXT", "serde_json::Value"),
 ];
 
@@ -255,7 +255,7 @@ const POSTGRES_PAIRS: &[Pair] = &[
     Pair::key_only("SERIAL", "i32"),
     Pair::key_only("BIGSERIAL", "i64"),
     Pair::key_only("SMALLSERIAL", "i16"),
-    Pair::new("UUID", "sqlx::types::Uuid"),
+    Pair::new("UUID", "uuid::Uuid"),
     Pair::new("BOOL", "bool"),
     Pair::new("CHAR", "i8"), // not sized, single char
     Pair::new("INT2", "i16"),

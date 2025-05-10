@@ -12,6 +12,7 @@ use crate::query::clause::{AssignmentManual, ParamArgs};
 use crate::query::clause::{SetColNull, SetColVal};
 use crate::query::helpers::{build_where, join_sql_parts};
 use crate::writers::NextParam;
+use crate::writers::TableWriter;
 use std::marker::PhantomData;
 use std::sync::Arc;
 use welds_connections::Param;
@@ -190,7 +191,9 @@ where
     {
         let next_params = NextParam::new(syntax);
         let sets = self.sets.as_slice();
-        let alias = <T as HasSchema>::Schema::identifier().join(".");
+
+        let alias_parts = <T as HasSchema>::Schema::identifier();
+        let alias = TableWriter::new(syntax).write2(alias_parts);
 
         join_sql_parts(&[
             build_head::<<T as HasSchema>::Schema>(syntax, &next_params, &alias, args, sets),
@@ -232,7 +235,8 @@ where
     's: 'p,
     S: TableInfo + TableColumns,
 {
-    let tn = S::identifier().join(".");
+    let parts = S::identifier();
+    let tn = TableWriter::new(syntax).write2(parts);
 
     let mut set_parts: Vec<String> = Vec::default();
 
@@ -278,7 +282,7 @@ where
 
     // use fulltable name for alias when updating
     let tableparts = T::Schema::identifier();
-    let outer_tablealias = tableparts.join(".");
+    let outer_tablealias = TableWriter::new(syntax).write2(tableparts);
 
     if let Some(p) = w_in.clause(syntax, &outer_tablealias, next_params) {
         where_sql.push(p);

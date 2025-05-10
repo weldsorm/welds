@@ -151,8 +151,8 @@ pub struct DropColumn {
 }
 
 impl MigrationWriter for DropColumn {
-    fn up_sql(&self, _syntax: Syntax) -> Vec<String> {
-        vec![drop_column(&self.tabledef, &self.column_name)]
+    fn up_sql(&self, syntax: Syntax) -> Vec<String> {
+        vec![drop_column(syntax, &self.tabledef, &self.column_name)]
     }
 
     fn down_sql(&self, syntax: Syntax) -> Vec<String> {

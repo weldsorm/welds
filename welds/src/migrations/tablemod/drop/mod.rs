@@ -8,9 +8,9 @@ impl MigrationWriter for Drop {
         writers::create_table::from_def(syntax, &self.tabledef)
     }
 
-    fn up_sql(&self, _syntax: Syntax) -> Vec<String> {
+    fn up_sql(&self, syntax: Syntax) -> Vec<String> {
         let tablename = self.tabledef.ident();
-        vec![writers::drop_table(tablename)]
+        vec![writers::drop_table(syntax, tablename)]
     }
 }
 

@@ -5,6 +5,7 @@ use crate::migrations::create_table::ColumnBuilder;
 use crate::migrations::create_table::IdBuilder;
 use crate::migrations::create_table::TableBuilder;
 use crate::migrations::types::Type;
+use crate::writers::TableWriter;
 use crate::writers::types::pk_override;
 
 pub fn from_def(syntax: Syntax, def: &TableDef) -> Vec<String> {
@@ -34,9 +35,11 @@ pub fn from_def(syntax: Syntax, def: &TableDef) -> Vec<String> {
         columns.push(build_column(syntax, &col))
     }
 
+    let tablename = TableWriter::new(syntax).write(&def.ident());
+
     let parts = vec![format!(
         "CREATE TABLE {} ( {} )",
-        def.ident(),
+        tablename,
         columns.join(", ")
     )];
     parts
@@ -45,7 +48,8 @@ pub fn from_def(syntax: Syntax, def: &TableDef) -> Vec<String> {
 pub fn from_builder(syntax: Syntax, tb: &TableBuilder) -> Vec<String> {
     let columns: Vec<String> = build_columns(syntax, &tb.pk, &tb.columns);
     let columns: String = columns.join(", ");
-    let mut parts = vec![format!("CREATE TABLE {} ( {} )", tb.ident, columns)];
+    let tablename = TableWriter::new(syntax).write(&tb.ident);
+    let mut parts = vec![format!("CREATE TABLE {} ( {} )", tablename, columns)];
     let index_cols = tb.columns.iter().filter(|c| c.index.is_some());
     for col in index_cols {
         parts.push(create_index(syntax, &tb.ident, col));

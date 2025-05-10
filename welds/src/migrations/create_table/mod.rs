@@ -5,9 +5,9 @@ use crate::migrations::writers;
 use crate::model_traits::TableIdent;
 
 impl MigrationWriter for TableBuilder {
-    fn down_sql(&self, _syntax: Syntax) -> Vec<String> {
+    fn down_sql(&self, syntax: Syntax) -> Vec<String> {
         let table = &self.ident;
-        vec![writers::drop_table(table)]
+        vec![writers::drop_table(syntax, table)]
     }
 
     fn up_sql(&self, syntax: Syntax) -> Vec<String> {

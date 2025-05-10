@@ -7,6 +7,7 @@ use crate::query::clause::ClauseAdder;
 use crate::query::clause::ParamArgs;
 use crate::writers::ColumnWriter;
 use crate::writers::NextParam;
+use crate::writers::TableWriter;
 use crate::writers::alias::TableAlias;
 use std::sync::Arc;
 
@@ -14,7 +15,7 @@ pub(crate) struct JoinBuilder {
     pub(crate) alias_asigner: Arc<TableAlias>,
     pub(crate) outer_key: String,
     pub(crate) inner_alias: String,
-    pub(crate) inner_table: String,
+    pub(crate) inner_table: &'static [&'static str],
     pub(crate) inner_key: String,
     pub(crate) wheres: Vec<Arc<Box<dyn ClauseAdder>>>,
     pub(crate) selects: Vec<SelectColumn>,
@@ -65,10 +66,13 @@ impl JoinBuilder {
         outer_alias: &str,
     ) {
         let writer = ColumnWriter::new(syntax);
+
+        let inner_table = TableWriter::new(syntax).write2(self.inner_table);
+
         let sql = format!(
             "{jointy} {itn} {ita} ON {ota}.{otk} = {ita}.{itk}",
             jointy = self.ty.to_sql(),
-            itn = self.inner_table,
+            itn = inner_table,
             ita = self.inner_alias,
             ota = outer_alias,
             otk = writer.excape(&self.outer_key),
@@ -107,7 +111,8 @@ impl JoinBuilder {
         T: Send + HasSchema,
         <T as HasSchema>::Schema: TableInfo,
     {
-        let tn = <T as HasSchema>::Schema::identifier().join(".");
+        let tn = <T as HasSchema>::Schema::identifier();
+
         JoinBuilder {
             alias_asigner: sb.qb.alias_asigner.clone(),
             inner_alias: sb.qb.alias.clone(),

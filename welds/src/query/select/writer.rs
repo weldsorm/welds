@@ -10,6 +10,7 @@ use crate::query::tail;
 use crate::writers::ColumnWriter;
 use crate::writers::CountWriter;
 use crate::writers::NextParam;
+use crate::writers::TableWriter;
 use crate::writers::alias::TableAlias;
 use std::sync::Arc;
 
@@ -108,7 +109,7 @@ impl SelectWriter {
 }
 
 fn build_head_count(table: &TableIdent, tablealias: &str, syntax: Syntax) -> Option<String> {
-    let tn = table.to_string();
+    let tn = TableWriter::new(syntax).write(table);
     let identifier = format!("{} {}", tn, &tablealias);
     let cw = CountWriter::new(syntax);
     let count_star = cw.count(Some(tablealias), Some("*"));
@@ -132,7 +133,7 @@ fn build_head_select(
     let cols = cols.join(", ");
     head.push(&cols);
     head.push("FROM");
-    let tn = table.to_string();
+    let tn = TableWriter::new(syntax).write(table);
     let identifier = format!("{} {}", tn, tablealias);
     head.push(&identifier);
     Some(head.join(" "))

@@ -1,6 +1,9 @@
 use super::*;
+use crate::Syntax;
+use crate::writers::TableWriter;
 
 pub(crate) fn up_sql(
+    syntax: Syntax,
     table: &TableDef,
     column: &ColumnDef,
     colname: String,
@@ -8,7 +11,7 @@ pub(crate) fn up_sql(
     nullable: bool,
 ) -> Vec<String> {
     let mut cmds = Vec::default();
-    let tablename: String = table.ident().to_string();
+    let tablename: String = TableWriter::new(syntax).write(&table.ident());
 
     // Change the type
     if column.ty() != ty {
@@ -32,6 +35,7 @@ pub(crate) fn up_sql(
 }
 
 pub(crate) fn down_sql(
+    syntax: Syntax,
     table: &TableDef,
     column: &ColumnDef,
     colname: String,
@@ -39,7 +43,7 @@ pub(crate) fn down_sql(
     _nullable: bool,
 ) -> Vec<String> {
     let mut cmds = Vec::default();
-    let tablename: String = table.ident().to_string();
+    let tablename: String = TableWriter::new(syntax).write(&table.ident());
 
     // NOTE: changing the type to the type it currently is is valid in PG
     // IE: table has type TEXT for column name, and changing it to type TEXT

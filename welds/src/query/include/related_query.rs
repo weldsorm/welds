@@ -27,7 +27,7 @@ where
     // The model that is being included
     pub(crate) row_type: std::marker::PhantomData<R>,
     pub(crate) out_col: String,
-    pub(crate) inner_tn: String,
+    pub(crate) inner_tn: &'static [&'static str],
     pub(crate) inner_col: String,
     pub(crate) ship: Ship,
     pub(crate) qb: QueryBuilder<R>,

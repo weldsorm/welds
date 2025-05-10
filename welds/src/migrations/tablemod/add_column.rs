@@ -41,7 +41,7 @@ impl MigrationWriter for AddColumn {
         vec![add_column(syntax, &self.tabledef, col, ty, nullable)]
     }
 
-    fn down_sql(&self, _syntax: Syntax) -> Vec<String> {
-        vec![drop_column(&self.tabledef, &self.name)]
+    fn down_sql(&self, syntax: Syntax) -> Vec<String> {
+        vec![drop_column(syntax, &self.tabledef, &self.name)]
     }
 }

@@ -1,19 +1,22 @@
+use crate::Syntax;
 use crate::detect::TableDef;
+use crate::writers::TableWriter;
 
 pub(crate) fn down_sql(
+    syntax: Syntax,
     table: &TableDef,
     colname_match: impl Into<String>,
     colname_new: impl Into<String>,
     ty: impl Into<String>,
     nullable: bool,
 ) -> Vec<String> {
-    let temptable = format!("{}_weldstmp", table.ident());
+    let tablename = TableWriter::new(syntax).write(&table.ident());
+    let temptable = format!("{}_weldstmp", tablename);
     let col_match: String = colname_match.into();
     let col_new: String = colname_new.into();
     let ty: String = ty.into();
     let old_cols = old_columns(table, &col_match, &col_new);
     let new_cols = new_columns(table, &col_match, &col_new, &ty, nullable);
-    let tablename = table.ident().to_string();
     vec![
         build_table_create(&temptable, &old_cols),
         build_copy_data(&tablename, &new_cols, &temptable, &old_cols),
@@ -23,13 +26,15 @@ pub(crate) fn down_sql(
 }
 
 pub(crate) fn up_sql(
+    syntax: Syntax,
     table: &TableDef,
     colname_match: impl Into<String>,
     colname_new: impl Into<String>,
     ty: impl Into<String>,
     nullable: bool,
 ) -> Vec<String> {
-    let temptable = format!("{}_weldstmp", table.ident());
+    let tablename = TableWriter::new(syntax).write(&table.ident());
+    let temptable = format!("{}_weldstmp", tablename);
 
     let col_match: String = colname_match.into();
     let col_new: String = colname_new.into();
@@ -38,7 +43,6 @@ pub(crate) fn up_sql(
     let old_cols = old_columns(table, &col_match, &col_new);
     let new_cols = new_columns(table, &col_match, &col_new, &ty, nullable);
 
-    let tablename = table.ident().to_string();
     vec![
         build_table_create(&temptable, &new_cols),
         build_copy_data(&tablename, &old_cols, &temptable, &new_cols),

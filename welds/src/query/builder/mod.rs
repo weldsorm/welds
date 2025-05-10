@@ -219,7 +219,6 @@ where
         let ship = relationship(Default::default());
         let out_col = ship.my_key::<R::Schema, T::Schema>();
         let inner_tn = <R as HasSchema>::Schema::identifier();
-        let inner_tn = inner_tn.join(".");
         let inner_col = ship.their_key::<R::Schema, T::Schema>();
         let mut exist_in = ExistIn::new(&filter, out_col, inner_tn, inner_col);
         exist_in.set_aliases(&self.alias_asigner);
@@ -246,7 +245,7 @@ where
         qb.set_aliases(&self.alias_asigner);
 
         let out_col = ship.their_key::<R::Schema, T::Schema>();
-        let inner_tn = <T as HasSchema>::Schema::identifier().join(".");
+        let inner_tn = <T as HasSchema>::Schema::identifier();
         let inner_col = ship.my_key::<R::Schema, T::Schema>();
         let exist_in = ExistIn::new(self, out_col, inner_tn, inner_col);
 

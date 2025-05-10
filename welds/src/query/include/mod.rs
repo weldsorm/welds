@@ -50,7 +50,7 @@ where
         // capture how to run this query as a sub-query in on the related table
         let ship = relationship(Default::default());
         let out_col = ship.their_key::<R::Schema, T::Schema>();
-        let inner_tn = <T as HasSchema>::Schema::identifier().join(".");
+        let inner_tn = <T as HasSchema>::Schema::identifier();
         let inner_col = ship.my_key::<R::Schema, T::Schema>();
 
         let include_query: IncludeQuery<R, Ship> = IncludeQuery::<R, Ship> {
@@ -91,7 +91,7 @@ where
     {
         let ship = relationship(Default::default());
         let out_col = ship.their_key::<R::Schema, T::Schema>();
-        let inner_tn = <T as HasSchema>::Schema::identifier().join(".");
+        let inner_tn = <T as HasSchema>::Schema::identifier();
         let inner_col = ship.my_key::<R::Schema, T::Schema>();
 
         let include_query: IncludeQuery<R, Ship> = IncludeQuery::<R, Ship> {

@@ -9,6 +9,7 @@ use crate::model_traits::UniqueIdentifier;
 use crate::model_traits::{HasSchema, TableColumns, TableInfo};
 use crate::query::clause::ParamArgs;
 use crate::writers::NextParam;
+use crate::writers::TableWriter;
 use welds_connections::Client;
 
 // ******************************************************************************************
@@ -47,7 +48,8 @@ where
         let next_params = NextParam::new(syntax);
 
         // Note: for deletes we can't alias the FROM tablename
-        let alias = <T as HasSchema>::Schema::identifier().join(".");
+        let parts = <T as HasSchema>::Schema::identifier();
+        let alias = TableWriter::new(syntax).write2(parts);
 
         join_sql_parts(&[
             build_head_delete::<<T as HasSchema>::Schema>(syntax),
@@ -76,11 +78,13 @@ where
     }
 }
 
-fn build_head_delete<S>(_syntax: Syntax) -> Option<String>
+fn build_head_delete<S>(syntax: Syntax) -> Option<String>
 where
     S: TableInfo + TableColumns,
 {
-    let identifier = S::identifier().join(".");
+    let parts = S::identifier();
+    let identifier = TableWriter::new(syntax).write2(parts);
+
     Some(format!("DELETE FROM {}", identifier))
 }
 

@@ -80,7 +80,6 @@ where
     }
 
     fn validate_group_by(&self) -> Result<()> {
-        #[cfg(feature = "unstable-api")]
         if self.requires_group_by() && self.group_bys.is_empty() {
             return Err(WeldsError::ColumnMissingFromGroupBy);
         }

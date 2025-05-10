@@ -59,8 +59,8 @@ where
         self
     }
 
-    /// Select all columns, equivalent to `SELECT table_name.*`
-    #[cfg(feature = "unstable-api")]
+    /// Used to select into one off structs.
+    /// Select all columns, equivalent to calling `query.select(..)` for each column
     pub fn select_all(mut self) -> SelectBuilder<T> {
         self.selects.push(SelectColumn {
             col_name: Default::default(),
@@ -87,7 +87,6 @@ where
         self
     }
 
-    #[cfg(feature = "unstable-api")]
     pub fn select_count<V, FN: AsFieldName<V>>(
         mut self,
         lam: impl Fn(<T as HasSchema>::Schema) -> FN,
@@ -102,7 +101,6 @@ where
         self
     }
 
-    #[cfg(feature = "unstable-api")]
     pub fn select_max<V, FN: AsFieldName<V>>(
         mut self,
         lam: impl Fn(<T as HasSchema>::Schema) -> FN,
@@ -117,7 +115,6 @@ where
         self
     }
 
-    #[cfg(feature = "unstable-api")]
     pub fn select_min<V, FN: AsFieldName<V>>(
         mut self,
         lam: impl Fn(<T as HasSchema>::Schema) -> FN,
@@ -231,7 +228,6 @@ where
         self
     }
 
-    #[cfg(feature = "unstable-api")]
     pub fn group_by<V, FN: AsFieldName<V>>(
         mut self,
         lam: impl Fn(<T as HasSchema>::Schema) -> FN,

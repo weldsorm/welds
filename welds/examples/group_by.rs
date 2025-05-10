@@ -1,11 +1,5 @@
 use welds::prelude::*;
 
-/***********************************************************************
- *
- * Enabling the `unstable-api` feature
- *
-***********************************************************************/
-
 // group_by exposes some additional querying methods such as
 // `group_by()`, `select_count()` and `select_max()` for grouping and aggregating.
 //

@@ -29,11 +29,8 @@ impl SelectKind {
 pub(crate) enum SelectKind {
     Column,
     All,
-    #[cfg(feature = "unstable-api")]
     Count,
-    #[cfg(feature = "unstable-api")]
     Max,
-    #[cfg(feature = "unstable-api")]
     Min,
 }
 
@@ -73,15 +70,12 @@ impl SelectRender {
             SelectKind::All => {
                 format!("{}.*", self.alias)
             }
-            #[cfg(feature = "unstable-api")]
             SelectKind::Count => {
                 format!("COUNT({}.{}) AS {}", self.alias, colname, fieldname)
             }
-            #[cfg(feature = "unstable-api")]
             SelectKind::Max => {
                 format!("MAX({}.{}) AS {}", self.alias, colname, fieldname)
             }
-            #[cfg(feature = "unstable-api")]
             SelectKind::Min => {
                 format!("MIN({}.{}) AS {}", self.alias, colname, fieldname)
             }

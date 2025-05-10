@@ -71,7 +71,6 @@ where
     /// accessible in the resulting dataset off of each instance of your model
     ///
     /// This is identical the `include` but allows for a filter to be applied to the included data
-    #[cfg(feature = "unstable-api")]
     pub fn include_where<R, Ship>(
         mut self,
         relationship: impl Fn(<T as HasRelations>::Relation) -> Ship,

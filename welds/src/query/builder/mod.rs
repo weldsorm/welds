@@ -357,13 +357,12 @@ where
         SelectBuilder::new(self).select_as(lam, as_name)
     }
 
-    /// Select all columns, equivalent to `SELECT table_name.*`
-    #[cfg(feature = "unstable-api")]
+    /// Used to select into one off structs.
+    /// Select all columns, equivalent to calling `query.select(..)` for each column
     pub fn select_all(self) -> SelectBuilder<T> {
         SelectBuilder::new(self).select_all()
     }
 
-    #[cfg(feature = "unstable-api")]
     pub fn select_count<V, FN: AsFieldName<V>>(
         self,
         lam: impl Fn(<T as HasSchema>::Schema) -> FN,
@@ -372,7 +371,6 @@ where
         SelectBuilder::new(self).select_count(lam, as_name)
     }
 
-    #[cfg(feature = "unstable-api")]
     pub fn select_max<V, FN: AsFieldName<V>>(
         self,
         lam: impl Fn(<T as HasSchema>::Schema) -> FN,
@@ -381,7 +379,6 @@ where
         SelectBuilder::new(self).select_max(lam, as_name)
     }
 
-    #[cfg(feature = "unstable-api")]
     pub fn select_min<V, FN: AsFieldName<V>>(
         self,
         lam: impl Fn(<T as HasSchema>::Schema) -> FN,
@@ -531,7 +528,6 @@ where
     /// accessible in the resulting dataset off of each instance of your model
     ///
     /// This is identical the `include` but allows for a filter to be applied to the included data
-    #[cfg(feature = "unstable-api")]
     pub fn include_where<R, Ship>(
         self,
         relationship: impl Fn(<T as HasRelations>::Relation) -> Ship,

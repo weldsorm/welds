@@ -2345,12 +2345,11 @@ dependencies = [
 
 [[package]]
 name = "welds"
-version = "0.4.12"
+version = "0.4.16"
 dependencies = [
  "anyhow",
  "async-trait",
  "colored",
- "log",
  "thiserror 1.0.69",
  "welds-connections",
  "welds-macros",
@@ -2358,7 +2357,7 @@ dependencies = [
 
 [[package]]
 name = "welds-cli"
-version = "0.4.12"
+version = "0.4.13"
 dependencies = [
  "Inflector",
  "anyhow",
@@ -2379,7 +2378,7 @@ dependencies = [
 
 [[package]]
 name = "welds-connections"
-version = "0.4.12"
+version = "0.4.16"
 dependencies = [
  "async-mutex",
  "async-trait",
@@ -2389,7 +2388,6 @@ dependencies = [
  "futures-util",
  "log",
  "sqlx",
- "thiserror 1.0.69",
  "tiberius",
  "tokio",
  "tokio-util",
@@ -2397,9 +2395,8 @@ dependencies = [
 
 [[package]]
 name = "welds-macros"
-version = "0.4.12"
+version = "0.4.16"
 dependencies = [
- "log",
  "proc-macro2",
  "quote",
  "syn 1.0.109",

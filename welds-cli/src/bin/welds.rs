@@ -10,7 +10,9 @@ async fn main() -> Result<()> {
     let args = weldscli_lib::commands::Args::parse();
 
     if let Some(uri) = args.database_url {
-        env::set_var("DATABASE_URL", uri);
+        unsafe {
+            env::set_var("DATABASE_URL", uri);
+        }
     }
 
     let mut schema_path = args

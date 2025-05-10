@@ -5,8 +5,11 @@
 </div>
 
 
+# DEPRECATED: Welds - CLI
 
-# Welds - CLI
+## The welds-cli tool has been deprecated in favor of the cli tool [Gumbo](https://crates.io/crates/gumbo). This cli is much better maintains and serves the same purpose.
+
+
 
 Welds is an ORM for Rust. 
 

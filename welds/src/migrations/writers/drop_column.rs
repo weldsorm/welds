@@ -1,8 +1,10 @@
+use crate::Syntax;
 use crate::detect::TableDef;
+use crate::writers::TableWriter;
 
 /// writes the SQL to Renames a column on a table
-pub fn write(table: &TableDef, col: impl Into<String>) -> String {
-    let tablename: String = table.ident().to_string();
+pub fn write(syntax: Syntax, table: &TableDef, col: impl Into<String>) -> String {
+    let tablename: String = TableWriter::new(syntax).write(&table.ident());
     let col: String = sanitize_column(col.into());
     format!("ALTER TABLE {tablename} DROP COLUMN {col}")
 }

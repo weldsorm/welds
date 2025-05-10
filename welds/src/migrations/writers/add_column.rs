@@ -1,3 +1,4 @@
+use crate::writers::TableWriter;
 use welds_connections::Syntax;
 
 use crate::detect::TableDef;
@@ -10,7 +11,7 @@ pub fn write(
     ty: impl Into<String>,
     nullable: bool,
 ) -> String {
-    let tablename: String = table.ident().to_string();
+    let tablename: String = TableWriter::new(syntax).write(&table.ident());
     let col: String = sanitize_column(col.into());
     let ty: String = ty.into();
     let null = if nullable { "NULL" } else { "NOT NULL" };

@@ -4,6 +4,7 @@ use crate::model_traits::{HasSchema, TableColumns, TableInfo, WriteToArgs};
 use crate::query::clause::ParamArgs;
 use crate::writers::ColumnWriter;
 use crate::writers::NextParam;
+use crate::writers::TableWriter;
 //use crate::Syntax;
 
 /// Executes the query in the database Bulk Inserting values
@@ -52,7 +53,8 @@ where
         .filter(|c| with_ids || !pks.contains(c))
         .collect();
 
-    let identifier = <<T as HasSchema>::Schema>::identifier().join(".");
+    let parts = <<T as HasSchema>::Schema>::identifier();
+    let identifier = TableWriter::new(syntax).write2(parts);
 
     let colnames: Vec<String> = columns
         .iter()
@@ -111,7 +113,6 @@ where
 //      let pks = <<T as HasSchema>::Schema as TableColumns>::primary_keys();
 //      let columns: Vec<_> = all_columns.iter().filter(|c| !pks.contains(c)).collect();
 //
-//      let identifier = <<T as HasSchema>::Schema>::identifier().join(".");
 //      let next_params = NextParam::new(syntax);
 //
 //      //let mut args: <DB as HasArguments>::Arguments = Default::default();

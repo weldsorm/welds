@@ -4,6 +4,7 @@ use crate::query::builder::QueryBuilder;
 use crate::query::clause::OrderBy;
 use crate::query::clause::ParamArgs;
 use crate::writers::NextParam;
+use crate::writers::TableWriter;
 use crate::writers::alias::TableAlias;
 use std::sync::Arc;
 
@@ -12,7 +13,7 @@ use std::sync::Arc;
 pub struct ExistIn {
     outer_column: String,
     inner_column: String,
-    inner_tablename: String,
+    inner_tablename: &'static [&'static str],
     pub(crate) inner_tablealias: String,
     wheres: Vec<Arc<Box<dyn ClauseAdder>>>,
     inner_exists_ins: Vec<Self>,
@@ -25,7 +26,7 @@ impl ExistIn {
     pub(crate) fn new<T>(
         sb: &QueryBuilder<T>,
         outer_column: String,
-        inner_tablename: String,
+        inner_tablename: &'static [&'static str],
         inner_column: String,
     ) -> Self {
         ExistIn {
@@ -64,15 +65,17 @@ impl ExistIn {
 
     fn exists_clause(&self, syntax: Syntax, _tablealias: &str, inner_clauses: &str) -> String {
         let tails = self.tails(syntax, &self.inner_tablealias);
+        let inner_tablename = TableWriter::new(syntax).write2(self.inner_tablename);
         format!(
             "EXISTS ( SELECT {} FROM {} {} WHERE {} {})",
-            self.inner_column, self.inner_tablename, self.inner_tablealias, inner_clauses, tails
+            self.inner_column, inner_tablename, self.inner_tablealias, inner_clauses, tails
         )
     }
 
     fn in_clause(&self, syntax: Syntax, tablealias: &str, inner_clauses: &str) -> String {
         let outcol = format!("{}.{}", tablealias, self.outer_column);
         let innercol = format!("{}.{}", self.inner_tablealias, self.inner_column);
+        let inner_tablename = TableWriter::new(syntax).write2(self.inner_tablename);
         let tails = self.tails(syntax, &self.inner_tablealias);
         let mut wheres = "".to_string();
         if !inner_clauses.is_empty() {
@@ -80,7 +83,7 @@ impl ExistIn {
         }
         format!(
             " {} IN (SELECT {} FROM {} {} {} {}) ",
-            outcol, innercol, self.inner_tablename, self.inner_tablealias, wheres, tails
+            outcol, innercol, inner_tablename, self.inner_tablealias, wheres, tails
         )
     }
 }

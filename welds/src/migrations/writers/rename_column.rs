@@ -1,5 +1,6 @@
 use crate::Syntax;
 use crate::model_traits::TableIdent;
+use crate::writers::TableWriter;
 
 /// writes the SQL to Renames a column on a table
 pub fn write(
@@ -10,7 +11,7 @@ pub fn write(
 ) -> String {
     let oldname: String = sanitize_column(old_name.into());
     let newname: String = sanitize_column(new_name.into());
-    let tablename: String = table.to_string();
+    let tablename: String = TableWriter::new(syntax).write(table);
 
     match syntax {
         Syntax::Mssql => format!("EXEC sp_rename '{tablename}.{oldname}', '{newname}', 'COLUMN'"),

@@ -3,9 +3,10 @@ use crate::migrations::create_table::ColumnBuilder;
 use crate::migrations::types::Index;
 use crate::migrations::types::OnDelete;
 use crate::model_traits::TableIdent;
+use crate::writers::TableWriter;
 
 pub fn write(syntax: Syntax, table: &TableIdent, col: &ColumnBuilder) -> String {
-    let tablename = table.to_string();
+    let tablename = TableWriter::new(syntax).write(table);
     let colname = col.name.as_str();
 
     let indexname = match &col.index_name {
@@ -52,7 +53,7 @@ fn write_fk(
         None => format!("fk_{}_{}", table.name, col.name),
     };
 
-    let tablename = table.to_string();
+    let tablename = TableWriter::new(syntax).write(table);
     let colname = col.name.as_str();
 
     format!(

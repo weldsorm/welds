@@ -6,6 +6,7 @@ use crate::model_traits::{ColumnDefaultCheck, UpdateFromRow};
 use crate::model_traits::{HasSchema, TableColumns, TableInfo, WriteToArgs};
 use crate::query::clause::ParamArgs;
 use crate::writers::NextParam;
+use crate::writers::TableWriter;
 use crate::writers::column::ColumnWriter;
 use crate::writers::insert::{ColArg, InsertWriter};
 use welds_connections::Client;
@@ -28,7 +29,9 @@ where
     let next_params = NextParam::new(syntax);
     let writer = InsertWriter::new(syntax);
 
-    let identifier = <<T as HasSchema>::Schema>::identifier().join(".");
+    let parts = <<T as HasSchema>::Schema>::identifier();
+    let identifier = TableWriter::new(syntax).write2(parts);
+
     let columns = <<T as HasSchema>::Schema as TableColumns>::columns();
     let pks = <<T as HasSchema>::Schema as TableColumns>::primary_keys();
 

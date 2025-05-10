@@ -2,6 +2,7 @@ use crate::Syntax;
 use crate::detect::{ColumnDef, TableDef};
 mod pg_writer;
 mod sqlite_writer;
+use crate::writers::TableWriter;
 
 /// writes the up SQL change the type/null of a column
 pub fn write_up(
@@ -12,7 +13,7 @@ pub fn write_up(
     ty: impl Into<String>,
     nullable: bool,
 ) -> Vec<String> {
-    let tablename: String = table.ident().to_string();
+    let tablename: String = TableWriter::new(syntax).write(&table.ident());
 
     let current_col = column.name();
     let colname: String = sanitize_column(colname.into());
@@ -20,8 +21,8 @@ pub fn write_up(
     let null = if nullable { "NULL" } else { "NOT NULL" };
 
     match syntax {
-        Syntax::Sqlite => sqlite_writer::up_sql(table, current_col, colname, ty, nullable),
-        Syntax::Postgres => pg_writer::up_sql(table, column, colname, ty, nullable),
+        Syntax::Sqlite => sqlite_writer::up_sql(syntax, table, current_col, colname, ty, nullable),
+        Syntax::Postgres => pg_writer::up_sql(syntax, table, column, colname, ty, nullable),
         Syntax::Mssql => vec![format!(
             "ALTER TABLE {tablename} ALTER COLUMN {colname} {ty} {null}"
         )],
@@ -40,7 +41,7 @@ pub fn write_down(
     ty: impl Into<String>,
     nullable: bool,
 ) -> Vec<String> {
-    let tablename: String = table.ident().to_string();
+    let tablename: String = TableWriter::new(syntax).write(&table.ident());
 
     let current_col = column.name();
     let colname: String = sanitize_column(colname.into());
@@ -48,8 +49,10 @@ pub fn write_down(
     let null = if nullable { "NULL" } else { "NOT NULL" };
 
     match syntax {
-        Syntax::Sqlite => sqlite_writer::down_sql(table, current_col, colname, ty, nullable),
-        Syntax::Postgres => pg_writer::down_sql(table, column, colname, ty, nullable),
+        Syntax::Sqlite => {
+            sqlite_writer::down_sql(syntax, table, current_col, colname, ty, nullable)
+        }
+        Syntax::Postgres => pg_writer::down_sql(syntax, table, column, colname, ty, nullable),
         Syntax::Mssql => vec![format!(
             "ALTER TABLE {tablename} ALTER COLUMN {colname} {ty} {null}"
         )],

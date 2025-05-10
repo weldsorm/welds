@@ -9,6 +9,7 @@ use crate::query::clause::ParamArgs;
 use crate::query::helpers::{build_tail, build_where, join_sql_parts};
 use crate::writers::ColumnWriter;
 use crate::writers::NextParam;
+use crate::writers::TableWriter;
 
 /// Used to generated a SQL IN clause.
 /// This is used when deleting and updating to be able to apply limit
@@ -75,7 +76,8 @@ fn build_head_select<S>(syntax: Syntax, tablealias: &str) -> Option<String>
 where
     S: TableInfo + UniqueIdentifier,
 {
-    let mut tablename = S::identifier().join(".");
+    let mut tablename = TableWriter::new(syntax).write2(S::identifier());
+
     if tablename != tablealias {
         tablename = format!("{} {}", tablename, tablealias);
     }

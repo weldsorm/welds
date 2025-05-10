@@ -6,6 +6,7 @@ use crate::query::clause::ParamArgs;
 use crate::query::helpers::{build_tail, build_where_clauses, join_sql_parts};
 use crate::query::select_cols::SelectBuilder;
 use crate::query::select_cols::select_column::SelectRender;
+use crate::writers::TableWriter;
 use crate::writers::{ColumnWriter, NextParam};
 use crate::{Client, WeldsError};
 use std::collections::HashSet;
@@ -114,7 +115,10 @@ where
     head.push(&cols_text);
 
     head.push("FROM");
-    let tn = <T as HasSchema>::Schema::identifier().join(".");
+
+    let parts = <T as HasSchema>::Schema::identifier();
+    let tn = TableWriter::new(syntax).write2(parts);
+
     let alias = &sb.qb.alias;
     let identifier = format!("{} {}", tn, alias);
     head.push(&identifier);

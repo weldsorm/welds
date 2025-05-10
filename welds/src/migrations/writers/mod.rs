@@ -1,12 +1,15 @@
 use crate::model_traits::TableIdent;
 
 pub mod create_table;
+use crate::Syntax;
+use crate::writers::TableWriter;
 
 mod create_indexes;
 pub use create_indexes::write as create_index;
 
-pub fn drop_table(table: &TableIdent) -> String {
-    format!("DROP TABLE {}", table)
+pub fn drop_table(syntax: Syntax, table: &TableIdent) -> String {
+    let tablename = TableWriter::new(syntax).write(table);
+    format!("DROP TABLE {}", tablename)
 }
 
 mod rename_column;

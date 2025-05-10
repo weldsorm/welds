@@ -4,6 +4,7 @@ use crate::model_traits::{HasSchema, TableColumns, TableInfo, UpdateFromRow, Wri
 use crate::query::clause::ParamArgs;
 use crate::writers::ColumnWriter;
 use crate::writers::NextParam;
+use crate::writers::TableWriter;
 use welds_connections::Client;
 
 pub async fn update_one<T>(obj: &mut T, client: &dyn Client) -> Result<()>
@@ -20,7 +21,9 @@ where
     let col_writer = ColumnWriter::new(syntax);
     let next_params = NextParam::new(syntax);
 
-    let identifier = <<T as HasSchema>::Schema>::identifier().join(".");
+    let parts = <<T as HasSchema>::Schema>::identifier();
+    let identifier = TableWriter::new(syntax).write2(parts);
+
     let columns = <<T as HasSchema>::Schema as TableColumns>::columns();
     let pks = <<T as HasSchema>::Schema as TableColumns>::primary_keys();
     if pks.is_empty() {

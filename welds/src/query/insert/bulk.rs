@@ -65,12 +65,13 @@ where
     // number of to create per insert
     let max_params = NextParam::new(syntax).max_params();
     let chunk_size = max_params as usize / colnames.len();
+    let param_size = chunk_size + columns.len();
 
     for chunk in data.chunks(chunk_size) {
         let next_params = NextParam::new(syntax);
-        let mut args: ParamArgs = Vec::default();
+        let mut args: ParamArgs = Vec::with_capacity(param_size);
 
-        let mut rows: Vec<String> = Vec::default();
+        let mut rows: Vec<String> = Vec::with_capacity(chunk_size);
         for d in chunk {
             let mut row: Vec<String> = Vec::default();
             for col in &columns {

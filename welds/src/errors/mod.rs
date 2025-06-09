@@ -18,8 +18,8 @@ pub enum WeldsError {
     MissingDbColumn(String),
     #[error("Failed to Insert {0}")]
     InsertFailed(String),
-    #[error("Expected Row from DB, Found none")]
-    RowNowFound,
+    #[error("Expected a row from DB, found None")]
+    RowNotFound,
     #[error("A Primary key is required for this action")]
     NoPrimaryKey,
     #[error("There are multiple migrations with the same name")]

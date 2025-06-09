@@ -54,7 +54,7 @@ async fn create_with_errors(client: &(dyn TransactStart)) -> Result<()> {
     // return some random error.
     // no commit was ever called, and transaction has gone out of scope
     // This will rollback the transaction
-    Err(WeldsError::RowNowFound)?
+    Err(WeldsError::RowNotFound)?
 }
 
 /// Create a person, commits it

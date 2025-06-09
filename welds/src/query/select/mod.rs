@@ -60,7 +60,7 @@ where
 
         let args = args.unwrap();
         let rows = client.fetch_rows(&sql, &args).await?;
-        let row = rows.first().ok_or(WeldsError::RowNowFound)?;
+        let row = rows.first().ok_or(WeldsError::RowNotFound)?;
         let count: i64 = row.get_by_position(0)?;
         Ok(count as u64)
     }
@@ -133,7 +133,7 @@ where
             .await?
             .into_iter()
             .nth(0)
-            .ok_or(WeldsError::RowNowFound)
+            .ok_or(WeldsError::RowNotFound)
     }
 }
 

@@ -23,6 +23,8 @@ use tiberius::Row as MssqlRow;
 mod mssql_row_wrapper;
 #[cfg(feature = "mssql")]
 pub use mssql_row_wrapper::MssqlRowWrapper;
+#[cfg(feature = "mssql")]
+pub use mssql_row_wrapper::TiberiusDecode;
 
 /// all kinds of rows
 pub enum RowInner {
@@ -115,9 +117,6 @@ impl Row {
         }
     }
 }
-
-#[cfg(feature = "mssql")]
-use mssql_row_wrapper::TiberiusDecode;
 
 // This code is scripted out cuz writing it for all the features to be to much
 mod row_gen;

@@ -5,9 +5,12 @@ use quote::quote;
 
 pub(crate) fn write(info: &Info) -> TokenStream {
     let colstruct = write_colstruct(info);
-    let columns = write_cols(&info.columns);
+
+    let read_columns = read_cols(&info.columns);
+    let write_columns = write_cols(&info.columns);
+
     let pks = write_cols(&info.pks);
-    write_for_db(info, &colstruct, &pks, &columns)
+    write_for_db(info, &colstruct, &pks, &read_columns, &write_columns)
 }
 
 pub(crate) fn write_colstruct(info: &Info) -> TokenStream {
@@ -57,10 +60,23 @@ pub(crate) fn write_colstruct(info: &Info) -> TokenStream {
     }
 }
 
+pub(crate) fn read_cols(columns: &[Column]) -> TokenStream {
+    let parts: Vec<_> = columns
+        .iter()
+        .filter(|x| !x.ignore)
+        .map(|c| {
+            let name = &c.field;
+            quote! { columns.#name }
+        })
+        .collect();
+    quote! { vec![ #(#parts),* ] }
+}
+
 pub(crate) fn write_cols(columns: &[Column]) -> TokenStream {
     let parts: Vec<_> = columns
         .iter()
         .filter(|x| !x.ignore)
+        .filter(|x| !x.readonly)
         .map(|c| {
             let name = &c.field;
             quote! { columns.#name }
@@ -73,7 +89,8 @@ pub(crate) fn write_for_db(
     info: &Info,
     colstruct: &TokenStream,
     pks: &TokenStream,
-    columns: &TokenStream,
+    read_columns: &TokenStream,
+    write_columns: &TokenStream,
 ) -> TokenStream {
     let wp = &info.welds_path;
     let ident_schemastruct = &info.schemastruct;
@@ -91,11 +108,18 @@ pub(crate) fn write_for_db(
                 #pks
             }
 
-            fn columns() -> Vec<#wp::model_traits::Column> {
+            fn readable_columns() -> Vec<#wp::model_traits::Column> {
                 #[allow(dead_code)]
                 let columns = Self::default();
-                #columns
+                #read_columns
             }
+
+            fn writable_columns() -> Vec<#wp::model_traits::Column> {
+                #[allow(dead_code)]
+                let columns = Self::default();
+                #write_columns
+            }
+
         }
 
         impl #wp::model_traits::TableColumns for #ident_schemastruct {
@@ -105,9 +129,14 @@ pub(crate) fn write_for_db(
                 #ident_colstruct::primary_keys()
             }
 
-            fn columns() -> Vec<#wp::model_traits::Column> {
-                #ident_colstruct::columns()
+            fn readable_columns() -> Vec<#wp::model_traits::Column> {
+                #ident_colstruct::readable_columns()
             }
+
+            fn writable_columns() -> Vec<#wp::model_traits::Column> {
+                #ident_colstruct::writable_columns()
+            }
+
         }
     }
 }

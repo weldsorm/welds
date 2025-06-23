@@ -20,6 +20,7 @@ pub(crate) fn get_columns(ast: &syn::DeriveInput) -> Vec<Column> {
         .filter(|f| f.ident.is_some())
         .map(|f| {
             let ignore = is_welds_ignore(&f.attrs);
+            let readonly = is_welds_col_readonly(&f.attrs);
             let fieldname = f.ident.as_ref().unwrap().to_string();
             let dbname = read_rename(f).unwrap_or(fieldname);
             let field_type = as_option_inner(&f.ty);
@@ -29,6 +30,7 @@ pub(crate) fn get_columns(ast: &syn::DeriveInput) -> Vec<Column> {
             Column {
                 field,
                 ignore,
+                readonly,
                 dbname,
                 field_type,
                 is_option,
@@ -59,6 +61,9 @@ pub(crate) fn get_pks(ast: &syn::DeriveInput) -> Vec<Column> {
             Column {
                 field,
                 ignore: false,
+                // The PK column is used when inserting but not ever updated.
+                // This is handled within welds "core"
+                readonly: false,
                 dbname,
                 field_type,
                 is_option,
@@ -323,6 +328,15 @@ fn is_welds_ignore(attrs: &[Attribute]) -> bool {
         .iter()
         .flat_map(as_metalist_nested_meta)
         .any(|m| m.path().is_ident("ignore"))
+}
+
+fn is_welds_col_readonly(attrs: &[Attribute]) -> bool {
+    let metas = welds_meta(attrs);
+    // Check if any attr has are readonly
+    metas
+        .iter()
+        .flat_map(as_metalist_nested_meta)
+        .any(|m| m.path().is_ident("readonly"))
 }
 
 fn is_welds_pk(attrs: &[Attribute]) -> bool {

@@ -45,7 +45,7 @@ where
     // }
 
     let col_writer = ColumnWriter::new(syntax);
-    let all_columns = <<T as HasSchema>::Schema as TableColumns>::columns();
+    let all_columns = <<T as HasSchema>::Schema as TableColumns>::writable_columns();
     let pks = <<T as HasSchema>::Schema as TableColumns>::primary_keys();
 
     let columns: Vec<_> = all_columns

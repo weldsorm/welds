@@ -71,7 +71,7 @@ where
         <T as HasSchema>::Schema: TableInfo + TableColumns,
     {
         let table = TableIdent::from_model::<T>();
-        let columns = <T as HasSchema>::Schema::columns();
+        let columns = <T as HasSchema>::Schema::readable_columns();
         let writer = SelectWriter::new_with_alias(syntax, &table, &self.alias);
         writer.sql(
             &columns,
@@ -96,7 +96,7 @@ where
         let mut args: Option<ParamArgs> = Some(Vec::default());
 
         let table = TableIdent::from_model::<T>();
-        let columns = <T as HasSchema>::Schema::columns();
+        let columns = <T as HasSchema>::Schema::readable_columns();
         let writer = SelectWriter::new_with_alias(syntax, &table, &self.alias);
         let sql = writer.sql(
             &columns,

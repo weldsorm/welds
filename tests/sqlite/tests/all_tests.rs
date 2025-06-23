@@ -1,11 +1,11 @@
-use sqlite_test::models::StringThing;
 use sqlite_test::models::order::{Order, SmallOrder};
 use sqlite_test::models::product::{BadProduct1, BadProduct2, Product};
+use sqlite_test::models::StringThing;
 use sqlite_test::models::{Thing1, Thing2, Thing3};
-use welds::Syntax;
-use welds::connections::TransactStart;
 use welds::connections::sqlite::SqliteClient;
+use welds::connections::TransactStart;
 use welds::state::{DbState, DbStatus};
+use welds::Syntax;
 
 pub mod bulk_delete;
 pub mod bulk_update;
@@ -575,23 +575,61 @@ fn should_be_able_to_select_all_orders_with_there_products() {
 fn should_be_able_to_fetch_a_single_object() {
     async_std::task::block_on(async {
         let conn = get_conn().await;
-        let result: DbState<Product> = Product::where_col(|p| p.id.gt(1))
+        let _product: DbState<Product> = Product::where_col(|p| p.id.gt(1))
             .fetch_one(&conn)
             .await
             .unwrap();
     })
 }
 
-//#[test]
-//fn should_be_able_to_join_limit_and_order_all_at_once() {
-//    async_std::task::block_on(async {
-//        let conn = get_conn().await;
-//        let q = Product::all().select(|x| x.id).join(
-//            |x| x.orders,
-//            Order::all()
-//                .select(|o| o.id)
-//                .limit(1)
-//                .order_by_asc(|o| o.id),
-//        );
-//    })
-//}
+#[test]
+fn should_be_able_to_select_a_readonly_field() {
+    async_std::task::block_on(async {
+        use sqlite_test::models::product::ProductNameOnly;
+        let conn = get_conn().await;
+        let product = ProductNameOnly::where_col(|p| p.description.not_equal(None))
+            .fetch_one(&conn)
+            .await
+            .unwrap();
+        assert!(product.description.is_some());
+    })
+}
+
+#[test]
+fn should_not_update_changes_to_readonly_field() {
+    async_std::task::block_on(async {
+        use sqlite_test::models::product::ProductNameOnly;
+        let conn = get_conn().await;
+        let mut product = ProductNameOnly::where_col(|p| p.description.not_equal(None))
+            .fetch_one(&conn)
+            .await
+            .unwrap();
+        product.description = None;
+        product.save(&conn).await.unwrap();
+        let product = ProductNameOnly::find_by_id(&conn, product.id)
+            .await
+            .unwrap()
+            .unwrap();
+        assert!(product.description.is_some());
+    })
+}
+
+#[test]
+fn should_not_insert_to_readonly_field() {
+    async_std::task::block_on(async {
+        use sqlite_test::models::product::ProductNameOnly;
+        let conn = get_conn().await;
+
+        let mut product = ProductNameOnly::new();
+        product.name = "Test".to_string();
+        product.description = Some("Test".to_string());
+        product.save(&conn).await.unwrap();
+        //re-pull the model from the database
+        let product = ProductNameOnly::find_by_id(&conn, product.id)
+            .await
+            .unwrap()
+            .unwrap();
+        // description should not be include in the insert
+        assert!(product.description.is_none());
+    })
+}

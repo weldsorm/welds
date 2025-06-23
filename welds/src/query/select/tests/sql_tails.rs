@@ -43,12 +43,20 @@ impl TableInfo for ProductSchema {
 
 impl TableColumns for ProductSchema {
     type ColumnStruct = Self;
-    fn columns() -> Vec<Column> {
+
+    fn readable_columns() -> Vec<Column> {
         vec![
             Column::new("a", "i32", false),
             Column::new("b", "i32", true),
         ]
     }
+    fn writable_columns() -> Vec<Column> {
+        vec![
+            Column::new("a", "i32", false),
+            Column::new("b", "i32", true),
+        ]
+    }
+
     fn primary_keys() -> Vec<Column> {
         vec![]
     }

@@ -13,6 +13,7 @@ pub(crate) fn write(info: &Info) -> TokenStream {
         .columns
         .iter()
         .filter(|x| !x.ignore)
+        .filter(|x| !x.readonly)
         .map(write_col_normal)
         .collect();
     let fields = quote! { #(#fields)* };

@@ -25,6 +25,8 @@ pub(crate) fn write_for_db(info: &Info, fieldsets: &TokenStream) -> TokenStream 
     let def = &info.defstruct;
     let wp = &info.welds_path;
 
+    // Updates an existing model from a welds-connection Row
+
     quote! {
           impl #wp::model_traits::UpdateFromRow for #def {
             fn update_from_row(&mut self, row: &mut #wp::Row) -> #wp::errors::Result<()> {

@@ -50,10 +50,12 @@ impl Column {
 /// This trait is impl by the model's schema not the model
 pub trait TableColumns {
     type ColumnStruct: TableColumns + Default;
-
-    // Used to identify models that have N columns in their primary_key
+    /// Used to identify models that have N columns in their primary_key
     fn primary_keys() -> Vec<Column>;
-    fn columns() -> Vec<Column>;
+    /// All columns that will be read from the DB
+    fn readable_columns() -> Vec<Column>;
+    /// All columns that will be written to the DB
+    fn writable_columns() -> Vec<Column>;
 }
 
 /// If the model can be uniquely identifed by a single column,

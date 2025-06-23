@@ -48,3 +48,18 @@ pub struct BadProduct2 {
     //pub price2: Option<f64>,
     //pub active: Option<bool>,
 }
+
+/// This is a version of a product that
+/// can only edit the name.
+/// and can read the description
+#[derive(Debug, WeldsModel)]
+#[welds(table = "Products")]
+#[welds(HasMany(orders, super::order::Order, "product_id"))]
+pub struct ProductNameOnly {
+    #[welds(rename = "product_id")]
+    #[welds(primary_key)]
+    pub id: i32,
+    pub name: String,
+    #[welds(readonly)]
+    pub description: Option<String>,
+}

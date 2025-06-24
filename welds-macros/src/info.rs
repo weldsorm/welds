@@ -93,6 +93,7 @@ mod tests {
             let field_type: syn::Type = syn::parse_str(&ty).unwrap();
             let col = Column {
                 field,
+                readonly: false,
                 ignore: false,
                 dbname: name,
                 field_type,
@@ -110,6 +111,7 @@ mod tests {
 
             let col = Column {
                 field,
+                readonly: false,
                 ignore: false,
                 dbname: name,
                 field_type,

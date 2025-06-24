@@ -176,11 +176,18 @@ mod tests {
                     vec![columns.id]
                 }
 
-                fn columns() -> Vec<welds::model_traits::Column> {
+                fn readable_columns() -> Vec<welds::model_traits::Column> {
                     #[allow(dead_code)]
                     let columns = Self::default();
                     vec![columns.id, columns.num]
                 }
+
+                fn writable_columns() -> Vec<welds::model_traits::Column> {
+                    #[allow(dead_code)]
+                    let columns = Self::default();
+                    vec![columns.id, columns.num]
+                }
+
             }
 
             impl welds::model_traits::TableColumns for MockSchema {
@@ -190,9 +197,14 @@ mod tests {
                     MockColumns::primary_keys()
                 }
 
-                fn columns() -> Vec<welds::model_traits::Column> {
-                    MockColumns::columns()
+                fn readable_columns() -> Vec<welds::model_traits::Column> {
+                    MockColumns::readable_columns()
                 }
+
+                fn writable_columns() -> Vec<welds::model_traits::Column> {
+                    MockColumns::writable_columns()
+                }
+
             }
         };
 

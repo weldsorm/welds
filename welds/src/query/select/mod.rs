@@ -119,6 +119,8 @@ where
         Ok(objs)
     }
 
+    /// A short hand to fetch a single row from the database.
+    /// The limit is automatically applied to one.
     pub async fn fetch_one<'q, 'c>(&self, client: &'c dyn Client) -> Result<DbState<T>>
     where
         'q: 'c,

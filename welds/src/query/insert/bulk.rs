@@ -5,31 +5,71 @@ use crate::query::clause::ParamArgs;
 use crate::writers::ColumnWriter;
 use crate::writers::NextParam;
 use crate::writers::TableWriter;
-//use crate::Syntax;
 
 /// Executes the query in the database Bulk Inserting values
 /// The primary_keys will be inserted as part of the data
-pub async fn run_with_ids<T>(conn: &dyn Client, data: &[T]) -> Result<()>
+pub async fn bulk_insert_with_ids<T>(conn: &dyn Client, data: &[T]) -> Result<()>
 where
     T: WriteToArgs + HasSchema,
     <T as HasSchema>::Schema: TableInfo + TableColumns,
 {
-    run(conn, data, true).await
-    //
+    let syntax = conn.syntax();
+    let parts = <<T as HasSchema>::Schema>::identifier();
+    let tablename: String = TableWriter::new(syntax).write2(parts);
+    run(conn, data, true, &tablename).await
 }
 
 /// Executes the query in the database Bulk Inserting values
 /// The primary_keys will NOT be inserted as part of the data
-pub async fn run_without_ids<T>(conn: &dyn Client, data: &[T]) -> Result<()>
+pub async fn bulk_insert<T>(conn: &dyn Client, data: &[T]) -> Result<()>
 where
     T: WriteToArgs + HasSchema,
     <T as HasSchema>::Schema: TableInfo + TableColumns,
 {
-    run(conn, data, false).await
+    let syntax = conn.syntax();
+    let parts = <<T as HasSchema>::Schema>::identifier();
+    let tablename: String = TableWriter::new(syntax).write2(parts);
+    run(conn, data, false, &tablename).await
 }
 
 /// Executes the query in the database Bulk Inserting values
-async fn run<T>(conn: &dyn Client, data: &[T], with_ids: bool) -> Result<()>
+/// The primary_keys will be inserted as part of the data
+///
+/// WARNING: This method does NOT protect the SQL generated tablename.
+/// DO NOT expose to end-users. SQL injection risk.
+pub async fn bulk_insert_with_ids_override_tablename_unsafe<T>(
+    conn: &dyn Client,
+    data: &[T],
+    tablename: impl Into<String>,
+) -> Result<()>
+where
+    T: WriteToArgs + HasSchema,
+    <T as HasSchema>::Schema: TableInfo + TableColumns,
+{
+    let tablename: String = tablename.into();
+    run(conn, data, true, &tablename).await
+}
+
+/// Executes the query in the database Bulk Inserting values
+/// The primary_keys will NOT be inserted as part of the data
+///
+/// WARNING: This method does NOT protect the SQL generated tablename.
+/// DO NOT expose to end-users. SQL injection risk.
+pub async fn bulk_insert_override_tablename_unsafe<T>(
+    conn: &dyn Client,
+    data: &[T],
+    tablename: impl Into<String>,
+) -> Result<()>
+where
+    T: WriteToArgs + HasSchema,
+    <T as HasSchema>::Schema: TableInfo + TableColumns,
+{
+    let tablename: String = tablename.into();
+    run(conn, data, false, &tablename).await
+}
+
+/// Executes the query in the database Bulk Inserting values
+async fn run<T>(conn: &dyn Client, data: &[T], with_ids: bool, tablename: &str) -> Result<()>
 where
     T: WriteToArgs + HasSchema,
     <T as HasSchema>::Schema: TableInfo + TableColumns,
@@ -52,9 +92,6 @@ where
         .iter()
         .filter(|c| with_ids || !pks.contains(c))
         .collect();
-
-    let parts = <<T as HasSchema>::Schema>::identifier();
-    let identifier = TableWriter::new(syntax).write2(parts);
 
     let colnames: Vec<String> = columns
         .iter()
@@ -81,7 +118,7 @@ where
             rows.push(format!("({})", row.join(",")));
         }
         let rows = rows.join(",");
-        let sql = format!("INSERT INTO {} ({}) VALUES {}", identifier, colnames, rows);
+        let sql = format!("INSERT INTO {tablename} ({colnames}) VALUES {rows}");
         conn.execute(&sql, &args).await?;
     }
 

@@ -25,7 +25,8 @@ description = "An async ORM for (postgres, mssql, mysql, sqlite)"
 "mssql-bigdecimal" = ["tiberius/bigdecimal"]
 "noop" = []
 "tracing" = ["dep:tracing"]
-"full" = ["postgres", "mysql", "sqlite", "mssql", "noop"]
+"unstable-api" = ["futures", "futures-core"]
+"full" = ["postgres", "mysql", "sqlite", "mssql", "noop", "unstable-api"]
 
 
 [dependencies]
@@ -34,6 +35,7 @@ bb8 = { version="0.9", optional=true }
 bb8-tiberius = { version="0.16", optional=true }
 tiberius = { version = "0.12", features = ["tokio"], optional = true }
 futures = {version= "0.3", optional=true }
+futures-core = {version= "0.3", optional=true }
 futures-util = { version= "0.3", optional=true }
 log = "0.4"
 sqlx = { version = "0.8", features = [], optional = true }

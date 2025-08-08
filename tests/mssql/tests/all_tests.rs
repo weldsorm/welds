@@ -1,16 +1,17 @@
-use mssql_test::models::StringThing;
-use mssql_test::models::Thing1;
 use mssql_test::models::order::Order;
 use mssql_test::models::product::{BadProductColumns, BadProductMissingTable, Product};
-use welds::TransactStart;
-use welds::connections::mssql::MssqlClient;
+use mssql_test::models::StringThing;
+use mssql_test::models::Thing1;
 use welds::connections::mssql::connect;
+use welds::connections::mssql::MssqlClient;
 use welds::state::{DbState, DbStatus};
+use welds::TransactStart;
 use welds::{Client, Syntax};
 
 mod extra_types;
 mod group_by;
 mod migrations;
+mod streams;
 
 async fn get_conn() -> MssqlClient {
     let cs = testlib::mssql::conn_string();

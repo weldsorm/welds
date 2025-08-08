@@ -15,6 +15,7 @@ pub mod group_by;
 pub mod includes;
 pub mod migrations;
 pub mod select_col;
+pub mod streams;
 pub mod sub_query_tests;
 async fn get_conn() -> SqliteClient {
     let conn = testlib::sqlite::conn().await.unwrap();

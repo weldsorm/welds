@@ -6,7 +6,7 @@ use welds::WeldsModel;
  * The this model is here for the purpose of testing core itself
  * */
 
-#[derive(Debug, WeldsModel)]
+#[derive(Debug, WeldsModel, PartialEq)]
 #[welds(table = "Products")]
 #[welds(HasMany(orders, super::order::Order, "product_id"))]
 pub struct Product {

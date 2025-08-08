@@ -8,6 +8,11 @@ use crate::errors::Result;
 use crate::{TransactStart, Transaction};
 use async_trait::async_trait;
 
+#[cfg(feature = "unstable-api")]
+use crate::StreamClient;
+#[cfg(feature = "unstable-api")]
+use futures_core::stream::BoxStream;
+
 /// This is a wrapper around a connection that could be Any underlying database
 /// only for the connection type features that have been enabled
 #[derive(Clone)]
@@ -90,6 +95,34 @@ impl Client for AnyClient {
             AnyClient::Mssql(c) => c.syntax(),
             #[cfg(feature = "noop")]
             AnyClient::Noop(c) => c.syntax(),
+        }
+    }
+}
+
+#[cfg(feature = "unstable-api")]
+#[async_trait]
+impl StreamClient for AnyClient {
+    /// Run the SQL streaming the results back in a future::stream
+    async fn stream<'client, 'e, 'params>(
+        &'client self,
+        sql: &str,
+        params: &[&'params (dyn Param + Sync)],
+    ) -> BoxStream<'e, Result<Row>>
+    where
+        'client: 'e,
+        'params: 'e,
+    {
+        match self {
+            #[cfg(feature = "sqlite")]
+            AnyClient::Sqlite(c) => c.stream(sql, params).await,
+            #[cfg(feature = "postgres")]
+            AnyClient::Postgres(c) => c.stream(sql, params).await,
+            #[cfg(feature = "mysql")]
+            AnyClient::Mysql(c) => c.stream(sql, params).await,
+            #[cfg(feature = "mssql")]
+            AnyClient::Mssql(c) => c.stream(sql, params).await,
+            #[cfg(feature = "noop")]
+            AnyClient::Noop(c) => c.stream(sql, params).await,
         }
     }
 }

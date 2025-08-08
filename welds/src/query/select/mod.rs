@@ -7,6 +7,15 @@ use crate::{Syntax, WeldsError};
 use welds_connections::Client;
 use welds_connections::Row;
 
+#[cfg(feature = "unstable-api")]
+use futures::StreamExt;
+#[cfg(feature = "unstable-api")]
+use futures::TryStreamExt;
+#[cfg(feature = "unstable-api")]
+use futures_core::stream::BoxStream;
+#[cfg(feature = "unstable-api")]
+use welds_connections::StreamClient;
+
 mod writer;
 pub use writer::SelectWriter;
 
@@ -117,6 +126,46 @@ where
             objs.push(DbState::db_loaded(obj));
         }
         Ok(objs)
+    }
+
+    /// Executes the query in the database returning the results
+    #[cfg(feature = "unstable-api")]
+    pub async fn stream<'e, 'q, 'c, C>(&'q self, client: &'c C) -> BoxStream<'e, Result<T>>
+    where
+        'q: 'e,
+        'c: 'e,
+        'q: 'c,
+        <T as HasSchema>::Schema: TableInfo + TableColumns,
+        T: TryFrom<Row>,
+        WeldsError: From<<T as TryFrom<Row>>::Error>,
+        C: Client,
+        C: StreamClient,
+    {
+        let syntax = client.syntax();
+        let mut args: Option<ParamArgs> = Some(Vec::default());
+
+        let table = TableIdent::from_model::<T>();
+        let columns = <T as HasSchema>::Schema::readable_columns();
+        let writer = SelectWriter::new_with_alias(syntax, &table, &self.alias);
+        let sql = writer.sql(
+            &columns,
+            &self.wheres,
+            &self.exist_ins,
+            &self.limit,
+            &self.offset,
+            &self.orderby,
+            &mut args,
+        );
+        let args = args.unwrap();
+
+        let stream = client.stream(&sql, &args).await;
+
+        let stream = stream.map_err(WeldsError::Database).map(|row_result| {
+            let r: Row = row_result?;
+            T::try_from(r).map_err(|e| e.into())
+        });
+
+        stream.boxed()
     }
 
     /// A short hand to fetch a single row from the database.

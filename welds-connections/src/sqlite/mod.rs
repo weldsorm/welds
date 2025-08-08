@@ -10,6 +10,11 @@ use sqlx::sqlite::SqliteArguments;
 use sqlx::{Sqlite, SqlitePool};
 use std::sync::Arc;
 
+#[cfg(feature = "unstable-api")]
+use crate::StreamClient;
+#[cfg(feature = "unstable-api")]
+use futures_core::stream::BoxStream;
+
 #[derive(Clone)]
 pub struct SqliteClient {
     pool: Arc<SqlitePool>,
@@ -98,6 +103,27 @@ impl Client for SqliteClient {
         crate::Syntax::Sqlite
     }
 }
+
+#[cfg(feature = "unstable-api")]
+#[async_trait]
+impl StreamClient for SqliteClient {
+    /// Run the SQL streaming the results back in a future::stream
+    async fn stream<'client, 'e, 'params>(
+        &'client self,
+        sql: &str,
+        params: &[&'params (dyn Param + Sync)],
+    ) -> BoxStream<'e, Result<Row>>
+    where
+        'client: 'e,
+        'params: 'e,
+    {
+        use futures::StreamExt;
+        row_stream::SqliteRowStream::new(self, sql, params).boxed()
+    }
+}
+
+#[cfg(feature = "unstable-api")]
+mod row_stream;
 
 pub trait SqliteParam {
     fn add_param<'q>(

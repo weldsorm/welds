@@ -11,6 +11,7 @@ use crate::query::clause::{AssignmentAdder, ClauseAdder};
 use crate::query::clause::{AssignmentManual, ParamArgs};
 use crate::query::clause::{SetColNull, SetColVal};
 use crate::query::helpers::{build_where, join_sql_parts};
+use crate::query::optional::Optional;
 use crate::writers::NextParam;
 use crate::writers::TableWriter;
 use std::marker::PhantomData;
@@ -60,18 +61,29 @@ where
     pub fn set<V, FIELD>(
         mut self,
         lam: impl Fn(<T as HasSchema>::Schema) -> FIELD,
-        value: impl Into<V>,
+        value: impl Into<Optional<V>>,
     ) -> Self
     where
         <T as HasSchema>::Schema: Default,
         FIELD: AsFieldName<V>,
         V: 'static + Sync + Send + Clone + Param,
     {
-        let val: V = value.into();
-        let field = lam(Default::default());
-        let col_raw = field.colname().to_string();
-        self.sets
-            .push(Arc::new(Box::new(SetColVal { col_raw, val })));
+        let value: Optional<V> = value.into();
+        let value: Option<V> = value.into();
+
+        match value {
+            None => {
+                let field = lam(Default::default());
+                let col_raw = field.colname().to_string();
+                self.sets.push(Arc::new(Box::new(SetColNull { col_raw })));
+            }
+            Some(val) => {
+                let field = lam(Default::default());
+                let col_raw = field.colname().to_string();
+                self.sets
+                    .push(Arc::new(Box::new(SetColVal { col_raw, val })));
+            }
+        }
         self
     }
 

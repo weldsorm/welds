@@ -5,6 +5,7 @@ use crate::model_traits::{HasSchema, TableColumns, TableInfo, UniqueIdentifier};
 use crate::query::clause::exists::ExistIn;
 use crate::query::clause::{AsFieldName, AssignmentAdder, ClauseAdder, OrderBy};
 use crate::query::include::IncludeBuilder;
+use crate::query::optional::Optional;
 use crate::relations::{HasRelations, Relationship};
 use crate::writers::alias::TableAlias;
 use std::marker::PhantomData;
@@ -410,7 +411,7 @@ where
     pub fn set<V, FIELD>(
         self,
         lam: impl Fn(<T as HasSchema>::Schema) -> FIELD,
-        value: impl Into<V>,
+        value: impl Into<Optional<V>>,
     ) -> UpdateBuilder<T>
     where
         <T as HasSchema>::Schema: Default,

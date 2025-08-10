@@ -209,7 +209,7 @@ where
     }
 
     /// Executes the query in the database Bulk updating the values
-    pub async fn run(&self, client: &dyn Client) -> Result<()>
+    pub async fn run(&self, client: &dyn Client) -> Result<u64>
     where
         <T as HasSchema>::Schema: UniqueIdentifier + TableInfo + TableColumns,
     {
@@ -218,9 +218,9 @@ where
         let mut w_in = WhereIn::new(&self.query_builder);
         let sql = self.sql_internal(syntax, &mut w_in, &mut args);
         let args = args.unwrap();
-        let _results = client.execute(&sql, &args).await?;
+        let results = client.execute(&sql, &args).await?;
 
-        Ok(())
+        Ok(results.rows_affected())
     }
 }
 

@@ -60,7 +60,7 @@ where
     /// Executes a `DELETE FROM ... `
     ///
     /// deletes all the resulting rows from the database
-    pub async fn delete(&self, client: &dyn Client) -> Result<()>
+    pub async fn delete(&self, client: &dyn Client) -> Result<u64>
     where
         <T as HasSchema>::Schema: UniqueIdentifier + TableInfo + TableColumns,
     {
@@ -73,8 +73,8 @@ where
         let mut args: Option<ParamArgs> = Some(Vec::default());
         let sql = self.delete_sql_internal(syntax, &mut w_in, &mut args);
         let args: ParamArgs = args.unwrap();
-        client.execute(&sql, &args).await?;
-        Ok(())
+        let results = client.execute(&sql, &args).await?;
+        Ok(results.rows_affected())
     }
 }
 

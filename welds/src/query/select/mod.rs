@@ -137,6 +137,23 @@ where
             .nth(0)
             .ok_or(WeldsError::RowNotFound)
     }
+
+    /// A short hand to fetch a single row or None from the database.
+    /// The limit is automatically applied to one.
+    pub async fn fetch_one_optional<'q, 'c>(
+        &self,
+        client: &'c dyn Client,
+    ) -> Result<Option<DbState<T>>>
+    where
+        'q: 'c,
+        <T as HasSchema>::Schema: TableInfo + TableColumns,
+        T: TryFrom<Row>,
+        WeldsError: From<<T as TryFrom<Row>>::Error>,
+    {
+        let mut query = self.clone();
+        query.limit = Some(1);
+        Ok(query.run(client).await?.pop())
+    }
 }
 
 #[cfg(test)]

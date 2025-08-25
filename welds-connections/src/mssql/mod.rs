@@ -7,6 +7,15 @@ use crate::errors::Result;
 use async_trait::async_trait;
 use std::sync::Arc;
 
+#[cfg(feature = "unstable-api")]
+use futures_core::stream::BoxStream;
+
+#[cfg(feature = "unstable-api")]
+use crate::StreamClient;
+
+#[cfg(feature = "unstable-api")]
+mod row_stream;
+
 use tiberius::ToSql;
 mod pool;
 use pool::Pool;
@@ -35,14 +44,6 @@ pub async fn connect(cs: &str) -> Result<MssqlClient> {
     Ok(MssqlClient { pool })
 }
 
-impl MssqlClient {
-    /// Returns a reference to the underlying tiberius connection
-    /// useful when you want to access the database yourself without welds
-    pub fn as_tiberius_pool(&self) -> Arc<Pool> {
-        self.pool.clone()
-    }
-}
-
 #[async_trait]
 impl Client for MssqlClient {
     async fn execute(&self, sql: &str, params: &[&(dyn Param + Sync)]) -> Result<ExecuteResult> {
@@ -65,6 +66,31 @@ impl Client for MssqlClient {
 
     fn syntax(&self) -> crate::Syntax {
         crate::Syntax::Mssql
+    }
+}
+
+#[cfg(feature = "unstable-api")]
+#[async_trait]
+impl StreamClient for MssqlClient {
+    /// Run the SQL streaming the results back in a future::stream
+    async fn stream<'client, 'e, 'params>(
+        &'client self,
+        sql: &str,
+        params: &[&'params (dyn Param + Sync)],
+    ) -> BoxStream<'e, Result<Row>>
+    where
+        'client: 'e,
+        'params: 'e,
+    {
+        use futures::StreamExt;
+        let conn = self.pool.get().await;
+        let conn = match conn {
+            Ok(c) => c,
+            Err(err) => return futures::stream::iter([Err(err)]).boxed(),
+        };
+        row_stream::MssqlClientStream::new(conn, sql, params)
+            .await
+            .boxed()
     }
 }
 

@@ -19,6 +19,9 @@ pub mod sqlite;
 pub mod trace;
 pub mod transaction;
 
+#[cfg(feature = "unstable-api")]
+use futures_core::stream::BoxStream;
+
 pub struct Fetch<'s, 'args, 't> {
     pub sql: &'s str,
     pub params: &'args [&'t (dyn Param + Sync)],
@@ -41,6 +44,21 @@ pub trait Client: Sync + Send {
 
     // Returns what syntax (dialect) of SQL the backend is expecting
     fn syntax(&self) -> Syntax;
+}
+
+#[cfg(feature = "unstable-api")]
+#[async_trait]
+/// The common trait for database connections and transactions.
+pub trait StreamClient: Sync + Send {
+    /// Run the SQL streaming the results back in a future::stream
+    async fn stream<'client, 'e, 'params>(
+        &'client self,
+        sql: &str,
+        params: &[&'params (dyn Param + Sync)],
+    ) -> BoxStream<'e, Result<Row>>
+    where
+        'client: 'e,
+        'params: 'e;
 }
 
 /// Used the ENV DATABASE_URL

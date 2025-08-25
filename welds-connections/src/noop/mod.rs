@@ -5,6 +5,11 @@ use crate::{ExecuteResult, Syntax};
 use async_trait::async_trait;
 use std::sync::{Arc, Mutex};
 
+#[cfg(feature = "unstable-api")]
+use crate::StreamClient;
+#[cfg(feature = "unstable-api")]
+use futures_core::stream::BoxStream;
+
 // This is a version of a client that does nothing.
 // It is used for testing
 //
@@ -100,5 +105,23 @@ impl Client for NoopClient {
 
     fn syntax(&self) -> crate::Syntax {
         self.syntax
+    }
+}
+
+#[cfg(feature = "unstable-api")]
+#[async_trait]
+impl StreamClient for NoopClient {
+    /// Run the SQL streaming the results back in a future::stream
+    async fn stream<'client, 'e, 'params>(
+        &'client self,
+        _sql: &str,
+        _params: &[&'params (dyn Param + Sync)],
+    ) -> BoxStream<'e, Result<Row>>
+    where
+        'client: 'e,
+        'params: 'e,
+    {
+        use futures::StreamExt;
+        futures::stream::iter([]).boxed()
     }
 }

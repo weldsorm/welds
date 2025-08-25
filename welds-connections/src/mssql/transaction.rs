@@ -24,7 +24,7 @@ pub(crate) struct MssqlTransaction<'t> {
 }
 
 impl MssqlTransaction<'_> {
-    pub async fn new(mut conn: PooledConnection) -> Result<Self> {
+    pub(crate) async fn new(mut conn: PooledConnection) -> Result<Self> {
         // start the transaction
         let trans_name = format!("t_{}", get_trans_count());
         let sql = format!("BEGIN TRANSACTION {}", trans_name);

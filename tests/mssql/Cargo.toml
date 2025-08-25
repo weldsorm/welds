@@ -18,3 +18,4 @@ uuid = { version = "1.11.0", features = ["v4"] }
 serde_json = "1.0.132"
 chrono = "0.4.38"
 tiberius = { version = "0.12.3", features = ["chrono"] }
+futures = "0.3.31"

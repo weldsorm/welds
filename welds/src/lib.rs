@@ -176,6 +176,8 @@ pub mod migrations;
 pub use welds_connections as connections;
 
 /// Re-export welds_connections
+#[cfg(feature = "unstable-api")]
+pub use welds_connections::StreamClient;
 pub use welds_connections::{Client, Row, Syntax, TransactStart};
 
 /// Re-export the Macro used to make models

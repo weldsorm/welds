@@ -5,7 +5,7 @@
 
 use welds::WeldsModel;
 
-#[derive(Debug, sqlx::FromRow, WeldsModel)]
+#[derive(Debug, sqlx::FromRow, WeldsModel, PartialEq)]
 #[welds(schema = "public", table = "Products")]
 #[welds(HasMany(order, super::super::order::Order, "product_id"))]
 pub struct Product {

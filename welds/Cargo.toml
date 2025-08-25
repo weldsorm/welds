@@ -12,6 +12,8 @@ description = "An async ORM for (postgres, mssql, mysql, sqlite)"
 
 [dependencies]
 welds-connections = { path="../welds-connections", version = "^0.4.18" }
+futures = {version= "0.3", optional = true  }
+futures-core = {version= "0.3", optional=true }
 async-trait = "0.1"
 colored = { version="3", optional = true }
 anyhow = "1.0"
@@ -29,7 +31,7 @@ welds-macros = { path="../welds-macros", version = "^0.4.18" }
 "mock" = []
 "check" = ["detect", "colored"]
 "migrations" = ["detect"]
-"unstable-api" = []
+"unstable-api" = ["welds-connections/unstable-api", "futures", "futures-core"]
 "tracing" = ["welds-connections/tracing"]
 
 
@@ -38,7 +40,7 @@ welds-macros = { path="../welds-macros", version = "^0.4.18" }
 
 
 [dev-dependencies]
-welds = { path="./", features=["full", "mock"] }
+welds = { path="./", features=["full", "mock", "unstable-api"] }
 futures = {version= "0.3" }
 welds-connections = { path="../welds-connections", version = "^0.4.18", features=["full"] }
 welds-macros = { path="../welds-macros", version = "^0.4.18" }

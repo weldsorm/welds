@@ -4,7 +4,7 @@
 ******************************************************************************/
 
 use welds::WeldsModel;
-#[derive(Debug, WeldsModel)]
+#[derive(Debug, WeldsModel, PartialEq)]
 #[welds(schema = "welds", table = "Products")]
 #[welds(HasMany(order, super::super::order::Order, "product_id"))]
 #[welds(HasMany(order2, super::super::order::Order, "product_id2"))]

@@ -3,14 +3,22 @@ use super::ConnectionStatus;
 use super::TiberiusConn;
 use super::{Client, Param};
 use crate::ExecuteResult;
+use crate::StreamClient;
 use crate::errors::Result;
 use crate::row::Row;
 use async_mutex::Mutex as AsyncMutex;
 use async_trait::async_trait;
+use futures::StreamExt;
 use std::sync::mpsc::Sender;
 use tiberius::ToSql;
 
-pub struct PooledConnection {
+#[cfg(feature = "unstable-api")]
+use super::pooled_stream::PooledConnectionStream;
+
+#[cfg(feature = "unstable-api")]
+use futures_core::stream::BoxStream;
+
+pub(crate) struct PooledConnection {
     pub(crate) status: ConnectionStatus,
     // NOTE: this is an option so it can be taken when dropped
     pub(super) tiberius_conn: AsyncMutex<Option<TiberiusConn>>,
@@ -121,5 +129,24 @@ impl Client for PooledConnection {
 
     fn syntax(&self) -> crate::Syntax {
         crate::Syntax::Mssql
+    }
+}
+
+#[cfg(feature = "unstable-api")]
+#[async_trait]
+impl StreamClient for PooledConnection {
+    /// Run the SQL streaming the results back in a future::stream
+    async fn stream<'client, 'e, 'params>(
+        &'client self,
+        sql: &str,
+        params: &[&'params (dyn Param + Sync)],
+    ) -> BoxStream<'e, Result<Row>>
+    where
+        'client: 'e,
+        'params: 'e,
+    {
+        PooledConnectionStream::new(self.tiberius_conn.lock().await, sql, params)
+            .await
+            .boxed()
     }
 }

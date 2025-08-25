@@ -10,6 +10,9 @@ use std::sync::Mutex;
 use std::sync::mpsc::{Receiver, Sender, channel};
 use tokio::task::yield_now;
 
+#[cfg(feature = "unstable-api")]
+pub(crate) mod pooled_stream;
+
 // ******************************************************************************
 // Why in the world are we making our own connection pool?
 // I known this seams crazy and unnecessary
@@ -29,7 +32,7 @@ pub(crate) type TiberiusConn = tiberius::Client<tokio_util::compat::Compat<tokio
 mod pooledconnection;
 pub(crate) use pooledconnection::PooledConnection;
 
-pub struct Pool {
+pub(crate) struct Pool {
     mgr: ConnectionManager,
     slots: Vec<Mutex<Slot>>,
     round_robin_next: Mutex<usize>,

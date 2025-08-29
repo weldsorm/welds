@@ -3,7 +3,6 @@ use super::ConnectionStatus;
 use super::TiberiusConn;
 use super::{Client, Param};
 use crate::ExecuteResult;
-use crate::StreamClient;
 use crate::errors::Result;
 use crate::row::Row;
 use async_mutex::Mutex as AsyncMutex;
@@ -11,6 +10,9 @@ use async_trait::async_trait;
 use futures::StreamExt;
 use std::sync::mpsc::Sender;
 use tiberius::ToSql;
+
+#[cfg(feature = "unstable-api")]
+use crate::StreamClient;
 
 #[cfg(feature = "unstable-api")]
 use super::pooled_stream::PooledConnectionStream;

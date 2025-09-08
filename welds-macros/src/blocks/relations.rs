@@ -58,8 +58,22 @@ fn defaultdef(info: &Info, relation: &Relation) -> TokenStream {
     let kind = &relation.kind;
     let field = &relation.field;
     let fk = &relation.foreign_key_db;
-    quote! {
-        #field: #wp::relations::#kind::using(#fk)
+
+    match kind.to_string().as_str() {
+        "ManualRelationship" => {
+            let self_key = relation
+                .self_key_db
+                .clone()
+                .expect("Self key should have value");
+            quote! {
+                #field: #wp::relations::#kind::using(#self_key, #fk)
+            }
+        }
+        _ => {
+            quote! {
+                #field: #wp::relations::#kind::using(#fk)
+            }
+        }
     }
 }
 
@@ -96,6 +110,17 @@ fn compiletime_asserts(info: &Info) {
                 !info.pks.is_empty(),
                 "The model {} has a HasOne relationships defined, but no primary_key column is defined",
                 defstruct,
+            );
+        }
+        // Compile time check that the column exists.
+        if &relation_kind_name == "ManualRelationship" {
+            let self_column: &str = relation.self_key_db.as_ref().expect("Missing Self COlumn");
+            let found = columns.iter().find(|x| x.dbname == self_column);
+            assert!(
+                found.is_some(),
+                "The model {} has a ManualRelationship, but no field with the database colunm \"{}\" was found on the model",
+                defstruct,
+                self_column
             );
         }
     }

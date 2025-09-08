@@ -358,6 +358,13 @@ where
         SelectBuilder::new(self).select_as(lam, as_name)
     }
 
+    /// Converts this QB to a SelectBuilder selecting no columns
+    /// Useful when joining on another table and you don't want an data from this this QueryBuilder
+    /// just the relationship.
+    pub fn select_none(self) -> SelectBuilder<T> {
+        SelectBuilder::new(self)
+    }
+
     /// Used to select into one off structs.
     /// Select all columns, equivalent to calling `query.select(..)` for each column
     pub fn select_all(self) -> SelectBuilder<T> {

@@ -125,6 +125,7 @@ pub(crate) fn get_relations(ast: &syn::DeriveInput) -> Result<Vec<Relation>> {
         .map(|m| Relation::new(m, "HasMany"))
         .collect();
     let mut relations1 = relations1?;
+
     let relations2: Result<Vec<_>> = inners
         .iter()
         .filter_map(|m| as_metalist_ref(m))
@@ -132,6 +133,7 @@ pub(crate) fn get_relations(ast: &syn::DeriveInput) -> Result<Vec<Relation>> {
         .map(|m| Relation::new(m, "BelongsTo"))
         .collect();
     let mut relations2 = relations2?;
+
     let relations3: Result<Vec<_>> = inners
         .iter()
         .filter_map(|m| as_metalist_ref(m))
@@ -139,10 +141,20 @@ pub(crate) fn get_relations(ast: &syn::DeriveInput) -> Result<Vec<Relation>> {
         .map(|m| Relation::new(m, "HasOne"))
         .collect();
     let mut relations3 = relations3?;
+
+    let relations4: Result<Vec<_>> = inners
+        .iter()
+        .filter_map(|m| as_metalist_ref(m))
+        .filter(|m| m.path.is_ident("ManualRelationship"))
+        .map(Relation::new_manual)
+        .collect();
+    let mut relations4 = relations4?;
+
     let relations: Vec<_> = relations1
         .drain(..)
         .chain(relations2.drain(..))
         .chain(relations3.drain(..))
+        .chain(relations4.drain(..))
         .collect();
 
     Ok(relations)

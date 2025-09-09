@@ -1,7 +1,7 @@
 [package]
 name = "welds-macros"
 authors = ["Lex Childs <lexchilds@gmail.com>"]
-version = "0.4.18"
+version = "0.4.19"
 edition = "2024"
 license = "BSD-3-Clause"
 categories = ["database"]

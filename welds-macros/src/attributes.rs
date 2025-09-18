@@ -122,7 +122,7 @@ pub(crate) fn get_relations(ast: &syn::DeriveInput) -> Result<Vec<Relation>> {
         .iter()
         .filter_map(|m| as_metalist_ref(m))
         .filter(|m| m.path.is_ident("HasMany"))
-        .map(|m| Relation::new(m, "HasMany"))
+        .map(Relation::basic)
         .collect();
     let mut relations1 = relations1?;
 
@@ -130,7 +130,7 @@ pub(crate) fn get_relations(ast: &syn::DeriveInput) -> Result<Vec<Relation>> {
         .iter()
         .filter_map(|m| as_metalist_ref(m))
         .filter(|m| m.path.is_ident("BelongsTo"))
-        .map(|m| Relation::new(m, "BelongsTo"))
+        .map(Relation::basic)
         .collect();
     let mut relations2 = relations2?;
 
@@ -138,7 +138,7 @@ pub(crate) fn get_relations(ast: &syn::DeriveInput) -> Result<Vec<Relation>> {
         .iter()
         .filter_map(|m| as_metalist_ref(m))
         .filter(|m| m.path.is_ident("HasOne"))
-        .map(|m| Relation::new(m, "HasOne"))
+        .map(Relation::basic)
         .collect();
     let mut relations3 = relations3?;
 
@@ -150,11 +150,21 @@ pub(crate) fn get_relations(ast: &syn::DeriveInput) -> Result<Vec<Relation>> {
         .collect();
     let mut relations4 = relations4?;
 
+    let relations5: Result<Vec<_>> = inners
+        .iter()
+        .filter_map(|m| as_metalist_ref(m))
+        .filter(|m| m.path.is_ident("JoinTable"))
+        .map(Relation::build_jointable)
+        .collect();
+    let mut relations5 = relations5?;
+
     let relations: Vec<_> = relations1
         .drain(..)
         .chain(relations2.drain(..))
         .chain(relations3.drain(..))
         .chain(relations4.drain(..))
+        .chain(relations5.drain(..))
+        .flatten()
         .collect();
 
     Ok(relations)

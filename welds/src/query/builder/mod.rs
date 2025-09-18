@@ -210,17 +210,17 @@ where
     ) -> Self
     where
         T: HasRelations,
-        Ship: Relationship<R>,
+        Ship: Relationship<T, R>,
         R: HasSchema,
         R: Send + Sync + HasSchema,
-        <R as HasSchema>::Schema: TableInfo + TableColumns + UniqueIdentifier,
-        <T as HasSchema>::Schema: TableInfo + TableColumns + UniqueIdentifier,
+        <R as HasSchema>::Schema: TableInfo + TableColumns,
+        <T as HasSchema>::Schema: TableInfo + TableColumns,
         <T as HasRelations>::Relation: Default,
     {
         let ship = relationship(Default::default());
-        let out_col = ship.my_key::<R::Schema, T::Schema>();
+        let out_col = ship.my_key();
         let inner_tn = <R as HasSchema>::Schema::identifier();
-        let inner_col = ship.their_key::<R::Schema, T::Schema>();
+        let inner_col = ship.their_key();
         let mut exist_in = ExistIn::new(&filter, out_col, inner_tn, inner_col);
         exist_in.set_aliases(&self.alias_asigner);
         self.exist_ins.push(exist_in);
@@ -234,20 +234,20 @@ where
     ) -> QueryBuilder<R>
     where
         T: HasRelations,
-        Ship: Relationship<R>,
+        Ship: Relationship<T, R>,
         T: HasSchema,
         R: Send + Sync + HasSchema,
-        <R as HasSchema>::Schema: TableInfo + TableColumns + UniqueIdentifier,
-        <T as HasSchema>::Schema: TableInfo + TableColumns + UniqueIdentifier,
+        <R as HasSchema>::Schema: TableInfo + TableColumns,
+        <T as HasSchema>::Schema: TableInfo + TableColumns,
         <T as HasRelations>::Relation: Default,
     {
         let ship = relationship(Default::default());
         let mut qb: QueryBuilder<R> = QueryBuilder::new();
         qb.set_aliases(&self.alias_asigner);
 
-        let out_col = ship.their_key::<R::Schema, T::Schema>();
+        let out_col = ship.their_key();
         let inner_tn = <T as HasSchema>::Schema::identifier();
-        let inner_col = ship.my_key::<R::Schema, T::Schema>();
+        let inner_col = ship.my_key();
         let exist_in = ExistIn::new(self, out_col, inner_tn, inner_col);
 
         qb.exist_ins.push(exist_in);
@@ -518,7 +518,7 @@ where
     ) -> IncludeBuilder<T>
     where
         T: 'static + HasRelations,
-        Ship: 'static + Sync + Relationship<R>,
+        Ship: 'static + Sync + Relationship<T, R>,
         R: HasSchema,
         R: 'static,
         R: Send + Sync + HasSchema,
@@ -543,7 +543,7 @@ where
     ) -> IncludeBuilder<T>
     where
         T: 'static + HasRelations,
-        Ship: 'static + Sync + Relationship<R>,
+        Ship: 'static + Sync + Relationship<T, R>,
         R: HasSchema,
         R: 'static,
         R: Send + Sync + HasSchema,

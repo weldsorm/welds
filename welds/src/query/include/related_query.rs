@@ -9,6 +9,7 @@ use crate::query::clause::exists::ExistIn;
 use crate::relations::Relationship;
 use async_trait::async_trait;
 use std::any::Any;
+use std::marker::PhantomData;
 
 #[async_trait]
 pub(crate) trait RelatedQuery<R> {
@@ -20,11 +21,12 @@ pub(crate) trait RelatedQuery<R> {
     fn to_sql(&self, primary_query: &QueryBuilder<R>, syntax: crate::Syntax) -> String;
 }
 
-pub(crate) struct IncludeQuery<R, Ship>
+pub(crate) struct IncludeQuery<T, R, Ship>
 where
-    Ship: Relationship<R>,
+    Ship: Relationship<T, R>,
 {
     // The model that is being included
+    pub(crate) _t: PhantomData<T>,
     pub(crate) row_type: std::marker::PhantomData<R>,
     pub(crate) out_col: String,
     pub(crate) inner_tn: &'static [&'static str],
@@ -34,11 +36,11 @@ where
 }
 
 #[async_trait]
-impl<R, T, Ship> RelatedQuery<T> for IncludeQuery<R, Ship>
+impl<R, T, Ship> RelatedQuery<T> for IncludeQuery<T, R, Ship>
 where
-    for<'r> &'r IncludeQuery<R, Ship>: Send,
+    for<'r> &'r IncludeQuery<T, R, Ship>: Send,
     for<'b> &'b QueryBuilder<T>: Send,
-    Ship: 'static + Relationship<R>,
+    Ship: 'static + Relationship<T, R>,
     T: 'static + Send,
     R: 'static,
     <R as HasSchema>::Schema: TableInfo + TableColumns + UniqueIdentifier,
@@ -66,7 +68,8 @@ where
 
         let rows = qb.run(client).await?;
 
-        Ok(Box::new(RelatedSet::<R, Ship> {
+        Ok(Box::new(RelatedSet::<T, R, Ship> {
+            _t: Default::default(),
             data: rows.into_inners(),
             ship: self.ship.clone(),
         }))
@@ -87,51 +90,38 @@ where
     }
 }
 
-pub(crate) struct RelatedSet<R, Ship>
+pub(crate) struct RelatedSet<T, R, Ship>
 where
-    Ship: Relationship<R>,
+    Ship: Relationship<T, R>,
 {
+    _t: PhantomData<T>,
     pub(crate) data: Vec<R>,
     pub(crate) ship: Ship,
 }
 
 pub(crate) trait RelatedSetAccesser {
     fn as_any(&self) -> &dyn Any;
-    //fn as_any_mut(&mut self) -> &mut dyn Any;
 }
 
-impl<R: 'static, Ship: 'static> RelatedSetAccesser for RelatedSet<R, Ship>
+impl<T: 'static, R: 'static, Ship: 'static> RelatedSetAccesser for RelatedSet<T, R, Ship>
 where
-    Ship: Relationship<R>,
+    Ship: Relationship<T, R>,
 {
     fn as_any(&self) -> &dyn Any {
         self
     }
-
-    //fn as_any_mut(&mut self) -> &mut dyn Any {
-    //    self
-    //}
 }
 
 pub(crate) trait SetDowncast {
-    fn downcast_ref<R: 'static, Ship: 'static + Relationship<R>>(
+    fn downcast_ref<T: 'static, R: 'static, Ship: 'static + Relationship<T, R>>(
         &self,
-    ) -> Option<&RelatedSet<R, Ship>>;
-    // fn downcast_mut<R: 'static, Ship: 'static + Relationship<R>>(
-    //     &mut self,
-    // ) -> Option<&mut RelatedSet<R, Ship>>;
+    ) -> Option<&RelatedSet<T, R, Ship>>;
 }
 
 impl SetDowncast for Box<dyn RelatedSetAccesser + Send> {
-    fn downcast_ref<R: 'static, Ship: 'static + Relationship<R>>(
+    fn downcast_ref<T: 'static, R: 'static, Ship: 'static + Relationship<T, R>>(
         &self,
-    ) -> Option<&RelatedSet<R, Ship>> {
-        self.as_any().downcast_ref::<RelatedSet<R, Ship>>()
+    ) -> Option<&RelatedSet<T, R, Ship>> {
+        self.as_any().downcast_ref::<RelatedSet<T, R, Ship>>()
     }
-
-    // fn downcast_mut<R: 'static, Ship: 'static + Relationship<R>>(
-    //     &mut self,
-    // ) -> Option<&mut RelatedSet<R, Ship>> {
-    //     self.as_any_mut().downcast_mut::<RelatedSet<R, Ship>>()
-    // }
 }

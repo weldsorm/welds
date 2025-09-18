@@ -74,6 +74,12 @@ where
     // If this insert needs a second select command to get the id, add it to the vec of sql to run
     let sql2: String;
     if id_return_required {
+        // If the user is expecting the DB to return the DB generated ID,
+        // and there is more than one, we can't continue.
+        if pks.len() >= 2 {
+            return Err(crate::errors::WeldsError::InsertFailed("Unable to insert record with multiple PKs where IDs are expected to be returned from database. To insert a record with multiple PKs they must both be provided.".to_owned()));
+        }
+
         if let Some(select) = select {
             sql2 = select.to_owned();
             statements.push(Fetch {

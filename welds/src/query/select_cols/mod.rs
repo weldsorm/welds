@@ -151,12 +151,12 @@ where
     ) -> Self
     where
         T: HasRelations,
-        Ship: Relationship<R>,
+        Ship: Relationship<T, R>,
         R: HasSchema,
         T: HasSchema,
         R: Send + HasSchema,
-        <R as HasSchema>::Schema: TableInfo + TableColumns + UniqueIdentifier,
-        <T as HasSchema>::Schema: TableInfo + TableColumns + UniqueIdentifier,
+        <R as HasSchema>::Schema: TableInfo + TableColumns,
+        <T as HasSchema>::Schema: TableInfo + TableColumns,
         <T as HasRelations>::Relation: Default,
     {
         self.qb = self.qb.where_relation(relationship, filter);
@@ -171,11 +171,11 @@ where
     ) -> Self
     where
         T: HasRelations,
-        Ship: Relationship<R>,
+        Ship: Relationship<T, R>,
         R: HasSchema,
         R: Send + HasSchema,
-        <R as HasSchema>::Schema: TableInfo + TableColumns + UniqueIdentifier,
-        <T as HasSchema>::Schema: TableInfo + TableColumns + UniqueIdentifier,
+        <R as HasSchema>::Schema: TableInfo + TableColumns,
+        <T as HasSchema>::Schema: TableInfo + TableColumns,
     {
         self.join_with(relationship, sb, Join::Inner)
     }
@@ -188,11 +188,11 @@ where
     ) -> Self
     where
         T: HasRelations,
-        Ship: Relationship<R>,
+        Ship: Relationship<T, R>,
         R: HasSchema,
         R: Send + HasSchema,
-        <R as HasSchema>::Schema: TableInfo + TableColumns + UniqueIdentifier,
-        <T as HasSchema>::Schema: TableInfo + TableColumns + UniqueIdentifier,
+        <R as HasSchema>::Schema: TableInfo + TableColumns,
+        <T as HasSchema>::Schema: TableInfo + TableColumns,
     {
         self.join_with(relationship, sb, Join::Left)
     }
@@ -207,11 +207,11 @@ where
     ) -> Self
     where
         T: HasRelations,
-        Ship: Relationship<R>,
+        Ship: Relationship<T, R>,
         R: HasSchema,
         R: Send + HasSchema,
-        <R as HasSchema>::Schema: TableInfo + TableColumns + UniqueIdentifier,
-        <T as HasSchema>::Schema: TableInfo + TableColumns + UniqueIdentifier,
+        <R as HasSchema>::Schema: TableInfo + TableColumns,
+        <T as HasSchema>::Schema: TableInfo + TableColumns,
     {
         let ship = relationship(Default::default());
         sb.set_aliases(&self.qb.alias_asigner);
@@ -220,8 +220,8 @@ where
             .drain(..)
             .map(|gb| self.group_bys.push(gb.set_alias(&sb.qb.alias)))
             .collect::<Vec<_>>();
-        let outer_key = ship.my_key::<R::Schema, T::Schema>();
-        let inner_key = ship.their_key::<R::Schema, T::Schema>();
+        let outer_key = ship.my_key();
+        let inner_key = ship.their_key();
         let mut jb = JoinBuilder::new(sb, outer_key, inner_key);
         jb.ty = join_type;
         self.joins.push(jb);

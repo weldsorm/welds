@@ -51,10 +51,6 @@ struct Sqlite;
 
 impl Sqlite {
     fn write(identifier: &str, colargs: &[ColArg], _columns: &[Column], pks: &[Column]) -> Sql {
-        assert!(
-            pks.len() == 1,
-            "Error: A single primary key is required for insert"
-        );
         let cols: Vec<_> = colargs.iter().map(|x| x.0.as_str()).collect();
         let args: Vec<_> = colargs.iter().map(|x| x.1.as_str()).collect();
         let col_group = cols.join(", ");
@@ -76,10 +72,6 @@ struct MySql;
 
 impl MySql {
     fn write(identifier: &str, colargs: &[ColArg], _columns: &[Column], pks: &[Column]) -> Sql {
-        assert!(
-            pks.len() == 1,
-            "Error: A single primary key is required for insert"
-        );
         let cols: Vec<_> = colargs.iter().map(|x| x.0.as_str()).collect();
         let args: Vec<_> = colargs.iter().map(|x| x.1.as_str()).collect();
         let col_group = cols.join(", ");

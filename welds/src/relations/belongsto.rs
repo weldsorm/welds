@@ -6,55 +6,54 @@ use crate::model_traits::PrimaryKeyValue;
 use crate::model_traits::UniqueIdentifier;
 use std::marker::PhantomData;
 
-pub struct BelongsTo<T> {
+pub struct BelongsTo<T, R> {
     _t: PhantomData<T>,
+    _r: PhantomData<R>,
     foreign_key: &'static str,
 }
 
-impl<T> BelongsTo<T> {
-    pub fn using(fk: &'static str) -> BelongsTo<T> {
+impl<T, R> BelongsTo<T, R> {
+    pub fn using(fk: &'static str) -> BelongsTo<T, R> {
         BelongsTo {
             _t: Default::default(),
+            _r: Default::default(),
             foreign_key: fk,
         }
     }
 }
 
 // writing these by hand to ignore PhantomData
-impl<T> PartialEq for BelongsTo<T> {
+impl<T, R> PartialEq for BelongsTo<T, R> {
     fn eq(&self, other: &Self) -> bool {
         self.foreign_key == other.foreign_key
     }
 }
-impl<T> Clone for BelongsTo<T> {
+impl<T, R> Clone for BelongsTo<T, R> {
     fn clone(&self) -> Self {
         Self {
             _t: Default::default(),
+            _r: Default::default(),
             foreign_key: self.foreign_key,
         }
     }
 }
 
-impl<R: Send> Relationship<R> for BelongsTo<R> {
-    fn my_key<ME, THEM>(&self) -> String
-    where
-        ME: UniqueIdentifier,
-        THEM: UniqueIdentifier,
-    {
+impl<T: Send, R: Send> Relationship<T, R> for BelongsTo<T, R>
+where
+    R: HasSchema,
+    <R as HasSchema>::Schema: UniqueIdentifier,
+{
+    fn my_key(&self) -> String {
         self.foreign_key.to_owned()
     }
-    fn their_key<ME, THEM>(&self) -> String
-    where
-        ME: UniqueIdentifier,
-        THEM: UniqueIdentifier,
-    {
-        ME::id_column().name().to_owned()
+    fn their_key(&self) -> String {
+        <R as HasSchema>::Schema::id_column().name().to_owned()
     }
 }
 
-impl<T, R> RelationshipCompare<T, R> for BelongsTo<R>
+impl<T, R> RelationshipCompare<T, R> for BelongsTo<T, R>
 where
-    Self: Relationship<R>,
+    Self: Relationship<T, R>,
     R: PrimaryKeyValue + HasSchema,
     R::Schema: UniqueIdentifier,
     T: HasSchema,
@@ -63,7 +62,7 @@ where
 {
     fn is_related(&self, source: &T, other: &R) -> bool {
         let pk = other.primary_key_value();
-        let fk_field: String = Self::my_key::<R::Schema, T::Schema>(self);
+        let fk_field: String = Self::my_key(self);
         source.eq(&fk_field, &pk)
     }
 }

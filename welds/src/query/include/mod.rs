@@ -37,7 +37,7 @@ where
     ) -> IncludeBuilder<T>
     where
         T: 'static + HasRelations,
-        Ship: 'static + Sync + Relationship<R>,
+        Ship: 'static + Sync + Relationship<T, R>,
         R: HasSchema,
         R: 'static,
         R: Send + Sync + HasSchema,
@@ -49,11 +49,12 @@ where
     {
         // capture how to run this query as a sub-query in on the related table
         let ship = relationship(Default::default());
-        let out_col = ship.their_key::<R::Schema, T::Schema>();
+        let out_col = ship.their_key();
         let inner_tn = <T as HasSchema>::Schema::identifier();
-        let inner_col = ship.my_key::<R::Schema, T::Schema>();
+        let inner_col = ship.my_key();
 
-        let include_query: IncludeQuery<R, Ship> = IncludeQuery::<R, Ship> {
+        let include_query: IncludeQuery<T, R, Ship> = IncludeQuery::<T, R, Ship> {
+            _t: Default::default(),
             row_type: Default::default(),
             out_col,
             inner_tn,
@@ -78,7 +79,7 @@ where
     ) -> IncludeBuilder<T>
     where
         T: 'static + HasRelations,
-        Ship: 'static + Sync + Relationship<R>,
+        Ship: 'static + Sync + Relationship<T, R>,
         R: HasSchema,
         R: 'static,
         R: Send + Sync + HasSchema,
@@ -89,11 +90,12 @@ where
         WeldsError: From<<R as TryFrom<Row>>::Error>,
     {
         let ship = relationship(Default::default());
-        let out_col = ship.their_key::<R::Schema, T::Schema>();
+        let out_col = ship.their_key();
         let inner_tn = <T as HasSchema>::Schema::identifier();
-        let inner_col = ship.my_key::<R::Schema, T::Schema>();
+        let inner_col = ship.my_key();
 
-        let include_query: IncludeQuery<R, Ship> = IncludeQuery::<R, Ship> {
+        let include_query: IncludeQuery<T, R, Ship> = IncludeQuery::<T, R, Ship> {
+            _t: Default::default(),
             row_type: Default::default(),
             out_col,
             inner_tn,

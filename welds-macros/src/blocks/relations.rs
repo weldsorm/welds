@@ -44,11 +44,12 @@ pub(crate) fn write(info: &Info) -> TokenStream {
 // write the definition of a HasRelations field
 fn fielddef(info: &Info, relation: &Relation) -> TokenStream {
     let wp = &info.welds_path;
+    let model_struct = &info.defstruct;
     let kind = &relation.kind;
     let field = &relation.field;
     let other = &relation.foreign_struct;
     quote! {
-        pub #field: #wp::relations::#kind<#other>
+        pub #field: #wp::relations::#kind<#model_struct, #other>
     }
 }
 

@@ -41,6 +41,7 @@ fn model_gen_inner(input: TokenStream) -> errors::Result<TokenStream> {
     let p13 = blocks::write_hooks(&info);
     let p14 = blocks::write_primary_key_value(&info);
     let p15 = blocks::foreign_key_partial_eq(&info);
+    let p16 = blocks::jointable(&info);
 
     let q = quote! {
         #p1
@@ -58,6 +59,7 @@ fn model_gen_inner(input: TokenStream) -> errors::Result<TokenStream> {
         #p13
         #p14
         #p15
+        #p16
     };
 
     // // Want to see what the macros generate?

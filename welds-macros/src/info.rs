@@ -93,8 +93,9 @@ mod tests {
             let field_type: syn::Type = syn::parse_str(&ty).unwrap();
             let col = Column {
                 field,
-                readonly: false,
-                ignore: false,
+                selectable: true,
+                updateable: true,
+                insertable: true,
                 dbname: name,
                 field_type,
                 is_option: null,
@@ -111,8 +112,9 @@ mod tests {
 
             let col = Column {
                 field,
-                readonly: false,
-                ignore: false,
+                selectable: true,
+                updateable: true,
+                insertable: true,
                 dbname: name,
                 field_type,
                 is_option: false,

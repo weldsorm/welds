@@ -7,13 +7,13 @@ pub(crate) fn write(info: &Info) -> TokenStream {
     let fields: Vec<_> = info
         .columns
         .iter()
-        .filter(|x| !x.ignore)
+        .filter(|x| x.selectable)
         .map(setfield)
         .collect();
     let fields = quote! { #(#fields)* };
 
     // Get all the columns that are ignored
-    let ignored: Vec<_> = info.columns.iter().filter(|&x| x.ignore).collect();
+    let ignored: Vec<_> = info.columns.iter().filter(|&x| !x.selectable).collect();
 
     write_for_db(info, &fields, &ignored)
 }

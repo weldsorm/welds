@@ -19,18 +19,24 @@ pub(crate) fn get_columns(ast: &syn::DeriveInput) -> Vec<Column> {
         .iter()
         .filter(|f| f.ident.is_some())
         .map(|f| {
-            let ignore = is_welds_ignore(&f.attrs);
-            let readonly = is_welds_col_readonly(&f.attrs);
             let fieldname = f.ident.as_ref().unwrap().to_string();
             let dbname = read_rename(f).unwrap_or(fieldname);
             let field_type = as_option_inner(&f.ty);
             let is_option = field_type.is_some();
             let field_type = field_type.unwrap_or(&f.ty).clone();
             let field = f.ident.as_ref().unwrap().clone();
+
+            let ignores = welds_ignores(&f.attrs);
+
+            let selectable = !ignores.contains(&Ignores::Select);
+            let updateable = !ignores.contains(&Ignores::Update);
+            let insertable = !ignores.contains(&Ignores::Insert);
+
             Column {
                 field,
-                ignore,
-                readonly,
+                selectable,
+                updateable,
+                insertable,
                 dbname,
                 field_type,
                 is_option,
@@ -48,7 +54,7 @@ pub(crate) fn get_pks(ast: &syn::DeriveInput) -> Vec<Column> {
     let fields = &struct_def.fields;
     fields
         .iter()
-        .filter(|x| !is_welds_ignore(&x.attrs))
+        .filter(|x| !is_welds_full_ignore(&x.attrs))
         .filter(|x| is_welds_pk(&x.attrs))
         .filter(|f| f.ident.is_some())
         .map(|f| {
@@ -60,10 +66,14 @@ pub(crate) fn get_pks(ast: &syn::DeriveInput) -> Vec<Column> {
             let field = f.ident.as_ref().unwrap().clone();
             Column {
                 field,
-                ignore: false,
+
+                selectable: true,
                 // The PK column is used when inserting but not ever updated.
                 // This is handled within welds "core"
-                readonly: false,
+                // We are marking it as updateable and insertable logic exists for bulk
+                insertable: true,
+                updateable: true,
+
                 dbname,
                 field_type,
                 is_option,
@@ -305,6 +315,7 @@ fn as_meta_namevalue_ref(meta: &syn::Meta) -> Option<&syn::MetaNameValue> {
     }
 }
 
+/// return the inner nested list "welds(bla, bla2)" -> vec![bla, bla2]
 fn as_metalist_nested_meta(metalist: &syn::MetaList) -> Vec<&syn::Meta> {
     metalist
         .nested
@@ -343,13 +354,70 @@ fn welds_path_meta(attrs: &[Attribute]) -> Vec<syn::MetaList> {
         .collect()
 }
 
-fn is_welds_ignore(attrs: &[Attribute]) -> bool {
+fn welds_ignores(attrs: &[Attribute]) -> Vec<Ignores> {
+    if is_welds_full_ignore(attrs) {
+        return vec![Ignores::Select, Ignores::Update, Ignores::Insert];
+    }
+    if is_welds_col_readonly(attrs) {
+        return vec![Ignores::Update, Ignores::Insert];
+    }
+    welds_ignore_subs(attrs)
+}
+
+fn is_welds_full_ignore(attrs: &[Attribute]) -> bool {
     let metas = welds_meta(attrs);
     // Check if any attr has ignore
     metas
         .iter()
+        //.filter(|m| m.nested.is_empty())
         .flat_map(as_metalist_nested_meta)
-        .any(|m| m.path().is_ident("ignore"))
+        .filter(|m| m.path().is_ident("ignore"))
+        // Make sure this "ignore doesn't have children"
+        .filter(|m| !matches!(m, syn::Meta::List(_)))
+        .any(|_| true)
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+enum Ignores {
+    Select,
+    Update,
+    Insert,
+}
+
+impl From<&syn::Path> for Ignores {
+    fn from(path: &syn::Path) -> Self {
+        let err_msg = "Valid ignore options are (select, update, insert) or empty \n #[welds(ignore)] \n #[welds(ignore(insert))]";
+        let idnt = path.get_ident().map(|i| i.to_string()).expect(err_msg);
+        match idnt.as_str() {
+            "select" => Ignores::Select,
+            "update" => Ignores::Update,
+            "insert" => Ignores::Insert,
+            _ => panic!("{}", err_msg),
+        }
+    }
+}
+
+/// returns the inner contents of a #welds(ignore(bla, bla2)) -> bla, bla2
+fn welds_ignore_subs(attrs: &[Attribute]) -> Vec<Ignores> {
+    let metas = welds_meta(attrs);
+    // Check if any attr has ignore
+    metas
+        .iter()
+        //.filter(|m| m.nested.is_empty())
+        .flat_map(as_metalist_nested_meta)
+        .filter(|m| m.path().is_ident("ignore"))
+        // Make sure this "ignore doesn't have children"
+        .flat_map(|m| match m {
+            syn::Meta::List(l) => Some(l),
+            _ => None,
+        })
+        .flat_map(|m| m.nested.iter())
+        .flat_map(|m| match m {
+            syn::NestedMeta::Meta(m) => Some(m),
+            _ => None,
+        })
+        .map(|m| m.path().into())
+        .collect()
 }
 
 fn is_welds_col_readonly(attrs: &[Attribute]) -> bool {
@@ -367,4 +435,37 @@ fn is_welds_pk(attrs: &[Attribute]) -> bool {
         .iter()
         .flat_map(as_metalist_nested_meta)
         .any(|m| m.path().is_ident("primary_key"))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use syn::parse_quote;
+
+    #[test]
+    fn should_find_attr_ignore_full() {
+        let attr1: Attribute = parse_quote!(#[welds(ignore)]);
+        assert!(is_welds_full_ignore(&[attr1]));
+    }
+
+    #[test]
+    fn should_not_find_attr_ignore() {
+        let attr1: Attribute = parse_quote!(#[cars(ignore)]);
+        assert!(!is_welds_full_ignore(&[attr1]));
+    }
+
+    #[test]
+    fn should_find_attr_readonly() {
+        let attr1: Attribute = parse_quote!(#[welds(readonly)]);
+        assert!(is_welds_col_readonly(&[attr1]));
+    }
+
+    #[test]
+    fn should_find_attr_ignore_insert() {
+        let attr1: Attribute = parse_quote!(#[welds(ignore(insert, select, update))]);
+        let subs = welds_ignore_subs(&[attr1]);
+        assert!(subs.contains(&Ignores::Insert));
+        assert!(subs.contains(&Ignores::Select));
+        assert!(subs.contains(&Ignores::Update));
+    }
 }

@@ -7,10 +7,18 @@ pub(crate) fn write(info: &Info) -> TokenStream {
     let colstruct = write_colstruct(info);
 
     let read_columns = read_cols(&info.columns);
-    let write_columns = write_cols(&info.columns);
+    let update_columns = update_cols(&info.columns);
+    let insert_columns = insert_cols(&info.columns);
 
-    let pks = write_cols(&info.pks);
-    write_for_db(info, &colstruct, &pks, &read_columns, &write_columns)
+    let pks = any_write_cols(&info.pks);
+    write_for_db(
+        info,
+        &colstruct,
+        &pks,
+        &read_columns,
+        &update_columns,
+        &insert_columns,
+    )
 }
 
 pub(crate) fn write_colstruct(info: &Info) -> TokenStream {
@@ -20,7 +28,7 @@ pub(crate) fn write_colstruct(info: &Info) -> TokenStream {
     let fields: Vec<_> = info
         .columns
         .iter()
-        .filter(|c| !c.ignore)
+        .filter(|c| c.selectable || c.updateable || c.insertable)
         .map(|c| {
             let name = &c.field;
             quote! { pub #name: #wp::model_traits::Column }
@@ -30,7 +38,7 @@ pub(crate) fn write_colstruct(info: &Info) -> TokenStream {
     let default_fields: Vec<_> = info
         .columns
         .iter()
-        .filter(|x| !x.ignore)
+        .filter(|c| c.selectable || c.updateable || c.insertable)
         .map(|c| {
             let name = &c.field;
             let ft = &c.field_type;
@@ -63,7 +71,7 @@ pub(crate) fn write_colstruct(info: &Info) -> TokenStream {
 pub(crate) fn read_cols(columns: &[Column]) -> TokenStream {
     let parts: Vec<_> = columns
         .iter()
-        .filter(|x| !x.ignore)
+        .filter(|x| x.selectable)
         .map(|c| {
             let name = &c.field;
             quote! { columns.#name }
@@ -72,11 +80,34 @@ pub(crate) fn read_cols(columns: &[Column]) -> TokenStream {
     quote! { vec![ #(#parts),* ] }
 }
 
-pub(crate) fn write_cols(columns: &[Column]) -> TokenStream {
+pub(crate) fn insert_cols(columns: &[Column]) -> TokenStream {
     let parts: Vec<_> = columns
         .iter()
-        .filter(|x| !x.ignore)
-        .filter(|x| !x.readonly)
+        .filter(|x| x.insertable)
+        .map(|c| {
+            let name = &c.field;
+            quote! { columns.#name }
+        })
+        .collect();
+    quote! { vec![ #(#parts),* ] }
+}
+
+pub(crate) fn update_cols(columns: &[Column]) -> TokenStream {
+    let parts: Vec<_> = columns
+        .iter()
+        .filter(|x| x.updateable)
+        .map(|c| {
+            let name = &c.field;
+            quote! { columns.#name }
+        })
+        .collect();
+    quote! { vec![ #(#parts),* ] }
+}
+
+pub(crate) fn any_write_cols(columns: &[Column]) -> TokenStream {
+    let parts: Vec<_> = columns
+        .iter()
+        .filter(|x| x.updateable || x.insertable)
         .map(|c| {
             let name = &c.field;
             quote! { columns.#name }
@@ -90,7 +121,8 @@ pub(crate) fn write_for_db(
     colstruct: &TokenStream,
     pks: &TokenStream,
     read_columns: &TokenStream,
-    write_columns: &TokenStream,
+    update_columns: &TokenStream,
+    insert_columns: &TokenStream,
 ) -> TokenStream {
     let wp = &info.welds_path;
     let ident_schemastruct = &info.schemastruct;
@@ -108,16 +140,22 @@ pub(crate) fn write_for_db(
                 #pks
             }
 
-            fn readable_columns() -> Vec<#wp::model_traits::Column> {
+            fn select_columns() -> Vec<#wp::model_traits::Column> {
                 #[allow(dead_code)]
                 let columns = Self::default();
                 #read_columns
             }
 
-            fn writable_columns() -> Vec<#wp::model_traits::Column> {
+            fn update_columns() -> Vec<#wp::model_traits::Column> {
                 #[allow(dead_code)]
                 let columns = Self::default();
-                #write_columns
+                #update_columns
+            }
+
+            fn insert_columns() -> Vec<#wp::model_traits::Column> {
+                #[allow(dead_code)]
+                let columns = Self::default();
+                #insert_columns
             }
 
         }
@@ -129,12 +167,16 @@ pub(crate) fn write_for_db(
                 #ident_colstruct::primary_keys()
             }
 
-            fn readable_columns() -> Vec<#wp::model_traits::Column> {
-                #ident_colstruct::readable_columns()
+            fn select_columns() -> Vec<#wp::model_traits::Column> {
+                #ident_colstruct::select_columns()
             }
 
-            fn writable_columns() -> Vec<#wp::model_traits::Column> {
-                #ident_colstruct::writable_columns()
+            fn update_columns() -> Vec<#wp::model_traits::Column> {
+                #ident_colstruct::update_columns()
+            }
+
+            fn insert_columns() -> Vec<#wp::model_traits::Column> {
+                #ident_colstruct::insert_columns()
             }
 
         }
@@ -176,13 +218,19 @@ mod tests {
                     vec![columns.id]
                 }
 
-                fn readable_columns() -> Vec<welds::model_traits::Column> {
+                fn select_columns() -> Vec<welds::model_traits::Column> {
                     #[allow(dead_code)]
                     let columns = Self::default();
                     vec![columns.id, columns.num]
                 }
 
-                fn writable_columns() -> Vec<welds::model_traits::Column> {
+                fn update_columns() -> Vec<welds::model_traits::Column> {
+                    #[allow(dead_code)]
+                    let columns = Self::default();
+                    vec![columns.id, columns.num]
+                }
+
+                fn insert_columns() -> Vec<welds::model_traits::Column> {
                     #[allow(dead_code)]
                     let columns = Self::default();
                     vec![columns.id, columns.num]
@@ -197,12 +245,16 @@ mod tests {
                     MockColumns::primary_keys()
                 }
 
-                fn readable_columns() -> Vec<welds::model_traits::Column> {
-                    MockColumns::readable_columns()
+                fn select_columns() -> Vec<welds::model_traits::Column> {
+                    MockColumns::select_columns()
                 }
 
-                fn writable_columns() -> Vec<welds::model_traits::Column> {
-                    MockColumns::writable_columns()
+                fn update_columns() -> Vec<welds::model_traits::Column> {
+                    MockColumns::update_columns()
+                }
+
+                fn insert_columns() -> Vec<welds::model_traits::Column> {
+                    MockColumns::insert_columns()
                 }
 
             }

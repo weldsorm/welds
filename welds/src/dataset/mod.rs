@@ -55,7 +55,7 @@ impl<T> DataSet<T> {
         Self { primary, related }
     }
 
-    pub fn iter(&self) -> DataSetIter<T> {
+    pub fn iter(&self) -> DataSetIter<'_, T> {
         DataSetIter {
             index: 0,
             inner: self,
@@ -92,7 +92,7 @@ impl<T> DataSet<T> {
     }
 
     /// access a <T> at a given index.
-    pub fn get(&self, index: usize) -> Option<DataAccessGuard<T>> {
+    pub fn get(&self, index: usize) -> Option<DataAccessGuard<'_, T>> {
         let obj = self.primary.get(index)?;
         Some(DataAccessGuard {
             inner: obj,
@@ -107,6 +107,7 @@ pub struct DataAccessGuard<'t, T> {
 }
 
 impl<'t, T> DataAccessGuard<'t, T> {
+    #[allow(clippy::should_implement_trait)]
     pub fn as_ref(&self) -> &'t T {
         self.inner.as_ref()
     }

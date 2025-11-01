@@ -9,6 +9,7 @@ use crate::query::clause::NumericOpt;
 // Testing that the tail end of the SQL is correct
 // Limits / skips / orders
 
+#[allow(dead_code)]
 struct Product {
     pub a: i32,
     pub b: i32,

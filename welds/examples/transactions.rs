@@ -44,7 +44,7 @@ async fn main() -> Result<()> {
 }
 
 /// Create a person, but errors out before committing
-async fn create_with_errors(client: &(dyn TransactStart)) -> Result<()> {
+async fn create_with_errors(client: &dyn TransactStart) -> Result<()> {
     //start the transaction
     let transaction = client.begin().await?;
 
@@ -58,7 +58,7 @@ async fn create_with_errors(client: &(dyn TransactStart)) -> Result<()> {
 }
 
 /// Create a person, commits it
-async fn create_person(client: &(dyn TransactStart)) -> Result<()> {
+async fn create_person(client: &dyn TransactStart) -> Result<()> {
     //start the transaction
     let transaction = client.begin().await?;
 

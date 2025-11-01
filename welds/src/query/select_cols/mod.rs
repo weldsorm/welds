@@ -1,4 +1,4 @@
-use crate::model_traits::{HasSchema, TableColumns, TableInfo, UniqueIdentifier};
+use crate::model_traits::{HasSchema, TableColumns, TableInfo};
 use crate::query::builder::QueryBuilder;
 use crate::query::clause::{AsFieldName, ClauseAdder};
 use crate::query::select_cols::group_by::GroupBy;

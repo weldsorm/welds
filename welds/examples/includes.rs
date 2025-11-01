@@ -31,6 +31,7 @@ pub struct City {
 }
 
 // Output struct with borrowed objects (Example 1)
+#[allow(dead_code)]
 #[derive(Debug)]
 pub struct TeamWithRelated<'a> {
     team: &'a Team,
@@ -39,6 +40,7 @@ pub struct TeamWithRelated<'a> {
 }
 
 // Output struct with owned objects (Example 2)
+#[allow(dead_code)]
 #[derive(Debug)]
 pub struct CityWithTeams {
     city: City,

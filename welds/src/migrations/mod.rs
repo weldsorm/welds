@@ -26,7 +26,7 @@ pub use manual::Manual;
 pub type MigrationFn = fn(state: &TableState) -> Result<MigrationStep>;
 
 /// Migrate your database to the latest in the list of migrations
-pub async fn up(client: &(dyn TransactStart), migrations: &[MigrationFn]) -> Result<()> {
+pub async fn up(client: &dyn TransactStart, migrations: &[MigrationFn]) -> Result<()> {
     //make the migration table if needed
     {
         let setup_trans = client.begin().await?;
@@ -93,7 +93,7 @@ fn unixtime() -> u128 {
 /// Rolls back the last migration that ran.
 /// return the name of the migration that rolled back
 /// None, there were not more migrations to rollback
-pub async fn down_last(client: &(dyn TransactStart)) -> Result<Option<String>> {
+pub async fn down_last(client: &dyn TransactStart) -> Result<Option<String>> {
     //make the migration table if needed
     {
         let setup_trans = client.begin().await?;
@@ -129,7 +129,7 @@ pub async fn down_last(client: &(dyn TransactStart)) -> Result<Option<String>> {
 /// Rolls back the given migration.
 /// return the name of the migration that rolled back
 /// None, there were no matching migrations to rollback
-pub async fn down(client: &(dyn TransactStart), name: impl Into<String>) -> Result<Option<String>> {
+pub async fn down(client: &dyn TransactStart, name: impl Into<String>) -> Result<Option<String>> {
     //make the migration table if needed
     {
         let setup_trans = client.begin().await?;

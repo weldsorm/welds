@@ -34,13 +34,6 @@ pub enum WeldsError {
     Other(#[from] anyhow::Error),
 }
 
-impl WeldsError {
-    #[deprecated(
-        note = "please use `WeldsError::RowNotFound` instead. RowNowFound will be removed in the next release"
-    )]
-    pub const RowNowFound: WeldsError = WeldsError::RowNotFound;
-}
-
 impl From<ConnError> for WeldsError {
     fn from(inner: ConnError) -> Self {
         WeldsError::Database(inner)

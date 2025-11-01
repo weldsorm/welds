@@ -10,7 +10,7 @@ use crate::query::clause::BasicOpt;
 //
 
 // model with option
-
+#[allow(dead_code)]
 struct Product2 {
     pub name: Option<String>,
 }

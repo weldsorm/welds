@@ -53,9 +53,11 @@ pub trait TableColumns {
     /// Used to identify models that have N columns in their primary_key
     fn primary_keys() -> Vec<Column>;
     /// All columns that will be read from the DB
-    fn readable_columns() -> Vec<Column>;
+    fn select_columns() -> Vec<Column>;
     /// All columns that will be written to the DB
-    fn writable_columns() -> Vec<Column>;
+    fn update_columns() -> Vec<Column>;
+    /// All columns that will be written to the DB
+    fn insert_columns() -> Vec<Column>;
 }
 
 /// If the model can be uniquely identifed by a single column,

@@ -63,3 +63,36 @@ pub struct ProductNameOnly {
     #[welds(readonly)]
     pub description: Option<String>,
 }
+
+#[derive(Debug, WeldsModel, Default)]
+#[welds(table = "Products")]
+pub struct ProductFullIgnoreDesc {
+    #[welds(rename = "product_id")]
+    #[welds(primary_key)]
+    pub id: i32,
+    pub name: String,
+    #[welds(ignore)]
+    pub description: String,
+}
+
+#[derive(Debug, WeldsModel)]
+#[welds(table = "Products")]
+pub struct ProductInsertIgnoreDesc {
+    #[welds(rename = "product_id")]
+    #[welds(primary_key)]
+    pub id: i32,
+    pub name: String,
+    #[welds(ignore(insert))]
+    pub description: String,
+}
+
+#[derive(Debug, WeldsModel)]
+#[welds(table = "Products")]
+pub struct ProductUpdateIgnoreDesc {
+    #[welds(rename = "product_id")]
+    #[welds(primary_key)]
+    pub id: i32,
+    pub name: String,
+    #[welds(ignore(update))]
+    pub description: String,
+}

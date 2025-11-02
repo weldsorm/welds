@@ -42,10 +42,13 @@ impl TableInfo for Product2Schema {
 
 impl TableColumns for Product2Schema {
     type ColumnStruct = Self;
-    fn readable_columns() -> Vec<Column> {
+    fn select_columns() -> Vec<Column> {
         vec![Column::new("dbname", "String", true)]
     }
-    fn writable_columns() -> Vec<Column> {
+    fn update_columns() -> Vec<Column> {
+        vec![Column::new("dbname", "String", true)]
+    }
+    fn insert_columns() -> Vec<Column> {
         vec![Column::new("dbname", "String", true)]
     }
     fn primary_keys() -> Vec<Column> {

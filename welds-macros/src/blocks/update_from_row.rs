@@ -7,7 +7,7 @@ pub(crate) fn write(info: &Info) -> TokenStream {
     let fields: Vec<_> = info
         .columns
         .iter()
-        .filter(|x| !x.ignore)
+        .filter(|x| x.selectable)
         .map(setfield)
         .collect();
     let fields = quote! { #(#fields)* };

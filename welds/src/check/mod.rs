@@ -33,7 +33,7 @@ where
     };
 
     let table_cols = tabledef.columns();
-    let model_cols = <T::Schema>::readable_columns();
+    let model_cols = <T::Schema>::select_columns();
     let pairs = get_pairs(client.syntax());
 
     struct_added(table_cols, &model_cols)

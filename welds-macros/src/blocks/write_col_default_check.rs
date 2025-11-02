@@ -13,7 +13,7 @@ pub(crate) fn write(info: &Info) -> TokenStream {
     let fields: Vec<_> = info
         .columns
         .iter()
-        .filter(|x| !x.ignore)
+        .filter(|x| x.selectable || x.updateable)
         .map(col_switch)
         .collect();
     let fields = quote! { #(#fields)* };

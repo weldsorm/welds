@@ -10,14 +10,14 @@ pub(crate) fn write(info: &Info) -> TokenStream {
     let fields: Vec<_> = info
         .columns
         .iter()
-        .filter(|x| !x.ignore)
+        .filter(|x| x.selectable || x.updateable || x.insertable)
         .map(|x| def_field(info, x))
         .collect();
 
     let default_fields: Vec<_> = info
         .columns
         .iter()
-        .filter(|x| !x.ignore)
+        .filter(|x| x.selectable || x.updateable || x.insertable)
         .map(|x| default_fields(info, x))
         .collect();
 

@@ -32,7 +32,7 @@ where
     let parts = <<T as HasSchema>::Schema>::identifier();
     let identifier = TableWriter::new(syntax).write2(parts);
 
-    let columns = <<T as HasSchema>::Schema as TableColumns>::writable_columns();
+    let columns = <<T as HasSchema>::Schema as TableColumns>::insert_columns();
     let pks = <<T as HasSchema>::Schema as TableColumns>::primary_keys();
 
     let mut colargs = Vec::default();

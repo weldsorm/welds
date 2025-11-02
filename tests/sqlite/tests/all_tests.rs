@@ -12,6 +12,7 @@ pub mod bulk_update;
 pub mod callbacks;
 pub mod extra_types;
 pub mod group_by;
+pub mod ignores;
 pub mod includes;
 pub mod migrations;
 pub mod select_col;
@@ -580,57 +581,5 @@ fn should_be_able_to_fetch_a_single_object() {
             .fetch_one(&conn)
             .await
             .unwrap();
-    })
-}
-
-#[test]
-fn should_be_able_to_select_a_readonly_field() {
-    async_std::task::block_on(async {
-        use sqlite_test::models::product::ProductNameOnly;
-        let conn = get_conn().await;
-        let product = ProductNameOnly::where_col(|p| p.description.not_equal(None))
-            .fetch_one(&conn)
-            .await
-            .unwrap();
-        assert!(product.description.is_some());
-    })
-}
-
-#[test]
-fn should_not_update_changes_to_readonly_field() {
-    async_std::task::block_on(async {
-        use sqlite_test::models::product::ProductNameOnly;
-        let conn = get_conn().await;
-        let mut product = ProductNameOnly::where_col(|p| p.description.not_equal(None))
-            .fetch_one(&conn)
-            .await
-            .unwrap();
-        product.description = None;
-        product.save(&conn).await.unwrap();
-        let product = ProductNameOnly::find_by_id(&conn, product.id)
-            .await
-            .unwrap()
-            .unwrap();
-        assert!(product.description.is_some());
-    })
-}
-
-#[test]
-fn should_not_insert_to_readonly_field() {
-    async_std::task::block_on(async {
-        use sqlite_test::models::product::ProductNameOnly;
-        let conn = get_conn().await;
-
-        let mut product = ProductNameOnly::new();
-        product.name = "Test".to_string();
-        product.description = Some("Test".to_string());
-        product.save(&conn).await.unwrap();
-        //re-pull the model from the database
-        let product = ProductNameOnly::find_by_id(&conn, product.id)
-            .await
-            .unwrap()
-            .unwrap();
-        // description should not be include in the insert
-        assert!(product.description.is_none());
     })
 }

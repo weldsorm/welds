@@ -25,6 +25,7 @@ fn get_clause_typepath(ty: &TypePath) -> Option<&'static str> {
         .get_ident()
         .or(ty.path.segments.first().map(|f| &f.ident))?;
     let name = ident.to_string();
+
     let clause = match name.as_str() {
         "u8" => "Numeric",
         "i8" => "Numeric",
@@ -39,6 +40,9 @@ fn get_clause_typepath(ty: &TypePath) -> Option<&'static str> {
         "String" => "Text",
         "chrono" => "Numeric",
         "PgMoney" => "Numeric",
+        "DateTime" => "Numeric",
+        "Date" => "Numeric",
+        //"Time" => "Numeric", // Not time, time wraps every day
         _ => return None,
     };
     Some(clause)

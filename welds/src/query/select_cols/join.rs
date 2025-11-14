@@ -11,6 +11,7 @@ use crate::writers::TableWriter;
 use crate::writers::alias::TableAlias;
 use std::sync::Arc;
 
+#[derive(Clone)]
 pub(crate) struct JoinBuilder {
     pub(crate) alias_asigner: Arc<TableAlias>,
     pub(crate) outer_key: String,

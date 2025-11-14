@@ -32,6 +32,17 @@ pub struct SelectBuilder<T> {
     group_bys: Vec<GroupBy>,
 }
 
+impl<T> Clone for SelectBuilder<T> {
+    fn clone(&self) -> Self {
+        Self {
+            qb: self.qb.clone(),
+            selects: self.selects.clone(),
+            joins: self.joins.clone(),
+            group_bys: self.group_bys.clone(),
+        }
+    }
+}
+
 impl<T> SelectBuilder<T>
 where
     T: Send + HasSchema,

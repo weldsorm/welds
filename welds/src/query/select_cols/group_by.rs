@@ -1,3 +1,4 @@
+#[derive(Clone)]
 pub(crate) struct GroupBy {
     pub(crate) col_name: String,
     pub(crate) table_alias: Option<String>,

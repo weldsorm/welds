@@ -10,6 +10,10 @@ use sqlx::Row as SqlxRow;
     not(feature = "mssql")
 ))]
 impl Row {
+    /// gets the value for a column in the row by its name.
+    /// Errors:
+    ///  * if column missing
+    ///  * if column could not be deserialized into requested type <T>
     pub fn get<T>(&self, name: &str) -> Result<T>
     where
         T: for<'r> Decode<'r, sqlx::Sqlite> + Type<sqlx::Sqlite>,
@@ -26,6 +30,10 @@ impl Row {
         }
     }
 
+    /// gets the value for a column in the row by its index (position, zero based index).
+    /// Errors:
+    ///  * if column missing, out of bounds
+    ///  * if column could not be deserialized into requested type <T>
     pub fn get_by_position<T>(&self, index: usize) -> Result<T>
     where
         T: for<'r> Decode<'r, sqlx::Sqlite> + Type<sqlx::Sqlite>,
@@ -50,6 +58,10 @@ impl Row {
     not(feature = "mssql")
 ))]
 impl Row {
+    /// gets the value for a column in the row by its name.
+    /// Errors:
+    ///  * if column missing
+    ///  * if column could not be deserialized into requested type <T>
     pub fn get<T>(&self, name: &str) -> Result<T>
     where
         T: for<'r> Decode<'r, sqlx::Postgres> + Type<sqlx::Postgres>,
@@ -66,6 +78,10 @@ impl Row {
         }
     }
 
+    /// gets the value for a column in the row by its index (position, zero based index).
+    /// Errors:
+    ///  * if column missing, out of bounds
+    ///  * if column could not be deserialized into requested type <T>
     pub fn get_by_position<T>(&self, index: usize) -> Result<T>
     where
         T: for<'r> Decode<'r, sqlx::Postgres> + Type<sqlx::Postgres>,
@@ -90,6 +106,10 @@ impl Row {
     not(feature = "mssql")
 ))]
 impl Row {
+    /// gets the value for a column in the row by its name.
+    /// Errors:
+    ///  * if column missing
+    ///  * if column could not be deserialized into requested type <T>
     pub fn get<T>(&self, name: &str) -> Result<T>
     where
         T: for<'r> Decode<'r, sqlx::MySql> + Type<sqlx::MySql>,
@@ -106,6 +126,10 @@ impl Row {
         }
     }
 
+    /// gets the value for a column in the row by its index (position, zero based index).
+    /// Errors:
+    ///  * if column missing, out of bounds
+    ///  * if column could not be deserialized into requested type <T>
     pub fn get_by_position<T>(&self, index: usize) -> Result<T>
     where
         T: for<'r> Decode<'r, sqlx::MySql> + Type<sqlx::MySql>,
@@ -130,6 +154,10 @@ impl Row {
     not(feature = "mysql")
 ))]
 impl Row {
+    /// gets the value for a column in the row by its name.
+    /// Errors:
+    ///  * if column missing
+    ///  * if column could not be deserialized into requested type <T>
     pub fn get<T>(&self, name: &str) -> Result<T>
     where
         T: TiberiusDecode,
@@ -146,6 +174,10 @@ impl Row {
         }
     }
 
+    /// gets the value for a column in the row by its index (position, zero based index).
+    /// Errors:
+    ///  * if column missing, out of bounds
+    ///  * if column could not be deserialized into requested type <T>
     pub fn get_by_position<T>(&self, index: usize) -> Result<T>
     where
         T: TiberiusDecode,
@@ -170,6 +202,10 @@ impl Row {
     not(feature = "mssql")
 ))]
 impl Row {
+    /// gets the value for a column in the row by its name.
+    /// Errors:
+    ///  * if column missing
+    ///  * if column could not be deserialized into requested type <T>
     pub fn get<T>(&self, name: &str) -> Result<T>
     where
         T: for<'r> Decode<'r, sqlx::Sqlite>
@@ -189,6 +225,10 @@ impl Row {
         }
     }
 
+    /// gets the value for a column in the row by its index (position, zero based index).
+    /// Errors:
+    ///  * if column missing, out of bounds
+    ///  * if column could not be deserialized into requested type <T>
     pub fn get_by_position<T>(&self, index: usize) -> Result<T>
     where
         T: for<'r> Decode<'r, sqlx::Sqlite>
@@ -216,6 +256,10 @@ impl Row {
     not(feature = "mssql")
 ))]
 impl Row {
+    /// gets the value for a column in the row by its name.
+    /// Errors:
+    ///  * if column missing
+    ///  * if column could not be deserialized into requested type <T>
     pub fn get<T>(&self, name: &str) -> Result<T>
     where
         T: for<'r> Decode<'r, sqlx::Sqlite>
@@ -235,6 +279,10 @@ impl Row {
         }
     }
 
+    /// gets the value for a column in the row by its index (position, zero based index).
+    /// Errors:
+    ///  * if column missing, out of bounds
+    ///  * if column could not be deserialized into requested type <T>
     pub fn get_by_position<T>(&self, index: usize) -> Result<T>
     where
         T: for<'r> Decode<'r, sqlx::Sqlite>
@@ -262,6 +310,10 @@ impl Row {
     not(feature = "mysql")
 ))]
 impl Row {
+    /// gets the value for a column in the row by its name.
+    /// Errors:
+    ///  * if column missing
+    ///  * if column could not be deserialized into requested type <T>
     pub fn get<T>(&self, name: &str) -> Result<T>
     where
         T: for<'r> Decode<'r, sqlx::Sqlite> + Type<sqlx::Sqlite> + TiberiusDecode,
@@ -278,6 +330,10 @@ impl Row {
         }
     }
 
+    /// gets the value for a column in the row by its index (position, zero based index).
+    /// Errors:
+    ///  * if column missing, out of bounds
+    ///  * if column could not be deserialized into requested type <T>
     pub fn get_by_position<T>(&self, index: usize) -> Result<T>
     where
         T: for<'r> Decode<'r, sqlx::Sqlite> + Type<sqlx::Sqlite> + TiberiusDecode,
@@ -302,6 +358,10 @@ impl Row {
     not(feature = "mssql")
 ))]
 impl Row {
+    /// gets the value for a column in the row by its name.
+    /// Errors:
+    ///  * if column missing
+    ///  * if column could not be deserialized into requested type <T>
     pub fn get<T>(&self, name: &str) -> Result<T>
     where
         T: for<'r> Decode<'r, sqlx::Postgres>
@@ -321,6 +381,10 @@ impl Row {
         }
     }
 
+    /// gets the value for a column in the row by its index (position, zero based index).
+    /// Errors:
+    ///  * if column missing, out of bounds
+    ///  * if column could not be deserialized into requested type <T>
     pub fn get_by_position<T>(&self, index: usize) -> Result<T>
     where
         T: for<'r> Decode<'r, sqlx::Postgres>
@@ -348,6 +412,10 @@ impl Row {
     not(feature = "mysql")
 ))]
 impl Row {
+    /// gets the value for a column in the row by its name.
+    /// Errors:
+    ///  * if column missing
+    ///  * if column could not be deserialized into requested type <T>
     pub fn get<T>(&self, name: &str) -> Result<T>
     where
         T: for<'r> Decode<'r, sqlx::Postgres> + Type<sqlx::Postgres> + TiberiusDecode,
@@ -364,6 +432,10 @@ impl Row {
         }
     }
 
+    /// gets the value for a column in the row by its index (position, zero based index).
+    /// Errors:
+    ///  * if column missing, out of bounds
+    ///  * if column could not be deserialized into requested type <T>
     pub fn get_by_position<T>(&self, index: usize) -> Result<T>
     where
         T: for<'r> Decode<'r, sqlx::Postgres> + Type<sqlx::Postgres> + TiberiusDecode,
@@ -388,6 +460,10 @@ impl Row {
     not(feature = "postgres")
 ))]
 impl Row {
+    /// gets the value for a column in the row by its name.
+    /// Errors:
+    ///  * if column missing
+    ///  * if column could not be deserialized into requested type <T>
     pub fn get<T>(&self, name: &str) -> Result<T>
     where
         T: for<'r> Decode<'r, sqlx::MySql> + Type<sqlx::MySql> + TiberiusDecode,
@@ -404,6 +480,10 @@ impl Row {
         }
     }
 
+    /// gets the value for a column in the row by its index (position, zero based index).
+    /// Errors:
+    ///  * if column missing, out of bounds
+    ///  * if column could not be deserialized into requested type <T>
     pub fn get_by_position<T>(&self, index: usize) -> Result<T>
     where
         T: for<'r> Decode<'r, sqlx::MySql> + Type<sqlx::MySql> + TiberiusDecode,
@@ -428,6 +508,10 @@ impl Row {
     not(feature = "mssql")
 ))]
 impl Row {
+    /// gets the value for a column in the row by its name.
+    /// Errors:
+    ///  * if column missing
+    ///  * if column could not be deserialized into requested type <T>
     pub fn get<T>(&self, name: &str) -> Result<T>
     where
         T: for<'r> Decode<'r, sqlx::Sqlite>
@@ -449,6 +533,10 @@ impl Row {
         }
     }
 
+    /// gets the value for a column in the row by its index (position, zero based index).
+    /// Errors:
+    ///  * if column missing, out of bounds
+    ///  * if column could not be deserialized into requested type <T>
     pub fn get_by_position<T>(&self, index: usize) -> Result<T>
     where
         T: for<'r> Decode<'r, sqlx::Sqlite>
@@ -478,6 +566,10 @@ impl Row {
     not(feature = "mysql")
 ))]
 impl Row {
+    /// gets the value for a column in the row by its name.
+    /// Errors:
+    ///  * if column missing
+    ///  * if column could not be deserialized into requested type <T>
     pub fn get<T>(&self, name: &str) -> Result<T>
     where
         T: for<'r> Decode<'r, sqlx::Sqlite>
@@ -498,6 +590,10 @@ impl Row {
         }
     }
 
+    /// gets the value for a column in the row by its index (position, zero based index).
+    /// Errors:
+    ///  * if column missing, out of bounds
+    ///  * if column could not be deserialized into requested type <T>
     pub fn get_by_position<T>(&self, index: usize) -> Result<T>
     where
         T: for<'r> Decode<'r, sqlx::Sqlite>
@@ -526,6 +622,10 @@ impl Row {
     not(feature = "postgres")
 ))]
 impl Row {
+    /// gets the value for a column in the row by its name.
+    /// Errors:
+    ///  * if column missing
+    ///  * if column could not be deserialized into requested type <T>
     pub fn get<T>(&self, name: &str) -> Result<T>
     where
         T: for<'r> Decode<'r, sqlx::Sqlite>
@@ -546,6 +646,10 @@ impl Row {
         }
     }
 
+    /// gets the value for a column in the row by its index (position, zero based index).
+    /// Errors:
+    ///  * if column missing, out of bounds
+    ///  * if column could not be deserialized into requested type <T>
     pub fn get_by_position<T>(&self, index: usize) -> Result<T>
     where
         T: for<'r> Decode<'r, sqlx::Sqlite>
@@ -574,6 +678,10 @@ impl Row {
     not(feature = "sqlite")
 ))]
 impl Row {
+    /// gets the value for a column in the row by its name.
+    /// Errors:
+    ///  * if column missing
+    ///  * if column could not be deserialized into requested type <T>
     pub fn get<T>(&self, name: &str) -> Result<T>
     where
         T: for<'r> Decode<'r, sqlx::Postgres>
@@ -594,6 +702,10 @@ impl Row {
         }
     }
 
+    /// gets the value for a column in the row by its index (position, zero based index).
+    /// Errors:
+    ///  * if column missing, out of bounds
+    ///  * if column could not be deserialized into requested type <T>
     pub fn get_by_position<T>(&self, index: usize) -> Result<T>
     where
         T: for<'r> Decode<'r, sqlx::Postgres>
@@ -622,6 +734,10 @@ impl Row {
     feature = "mssql"
 ))]
 impl Row {
+    /// gets the value for a column in the row by its name.
+    /// Errors:
+    ///  * if column missing
+    ///  * if column could not be deserialized into requested type <T>
     pub fn get<T>(&self, name: &str) -> Result<T>
     where
         T: for<'r> Decode<'r, sqlx::Sqlite>
@@ -644,6 +760,10 @@ impl Row {
         }
     }
 
+    /// gets the value for a column in the row by its index (position, zero based index).
+    /// Errors:
+    ///  * if column missing, out of bounds
+    ///  * if column could not be deserialized into requested type <T>
     pub fn get_by_position<T>(&self, index: usize) -> Result<T>
     where
         T: for<'r> Decode<'r, sqlx::Sqlite>

@@ -11,6 +11,11 @@ def blocky(cfg, wheres)
 
 #{cfg}
 impl Row {
+
+    /// gets the value for a column in the row by its name. 
+    /// Errors: 
+    ///  * if column missing
+    ///  * if column could not be deserialized into requested type <T>
     pub fn get<T>(&self, name: &str) -> Result<T>
       where T: #{wheres}
     {
@@ -26,6 +31,10 @@ impl Row {
         }
     }
 
+    /// gets the value for a column in the row by its index (position, zero based index). 
+    /// Errors: 
+    ///  * if column missing, out of bounds
+    ///  * if column could not be deserialized into requested type <T>
     pub fn get_by_position<T>(&self, index: usize) -> Result<T>
       where T: #{wheres}
     {
@@ -40,6 +49,8 @@ impl Row {
             RowInner::Mysql(r) => Ok(r.try_get(index)?),
         }
     }
+
+
 }
 
 |

@@ -4,8 +4,9 @@ pub mod create_table;
 use crate::Syntax;
 use crate::writers::TableWriter;
 
-mod create_indexes;
-pub use create_indexes::write as create_index;
+pub(crate) mod create_indexes;
+//pub(crate) use create_indexes::write as create_index;
+//pub(crate) use create_indexes::write_fk_inline as create_index_inline;
 
 pub fn drop_table(syntax: Syntax, table: &TableIdent) -> String {
     let tablename = TableWriter::new(syntax).write(table);

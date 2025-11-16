@@ -1,12 +1,12 @@
 use super::get_conn;
-use welds::Client;
 use welds::detect::find_table;
 use welds::errors::Result;
+use welds::migrations::types::Type;
 use welds::migrations::MigrationFn;
 use welds::migrations::MigrationStep;
-use welds::migrations::types::Type;
-use welds::migrations::{TableState, change_table, create_table};
+use welds::migrations::{change_table, create_table, TableState};
 use welds::migrations::{down_last, up};
+use welds::Client;
 
 /************************************************
 * two migrations shouldn't have the same name
@@ -327,5 +327,49 @@ fn should_be_able_to_add_a_column() {
         let table = table.unwrap();
         let column = table.columns().iter().find(|c| c.name() == "lastname");
         assert!(column.is_none());
+    })
+}
+
+/************************************************
+* Test add the a table with a FK
+* **********************************************/
+
+fn add_a_parent_table_for_fk_check(_state: &TableState) -> Result<MigrationStep> {
+    let m = create_table("test_parent_6")
+        .id(|c| c("id", Type::Int))
+        .column(|c| c("firstname", Type::String));
+    Ok(MigrationStep::new("test_6_step1", m))
+}
+
+fn add_a_child_table_for_fk_check(_state: &TableState) -> Result<MigrationStep> {
+    let m = create_table("test_child_6")
+        .id(|c| c("id", Type::String))
+        .column(|c| {
+            c("parent_id", Type::Int).create_foreign_key(
+                "test_child_6",
+                "id",
+                welds::migrations::types::OnDelete::Cascade,
+            )
+        });
+    Ok(MigrationStep::new("test_6_step2", m))
+}
+
+#[test]
+fn should_create_a_fk() {
+    async_std::task::block_on(async {
+        let client = get_conn().await;
+        let client = &client;
+        let list1: Vec<MigrationFn> = vec![
+            add_a_parent_table_for_fk_check,
+            add_a_child_table_for_fk_check,
+        ];
+        up(client, list1.as_slice()).await.unwrap();
+
+        // get the number of FKs on the child table.
+        let sql = "SELECT COUNT(*) AS fk_count FROM pragma_foreign_key_list('test_child_6');";
+        let row = client.fetch_rows(sql, &[]).await.unwrap().pop().unwrap();
+        let count: i32 = row.get_by_position(0).unwrap();
+        // verify the FK exists
+        assert!(count > 0);
     })
 }

@@ -1,4 +1,4 @@
-use super::create_index;
+use super::create_indexes::{write as create_index, write_inline_fk};
 use crate::Syntax;
 use crate::detect::TableDef;
 use crate::migrations::create_table::ColumnBuilder;
@@ -35,7 +35,7 @@ pub fn from_def(syntax: Syntax, def: &TableDef) -> Vec<String> {
         columns.push(build_column(syntax, &col))
     }
 
-    let tablename = TableWriter::new(syntax).write(&def.ident());
+    let tablename = TableWriter::new(syntax).write(def.ident());
 
     let parts = vec![format!(
         "CREATE TABLE {} ( {} )",
@@ -46,7 +46,16 @@ pub fn from_def(syntax: Syntax, def: &TableDef) -> Vec<String> {
 }
 
 pub fn from_builder(syntax: Syntax, tb: &TableBuilder) -> Vec<String> {
-    let columns: Vec<String> = build_columns(syntax, &tb.pk, &tb.columns);
+    let mut columns: Vec<String> = build_columns(syntax, &tb.pk, &tb.columns);
+
+    // some FK indexs need to be made inline with the Table.
+    let mut inline_indexes: Vec<String> = tb
+        .columns
+        .iter()
+        .filter_map(|c| write_inline_fk(syntax, c))
+        .collect();
+    columns.append(&mut inline_indexes);
+
     let columns: String = columns.join(", ");
     let tablename = TableWriter::new(syntax).write(&tb.ident);
     let mut parts = vec![format!("CREATE TABLE {} ( {} )", tablename, columns)];

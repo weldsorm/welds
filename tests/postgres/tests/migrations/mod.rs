@@ -1,8 +1,8 @@
 use super::get_conn;
-use welds::Client;
 use welds::detect::find_table;
 use welds::errors::Result;
 use welds::migrations::prelude::*;
+use welds::Client;
 
 /************************************************
 * two migrations shouldn't have the same name
@@ -371,7 +371,7 @@ fn should_be_able_to_create_a_table_with_json() {
 }
 
 fn creating_a_fk_to_nontable_should_fail(_state: &TableState) -> Result<MigrationStep> {
-    let m = create_table("blarf")
+    let m = create_table("bad_fk_table")
         .id(|c| c("id", Type::Int))
         .column(|c| c("name", Type::String).create_foreign_key("trash", "t_id", OnDelete::Cascade));
     Ok(MigrationStep::new("Create Trash FK", m))
@@ -417,7 +417,14 @@ fn creating_a_fk_to_table_should_be_ok_test() {
             creating_a_fk_to_table_should_be_ok_step_2,
         ];
         let result = up(client, list.as_slice()).await;
-
         assert!(result.is_ok());
+
+        // verify the FK exists
+        let sql = "SELECT
+             con.conname AS constraint_name, pg_get_constraintdef(con.oid) AS definition
+             FROM pg_constraint AS con JOIN pg_class AS tbl ON tbl.oid = con.conrelid WHERE tbl.relname = 'pk_table' AND con.contype = 'f';";
+
+        let rows = client.fetch_rows(sql, &[]).await.unwrap();
+        assert_eq!(rows.len(), 1);
     })
 }

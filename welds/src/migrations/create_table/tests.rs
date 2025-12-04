@@ -58,6 +58,7 @@ fn should_be_able_to_make_a_fk() {
 
     //sqlite
     let sql2 = MigrationWriter::up_sql(&m, Syntax::Sqlite).pop().unwrap();
+    // NOTE sqlite FKs are made in CREATE TABLE no ALTER
     let expected = r#""#;
     assert_eq!(sql2, expected.trim());
 }

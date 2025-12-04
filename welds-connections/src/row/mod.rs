@@ -1,10 +1,5 @@
 use crate::errors::Result;
 
-/// A row of data from the database
-pub struct Row {
-    inner: RowInner,
-}
-
 #[cfg(any(feature = "mysql", feature = "sqlite", feature = "postgres"))]
 use sqlx::Decode;
 #[cfg(any(feature = "mysql", feature = "sqlite", feature = "postgres"))]
@@ -16,6 +11,9 @@ use sqlx::postgres::PgRow;
 #[cfg(feature = "sqlite")]
 use sqlx::sqlite::SqliteRow;
 
+#[cfg(any(feature = "sqlite", feature = "postgres", feature = "mysql"))]
+use sqlx::Row as SqlxRow;
+
 #[cfg(feature = "mssql")]
 use tiberius::Row as MssqlRow;
 
@@ -25,6 +23,11 @@ mod mssql_row_wrapper;
 pub use mssql_row_wrapper::MssqlRowWrapper;
 #[cfg(feature = "mssql")]
 pub use mssql_row_wrapper::TiberiusDecode;
+
+/// A row of data from the database
+pub struct Row {
+    inner: RowInner,
+}
 
 /// all kinds of rows
 pub enum RowInner {
@@ -114,6 +117,38 @@ impl Row {
         match self.inner {
             RowInner::Mssql(r) => Some(r),
             _ => None,
+        }
+    }
+}
+
+impl Row {
+    /// Check if a row contains a column by its name.
+    /// returns true if the column is in the row
+    pub fn has(&self, name: &str) -> bool {
+        match &self.inner {
+            #[cfg(feature = "sqlite")]
+            RowInner::Sqlite(r) => r.try_column(name).is_ok(),
+            #[cfg(feature = "mssql")]
+            RowInner::Mssql(r) => r.has_column(name),
+            #[cfg(feature = "postgres")]
+            RowInner::Postgres(r) => r.try_column(name).is_ok(),
+            #[cfg(feature = "mysql")]
+            RowInner::Mysql(r) => r.try_column(name).is_ok(),
+        }
+    }
+
+    /// Check if a row contains a column by its index (zero based).
+    /// returns true if the column is in the row
+    pub fn has_index(&self, index: usize) -> bool {
+        match &self.inner {
+            #[cfg(feature = "sqlite")]
+            RowInner::Sqlite(r) => r.try_column(index).is_ok(),
+            #[cfg(feature = "mssql")]
+            RowInner::Mssql(r) => r.has_index(index),
+            #[cfg(feature = "postgres")]
+            RowInner::Postgres(r) => r.try_column(index).is_ok(),
+            #[cfg(feature = "mysql")]
+            RowInner::Mysql(r) => r.try_column(index).is_ok(),
         }
     }
 }

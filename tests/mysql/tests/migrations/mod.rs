@@ -1,12 +1,12 @@
 use super::get_conn;
-use welds::Client;
 use welds::detect::find_table;
 use welds::errors::Result;
+use welds::migrations::types::Type;
 use welds::migrations::MigrationFn;
 use welds::migrations::MigrationStep;
-use welds::migrations::types::Type;
-use welds::migrations::{TableState, change_table, create_table};
+use welds::migrations::{change_table, create_table, TableState};
 use welds::migrations::{down, up};
+use welds::Client;
 
 /************************************************
 * two migrations shouldn't have the same name
@@ -378,4 +378,58 @@ fn should_be_able_to_create_a_table_with_json() {
 fn test_json_column(_state: &TableState) -> Result<MigrationStep> {
     let m = create_table("tmp_table_with_json").column(|c| c("test_json_column", Type::Json));
     Ok(MigrationStep::new("test_json_column", m))
+}
+
+/************************************************
+* Test add the a table with a FK
+* **********************************************/
+
+fn add_a_parent_table_for_fk_check(_state: &TableState) -> Result<MigrationStep> {
+    let m = create_table("test_add_fk_parent")
+        .id(|c| c("id", Type::Int))
+        .column(|c| c("firstname", Type::String));
+    Ok(MigrationStep::new("test_add_fk_step1", m))
+}
+
+fn add_a_child_table_for_fk_check(_state: &TableState) -> Result<MigrationStep> {
+    let m = create_table("test_add_fk_child")
+        .id(|c| c("id", Type::String))
+        .column(|c| {
+            c("parent_id", Type::Int).create_foreign_key(
+                "test_add_fk_parent",
+                "id",
+                welds::migrations::types::OnDelete::Cascade,
+            )
+        });
+    Ok(MigrationStep::new("test_add_fk_step2", m))
+}
+
+#[test]
+fn should_create_a_fk() {
+    async_std::task::block_on(async {
+        let client = get_conn().await;
+        let client = &client;
+        let list1: Vec<MigrationFn> = vec![
+            add_a_parent_table_for_fk_check,
+            add_a_child_table_for_fk_check,
+        ];
+        up(client, list1.as_slice()).await.unwrap();
+
+        // Get rows of FKs for the child table
+        let sql = "
+            SELECT
+                kcu.CONSTRAINT_NAME,
+                kcu.TABLE_NAME,
+                kcu.COLUMN_NAME,
+                kcu.REFERENCED_TABLE_NAME,
+                kcu.REFERENCED_COLUMN_NAME
+            FROM information_schema.KEY_COLUMN_USAGE AS kcu
+            WHERE kcu.TABLE_SCHEMA = DATABASE()
+              AND kcu.TABLE_NAME = 'test_add_fk_child'
+              AND kcu.REFERENCED_TABLE_NAME IS NOT NULL;";
+
+        // verify the FK exists
+        let row = client.fetch_rows(sql, &[]).await.unwrap();
+        assert_eq!(row.len(), 1);
+    })
 }

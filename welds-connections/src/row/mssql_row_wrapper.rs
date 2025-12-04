@@ -45,6 +45,25 @@ impl MssqlRowWrapper {
         self.cells
     }
 
+    /// returns true is the column is in the row, find by name
+    pub fn has_column(&self, name: &str) -> bool {
+        for cell in &self.cells {
+            if cell.column.name() == name {
+                return true;
+            }
+        }
+        false
+    }
+
+    /// returns true is the column is in the row, find by index
+    pub fn has_index(&self, index: usize) -> bool {
+        self.cells.len() > index
+    }
+
+    /// Try and fetch the data from the row/column into a type <T>
+    /// Errors
+    ///  * if the column name is not in row
+    ///  * the cell can not be deserialized into <T>
     pub fn try_get<T>(&self, name: &str) -> Result<T>
     where
         T: TiberiusDecode,
@@ -57,6 +76,10 @@ impl MssqlRowWrapper {
         Err(Error::ColumnNotFound(name.to_owned()))
     }
 
+    /// Try and fetch the data from the row/column into a type <T>
+    /// Errors
+    ///  * if the column index is not in row
+    ///  * the cell can not be deserialized into <T>
     pub fn try_get_by_posision<T>(&self, idx: usize) -> Result<T>
     where
         T: TiberiusDecode,

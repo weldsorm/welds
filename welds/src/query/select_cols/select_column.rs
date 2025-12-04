@@ -2,6 +2,7 @@ use crate::writers::ColumnWriter;
 use welds_connections::Syntax;
 
 /// What is added to the query_builder, will be build into SQL
+#[derive(Clone)]
 pub(crate) struct SelectColumn {
     pub(crate) col_name: String,
     pub(crate) field_name: String,
@@ -21,7 +22,7 @@ impl SelectRender {
 
 impl SelectKind {
     pub fn is_aggregate(&self) -> bool {
-        ![SelectKind::All, SelectKind::Column].contains(&self)
+        ![SelectKind::All, SelectKind::Column].contains(self)
     }
 }
 

@@ -28,6 +28,33 @@ pub fn write(syntax: Syntax, table: &TableIdent, col: &ColumnBuilder) -> String 
     }
 }
 
+/// write the fk crateion for sqlite. inline while table is being created
+pub(crate) fn write_inline_fk(syntax: Syntax, col: &ColumnBuilder) -> Option<String> {
+    // only sqlite needs FKs create in the table create
+    if syntax != Syntax::Sqlite {
+        return None;
+    }
+
+    // pull out the info about the FK to create
+    let colname = col.name.as_str();
+    let (f_table, f_column, on_delete) = match col.index.as_ref()? {
+        Index::ForeignKey(fk_args) => fk_args,
+        _ => return None,
+    };
+
+    let on_delete_str = match on_delete {
+        OnDelete::Cascade => "CASCADE",
+        OnDelete::SetNull => "SET NULL",
+        OnDelete::SetDefault => "SET DEFAULT",
+        OnDelete::Restrict => "RESTRICT",
+        OnDelete::NoAction => "NO ACTION",
+    };
+
+    Some(format!(
+        "FOREIGN KEY ({colname}) REFERENCES {f_table}({f_column}) ON DELETE {on_delete_str}"
+    ))
+}
+
 fn write_fk(
     syntax: Syntax,
     table: &TableIdent,

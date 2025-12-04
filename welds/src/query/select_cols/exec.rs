@@ -79,6 +79,53 @@ where
         Ok(rows)
     }
 
+    /// Executes the Query returning the first Row
+    /// Returns an Error if row is not found
+    #[cfg(feature = "unstable-api")]
+    pub async fn fetch_one<'q, 'c, Ch>(&self, client: &'c dyn Client) -> Result<Ch>
+    where
+        'q: 'c,
+        <T as HasSchema>::Schema: TableInfo + TableColumns,
+        Ch: Send + HasSchema,
+        <Ch as HasSchema>::Schema: TableInfo + TableColumns,
+        Ch: TryFrom<Row>,
+        WeldsError: From<<Ch as TryFrom<Row>>::Error>,
+    {
+        let query: Self = self.clone().limit(1);
+        let row = query
+            .run(client)
+            .await?
+            .into_iter()
+            .nth(0)
+            .ok_or(WeldsError::RowNotFound)?;
+        let obj: Ch = row.try_into()?;
+        Ok(obj)
+    }
+
+    /// A short hand to fetch a single row or None from the database.
+    /// The limit is automatically applied to one.
+    #[cfg(feature = "unstable-api")]
+    pub async fn fetch_one_optional<'q, 'c, Ch>(&self, client: &'c dyn Client) -> Result<Option<Ch>>
+    where
+        'q: 'c,
+        <T as HasSchema>::Schema: TableInfo + TableColumns,
+        Ch: Send + HasSchema,
+        <Ch as HasSchema>::Schema: TableInfo + TableColumns,
+        Ch: TryFrom<Row>,
+        WeldsError: From<<Ch as TryFrom<Row>>::Error>,
+    {
+        let query: Self = self.clone().limit(1);
+        let mut rows = query.run(client).await?;
+        let row = rows.pop();
+        match row {
+            Some(r) => {
+                let obj: Ch = r.try_into()?;
+                Ok(Some(obj))
+            }
+            None => Ok(None),
+        }
+    }
+
     fn validate_group_by(&self) -> Result<()> {
         if self.requires_group_by() && self.group_bys.is_empty() {
             return Err(WeldsError::ColumnMissingFromGroupBy);

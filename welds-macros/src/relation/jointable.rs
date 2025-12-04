@@ -1,31 +1,31 @@
-use super::Relation;
-use super::{read_as_path, read_as_string};
+use super::{read_as_ident, Relation};
+use super::read_as_string;
 use crate::errors::Result;
-use syn::Ident;
+use syn::{Ident};
 use syn::MetaList;
 
 impl Relation {
     pub(crate) fn build_jointable(list: &MetaList) -> Result<Vec<Self>> {
         let badformat = || FORMAT_ERR_MANUAL.to_owned();
 
-        let inner: Vec<_> = list.nested.iter().collect();
-        if inner.len() != 4 {
+        let list= &list.tokens.clone().into_iter().collect::<Vec<_>>();
+        if list.len() != 7 {
             return Err(badformat());
         }
 
         // Read the Rust path to the Related Model out as MetaPath
-        let model_a = read_as_path(list, 0).ok_or_else(badformat)?;
+        let model_a = read_as_ident(list, 0).ok_or_else(badformat)?;
         let model_a_key = read_as_string(list, 1).ok_or_else(badformat)?;
 
-        let model_b = read_as_path(list, 2).ok_or_else(badformat)?;
-        let model_b_key = read_as_string(list, 3).ok_or_else(badformat)?;
+        let model_b = read_as_ident(list, 4).ok_or_else(badformat)?;
+        let model_b_key = read_as_string(list, 6).ok_or_else(badformat)?;
 
-        let span = model_a.segments.last().unwrap().ident.span();
-        let field_a = model_a.segments.last().unwrap().ident.to_string();
+        let span =model_a.span();
+        let field_a = model_a.to_string();
         let field_a = to_snake_case(&field_a);
         let field_a = Ident::new(&field_a, span);
 
-        let field_b = model_b.segments.last().unwrap().ident.to_string();
+        let field_b = model_b.to_string();
         let field_b = to_snake_case(&field_b);
         let field_b = Ident::new(&field_b, span);
 

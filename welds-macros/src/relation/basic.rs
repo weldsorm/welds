@@ -1,5 +1,5 @@
 use super::Relation;
-use super::{read_as_ident, read_as_path, read_as_string};
+use super::{read_as_ident, read_as_string};
 use crate::errors::Result;
 use syn::Ident;
 use syn::MetaList;
@@ -16,14 +16,14 @@ impl Relation {
             _ => panic!("Unknown relationship type ({})", kind_str),
         };
 
-        let inner: Vec<_> = list.nested.iter().collect();
-        if inner.len() != 3 {
+        let list= &list.tokens.clone().into_iter().collect::<Vec<_>>();
+        if list.len() != 5 {
             return Err(badformat());
         }
 
         let field = read_as_ident(list, 0).ok_or_else(badformat)?;
-        let model = read_as_path(list, 1).ok_or_else(badformat)?;
-        let foreign_key = read_as_string(list, 2).ok_or_else(badformat)?;
+        let model = read_as_ident(list, 2).ok_or_else(badformat)?;
+        let foreign_key = read_as_string(list, 4).ok_or_else(badformat)?;
 
         let kind = Ident::new(kind.as_str(), field.span());
 

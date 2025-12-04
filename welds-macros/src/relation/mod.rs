@@ -1,5 +1,5 @@
+use proc_macro2::TokenTree;
 use syn::Ident;
-use syn::MetaList;
 
 mod basic;
 mod jointable;
@@ -13,7 +13,7 @@ pub(crate) struct Relation {
     // How this relationship is referred to by the user
     pub(crate) field: Ident,
     /// The model this relationship links to
-    pub(crate) foreign_struct: syn::Path,
+    pub(crate) foreign_struct: syn::Ident,
     // the field name (on the model) of the FK in the DB
     pub(crate) foreign_key_db: String,
     // Used for ManualRelationship, the non-id field defined by developer
@@ -23,44 +23,22 @@ pub(crate) struct Relation {
     pub(crate) is_jointable: bool,
 }
 
-fn read_as_path(list: &MetaList, index: usize) -> Option<syn::Path> {
-    let part = list.nested.iter().nth(index)?;
-    let meta = match part {
-        syn::NestedMeta::Meta(m) => m,
-        _ => return None,
-    };
-    match meta {
-        syn::Meta::Path(path) => Some(path.clone()),
+fn read_as_ident(list: &Vec<TokenTree>, index: usize) -> Option<syn::Ident> {
+    let field = list.get(index)?;
+   match field {
+        TokenTree::Ident(ident) => {
+            let ident_str = ident.to_string();
+            Some(syn::Ident::new(&ident_str, ident.span()))
+        }
         _ => None,
     }
 }
 
-fn read_as_ident(list: &MetaList, index: usize) -> Option<syn::Ident> {
-    let part = list.nested.iter().nth(index)?;
-    let field = match part {
-        syn::NestedMeta::Meta(m) => m,
-        _ => return None,
-    };
-    let field = match field {
-        syn::Meta::Path(path) => path,
-        _ => return None,
-    };
-    if field.segments.len() != 1 {
-        return None;
+fn read_as_string(list: &Vec<TokenTree>, index: usize) -> Option<String> {
+    // If we have metas, try to extract string from NameValue
+    let meta = list.get(index)?;
+    match meta {
+        TokenTree::Literal(lit) => Some(lit.to_string().trim_matches('"').to_string()),
+        _ => None,
     }
-    let field = field.segments[0].ident.clone();
-    Some(field)
-}
-
-fn read_as_string(list: &MetaList, index: usize) -> Option<String> {
-    let part = list.nested.iter().nth(index)?;
-    let lit = match part {
-        syn::NestedMeta::Lit(lit) => lit,
-        _ => return None,
-    };
-    let lit_str = match lit {
-        syn::Lit::Str(s) => s,
-        _ => return None,
-    };
-    Some(lit_str.value())
 }

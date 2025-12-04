@@ -7,6 +7,8 @@ use crate::{
 };
 use proc_macro2::{Ident, Span};
 use syn::{Attribute, Field, Type};
+use syn::punctuated::Punctuated;
+use syn::token::Comma;
 
 pub(crate) fn get_columns(ast: &syn::DeriveInput) -> Vec<Column> {
     let struct_def = match &ast.data {
@@ -86,18 +88,17 @@ fn read_rename(field: &Field) -> Option<String> {
     let metas: Vec<_> = field
         .attrs
         .iter()
-        .filter_map(|a| a.parse_meta().ok())
-        .filter_map(as_metalist)
-        .filter(|m| m.path.is_ident("welds"))
+        .filter(|a| a.path().is_ident("welds"))
+        .filter_map(|a| a.meta.require_list().ok())
         .collect();
     // Read out the inner meta from [welds(this, and_this)]
-    let inners: Vec<&syn::Meta> = metas.iter().flat_map(as_metalist_nested_meta).collect();
+    let inners: Vec<syn::Meta> = metas.into_iter().flat_map(as_metalist_nested_meta).collect();
     // find the first rename="name"
     let db_col_name: Option<String> = inners
         .iter()
         .filter_map(|m| as_meta_namevalue_ref(m))
         .filter(|m| m.path.is_ident("rename"))
-        .filter_map(|nv| lit_as_litstr(&nv.lit))
+        .filter_map(|nv| lit_as_litstr(&nv.value))
         .map(|x| x.value())
         .next();
     db_col_name
@@ -126,7 +127,7 @@ pub(crate) fn get_relations(ast: &syn::DeriveInput) -> Result<Vec<Relation>> {
     let metas = welds_meta(&ast.attrs);
 
     // Read out the inner meta from [welds(this, and_this)]
-    let inners: Vec<&syn::Meta> = metas.iter().flat_map(as_metalist_nested_meta).collect();
+    let inners: Vec<syn::Meta> = metas.iter().flat_map(as_metalist_nested_meta).collect();
 
     let relations1: Result<Vec<_>> = inners
         .iter()
@@ -184,7 +185,7 @@ pub(crate) fn get_hooks(ast: &syn::DeriveInput) -> Result<Vec<Hook>> {
     let metas = welds_meta(&ast.attrs);
 
     // Read out the inner meta from [welds(this, and_this)]
-    let inners: Vec<&syn::Meta> = metas.iter().flat_map(as_metalist_nested_meta).collect();
+    let inners: Vec<syn::Meta> = metas.iter().flat_map(as_metalist_nested_meta).collect();
 
     let before_create: Result<Vec<_>> = inners
         .iter()
@@ -246,13 +247,13 @@ pub(crate) fn get_scructname(ast: &syn::DeriveInput) -> syn::Ident {
 pub(crate) fn get_tablename(ast: &syn::DeriveInput) -> String {
     let metas = welds_meta(&ast.attrs);
     // Read out the inner meta from [welds(this, and_this)]
-    let inners: Vec<&syn::Meta> = metas.iter().flat_map(as_metalist_nested_meta).collect();
+    let inners: Vec<syn::Meta> = metas.iter().flat_map(as_metalist_nested_meta).collect();
     // find the first table="name"
     let tablename: Option<String> = inners
         .iter()
         .filter_map(|m| as_meta_namevalue_ref(m))
         .filter(|m| m.path.is_ident("table"))
-        .filter_map(|nv| lit_as_litstr(&nv.lit))
+        .filter_map(|nv| lit_as_litstr(&nv.value))
         .map(|x| x.value())
         .next();
     // If the user didn't give use a table name, use the name of the struct lowercased.
@@ -263,13 +264,13 @@ pub(crate) fn get_tablename(ast: &syn::DeriveInput) -> String {
 pub(crate) fn get_schemaname(ast: &syn::DeriveInput) -> Option<String> {
     let metas = welds_meta(&ast.attrs);
     // Read out the inner meta from [welds(this, and_this)]
-    let inners: Vec<&syn::Meta> = metas.iter().flat_map(as_metalist_nested_meta).collect();
+    let inners: Vec<syn::Meta> = metas.iter().flat_map(as_metalist_nested_meta).collect();
     // find the first schema="name"
     inners
         .iter()
         .filter_map(|m| as_meta_namevalue_ref(m))
         .filter(|m| m.path.is_ident("schema"))
-        .filter_map(|nv| lit_as_litstr(&nv.lit))
+        .filter_map(|nv| lit_as_litstr(&nv.value))
         .map(|x| x.value())
         .next()
 }
@@ -277,7 +278,7 @@ pub(crate) fn get_schemaname(ast: &syn::DeriveInput) -> Option<String> {
 pub(crate) fn get_welds_path(ast: &syn::DeriveInput) -> syn::Path {
     let metas = welds_path_meta(&ast.attrs);
     // Read out the inner meta from [welds_path(this, and_this)]
-    let inners: Vec<&syn::Meta> = metas.iter().flat_map(as_metalist_nested_meta).collect();
+    let inners: Vec<syn::Meta> = metas.iter().flat_map(as_metalist_nested_meta).collect();
     // find the first table="name"
     let first: Option<_> = inners.iter().map(|x| x.path()).next().cloned();
     first.unwrap_or_else(|| {
@@ -289,17 +290,11 @@ pub(crate) fn get_welds_path(ast: &syn::DeriveInput) -> syn::Path {
 pub(crate) fn get_readonly(ast: &syn::DeriveInput) -> bool {
     let metas = welds_meta(&ast.attrs);
     // Read out the inner meta from [welds(this, and_this)]
-    let inners: Vec<&syn::Meta> = metas.iter().flat_map(as_metalist_nested_meta).collect();
+    let inners: Vec<syn::Meta> = metas.iter().flat_map(as_metalist_nested_meta).collect();
     // find the first readonly
-    inners.iter().any(|&m| m.path().is_ident("readonly"))
+    inners.iter().any(|m| m.path().is_ident("readonly"))
 }
 
-fn as_metalist(meta: syn::Meta) -> Option<syn::MetaList> {
-    match meta {
-        syn::Meta::List(inner) => Some(inner),
-        _ => None,
-    }
-}
 
 fn as_metalist_ref(meta: &syn::Meta) -> Option<&syn::MetaList> {
     match meta {
@@ -316,20 +311,20 @@ fn as_meta_namevalue_ref(meta: &syn::Meta) -> Option<&syn::MetaNameValue> {
 }
 
 /// return the inner nested list "welds(bla, bla2)" -> vec![bla, bla2]
-fn as_metalist_nested_meta(metalist: &syn::MetaList) -> Vec<&syn::Meta> {
-    metalist
-        .nested
-        .iter()
-        .filter_map(|inner| match inner {
-            syn::NestedMeta::Meta(m) => Some(m),
-            _ => None,
-        })
-        .collect()
+fn as_metalist_nested_meta(metalist: &syn::MetaList) -> Vec<syn::Meta> {
+    // In syn 2.0, we need to parse the tokens manually
+    match metalist.parse_args_with(Punctuated::<syn::Meta, Comma>::parse_terminated) {
+        Ok(metas) => metas.into_iter().collect(),
+        Err(_) => vec![],
+    }
 }
 
-fn lit_as_litstr(lit: &syn::Lit) -> Option<&syn::LitStr> {
-    match lit {
-        syn::Lit::Str(s) => Some(s),
+fn lit_as_litstr(expr: &syn::Expr) -> Option<&syn::LitStr> {
+    match expr {
+        syn::Expr::Lit(expr_lit) => match &expr_lit.lit {
+            syn::Lit::Str(s) => Some(s),
+            _ => None,
+        },
         _ => None,
     }
 }
@@ -338,9 +333,11 @@ fn lit_as_litstr(lit: &syn::Lit) -> Option<&syn::LitStr> {
 fn welds_meta(attrs: &[Attribute]) -> Vec<syn::MetaList> {
     attrs
         .iter()
-        .filter_map(|a| a.parse_meta().ok())
-        .filter_map(as_metalist)
-        .filter(|m| m.path.is_ident("welds"))
+        .filter(|a| a.path().is_ident("welds"))
+        .filter_map(|a| match &a.meta {
+            syn::Meta::List(list) => Some(list.clone()),
+            _ => None,
+        })
         .collect()
 }
 
@@ -348,9 +345,11 @@ fn welds_meta(attrs: &[Attribute]) -> Vec<syn::MetaList> {
 fn welds_path_meta(attrs: &[Attribute]) -> Vec<syn::MetaList> {
     attrs
         .iter()
-        .filter_map(|a| a.parse_meta().ok())
-        .filter_map(as_metalist)
-        .filter(|m| m.path.is_ident("welds_path"))
+        .filter(|a| a.path().is_ident("welds_path"))
+        .filter_map(|a| match &a.meta {
+            syn::Meta::List(list) => Some(list.clone()),
+            _ => None,
+        })
         .collect()
 }
 
@@ -369,7 +368,6 @@ fn is_welds_full_ignore(attrs: &[Attribute]) -> bool {
     // Check if any attr has ignore
     metas
         .iter()
-        //.filter(|m| m.nested.is_empty())
         .flat_map(as_metalist_nested_meta)
         .filter(|m| m.path().is_ident("ignore"))
         // Make sure this "ignore doesn't have children"
@@ -403,7 +401,6 @@ fn welds_ignore_subs(attrs: &[Attribute]) -> Vec<Ignores> {
     // Check if any attr has ignore
     metas
         .iter()
-        //.filter(|m| m.nested.is_empty())
         .flat_map(as_metalist_nested_meta)
         .filter(|m| m.path().is_ident("ignore"))
         // Make sure this "ignore doesn't have children"
@@ -411,11 +408,7 @@ fn welds_ignore_subs(attrs: &[Attribute]) -> Vec<Ignores> {
             syn::Meta::List(l) => Some(l),
             _ => None,
         })
-        .flat_map(|m| m.nested.iter())
-        .flat_map(|m| match m {
-            syn::NestedMeta::Meta(m) => Some(m),
-            _ => None,
-        })
+        .flat_map(|m| as_metalist_nested_meta(&m))
         .map(|m| m.path().into())
         .collect()
 }

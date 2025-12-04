@@ -1,13 +1,14 @@
+use proc_macro2::TokenTree;
 use crate::errors::Result;
 //use syn::Ident;
-use syn::{Lit, MetaList};
+use syn::MetaList;
 
 /// User has defined a Hook on the model
 
 #[derive(Debug)]
 pub(crate) struct Hook {
     pub(crate) kind: HookKind,
-    pub(crate) callback: syn::Path,
+    pub(crate) callback: syn::Ident,
     pub(crate) is_async: bool,
 }
 
@@ -24,43 +25,52 @@ pub(crate) enum HookKind {
 impl Hook {
     pub(crate) fn new(list: &MetaList, kind: HookKind) -> Result<Self> {
         let badformat = || {
-            Err("Expected Hook to be one of the following format(s):\n\
+            Result::<Self>::Err("Expected Hook to be one of the following format(s):\n\
             [ welds(BeforeCreate(fn_to_call_before_create)) ]\n\
             [ welds(BeforeCreate(fn_to_call_before_create, async = true)) ]"
                 .to_owned())
         };
 
-        let inner: Vec<_> = list.nested.iter().collect();
-
-        if inner.len() > 2 {
+        let list= &list.tokens.clone().into_iter().collect::<Vec<_>>();
+        if list.len() > 5 {
             return badformat();
         }
 
         let mut is_async = false;
 
-        if inner.len() == 2 {
-            match inner[1] {
-                syn::NestedMeta::Meta(syn::Meta::NameValue(option)) => {
-                    if &option.path.segments[0].ident.to_string() != "async" {
+        if list.len() == 5 {
+            match &list[3] {
+                TokenTree::Punct(punct)=>
+                if punct.as_char() != '=' {
+                    return badformat();
+                }
+                _ => return badformat(),
+            }
+            match &list[2] {
+                TokenTree::Ident(ident)=> {
+                    if ident.to_string() != "async" {
                         return badformat();
-                    }
-                    match &option.lit {
-                        Lit::Bool(bool) => {
-                            is_async = bool.value;
-                        }
-                        _ => return badformat(),
                     }
                 }
                 _ => return badformat(),
-            };
+            }
+
+            match &list[4] {
+                TokenTree::Ident(ident) => {
+                    if ident.to_string()=="true" {
+                        is_async = true;
+                    } else if ident.to_string()=="false" {
+                        is_async = false;
+                    } else {
+                        return badformat();
+                    }
+                },
+                _ => return badformat(),
+            }
         }
 
-        let callback = match inner[0] {
-            syn::NestedMeta::Meta(m) => m,
-            _ => return badformat(),
-        };
-        let callback = match callback {
-            syn::Meta::Path(path) => path,
+        let callback = match &list[0] {
+            TokenTree::Ident(path) => path,
             _ => return badformat(),
         };
 

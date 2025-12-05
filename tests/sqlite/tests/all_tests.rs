@@ -2,6 +2,7 @@ use sqlite_test::models::order::{Order, SmallOrder};
 use sqlite_test::models::product::{BadProduct1, BadProduct2, Product};
 use sqlite_test::models::StringThing;
 use sqlite_test::models::{Thing1, Thing2, Thing3};
+use sqlx::Executor;
 use welds::connections::sqlite::SqliteClient;
 use welds::connections::TransactStart;
 use welds::state::{DbState, DbStatus};
@@ -18,10 +19,32 @@ pub mod migrations;
 pub mod select_col;
 pub mod streams;
 pub mod sub_query_tests;
+
+// Get a DB connection for testing
 async fn get_conn() -> SqliteClient {
-    let conn = testlib::sqlite::conn().await.unwrap();
+    let conn = conn_inner().await.unwrap();
     let client: SqliteClient = conn.into();
     client
+}
+
+/// Build a Connection to test the Sqlite database.
+/// db is pre-seeded with contents for test.
+pub async fn conn_inner() -> Result<sqlx::SqlitePool, sqlx::Error> {
+    let pool = sqlx::SqlitePool::connect("sqlite::memory:").await?;
+
+    // Make the tables
+    let schema = include_str!("../../testlib/databases/sqlite/01_create_tables.sql");
+    let _r = pool.clone().execute(schema).await.unwrap();
+
+    // Add Data to table
+    let schema = include_str!("../../testlib/databases/sqlite/02_add_test_data.sql");
+    let _r = pool.clone().execute(schema).await.unwrap();
+
+    // Add Views
+    let schema = include_str!("../../testlib/databases/sqlite/03_create_views.sql");
+    let _r = pool.clone().execute(schema).await.unwrap();
+
+    Ok(pool)
 }
 
 #[derive(Default, Debug, Clone)]

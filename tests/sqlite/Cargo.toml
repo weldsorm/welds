@@ -6,7 +6,6 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-testlib = { path = "../testlib" }
 welds = { path = "../../welds", features = ["sqlite", 'detect', 'check', "migrations", "unstable-api"]  }
 async-std = { version = "1", features = ["attributes"] }
 sqlx = { version = "0.8", features = [ "runtime-async-std", "tls-rustls", "macros", "chrono", "uuid"] }

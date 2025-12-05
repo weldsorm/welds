@@ -1,14 +1,15 @@
-use proc_macro2::TokenTree;
+use proc_macro2::{TokenStream, TokenTree};
+use quote::ToTokens;
 use crate::errors::Result;
 //use syn::Ident;
-use syn::MetaList;
+use syn::{MetaList, Path};
 
 /// User has defined a Hook on the model
 
 #[derive(Debug)]
 pub(crate) struct Hook {
     pub(crate) kind: HookKind,
-    pub(crate) callback: syn::Ident,
+    pub(crate) callback: syn::Path,
     pub(crate) is_async: bool,
 }
 
@@ -25,7 +26,7 @@ pub(crate) enum HookKind {
 impl Hook {
     pub(crate) fn new(list: &MetaList, kind: HookKind) -> Result<Self> {
         let badformat = || {
-            Result::<Self>::Err("Expected Hook to be one of the following format(s):\n\
+            Err("Expected Hook to be one of the following format(s):\n\
             [ welds(BeforeCreate(fn_to_call_before_create)) ]\n\
             [ welds(BeforeCreate(fn_to_call_before_create, async = true)) ]"
                 .to_owned())
@@ -69,8 +70,17 @@ impl Hook {
             }
         }
 
-        let callback = match &list[0] {
-            TokenTree::Ident(path) => path,
+        // Convert the TokenTree to TokenStream
+        let token_stream = {
+            let mut tokens = TokenStream::new();
+            list[0].to_tokens(&mut tokens);
+            tokens
+        };
+
+        let callback: syn::Result<Path> =syn::parse2(token_stream);
+
+        let callback = match callback {
+            Ok(path) => path,
             _ => return badformat(),
         };
 

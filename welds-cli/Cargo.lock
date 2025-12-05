@@ -2333,7 +2333,7 @@ dependencies = [
 
 [[package]]
 name = "welds"
-version = "0.4.19"
+version = "0.4.20"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -2368,7 +2368,7 @@ dependencies = [
 
 [[package]]
 name = "welds-connections"
-version = "0.4.19"
+version = "0.4.20"
 dependencies = [
  "async-mutex",
  "async-trait",
@@ -2386,7 +2386,7 @@ dependencies = [
 
 [[package]]
 name = "welds-macros"
-version = "0.4.19"
+version = "0.4.20"
 dependencies = [
  "proc-macro2",
  "quote",

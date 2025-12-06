@@ -1,7 +1,8 @@
-use rand::{Rng, distributions::Alphanumeric};
+use crate::container_cmd;
+use rand::{distributions::Alphanumeric, Rng};
 use static_init::dynamic;
 use std::process::{Command, Stdio};
-use std::thread::sleep; // 0.8
+use std::thread::sleep;
 
 #[dynamic(drop, lazy)]
 static mut POSTGRES: Postgres = Postgres::new();
@@ -38,6 +39,7 @@ pub(crate) struct Postgres {
     password: String,
     container_id: String,
     ready: std::cell::Cell<bool>,
+    container_cmd: &'static str,
 }
 
 impl Postgres {
@@ -52,6 +54,7 @@ impl Postgres {
             .collect();
 
         let mut pg = Self {
+            container_cmd: container_cmd().expect("Docker or Podmand is required"),
             container_id: String::default(),
             port,
             password,
@@ -72,7 +75,7 @@ impl Postgres {
     fn boot(&mut self) -> Result<(), String> {
         let port = format!("127.0.0.1:{}:5432", self.port);
         let env = format!("POSTGRES_PASSWORD={}", self.password);
-        let output = Command::new("docker")
+        let output = Command::new(self.container_cmd)
             .arg("run")
             .arg("--rm")
             .arg("-p")
@@ -89,7 +92,7 @@ impl Postgres {
     }
 
     pub fn is_running(&self) -> bool {
-        let logs = Command::new("docker")
+        let logs = Command::new(self.container_cmd)
             .arg("inspect")
             .arg(&self.container_id)
             .stdout(Stdio::piped())
@@ -112,7 +115,7 @@ impl Postgres {
         if self.ready.get() {
             return true;
         }
-        let logs = Command::new("docker")
+        let logs = Command::new(self.container_cmd)
             .arg("logs")
             .arg(&self.container_id)
             .stdout(Stdio::piped())
@@ -154,7 +157,7 @@ impl Postgres {
 
 impl Drop for Postgres {
     fn drop(&mut self) {
-        let _ = Command::new("docker")
+        let _ = Command::new(self.container_cmd)
             .arg("kill")
             .arg(&self.container_id)
             .output();

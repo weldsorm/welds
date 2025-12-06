@@ -1,4 +1,4 @@
-use rand::{Rng, distributions::Alphanumeric};
+use rand::{distributions::Alphanumeric, Rng};
 use sqlx::Executor;
 use static_init::dynamic;
 use std::process::{Command, Stdio};

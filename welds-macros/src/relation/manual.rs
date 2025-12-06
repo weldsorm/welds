@@ -1,15 +1,21 @@
-use super::Relation;
-use super::{read_as_ident, read_as_path, read_as_string};
+use super::{read_as_path, Relation};
+use super::{read_as_ident, read_as_string};
 use crate::errors::Result;
-use syn::Ident;
+use syn::{Expr, Ident};
 use syn::MetaList;
+use syn::parse::Parser;
+use syn::punctuated::Punctuated;
+use syn::token::Comma;
 
 impl Relation {
     pub(crate) fn new_manual(list: &MetaList) -> Result<Vec<Self>> {
         let badformat = || FORMAT_ERR_MANUAL.to_owned();
 
-        let inner: Vec<_> = list.nested.iter().collect();
-        if inner.len() != 4 {
+        let list =  Punctuated::<Expr, Comma>::parse_terminated.parse2(list.tokens.clone())
+            .map_err(|_|badformat())?;
+        let list: &Vec<_> = &list.iter().collect();
+
+        if list.len() != 4 {
             return Err(badformat());
         }
 

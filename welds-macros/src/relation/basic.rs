@@ -1,8 +1,11 @@
 use super::Relation;
 use super::{read_as_ident, read_as_path, read_as_string};
 use crate::errors::Result;
-use syn::Ident;
+use syn::{Expr, Ident, Token};
 use syn::MetaList;
+use syn::parse::Parser;
+use syn::punctuated::Punctuated;
+use syn::token::Comma;
 
 impl Relation {
     pub(crate) fn basic(list: &MetaList) -> Result<Vec<Self>> {
@@ -16,8 +19,11 @@ impl Relation {
             _ => panic!("Unknown relationship type ({})", kind_str),
         };
 
-        let inner: Vec<_> = list.nested.iter().collect();
-        if inner.len() != 3 {
+        let list =  Punctuated::<Expr, Comma>::parse_terminated.parse2(list.tokens.clone())
+                                                            .map_err(|_|badformat())?;
+        let list: &Vec<_> = &list.iter().collect();
+
+        if list.len() != 3 {
             return Err(badformat());
         }
 

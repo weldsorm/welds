@@ -30,6 +30,8 @@ pub use clause_adder::ClauseAdder;
 
 // trait used to write assignments in a sql statement
 mod assignment_adder;
+mod or_and;
+
 pub use assignment_adder::AssignmentAdder;
 
 pub struct ClauseColVal<T> {

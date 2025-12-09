@@ -1,4 +1,4 @@
-use super::{AsFieldName, AsOptField, ClauseColVal, ClauseColValEqual, ClauseColValIn, Text};
+use super::{AsFieldName, AsOptField, ClauseColVal, ClauseColValEqual, ClauseColValIn};
 use crate::query::optional::HasSomeNone;
 use crate::query::optional::Optional;
 use std::marker::PhantomData;

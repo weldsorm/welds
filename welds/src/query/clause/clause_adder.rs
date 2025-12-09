@@ -1,3 +1,4 @@
+use crate::query::clause::or_and::LogicalClause;
 use super::{ClauseColManual, ClauseColVal, ClauseColValEqual, ClauseColValIn, ClauseColValList};
 use super::{Param, ParamArgs};
 use crate::Syntax;
@@ -199,5 +200,22 @@ impl ClauseAdder for ClauseColManual {
 
         let clause = parts.join("");
         Some(clause)
+    }
+}
+
+impl std::ops::BitOr for Box<dyn ClauseAdder>
+{
+    type Output = Box<dyn ClauseAdder>;
+
+    fn bitor(self, rhs: Box<dyn ClauseAdder>) -> Box<dyn ClauseAdder> {
+        Box::new(LogicalClause::or(self,rhs))
+    }
+}
+
+impl std::ops::BitAnd for Box<dyn ClauseAdder> {
+    type Output = Box<dyn ClauseAdder>;
+
+    fn bitand(self, rhs: Box<dyn ClauseAdder>) -> Box<dyn ClauseAdder> {
+        Box::new(LogicalClause::and(self,rhs))
     }
 }

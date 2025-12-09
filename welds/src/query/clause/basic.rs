@@ -1,4 +1,4 @@
-use super::{AsFieldName, ClauseColVal, ClauseColValEqual, ClauseColValIn, Text};
+use super::{AsFieldName, ClauseColVal, ClauseColValEqual, ClauseColValIn};
 use std::marker::PhantomData;
 use welds_connections::Param;
 

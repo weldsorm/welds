@@ -1,10 +1,10 @@
-use super::{AsFieldName, AsOptField, ClauseColVal, ClauseColValEqual, ClauseColValIn};
+use super::{AsFieldName, AsOptField, ClauseColVal, ClauseColValEqual, ClauseColValIn, Text};
 use crate::query::optional::HasSomeNone;
 use crate::query::optional::Optional;
 use std::marker::PhantomData;
 use welds_connections::Param;
 
-#[derive(Copy,Clone)]
+#[derive(Clone)]
 pub struct BasicOpt<T> {
     col: &'static str,
     field: &'static str,
@@ -19,6 +19,7 @@ impl<T> AsFieldName<T> for BasicOpt<T> {
         self.field
     }
 }
+impl<T:Clone> Copy for BasicOpt<T> {}
 
 impl<T> AsOptField for BasicOpt<T> {}
 

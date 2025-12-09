@@ -1,8 +1,8 @@
-use super::{AsFieldName, ClauseColVal, ClauseColValEqual, ClauseColValIn};
+use super::{AsFieldName, ClauseColVal, ClauseColValEqual, ClauseColValIn, Text};
 use std::marker::PhantomData;
 use welds_connections::Param;
 
-#[derive(Copy,Clone)]
+#[derive(Clone)]
 pub struct Basic<T> {
     col: &'static str,
     field: &'static str,
@@ -17,6 +17,7 @@ impl<T> AsFieldName<T> for Basic<T> {
         self.field
     }
 }
+impl<T:Clone> Copy for Basic<T> {}
 
 impl<T> Basic<T>
 where

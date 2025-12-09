@@ -1,7 +1,7 @@
 use super::Relation;
 use super::{read_as_ident, read_as_path, read_as_string};
 use crate::errors::Result;
-use syn::{Expr, Ident, Token};
+use syn::{Expr, Ident};
 use syn::MetaList;
 use syn::parse::Parser;
 use syn::punctuated::Punctuated;

@@ -1,11 +1,7 @@
 use welds_connections::Syntax;
-use crate::query::clause::{ClauseAdder, ParamArgs};
+use crate::query::clause::{ClauseAdder, LogicalClause, LogicalOp, ParamArgs};
 use crate::writers::NextParam;
 
-enum LogicalOp {
-    And,
-    Or,
-}
 
 impl LogicalOp {
     pub fn to_str(&self) -> &'static str
@@ -17,11 +13,6 @@ impl LogicalOp {
     }
 }
 
-pub struct LogicalClause {
-    left_clause: Box<dyn ClauseAdder>,
-    operator: LogicalOp,
-    right_clause: Box<dyn ClauseAdder>,
-}
 
 impl LogicalClause {
     pub fn or(
@@ -44,6 +35,28 @@ impl LogicalClause {
             operator: LogicalOp::And,
             right_clause,
         }
+    }
+}
+
+pub fn or(
+    left_clause: Box<dyn ClauseAdder>,
+    right_clause: Box<dyn ClauseAdder>,
+) -> LogicalClause {
+    LogicalClause {
+        left_clause,
+        operator: LogicalOp::Or,
+        right_clause,
+    }
+}
+
+pub fn and(
+    left_clause: Box<dyn ClauseAdder>,
+    right_clause: Box<dyn ClauseAdder>,
+) -> LogicalClause {
+    LogicalClause {
+        left_clause,
+        operator: LogicalOp::Or,
+        right_clause,
     }
 }
 

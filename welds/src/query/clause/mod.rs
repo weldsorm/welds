@@ -31,6 +31,8 @@ pub use clause_adder::ClauseAdder;
 // trait used to write assignments in a sql statement
 mod assignment_adder;
 mod or_and;
+pub use or_and::or;
+pub use or_and::and;
 
 pub use assignment_adder::AssignmentAdder;
 
@@ -95,4 +97,15 @@ pub struct SetColVal<T> {
 
 pub struct SetColNull {
     pub col_raw: String,
+}
+
+enum LogicalOp {
+    And,
+    Or,
+}
+
+pub struct LogicalClause {
+    left_clause: Box<dyn ClauseAdder>,
+    operator: LogicalOp,
+    right_clause: Box<dyn ClauseAdder>,
 }

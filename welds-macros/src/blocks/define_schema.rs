@@ -23,6 +23,7 @@ pub(crate) fn write(info: &Info) -> TokenStream {
 
     quote! {
 
+        #[derive(Copy,Clone)]
         pub struct #name {
             #(#fields),*
         }

@@ -2,18 +2,19 @@ use super::{AsFieldName, ClauseColVal, ClauseColValEqual, ClauseColValIn};
 use std::marker::PhantomData;
 use welds_connections::Param;
 
+#[derive(Copy,Clone)]
 pub struct Basic<T> {
-    col: String,
-    field: String,
+    col: &'static str,
+    field: &'static str,
     _t: PhantomData<T>,
 }
 
 impl<T> AsFieldName<T> for Basic<T> {
-    fn colname(&self) -> &str {
-        self.col.as_str()
+    fn colname(&self) -> &'static str {
+        self.col
     }
-    fn fieldname(&self) -> &str {
-        self.field.as_str()
+    fn fieldname(&self) -> &'static str {
+        self.field
     }
 }
 
@@ -21,7 +22,7 @@ impl<T> Basic<T>
 where
     T: 'static + Clone + Send + Sync,
 {
-    pub fn new(col: impl Into<String>, field: impl Into<String>) -> Self {
+    pub fn new(col: &'static str, field: &'static str) -> Self {
         Self {
             col: col.into(),
             field: field.into(),

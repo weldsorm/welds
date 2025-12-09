@@ -35,7 +35,7 @@ pub use assignment_adder::AssignmentAdder;
 pub struct ClauseColVal<T> {
     pub null_clause: bool,
     pub not_clause: bool,
-    pub col: String,
+    pub col: &'static str,
     pub operator: &'static str,
     pub val: Option<T>,
 }
@@ -43,31 +43,31 @@ pub struct ClauseColVal<T> {
 pub struct ClauseColValEqual<T> {
     pub null_clause: bool,
     pub not_clause: bool,
-    pub col: String,
+    pub col: &'static str,
     pub operator: &'static str,
     pub val: Option<T>,
 }
 
 pub struct ClauseColValIn<T> {
-    pub col: String,
+    pub col: &'static str,
     pub operator: &'static str,
     pub list: Vec<T>,
 }
 
 pub struct ClauseColValList<T> {
-    pub col: String,
+    pub col: &'static str,
     pub operator: &'static str,
     pub list: Vec<T>,
 }
 
 pub struct ClauseColManual {
-    pub(crate) col: Option<String>,
+    pub(crate) col: Option<&'static str>,
     pub(crate) sql: String,
     pub(crate) params: Vec<Box<dyn Param + Send + Sync>>,
 }
 
 pub struct AssignmentManual {
-    pub(crate) col: String,
+    pub(crate) col: &'static str,
     pub(crate) sql: String,
     pub(crate) params: Vec<Box<dyn Param + Send + Sync>>,
 }
@@ -77,8 +77,8 @@ pub struct AssignmentManual {
 // fieldname refers to what we want to get the column out as.
 // for example: select id as ids from bla.
 pub trait AsFieldName<T> {
-    fn colname(&self) -> &str;
-    fn fieldname(&self) -> &str;
+    fn colname(&self) -> &'static str;
+    fn fieldname(&self) -> &'static str;
 }
 
 // marker trait to make sure a field is nullable

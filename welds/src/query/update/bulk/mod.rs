@@ -168,7 +168,7 @@ where
     {
         let params: ManualParam = params.into();
         let field = lam(Default::default());
-        let col_raw = field.colname().to_string();
+        let col_raw = field.colname();
 
         let adder = AssignmentManual {
             col: col_raw,

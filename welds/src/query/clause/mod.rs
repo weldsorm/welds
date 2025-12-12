@@ -33,6 +33,7 @@ mod assignment_adder;
 mod or_and;
 pub use or_and::or;
 pub use or_and::and;
+pub use or_and::AndOrClauseTrait;
 
 pub use assignment_adder::AssignmentAdder;
 

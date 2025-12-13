@@ -1,11 +1,12 @@
-use welds_connections::{Param, Syntax};
-use crate::query::clause::{ClauseAdder, ClauseColManual, ClauseColVal, ClauseColValEqual, ClauseColValIn, ClauseColValList, LogicalClause, LogicalOp, ParamArgs};
+use crate::query::clause::{
+    ClauseAdder, ClauseColManual, ClauseColVal, ClauseColValEqual, ClauseColValIn,
+    ClauseColValList, LogicalClause, LogicalOp, ParamArgs,
+};
 use crate::writers::NextParam;
-
+use welds_connections::{Param, Syntax};
 
 impl LogicalOp {
-    pub fn to_str(&self) -> &'static str
-    {
+    pub fn to_str(&self) -> &'static str {
         match self {
             LogicalOp::And => "AND",
             LogicalOp::Or => "OR",
@@ -45,12 +46,26 @@ impl ClauseAdder for LogicalClause {
     }
 
     fn clause(&self, syntax: Syntax, alias: &str, next_params: &NextParam) -> Option<String> {
+        let left = self.left_clause.clause(syntax, alias, next_params);
+        let right = self.right_clause.clause(syntax, alias, next_params);
+        let operator = self.operator.to_str();
 
-        format!("({} {} {})",
-                self.left_clause.clause(syntax, alias, next_params)?,
-                self.operator.to_str(),
-                self.right_clause.clause(syntax, alias, next_params)?,
-        ).into()
+        // Both have some
+        if let Some(left) = &left
+            && let Some(right) = &right
+        {
+            return Some(format!("({left} {operator} {right})"));
+        }
+        // Left has some
+        if left.is_some() {
+            return left;
+        }
+        // Right has some
+        if right.is_some() {
+            return right;
+        }
+        // Both are none
+        None
     }
 }
 
@@ -59,8 +74,7 @@ pub trait AndOrClauseTrait {
     fn or(self: Box<Self>, other: Box<dyn ClauseAdder>) -> Box<LogicalClause>;
 }
 
-impl AndOrClauseTrait for LogicalClause
-{
+impl AndOrClauseTrait for LogicalClause {
     fn and(self: Box<Self>, other: Box<dyn ClauseAdder>) -> Box<LogicalClause> {
         and(self, other)
     }
@@ -72,8 +86,8 @@ impl AndOrClauseTrait for LogicalClause
 
 impl<T> AndOrClauseTrait for ClauseColVal<T>
 where
-        for<'a> T: 'a,
-        T: Clone + Send + Sync + Param,
+    for<'a> T: 'a,
+    T: Clone + Send + Sync + Param,
 {
     fn and(self: Box<Self>, other: Box<dyn ClauseAdder>) -> Box<LogicalClause> {
         and(self, other)
@@ -86,7 +100,7 @@ where
 
 impl<T> AndOrClauseTrait for ClauseColValEqual<T>
 where
-        for<'a> T: 'a,
+    for<'a> T: 'a,
     T: Clone + Send + Sync + Param,
 {
     fn and(self: Box<Self>, other: Box<dyn ClauseAdder>) -> Box<LogicalClause> {
@@ -98,10 +112,10 @@ where
     }
 }
 
-impl<T> AndOrClauseTrait for ClauseColValList< T >
+impl<T> AndOrClauseTrait for ClauseColValList<T>
 where
-        for<'a> T: 'a,
-        Vec<T>:  Clone + Send + Sync + Param,
+    for<'a> T: 'a,
+    Vec<T>: Clone + Send + Sync + Param,
 {
     fn and(self: Box<Self>, other: Box<dyn ClauseAdder>) -> Box<LogicalClause> {
         and(self, other)
@@ -188,7 +202,10 @@ mod tests {
         let sql_str = sql.unwrap();
         assert!(sql_str.contains("AND"));
         assert!(sql_str.contains("OR"));
-        assert_eq!(sql_str, "((t1.id = $1 AND t1.is_active = $2) OR t1.score >= $3)");
+        assert_eq!(
+            sql_str,
+            "((t1.id = $1 AND t1.is_active = $2) OR t1.score >= $3)"
+        );
     }
 
     #[test]
@@ -196,15 +213,18 @@ mod tests {
         let a = TestModelSchema::default();
 
         // ((id != 0 OR name_column == 'empty) AND is_active != true) OR score > 0.5
-        let or_clause = a.id.not_equal(0).or( a.name.equal("empty"));
-        let and_clause = or_clause.and( a.is_active.not_equal(true));
-        let nested = and_clause.or( a.score.gte(0.5));
+        let or_clause = a.id.not_equal(0).or(a.name.equal("empty"));
+        let and_clause = or_clause.and(a.is_active.not_equal(true));
+        let nested = and_clause.or(a.score.gte(0.5));
 
         let sql = nested.clause(Syntax::Postgres, "t1", &NextParam::new(Syntax::Postgres));
         assert!(sql.is_some());
         let sql_str = sql.unwrap();
         assert!(sql_str.contains("AND"));
         assert!(sql_str.contains("OR"));
-        assert_eq!(sql_str, "(((t1.id != $1 OR t1.name_column = $2) AND t1.is_active != $3) OR t1.score >= $4)");
+        assert_eq!(
+            sql_str,
+            "(((t1.id != $1 OR t1.name_column = $2) AND t1.is_active != $3) OR t1.score >= $4)"
+        );
     }
 }

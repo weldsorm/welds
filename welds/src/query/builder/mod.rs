@@ -150,7 +150,7 @@ where
         FN: AsFieldName<V>,
     {
         let field = col(Default::default());
-        let colname = field.colname().to_string();
+        let colname = field.colname();
         let params: ManualParam = params.into();
         let c = clause::ClauseColManual {
             col: Some(colname),

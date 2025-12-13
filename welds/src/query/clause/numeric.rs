@@ -5,18 +5,19 @@ use std::marker::PhantomData;
 use welds_connections::Param;
 
 /// Clauses for numeric types such as int, float, etc
+#[derive(Copy,Clone)]
 pub struct Numeric<T> {
-    col: String,
-    field: String,
+    col: &'static str,
+    field: &'static str,
     _t: PhantomData<T>,
 }
 
 impl<T> AsFieldName<T> for Numeric<T> {
-    fn colname(&self) -> &str {
-        self.col.as_str()
+    fn colname(&self) -> &'static str {
+        self.col
     }
-    fn fieldname(&self) -> &str {
-        self.field.as_str()
+    fn fieldname(&self) -> &'static str {
+        self.field
     }
 }
 
@@ -24,7 +25,7 @@ impl<T> Numeric<T>
 where
     T: 'static + Clone + Send + Sync,
 {
-    pub fn new(col: impl Into<String>, field: impl Into<String>) -> Self {
+    pub fn new(col: &'static str, field: &'static str) -> Self {
         Self {
             col: col.into(),
             field: field.into(),

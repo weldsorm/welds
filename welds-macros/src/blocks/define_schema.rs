@@ -23,6 +23,7 @@ pub(crate) fn write(info: &Info) -> TokenStream {
 
     quote! {
 
+        #[derive(Copy,Clone)]
         pub struct #name {
             #(#fields),*
         }
@@ -75,6 +76,7 @@ mod tests {
         let code = ts.to_string();
 
         let expected: &str = r#"
+            #[derive(Copy,Clone)]
             pub struct MockSchema {
                 pub id: welds::query::clause::Numeric<i64>
             }

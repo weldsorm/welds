@@ -786,3 +786,26 @@ fn should_be_able_to_select_all_orders_with_there_products() {
         assert_eq!(o3_products[0].product_id, 1);
     })
 }
+
+#[test]
+fn should_be_able_to_select_hourse_or_dog() {
+    async_std::task::block_on(async {
+        use welds::query::clause::or;
+        let conn = get_conn().await;
+        use postgres_test::models::product::ProductSchema;
+
+        // verify pulling out lambda into variable
+        let clause = |x: ProductSchema| or(x.name.like("horse"), x.name.like("dog"));
+        let q = Product::all().where_col(clause);
+
+        eprintln!("SQL: {}", q.to_sql(Syntax::Postgres));
+        let data = q.run(&conn).await.unwrap();
+        assert_eq!(data.len(), 2, "Expected horse and dog",);
+
+        // verify inline clause
+        let q2 = Product::all().where_col(|x| or(x.name.like("horse"), x.name.like("dog")));
+        eprintln!("SQL: {}", q2.to_sql(Syntax::Postgres));
+        let data = q2.run(&conn).await.unwrap();
+        assert_eq!(data.len(), 2, "Expected horse and dog",);
+    })
+}

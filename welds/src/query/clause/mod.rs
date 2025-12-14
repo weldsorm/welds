@@ -34,7 +34,7 @@ mod assignment_adder;
 #[cfg(feature = "unstable-api")]
 mod or_and;
 #[cfg(feature = "unstable-api")]
-pub use or_and::AndOrClauseTrait;
+pub use or_and::ClauseAdderAndOrExt;
 #[cfg(feature = "unstable-api")]
 pub use or_and::and;
 #[cfg(feature = "unstable-api")]

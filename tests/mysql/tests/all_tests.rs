@@ -374,3 +374,26 @@ fn should_be_able_to_write_a_custom_set() {
         q.run(&conn).await.unwrap();
     })
 }
+
+#[test]
+fn should_be_able_to_select_hourse_or_dog() {
+    async_std::task::block_on(async {
+        use welds::query::clause::or;
+        let conn = get_conn().await;
+        use mysql_test::models::product::ProductSchema;
+
+        // verify pulling out lambda into variable
+        let clause = |x: ProductSchema| or(x.name.like("horse"), x.name.like("dog"));
+        let q = Product::all().where_col(clause);
+
+        eprintln!("SQL: {}", q.to_sql(Syntax::Mysql));
+        let data = q.run(&conn).await.unwrap();
+        assert_eq!(data.len(), 2, "Expected horse and dog",);
+
+        // verify inline clause
+        let q2 = Product::all().where_col(|x| or(x.name.like("horse"), x.name.like("dog")));
+        eprintln!("SQL: {}", q2.to_sql(Syntax::Mysql));
+        let data = q2.run(&conn).await.unwrap();
+        assert_eq!(data.len(), 2, "Expected horse and dog",);
+    })
+}

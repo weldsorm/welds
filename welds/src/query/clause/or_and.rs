@@ -1,6 +1,17 @@
-use crate::query::clause::{ClauseAdder, LogicalClause, LogicalOp, ParamArgs};
+use crate::query::clause::{ClauseAdder, ParamArgs};
 use crate::writers::NextParam;
 use welds_connections::Syntax;
+
+enum LogicalOp {
+    And,
+    Or,
+}
+
+pub struct LogicalClause {
+    left_clause: Box<dyn ClauseAdder>,
+    operator: LogicalOp,
+    right_clause: Box<dyn ClauseAdder>,
+}
 
 impl LogicalOp {
     pub fn to_str(&self) -> &'static str {
@@ -84,81 +95,6 @@ where
     }
 }
 
-//  impl ClauseAdderAndOrExt for LogicalClause {
-//      fn and(self: Box<Self>, other: Box<dyn ClauseAdder>) -> Box<LogicalClause> {
-//          and(self, other)
-//      }
-//
-//      fn or(self: Box<Self>, other: Box<dyn ClauseAdder>) -> Box<LogicalClause> {
-//          or(self, other)
-//      }
-//  }
-//
-//  impl<T> ClauseAdderAndOrExt for ClauseColVal<T>
-//  where
-//      for<'a> T: 'a,
-//      T: Clone + Send + Sync + Param,
-//  {
-//      fn and(self: Box<Self>, other: Box<dyn ClauseAdder>) -> Box<LogicalClause> {
-//          and(self, other)
-//      }
-//
-//      fn or(self: Box<Self>, other: Box<dyn ClauseAdder>) -> Box<LogicalClause> {
-//          or(self, other)
-//      }
-//  }
-//
-//  impl<T> ClauseAdderAndOrExt for ClauseColValEqual<T>
-//  where
-//      for<'a> T: 'a,
-//      T: Clone + Send + Sync + Param,
-//  {
-//      fn and(self: Box<Self>, other: Box<dyn ClauseAdder>) -> Box<LogicalClause> {
-//          and(self, other)
-//      }
-//
-//      fn or(self: Box<Self>, other: Box<dyn ClauseAdder>) -> Box<LogicalClause> {
-//          or(self, other)
-//      }
-//  }
-//
-//  impl<T> ClauseAdderAndOrExt for ClauseColValList<T>
-//  where
-//      for<'a> T: 'a,
-//      Vec<T>: Clone + Send + Sync + Param,
-//  {
-//      fn and(self: Box<Self>, other: Box<dyn ClauseAdder>) -> Box<LogicalClause> {
-//          and(self, other)
-//      }
-//
-//      fn or(self: Box<Self>, other: Box<dyn ClauseAdder>) -> Box<LogicalClause> {
-//          or(self, other)
-//      }
-//  }
-//
-//  impl<T> ClauseAdderAndOrExt for ClauseColValIn<T>
-//  where
-//      for<'a> T: 'a + Clone + Send + Sync + Param,
-//  {
-//      fn and(self: Box<Self>, other: Box<dyn ClauseAdder>) -> Box<LogicalClause> {
-//          and(self, other)
-//      }
-//
-//      fn or(self: Box<Self>, other: Box<dyn ClauseAdder>) -> Box<LogicalClause> {
-//          or(self, other)
-//      }
-//  }
-//
-//  impl ClauseAdderAndOrExt for ClauseColManual {
-//      fn and(self: Box<Self>, other: Box<dyn ClauseAdder>) -> Box<LogicalClause> {
-//          and(self, other)
-//      }
-//
-//      fn or(self: Box<Self>, other: Box<dyn ClauseAdder>) -> Box<LogicalClause> {
-//          or(self, other)
-//      }
-//  }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -217,24 +153,4 @@ mod tests {
             "((t1.id = $1 AND t1.is_active = $2) OR t1.score >= $3)"
         );
     }
-
-    // #[test]
-    // fn test_nested_linked_logical_clauses() {
-    //     let a = TestModelSchema::default();
-
-    //     // ((id != 0 OR name_column == 'empty) AND is_active != true) OR score > 0.5
-    //     let or_clause = a.id.not_equal(0).or(a.name.equal("empty"));
-    //     let and_clause = or_clause.and(a.is_active.not_equal(true));
-    //     let nested = and_clause.or(a.score.gte(0.5));
-
-    //     let sql = nested.clause(Syntax::Postgres, "t1", &NextParam::new(Syntax::Postgres));
-    //     assert!(sql.is_some());
-    //     let sql_str = sql.unwrap();
-    //     assert!(sql_str.contains("AND"));
-    //     assert!(sql_str.contains("OR"));
-    //     assert_eq!(
-    //         sql_str,
-    //         "(((t1.id != $1 OR t1.name_column = $2) AND t1.is_active != $3) OR t1.score >= $4)"
-    //     );
-    // }
 }

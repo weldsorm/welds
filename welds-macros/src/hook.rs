@@ -1,7 +1,6 @@
+use crate::errors::Result;
 use proc_macro2::{TokenStream, TokenTree};
 use quote::ToTokens;
-use crate::errors::Result;
-//use syn::Ident;
 use syn::{MetaList, Path};
 
 /// User has defined a Hook on the model
@@ -32,7 +31,7 @@ impl Hook {
                 .to_owned())
         };
 
-        let list= &list.tokens.clone().into_iter().collect::<Vec<_>>();
+        let list = &list.tokens.clone().into_iter().collect::<Vec<_>>();
         if list.len() > 5 {
             return badformat();
         }
@@ -41,15 +40,16 @@ impl Hook {
 
         if list.len() == 5 {
             match &list[3] {
-                TokenTree::Punct(punct)=>
-                if punct.as_char() != '=' {
-                    return badformat();
+                TokenTree::Punct(punct) => {
+                    if punct.as_char() != '=' {
+                        return badformat();
+                    }
                 }
                 _ => return badformat(),
             }
             match &list[2] {
-                TokenTree::Ident(ident)=> {
-                    if ident.to_string() != "async" {
+                TokenTree::Ident(ident) => {
+                    if *ident != "async" {
                         return badformat();
                     }
                 }
@@ -58,14 +58,14 @@ impl Hook {
 
             match &list[4] {
                 TokenTree::Ident(ident) => {
-                    if ident.to_string()=="true" {
+                    if *ident == "true" {
                         is_async = true;
-                    } else if ident.to_string()=="false" {
+                    } else if *ident == "false" {
                         is_async = false;
                     } else {
                         return badformat();
                     }
-                },
+                }
                 _ => return badformat(),
             }
         }
@@ -77,7 +77,7 @@ impl Hook {
             tokens
         };
 
-        let callback: syn::Result<Path> =syn::parse2(token_stream);
+        let callback: syn::Result<Path> = syn::parse2(token_stream);
 
         let callback = match callback {
             Ok(path) => path,

@@ -104,14 +104,3 @@ pub struct SetColVal<T> {
 pub struct SetColNull {
     pub col_raw: String,
 }
-
-enum LogicalOp {
-    And,
-    Or,
-}
-
-pub struct LogicalClause {
-    left_clause: Box<dyn ClauseAdder>,
-    operator: LogicalOp,
-    right_clause: Box<dyn ClauseAdder>,
-}

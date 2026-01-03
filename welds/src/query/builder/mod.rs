@@ -395,6 +395,22 @@ where
         SelectBuilder::new(self).select_min(lam, as_name)
     }
 
+    pub fn select_avg<V, FN: AsFieldName<V>>(
+        self,
+        lam: impl Fn(<T as HasSchema>::Schema) -> FN,
+        as_name: &'static str,
+    ) -> SelectBuilder<T> {
+        SelectBuilder::new(self).select_avg(lam, as_name)
+    }
+
+    pub fn select_sum<V, FN: AsFieldName<V>>(
+        self,
+        lam: impl Fn(<T as HasSchema>::Schema) -> FN,
+        as_name: &'static str,
+    ) -> SelectBuilder<T> {
+        SelectBuilder::new(self).select_sum(lam, as_name)
+    }
+
     /// Changes this query Into a sql UPDATE.
     /// Sets the value from the lambda in the database
     ///

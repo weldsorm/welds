@@ -140,6 +140,34 @@ where
         self
     }
 
+    pub fn select_avg<V, FN: AsFieldName<V>>(
+        mut self,
+        lam: impl Fn(<T as HasSchema>::Schema) -> FN,
+        as_name: &'static str,
+    ) -> SelectBuilder<T> {
+        let field = lam(Default::default());
+        self.selects.push(SelectColumn {
+            col_name: field.colname().to_string(),
+            field_name: as_name.to_string(),
+            kind: SelectKind::Average,
+        });
+        self
+    }
+
+    pub fn select_sum<V, FN: AsFieldName<V>>(
+        mut self,
+        lam: impl Fn(<T as HasSchema>::Schema) -> FN,
+        as_name: &'static str,
+    ) -> SelectBuilder<T> {
+        let field = lam(Default::default());
+        self.selects.push(SelectColumn {
+            col_name: field.colname().to_string(),
+            field_name: as_name.to_string(),
+            kind: SelectKind::Sum,
+        });
+        self
+    }
+
     /// Filter the results returned by this query.
     /// Used when you want to filter on the columns of this table.
     pub fn where_col(

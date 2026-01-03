@@ -165,6 +165,42 @@ fn should_be_able_to_select_column_max() {
 }
 
 #[test]
+fn should_be_able_to_select_column_min() {
+    async_std::task::block_on(async {
+        let query = Order2::all().select_min(|o| o.oid, "oid_min");
+
+        assert_eq!(
+            query.to_sql(Syntax::Sqlite),
+            "SELECT MIN(t1.\"oid\") AS \"oid_min\" FROM orders t1"
+        );
+    });
+}
+
+#[test]
+fn should_be_able_to_select_column_avg() {
+    async_std::task::block_on(async {
+        let query = Order2::all().select_avg(|o| o.oid, "oid_avg");
+
+        assert_eq!(
+            query.to_sql(Syntax::Sqlite),
+            "SELECT AVG(t1.\"oid\") AS \"oid_avg\" FROM orders t1"
+        );
+    });
+}
+
+#[test]
+fn should_be_able_to_select_column_sum() {
+    async_std::task::block_on(async {
+        let query = Order2::all().select_sum(|o| o.oid, "oid_sum");
+
+        assert_eq!(
+            query.to_sql(Syntax::Sqlite),
+            "SELECT SUM(t1.\"oid\") AS \"oid_sum\" FROM orders t1"
+        );
+    });
+}
+
+#[test]
 fn should_be_able_to_join_and_group_by() {
     async_std::task::block_on(async {
         let query = Order2::all()

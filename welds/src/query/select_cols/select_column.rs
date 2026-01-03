@@ -33,6 +33,8 @@ pub(crate) enum SelectKind {
     Count,
     Max,
     Min,
+    Average,
+    Sum,
 }
 
 /// used while writing SQL to help keep track of parts of the select
@@ -79,6 +81,12 @@ impl SelectRender {
             }
             SelectKind::Min => {
                 format!("MIN({}.{}) AS {}", self.alias, colname, fieldname)
+            }
+            SelectKind::Average => {
+                format!("AVG({}.{}) AS {}", self.alias, colname, fieldname)
+            }
+            SelectKind::Sum => {
+                format!("SUM({}.{}) AS {}", self.alias, colname, fieldname)
             }
         }
     }

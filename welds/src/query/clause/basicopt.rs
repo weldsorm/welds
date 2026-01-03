@@ -4,20 +4,22 @@ use crate::query::optional::Optional;
 use std::marker::PhantomData;
 use welds_connections::Param;
 
+#[derive(Clone)]
 pub struct BasicOpt<T> {
-    col: String,
-    field: String,
+    col: &'static str,
+    field: &'static str,
     _t: PhantomData<T>,
 }
 
 impl<T> AsFieldName<T> for BasicOpt<T> {
-    fn colname(&self) -> &str {
-        self.col.as_str()
+    fn colname(&self) -> &'static str {
+        self.col
     }
-    fn fieldname(&self) -> &str {
-        self.field.as_str()
+    fn fieldname(&self) -> &'static str {
+        self.field
     }
 }
+impl<T:Clone> Copy for BasicOpt<T> {}
 
 impl<T> AsOptField for BasicOpt<T> {}
 
@@ -25,7 +27,7 @@ impl<T> BasicOpt<T>
 where
     T: 'static + Clone + Send + Sync,
 {
-    pub fn new(col: impl Into<String>, field: impl Into<String>) -> Self {
+    pub fn new(col: &'static str, field: &'static str) -> Self {
         Self {
             col: col.into(),
             field: field.into(),

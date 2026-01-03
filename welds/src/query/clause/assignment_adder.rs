@@ -31,7 +31,7 @@ where
 
     fn clause(&self, syntax: Syntax, _alias: &str, next_params: &NextParam) -> Option<String> {
         // build the column name
-        let colname = ColumnWriter::new(syntax).excape(&self.col);
+        let colname = ColumnWriter::new(syntax).excape(self.col);
         let mut parts = vec![colname.as_str()];
 
         // handle null clones
@@ -104,7 +104,7 @@ impl AssignmentAdder for AssignmentManual {
         // build the column name
         let mut parts = vec![];
 
-        let colname = ColumnWriter::new(syntax).excape(&self.col);
+        let colname = ColumnWriter::new(syntax).excape(self.col);
         parts.push(colname);
         parts.push(" = ( ".to_string());
 

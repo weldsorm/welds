@@ -201,3 +201,4 @@ impl ClauseAdder for ClauseColManual {
         Some(clause)
     }
 }
+

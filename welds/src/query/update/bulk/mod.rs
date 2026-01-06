@@ -27,6 +27,7 @@ pub struct UpdateBuilder<T> {
     pub(crate) sets: Vec<Arc<Box<dyn AssignmentAdder>>>,
 }
 
+#[maybe_async::maybe_async]
 impl<T> UpdateBuilder<T>
 where
     T: Send + HasSchema,

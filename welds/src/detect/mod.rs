@@ -23,12 +23,14 @@ pub use table_def::{ColumnDef, DataType, RelationDef, TableDef, TableDefSingle};
 /// Returns a list of all user defined tables in the database
 /// requires feature `detect`
 #[deprecated(since = "0.4.11", note = "please use `find_all_tables` instead.")]
+#[maybe_async::maybe_async]
 pub async fn find_tables(client: &dyn Client) -> Result<Vec<TableDef>> {
     find_all_tables(client).await
 }
 
 /// Returns a list of all user defined tables in the database
 /// requires feature `detect`
+#[maybe_async::maybe_async]
 pub async fn find_all_tables(client: &dyn Client) -> Result<Vec<TableDef>> {
     let syntax = client.syntax();
     let ts = TableScan::new(syntax);
@@ -57,6 +59,7 @@ pub async fn find_all_tables(client: &dyn Client) -> Result<Vec<TableDef>> {
 /// Will return Err if two tables with the same name exist. (Ex: "welds.Products" and "welds.products").
 /// Use table_search if you are expecting multiple table name.
 /// NOTE: does not include relationship info. use find_all_tables for that
+#[maybe_async::maybe_async]
 pub async fn find_table(
     namespace: Option<impl Into<String>>,
     tablename: impl Into<String>,
@@ -99,6 +102,7 @@ pub async fn find_table(
 /// Can use SQL wildcard.
 /// NOTE: namespace and tablename are case insensitive (using ilike)
 /// NOTE: Does not include relationship info. Use find_all_tables for that
+#[maybe_async::maybe_async]
 pub async fn table_search(
     namespace: Option<impl Into<String>>,
     tablename: impl Into<String>,

@@ -23,6 +23,7 @@ pub use writer::SelectWriter;
 // This file contains all the stuff added onto the Querybuilder to allow it to run SELECTs
 // ******************************************************************************************
 
+#[maybe_async::maybe_async]
 impl<T> QueryBuilder<T>
 where
     T: Send + HasSchema,

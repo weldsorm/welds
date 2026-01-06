@@ -11,6 +11,7 @@ use async_trait::async_trait;
 use std::any::Any;
 use std::marker::PhantomData;
 
+#[maybe_async::maybe_async]
 #[async_trait]
 pub(crate) trait RelatedQuery<R> {
     async fn run(
@@ -35,6 +36,7 @@ where
     pub(crate) qb: QueryBuilder<R>,
 }
 
+#[maybe_async::maybe_async]
 #[async_trait]
 impl<R, T, Ship> RelatedQuery<T> for IncludeQuery<T, R, Ship>
 where

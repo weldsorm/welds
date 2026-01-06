@@ -16,6 +16,8 @@ pub mod postgres;
 pub mod row;
 #[cfg(feature = "sqlite")]
 pub mod sqlite;
+#[cfg(feature = "sqlite-sync")]
+pub mod sqlite_sync;
 pub mod trace;
 pub mod transaction;
 
@@ -27,9 +29,20 @@ pub struct Fetch<'s, 'args, 't> {
     pub params: &'args [&'t (dyn Param + Sync)],
 }
 
+#[maybe_async::async_impl]
+pub trait AsyncNeedsSyncSend: Sync + Send {}
+#[maybe_async::async_impl]
+impl<T: Sync + Send> AsyncNeedsSyncSend for T {}
+
+#[maybe_async::sync_impl]
+pub trait AsyncNeedsSyncSend {}
+#[maybe_async::sync_impl]
+impl<T> AsyncNeedsSyncSend for T {}
+
+#[maybe_async::maybe_async]
 #[async_trait]
 /// The common trait for database connections and transactions.
-pub trait Client: Sync + Send {
+pub trait Client: AsyncNeedsSyncSend {
     /// Execute a sql command. returns the number of rows that were affected
     async fn execute(&self, sql: &str, params: &[&(dyn Param + Sync)]) -> Result<ExecuteResult>;
 
@@ -63,6 +76,7 @@ pub trait StreamClient: Sync + Send {
 
 /// Used the ENV DATABASE_URL
 /// builds a connection with whatever is in it.
+#[maybe_async::maybe_async]
 pub async fn connect_from_env() -> Result<any::AnyClient> {
     let url = std::env::var("DATABASE_URL").or(Err(Error::InvalidDatabaseUrl))?;
     connect(&url).await
@@ -75,6 +89,7 @@ pub async fn connect_from_env() -> Result<any::AnyClient> {
 /// connection string formats:
 /// SQLX Connection String (postgres, mysql, sqlite)
 /// ADO Connection String (mssql)
+#[maybe_async::maybe_async]
 pub async fn connect(cs: impl Into<String>) -> Result<any::AnyClient> {
     let cs: String = cs.into();
     #[cfg(feature = "postgres")]
@@ -101,6 +116,12 @@ pub async fn connect(cs: impl Into<String>) -> Result<any::AnyClient> {
         let client = sqlite::connect(&cs).await?;
         return Ok(any::AnyClient::Sqlite(client));
     }
+    #[cfg(feature = "sqlite-sync")]
+    if cs.starts_with("sqlite:") {
+        log::debug!("Welds connecting to Sqlite (Sync)");
+        let client = sqlite_sync::connect(&cs)?;
+        return Ok(any::AnyClient::SqliteSync(client));
+    }
     #[cfg(feature = "mssql")]
     if !cs.is_empty() {
         log::debug!("Welds connecting to MSSQL");
@@ -113,6 +134,7 @@ pub async fn connect(cs: impl Into<String>) -> Result<any::AnyClient> {
     Err(errors::Error::InvalidDatabaseUrl)
 }
 
+#[maybe_async::maybe_async]
 #[async_trait]
 /// Implementers of this trait can crate a transaction.
 /// If you want to create a transaction off of a Client,

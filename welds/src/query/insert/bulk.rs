@@ -8,6 +8,7 @@ use crate::writers::TableWriter;
 
 /// Executes the query in the database Bulk Inserting values
 /// The primary_keys will be inserted as part of the data
+#[maybe_async::maybe_async]
 pub async fn bulk_insert_with_ids<T>(conn: &dyn Client, data: &[T]) -> Result<()>
 where
     T: WriteToArgs + HasSchema,
@@ -21,6 +22,7 @@ where
 
 /// Executes the query in the database Bulk Inserting values
 /// The primary_keys will NOT be inserted as part of the data
+#[maybe_async::maybe_async]
 pub async fn bulk_insert<T>(conn: &dyn Client, data: &[T]) -> Result<()>
 where
     T: WriteToArgs + HasSchema,
@@ -37,6 +39,7 @@ where
 ///
 /// WARNING: This method does NOT protect the SQL generated tablename.
 /// DO NOT expose to end-users. SQL injection risk.
+#[maybe_async::maybe_async]
 pub async fn bulk_insert_with_ids_override_tablename_unsafe<T>(
     conn: &dyn Client,
     data: &[T],
@@ -55,6 +58,7 @@ where
 ///
 /// WARNING: This method does NOT protect the SQL generated tablename.
 /// DO NOT expose to end-users. SQL injection risk.
+#[maybe_async::maybe_async]
 pub async fn bulk_insert_override_tablename_unsafe<T>(
     conn: &dyn Client,
     data: &[T],
@@ -69,6 +73,7 @@ where
 }
 
 /// Executes the query in the database Bulk Inserting values
+#[maybe_async::maybe_async]
 async fn run<T>(conn: &dyn Client, data: &[T], with_ids: bool, tablename: &str) -> Result<()>
 where
     T: WriteToArgs + HasSchema,

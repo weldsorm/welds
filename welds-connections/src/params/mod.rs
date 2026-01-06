@@ -8,6 +8,9 @@ use sqlx::types::Type;
 #[cfg(feature = "sqlite")]
 use super::sqlite::SqliteParam;
 
+#[cfg(feature = "sqlite-sync")]
+use super::sqlite_sync::SqliteSyncParam;
+
 #[cfg(feature = "mssql")]
 use super::mssql::MssqlParam;
 
@@ -16,6 +19,12 @@ use super::postgres::PostgresParam;
 
 #[cfg(feature = "mysql")]
 use super::mysql::MysqlParam;
+
+#[cfg(all(feature = "sqlite-sync"))]
+pub trait Param: SqliteSyncParam + rusqlite::types::ToSql {}
+
+#[cfg(all(feature = "sqlite-sync"))]
+impl<T> Param for T where T: rusqlite::types::FromSql + rusqlite::types::ToSql {}
 
 #[cfg(all(
     feature = "sqlite",

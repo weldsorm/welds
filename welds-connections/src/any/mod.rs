@@ -19,6 +19,8 @@ use futures_core::stream::BoxStream;
 pub enum AnyClient {
     #[cfg(feature = "sqlite")]
     Sqlite(crate::sqlite::SqliteClient),
+    #[cfg(feature = "sqlite-sync")]
+    SqliteSync(crate::sqlite_sync::SqliteClient),
     #[cfg(feature = "postgres")]
     Postgres(crate::postgres::PostgresClient),
     #[cfg(feature = "mysql")]
@@ -29,6 +31,7 @@ pub enum AnyClient {
     Noop(crate::noop::NoopClient),
 }
 
+#[maybe_async::maybe_async]
 #[async_trait]
 impl Client for AnyClient {
     /// Execute a sql command. returns the number of rows that were affected
@@ -36,6 +39,8 @@ impl Client for AnyClient {
         match self {
             #[cfg(feature = "sqlite")]
             AnyClient::Sqlite(c) => c.execute(sql, params).await,
+            #[cfg(feature = "sqlite-sync")]
+            AnyClient::SqliteSync(c) => c.execute(sql, params),
             #[cfg(feature = "postgres")]
             AnyClient::Postgres(c) => c.execute(sql, params).await,
             #[cfg(feature = "mysql")]
@@ -52,6 +57,8 @@ impl Client for AnyClient {
         match self {
             #[cfg(feature = "sqlite")]
             AnyClient::Sqlite(c) => c.fetch_rows(sql, params).await,
+            #[cfg(feature = "sqlite-sync")]
+            AnyClient::SqliteSync(c) => c.fetch_rows(sql, params),
             #[cfg(feature = "postgres")]
             AnyClient::Postgres(c) => c.fetch_rows(sql, params).await,
             #[cfg(feature = "mysql")]
@@ -71,6 +78,8 @@ impl Client for AnyClient {
         match self {
             #[cfg(feature = "sqlite")]
             AnyClient::Sqlite(c) => c.fetch_many(args).await,
+            #[cfg(feature = "sqlite-sync")]
+            AnyClient::SqliteSync(c) => c.fetch_many(args),
             #[cfg(feature = "postgres")]
             AnyClient::Postgres(c) => c.fetch_many(args).await,
             #[cfg(feature = "mysql")]
@@ -87,6 +96,8 @@ impl Client for AnyClient {
         match self {
             #[cfg(feature = "sqlite")]
             AnyClient::Sqlite(c) => c.syntax(),
+            #[cfg(feature = "sqlite-sync")]
+            AnyClient::SqliteSync(c) => c.syntax(),
             #[cfg(feature = "postgres")]
             AnyClient::Postgres(c) => c.syntax(),
             #[cfg(feature = "mysql")]
@@ -115,6 +126,8 @@ impl StreamClient for AnyClient {
         match self {
             #[cfg(feature = "sqlite")]
             AnyClient::Sqlite(c) => c.stream(sql, params).await,
+            #[cfg(feature = "sqlite-sync")]
+            AnyClient::SqliteSync(c) => compile_error!("streaming unsupported in sync-mode"),
             #[cfg(feature = "postgres")]
             AnyClient::Postgres(c) => c.stream(sql, params).await,
             #[cfg(feature = "mysql")]
@@ -127,12 +140,15 @@ impl StreamClient for AnyClient {
     }
 }
 
+#[maybe_async::maybe_async]
 #[async_trait]
 impl TransactStart for AnyClient {
     async fn begin<'t>(&'t self) -> Result<Transaction<'t>> {
         match self {
             #[cfg(feature = "sqlite")]
             AnyClient::Sqlite(c) => c.begin().await,
+            #[cfg(feature = "sqlite-sync")]
+            AnyClient::SqliteSync(c) => c.begin(),
             #[cfg(feature = "postgres")]
             AnyClient::Postgres(c) => c.begin().await,
             #[cfg(feature = "mysql")]

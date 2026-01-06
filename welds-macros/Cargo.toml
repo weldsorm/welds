@@ -20,3 +20,6 @@ proc-macro2 = "1"
 
 [features]
 "default" = []
+
+# Internal feature for enabling sync compilation
+"__sync" = []

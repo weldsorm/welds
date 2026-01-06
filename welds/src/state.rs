@@ -42,6 +42,7 @@ where
     }
 }
 
+#[maybe_async::maybe_async]
 impl<T> DbState<T> {
     /// Returns status of the entity. If it is in the database/unsaved/modified/..
     pub fn db_status(&self) -> DbStatus {

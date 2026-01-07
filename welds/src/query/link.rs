@@ -15,6 +15,7 @@ use std::any::type_name;
 ///
 /// Warning: This function DOES NOT check that model_a or model_b is in the database.
 /// This is the responsibility of the calling code.
+#[maybe_async::maybe_async]
 pub async fn create<Link, A, B>(conn: &dyn Client, model_a: &A, model_b: &B) -> Result<()>
 where
     Link: WriteToArgs + HasSchema,
@@ -80,6 +81,7 @@ where
 /// deletes an instance of a <Link> model in the database linking model_a to model_b
 /// Success if link was not in database
 /// Fails only if there is a database issue.
+#[maybe_async::maybe_async]
 pub async fn delete<Link, A, B>(conn: &dyn Client, model_a: &A, model_b: &B) -> Result<()>
 where
     Link: WriteToArgs + HasSchema,

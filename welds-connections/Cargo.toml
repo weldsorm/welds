@@ -18,6 +18,7 @@ description = "An async ORM for (postgres, mssql, mysql, sqlite)"
 "postgres" = ["sqlx/postgres"]
 "mysql" = ["sqlx/mysql"]
 "sqlite" = ["sqlx/sqlite"]
+"sqlite-sync" = ["__sync", "rusqlite", "rusqlite/chrono", "rusqlite/uuid"]
 "mssql" = ["tokio", "tokio-util", "futures-util", "tiberius", "bb8-tiberius", "bb8", "futures", "async-mutex"]
 "mssql-chrono" = ["tiberius/chrono"]
 "mssql-time" = ["tiberius/time"]
@@ -27,7 +28,10 @@ description = "An async ORM for (postgres, mssql, mysql, sqlite)"
 "tracing" = ["dep:tracing"]
 "unstable-api" = ["futures", "futures-core"]
 "full" = ["postgres", "mysql", "sqlite", "mssql", "noop", "unstable-api"]
+"full-sync" = ["sqlite-sync"]
 
+# Internal feature for enabling sync compilation
+"__sync" = ["maybe-async/is_sync"]
 
 [dependencies]
 async-trait = "0.1"
@@ -39,10 +43,14 @@ futures-core = {version= "0.3", optional=true }
 futures-util = { version= "0.3", optional=true }
 log = "0.4"
 sqlx = { version = "0.8", features = [], optional = true }
+# NOTE: we *need* to pin rusqlite to 0.32.x due to libsqlite-sys version incompatibilities conflicting with sqlx's
+# When sqlx is updated, we will need to re-verify this constraint
+rusqlite = { version = "=0.32", optional = true }
 tracing = { version = "0.1", optional = true }
 tokio = { version = "1", features = [], optional = true }
 tokio-util = { version = "0.7", features = ["full"], optional = true }
 async-mutex = { version = "1.4", optional = true }
+maybe-async = "0.2.10"
 
 [dev-dependencies]
 welds-connections = { path="./", features = ["full"] }

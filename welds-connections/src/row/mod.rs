@@ -14,6 +14,9 @@ use sqlx::sqlite::SqliteRow;
 #[cfg(any(feature = "sqlite", feature = "postgres", feature = "mysql"))]
 use sqlx::Row as SqlxRow;
 
+#[cfg(feature = "sqlite-sync")]
+use crate::sqlite_sync::SqliteSyncOwnedRow as SqliteSyncRow;
+
 #[cfg(feature = "mssql")]
 use tiberius::Row as MssqlRow;
 
@@ -33,6 +36,8 @@ pub struct Row {
 pub enum RowInner {
     #[cfg(feature = "sqlite")]
     Sqlite(SqliteRow),
+    #[cfg(feature = "sqlite-sync")]
+    SqliteSync(SqliteSyncRow),
     #[cfg(feature = "mssql")]
     Mssql(MssqlRowWrapper),
     #[cfg(feature = "postgres")]
@@ -46,6 +51,15 @@ impl From<SqliteRow> for Row {
     fn from(r: SqliteRow) -> Row {
         Row {
             inner: RowInner::Sqlite(r),
+        }
+    }
+}
+
+#[cfg(feature = "sqlite-sync")]
+impl From<SqliteSyncRow> for Row {
+    fn from(r: SqliteSyncRow) -> Row {
+        Row {
+            inner: RowInner::SqliteSync(r),
         }
     }
 }
@@ -128,6 +142,8 @@ impl Row {
         match &self.inner {
             #[cfg(feature = "sqlite")]
             RowInner::Sqlite(r) => r.try_column(name).is_ok(),
+            #[cfg(feature = "sqlite-sync")]
+            RowInner::SqliteSync(r) => r.columns.iter().any(|c| c == name),
             #[cfg(feature = "mssql")]
             RowInner::Mssql(r) => r.has_column(name),
             #[cfg(feature = "postgres")]
@@ -143,6 +159,8 @@ impl Row {
         match &self.inner {
             #[cfg(feature = "sqlite")]
             RowInner::Sqlite(r) => r.try_column(index).is_ok(),
+            #[cfg(feature = "sqlite-sync")]
+            RowInner::SqliteSync(r) => r.data.get(index).is_some(),
             #[cfg(feature = "mssql")]
             RowInner::Mssql(r) => r.has_index(index),
             #[cfg(feature = "postgres")]

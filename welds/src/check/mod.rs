@@ -13,6 +13,7 @@ pub use issue::*;
 /// and what the welds object was compiled against
 ///
 /// Used to known if there are going to be issues when running the query of a model
+#[maybe_async::maybe_async]
 pub async fn schema<T>(client: &dyn Client) -> Result<Vec<Issue>>
 where
     T: Send + HasSchema,

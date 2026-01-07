@@ -4,9 +4,19 @@ use quote::quote;
 
 pub(crate) fn write(info: &Info) -> TokenStream {
     let wp = &info.welds_path;
+    let async_token = if cfg!(feature = "__sync") {
+        quote! {}
+    } else {
+        quote! { async }
+    };
+    let await_token = if cfg!(feature = "__sync") {
+        quote! {}
+    } else {
+        quote! { .await }
+    };
     quote! {
 
-    pub async fn from_raw_sql<'args, 't>(
+    pub #async_token fn from_raw_sql<'args, 't>(
         sql: &'static str,
         arguments: &'args #wp::query::clause::ParamArgs<'t>,
         client: &dyn #wp::Client,
@@ -16,7 +26,7 @@ pub(crate) fn write(info: &Info) -> TokenStream {
         Self: Send + TryFrom<#wp::Row>,
         #wp::WeldsError: From<<Self as TryFrom<#wp::Row>>::Error>
     {
-        let mut rows: Vec<#wp::Row> = client.fetch_rows(sql, arguments).await?;
+        let mut rows: Vec<#wp::Row> = client.fetch_rows(sql, arguments)#await_token?;
         let mut data: std::result::Result<Vec<Self>, _> = rows.drain(..).map( Self::try_from ).collect();
         let mut data = data?;
 

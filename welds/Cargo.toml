@@ -19,6 +19,7 @@ colored = { version="3", optional = true }
 anyhow = "1.0"
 thiserror = "2.0"
 welds-macros = { path="../welds-macros", version = "^0.4.20" }
+maybe-async = "0.2.10"
 
 [features]
 "default" = []
@@ -26,7 +27,9 @@ welds-macros = { path="../welds-macros", version = "^0.4.20" }
 "mysql" = ["welds-connections/mysql"]
 "mssql" = ["welds-connections/mssql"]
 "sqlite" = ["welds-connections/sqlite"]
+"sqlite-sync" = ["__sync", "welds-connections/sqlite-sync"]
 "full" = ["postgres", "mysql", "mssql", "sqlite", "check", "detect", "migrations", "unstable-api"]
+"full-sync" = ["sqlite-sync", "check", "detect", "migrations"]
 "detect" = []
 "mock" = []
 "check" = ["detect", "colored"]
@@ -34,6 +37,8 @@ welds-macros = { path="../welds-macros", version = "^0.4.20" }
 "unstable-api" = ["welds-connections/unstable-api", "futures", "futures-core"]
 "tracing" = ["welds-connections/tracing"]
 
+# Internal feature for enabling sync compilation
+"__sync" = ["maybe-async/is_sync", "welds-macros/__sync", "welds-connections/__sync"]
 
 #[profile.dev.package.sqlx-macros]
 #opt-level = 3

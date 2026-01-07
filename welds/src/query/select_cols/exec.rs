@@ -16,6 +16,7 @@ use welds_connections::trace;
 // This file contains all the stuff added onto the SelectBuilder to allow it to run SELECTs
 // ******************************************************************************************
 
+#[maybe_async::maybe_async]
 impl<T> SelectBuilder<T>
 where
     T: Send + HasSchema,

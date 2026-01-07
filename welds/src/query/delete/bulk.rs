@@ -60,6 +60,7 @@ where
     /// Executes a `DELETE FROM ... `
     ///
     /// deletes all the resulting rows from the database
+    #[maybe_async::maybe_async]
     pub async fn delete(&self, client: &dyn Client) -> Result<u64>
     where
         <T as HasSchema>::Schema: UniqueIdentifier + TableInfo + TableColumns,

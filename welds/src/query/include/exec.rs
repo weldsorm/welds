@@ -31,6 +31,7 @@ where
     }
 
     /// Executes the query in the database returning the results
+    #[maybe_async::maybe_async]
     pub async fn run<'q, 'c>(&'q self, client: &'c dyn Client) -> Result<DataSet<T>>
     where
         'q: 'c,

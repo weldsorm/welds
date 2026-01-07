@@ -437,7 +437,7 @@ fn should_be_able_to_write_a_custom_set2() {
     let q = Product::all()
         .map_query(|p| p.orders)
         .where_col(|c| c.id.equal(2342534))
-        .set_manual(|x| x.product_id, "product_id + ?", ());
+        .set_manual(|x| x.product_id, "product_id + ?", (2,));
     let sql = q.to_sql(Syntax::Sqlite);
     eprintln!("SQL: {}", sql);
     q.run(&conn).unwrap();

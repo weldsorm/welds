@@ -8,7 +8,8 @@ use welds::prelude::*;
 pub struct ExtraType {
     #[welds(primary_key)]
     pub id: uuid::Uuid,
-    //pub json_col: serde_json::Value,
+    // left in here so sql matches async version of DB
+    pub json_col: String,
     pub date_col: chrono::NaiveDate,
     pub time_col: chrono::NaiveTime,
     pub datetime_col: chrono::NaiveDateTime,
@@ -22,7 +23,7 @@ fn should_be_able_to_save_load_extra_types() {
 
     let org = ExtraType {
         id: Uuid::new_v4(),
-        //json_col: json!({"woot": true}),
+        json_col: json!({"woot": true}).to_string(),
         date_col: chrono::Utc::now().date_naive(),
         time_col: chrono::Utc::now().naive_local().time(),
         datetime_col: chrono::Utc::now().naive_local(),
@@ -38,7 +39,7 @@ fn should_be_able_to_save_load_extra_types() {
     // make sure the object hasn't changed.
     // the DB might truncate the nano seconds.
     assert_eq!(loaded.as_ref().id, org.id);
-    //assert_eq!(&loaded.as_ref().json_col, &org.json_col);
+    assert_eq!(&loaded.as_ref().json_col, &org.json_col);
     assert_eq!(loaded.as_ref().date_col, org.date_col);
 
     let diff = loaded.as_ref().time_col.signed_duration_since(org.time_col);

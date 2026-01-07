@@ -4,8 +4,6 @@
 
 default-members = ["testlib", "sqlite", "mysql"]
 members = ["testlib", "sqlite", "mysql"]
-#default-members = ["mssql", "mysql", "postgres", "testlib", "sqlite"]
-#members = ["mssql", "mysql", "postgres", "testlib", "sqlite"]
 
 workspace.resolver = "2"
 

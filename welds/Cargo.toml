@@ -19,7 +19,7 @@ colored = { version="3", optional = true }
 anyhow = "1.0"
 thiserror = "2.0"
 welds-macros = { path="../welds-macros", version = "^0.4.20" }
-maybe-async = "0.2.10"
+maybe-async = "0.2"
 
 [features]
 "default" = []

@@ -19,6 +19,15 @@ pub struct SqliteSyncOwnedRow {
     pub columns: Arc<Vec<String>>,
 }
 
+impl SqliteClient {
+    /// run multiple sql commands at like a sql script.
+    /// does not support sql Params
+    pub fn execute_script(&self, sql: &str) -> Result<()> {
+        trace::db_error(self.conn.lock().unwrap().execute_batch(sql))?;
+        Ok(())
+    }
+}
+
 impl SqliteSyncOwnedRow {
     pub fn try_get<T>(&self, idx: usize) -> rusqlite::Result<T>
     where
@@ -112,7 +121,11 @@ impl TransactStart for SqliteClient {
 }
 
 pub fn connect(url: &str) -> Result<SqliteClient> {
-    let path = url.trim_start_matches("sqlite://");
+    let mut path = url.trim_start_matches("sqlite://");
+    // sqlx style in-memory connection string
+    if path == "sqlite::memory:" {
+        path = ":memory:";
+    }
     let client = rusqlite::Connection::open(path)?;
     Ok(SqliteClient {
         conn: Arc::new(Mutex::new(client)),

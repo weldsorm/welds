@@ -26,22 +26,20 @@ fn get_conn() -> SqliteClient {
 /// Build a Connection to test the Sqlite database.
 /// db is pre-seeded with contents for test.
 fn conn_inner() -> Result<SqliteClient, welds::errors::WeldsError> {
-    use welds::connections::Client;
-    let url = ":memory:";
-    //let url = "sqlite::memory:";
+    let url = "sqlite::memory:";
     let pool = welds::connections::sqlite_sync::connect(url)?;
 
     // Make the tables
     let schema = include_str!("../../testlib/databases/sqlite/01_create_tables.sql");
-    pool.execute(schema, &[])?;
+    pool.execute_script(schema)?;
 
     // Add Data to table
     let data = include_str!("../../testlib/databases/sqlite/02_add_test_data.sql");
-    pool.execute(data, &[])?;
+    pool.execute_script(data)?;
 
     // Add Views
     let views = include_str!("../../testlib/databases/sqlite/03_create_views.sql");
-    pool.execute(views, &[])?;
+    pool.execute_script(views)?;
 
     Ok(pool)
 }

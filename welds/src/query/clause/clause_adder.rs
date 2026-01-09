@@ -1,7 +1,7 @@
 use super::{ClauseColManual, ClauseColVal, ClauseColValEqual, ClauseColValIn, ClauseColValList};
 use super::{Param, ParamArgs};
 use crate::Syntax;
-use crate::writers::NextParam;
+use crate::writers::{ColumnWriter, NextParam};
 
 /// A `ClauseAdder` is a trait used to write the "clause" part of
 /// a where, join, etc..
@@ -32,7 +32,8 @@ where
 
     fn clause(&self, syntax: Syntax, alias: &str, next_params: &NextParam) -> Option<String> {
         // build the column name
-        let col = format!("{}.{}", alias, self.col);
+        let col_writer = ColumnWriter::new(syntax);
+        let col = format!("{}.{}", alias, col_writer.excape(&self.col));
         let mut parts = vec![col.as_str()];
 
         // handle null clones
@@ -84,9 +85,10 @@ where
         }
     }
 
-    fn clause(&self, _syntax: Syntax, alias: &str, next_params: &NextParam) -> Option<String> {
+    fn clause(&self, syntax: Syntax, alias: &str, next_params: &NextParam) -> Option<String> {
         // build the column name
-        let col = format!("{}.{}", alias, self.col);
+        let col_writer = ColumnWriter::new(syntax);
+        let col = format!("{}.{}", alias, col_writer.excape(&self.col));
         let mut parts = vec![col.as_str()];
 
         // handle null clones
@@ -120,9 +122,10 @@ where
         args.push(&self.list);
     }
 
-    fn clause(&self, _syntax: Syntax, alias: &str, next_params: &NextParam) -> Option<String> {
+    fn clause(&self, syntax: Syntax, alias: &str, next_params: &NextParam) -> Option<String> {
         // build the column name
-        let col = format!("{}.{}", alias, self.col);
+        let col_writer = ColumnWriter::new(syntax);
+        let col = format!("{}.{}", alias, col_writer.excape(&self.col));
         let mut parts = vec![col.as_str()];
 
         // normal path
@@ -149,8 +152,9 @@ where
         }
     }
 
-    fn clause(&self, _syntax: Syntax, alias: &str, next_params: &NextParam) -> Option<String> {
-        let col = format!("{}.{}", alias, self.col);
+    fn clause(&self, syntax: Syntax, alias: &str, next_params: &NextParam) -> Option<String> {
+        let col_writer = ColumnWriter::new(syntax);
+        let col = format!("{}.{}", alias, col_writer.excape(&self.col));
         let mut parts = vec![col];
 
         parts.push(" ".to_string());
@@ -179,11 +183,12 @@ impl ClauseAdder for ClauseColManual {
         }
     }
 
-    fn clause(&self, _syntax: Syntax, alias: &str, next_params: &NextParam) -> Option<String> {
+    fn clause(&self, syntax: Syntax, alias: &str, next_params: &NextParam) -> Option<String> {
         // build the column name
         let mut parts = vec![];
+        let col_writer = ColumnWriter::new(syntax);
         if let Some(colname) = &self.col {
-            let col = format!("{}.{} ", alias, colname);
+            let col = format!("{}.{} ", alias, col_writer.excape(&colname));
             parts.push(col);
         }
 
@@ -201,4 +206,3 @@ impl ClauseAdder for ClauseColManual {
         Some(clause)
     }
 }
-

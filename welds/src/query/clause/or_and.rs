@@ -121,7 +121,7 @@ mod tests {
 
         let sql = and_clause.clause(Syntax::Postgres, "t1", &NextParam::new(Syntax::Postgres));
         assert!(sql.is_some());
-        assert_eq!(sql.unwrap(), "(t1.id = $1 AND t1.is_active = $2)");
+        assert_eq!(sql.unwrap(), r#"(t1."id" = $1 AND t1."is_active" = $2)"#);
     }
 
     #[test]
@@ -132,7 +132,10 @@ mod tests {
 
         let sql = or_clause.clause(Syntax::Postgres, "t1", &NextParam::new(Syntax::Postgres));
         assert!(sql.is_some());
-        assert_eq!(sql.unwrap(), "(t1.score > $1 OR t1.name_column = $2)");
+        assert_eq!(
+            sql.unwrap(),
+            r#"(t1."score" > $1 OR t1."name_column" = $2)"#
+        );
     }
 
     #[test]
@@ -150,7 +153,7 @@ mod tests {
         assert!(sql_str.contains("OR"));
         assert_eq!(
             sql_str,
-            "((t1.id = $1 AND t1.is_active = $2) OR t1.score >= $3)"
+            r#"((t1."id" = $1 AND t1."is_active" = $2) OR t1."score" >= $3)"#
         );
     }
 }

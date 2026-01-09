@@ -72,7 +72,7 @@ fn should_be_able_to_write_sql_with_basic_where() {
     let q = QueryBuilder::<Product>::new().where_col(|c| c.name.equal("bla"));
     let sql = q.to_sql(Syntax::Sqlite);
     assert_eq!(
-        "SELECT t1.\"dbname\" FROM da_schemaname.da_tablename t1 WHERE ( t1.dbname = ? )",
+        "SELECT t1.\"dbname\" FROM da_schemaname.da_tablename t1 WHERE ( t1.\"dbname\" = ? )",
         &sql
     );
 }
@@ -82,7 +82,7 @@ fn should_be_able_to_write_sql_count_with_basic_where() {
     let q = QueryBuilder::<Product>::new().where_col(|c| c.name.equal("bla"));
     let sql = q.to_sql_count(Syntax::Sqlite);
     assert_eq!(
-        "SELECT CAST( COUNT(*) as BIGINT ) FROM da_schemaname.da_tablename t1 WHERE ( t1.dbname = ? )",
+        "SELECT CAST( COUNT(*) as BIGINT ) FROM da_schemaname.da_tablename t1 WHERE ( t1.\"dbname\" = ? )",
         &sql
     );
 }
@@ -97,7 +97,7 @@ fn should_exec_basic_with_where() {
     })
     .unwrap();
     assert_eq!(
-        "SELECT t1.\"dbname\" FROM da_schemaname.da_tablename t1 WHERE ( t1.dbname = @p1 )",
+        "SELECT t1.\"dbname\" FROM da_schemaname.da_tablename t1 WHERE ( t1.\"dbname\" = @p1 )",
         &ran_sql
     );
 }
@@ -112,7 +112,7 @@ fn sqlite_syntax_should_be_translated_to_like() {
     })
     .unwrap();
     assert_eq!(
-        "SELECT t1.\"dbname\" FROM da_schemaname.da_tablename t1 WHERE ( t1.dbname like ? )",
+        "SELECT t1.\"dbname\" FROM da_schemaname.da_tablename t1 WHERE ( t1.\"dbname\" like ? )",
         &ran_sql
     );
 }

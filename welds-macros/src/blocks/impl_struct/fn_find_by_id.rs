@@ -19,9 +19,20 @@ pub(crate) fn write(info: &Info) -> TokenStream {
     let filters: Vec<_> = pks.iter().map(filter).collect();
     let filters = quote! {#(#filters)* };
 
+    let async_token = if cfg!(feature = "__sync") {
+        quote! {}
+    } else {
+        quote! { async }
+    };
+    let await_token = if cfg!(feature = "__sync") {
+        quote! {}
+    } else {
+        quote! { .await }
+    };
+
     quote! {
 
-    pub async fn find_by_id(
+    pub #async_token fn find_by_id(
         conn: &dyn #wp::Client,
         #id_params
     ) -> #wp::errors::Result<Option<#wp::state::DbState<Self>>>
@@ -32,7 +43,7 @@ pub(crate) fn write(info: &Info) -> TokenStream {
         #converts
         let mut q = Self::all();
         #filters
-        let mut results = q.limit(1).run(conn).await?;
+        let mut results = q.limit(1).run(conn)#await_token?;
         Ok(results.pop())
     }
 

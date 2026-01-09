@@ -10,6 +10,8 @@ pub enum Error {
     TiberiusConnPool(bb8_tiberius::Error),
     #[cfg(feature = "mssql")]
     Tiberius(tiberius::error::Error),
+    #[cfg(feature = "sqlite-sync")]
+    Rusqlite(rusqlite::Error),
     Bb8(&'static str),
     InvalidDatabaseUrl,
     RowNowFound,
@@ -27,6 +29,8 @@ impl Display for Error {
         let message = match self {
             #[cfg(any(feature = "mysql", feature = "sqlite", feature = "postgres"))]
             Error::Sqlx(err) => err.to_string(),
+            #[cfg(feature = "sqlite-sync")]
+            Error::Rusqlite(err) => err.to_string(),
             #[cfg(feature = "mssql")]
             Error::TiberiusConnPool(err) => err.to_string(),
             #[cfg(feature = "mssql")]
@@ -79,5 +83,12 @@ impl<T> From<bb8::RunError<T>> for Error {
 impl From<tiberius::error::Error> for Error {
     fn from(inner: tiberius::error::Error) -> Self {
         Error::Tiberius(inner)
+    }
+}
+
+#[cfg(feature = "sqlite-sync")]
+impl From<rusqlite::Error> for Error {
+    fn from(inner: rusqlite::Error) -> Self {
+        Error::Rusqlite(inner)
     }
 }

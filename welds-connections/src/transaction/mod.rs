@@ -8,16 +8,22 @@ use std::sync::Mutex;
 #[cfg(feature = "mssql")]
 use crate::mssql::transaction::MssqlTransaction;
 
+#[cfg(feature = "sqlite-sync")]
+use crate::sqlite_sync::SqliteSyncTransaction;
+
 pub struct Transaction<'t> {
     inner: Mutex<Option<TransT<'t>>>,
     syntax: crate::Syntax,
 }
 
+#[maybe_async::maybe_async]
 impl<'t> Transaction<'t> {
     pub(crate) fn new(inner: TransT<'t>) -> Self {
         let syntax = match &inner {
             #[cfg(feature = "sqlite")]
             TransT::Sqlite(_) => Syntax::Sqlite,
+            #[cfg(feature = "sqlite-sync")]
+            TransT::SqliteSync(_) => Syntax::Sqlite,
             #[cfg(feature = "mssql")]
             TransT::Mssql(_) => Syntax::Mssql,
             #[cfg(feature = "postgres")]
@@ -72,6 +78,8 @@ impl<'t> Transaction<'t> {
 pub(crate) enum TransT<'t> {
     #[cfg(feature = "sqlite")]
     Sqlite(sqlx::Transaction<'t, sqlx::Sqlite>),
+    #[cfg(feature = "sqlite-sync")]
+    SqliteSync(SqliteSyncTransaction<'t>),
     #[cfg(feature = "postgres")]
     Postgres(sqlx::Transaction<'t, sqlx::Postgres>),
     #[cfg(feature = "mysql")]
@@ -80,11 +88,14 @@ pub(crate) enum TransT<'t> {
     Mssql(MssqlTransaction<'t>),
 }
 
+#[maybe_async::maybe_async]
 impl TransT<'_> {
     async fn rollback(self) -> Result<()> {
         match self {
             #[cfg(feature = "sqlite")]
             TransT::Sqlite(t) => t.rollback().await?,
+            #[cfg(feature = "sqlite-sync")]
+            TransT::SqliteSync(t) => t.transaction.rollback().await?,
             #[cfg(feature = "mssql")]
             TransT::Mssql(t) => t.rollback().await?,
             #[cfg(feature = "postgres")]
@@ -98,6 +109,8 @@ impl TransT<'_> {
         match self {
             #[cfg(feature = "sqlite")]
             TransT::Sqlite(t) => t.commit().await?,
+            #[cfg(feature = "sqlite-sync")]
+            TransT::SqliteSync(t) => t.transaction.commit()?,
             #[cfg(feature = "mssql")]
             TransT::Mssql(t) => t.commit().await?,
             #[cfg(feature = "postgres")]
@@ -115,7 +128,10 @@ use super::mysql::MysqlParam;
 use super::postgres::PostgresParam;
 #[cfg(feature = "sqlite")]
 use super::sqlite::SqliteParam;
+#[cfg(feature = "sqlite-sync")]
+use super::sqlite_sync::SqliteSyncParam;
 
+#[maybe_async::maybe_async]
 #[async_trait]
 impl Client for Transaction<'_> {
     fn syntax(&self) -> crate::Syntax {
@@ -123,6 +139,9 @@ impl Client for Transaction<'_> {
     }
 
     async fn execute(&self, sql: &str, params: &[&(dyn Param + Sync)]) -> Result<ExecuteResult> {
+        if sql.trim().is_empty() {
+            return Ok(ExecuteResult::new(0));
+        }
         let mut inner = self.take_conn();
         let results = execute_inner(&mut inner, sql, params).await;
         self.return_conn(inner);
@@ -159,6 +178,7 @@ impl Client for Transaction<'_> {
     }
 }
 
+#[maybe_async::maybe_async]
 async fn execute_inner(
     inner: &mut TransT<'_>,
     sql: &str,
@@ -176,6 +196,16 @@ async fn execute_inner(
             Ok(ExecuteResult {
                 rows_affected: t.rows_affected(),
             })
+        }
+
+        #[cfg(feature = "sqlite-sync")]
+        TransT::SqliteSync(t) => {
+            let mut p = Vec::new();
+            for param in params {
+                p.push(SqliteSyncParam::to_sql_dyn(param));
+            }
+            let r = t.transaction.execute(sql, &*p)?;
+            Ok(ExecuteResult::new(r as u64))
         }
 
         #[cfg(feature = "postgres")]
@@ -215,6 +245,7 @@ async fn execute_inner(
     }
 }
 
+#[maybe_async::maybe_async]
 async fn fetch_rows_inner(
     inner: &mut TransT<'_>,
     sql: &str,
@@ -231,6 +262,34 @@ async fn fetch_rows_inner(
             let mut raw_rows = query.fetch_all(x).await?;
             let rows: Vec<Row> = raw_rows.drain(..).map(Row::from).collect();
             Ok(rows)
+        }
+
+        #[cfg(feature = "sqlite-sync")]
+        TransT::SqliteSync(t) => {
+            use super::sqlite_sync::SqliteSyncOwnedRow;
+            use std::sync::Arc;
+            let mut p = Vec::new();
+            for param in params {
+                p.push(SqliteSyncParam::to_sql_dyn(param));
+            }
+            let mut stmt = t.transaction.prepare(sql)?;
+            let column_names: Vec<String> =
+                stmt.column_names().iter().map(|s| s.to_string()).collect();
+            let columns = Arc::new(column_names);
+
+            let mut raw_rows = stmt.query(&*p)?;
+            let mut res = Vec::new();
+            while let Some(row) = raw_rows.next()? {
+                let mut data = Vec::new();
+                for i in 0..row.as_ref().column_count() {
+                    data.push(row.get::<_, rusqlite::types::Value>(i)?);
+                }
+                res.push(Row::from(SqliteSyncOwnedRow {
+                    data,
+                    columns: Arc::clone(&columns),
+                }));
+            }
+            Ok(res)
         }
 
         #[cfg(feature = "postgres")]

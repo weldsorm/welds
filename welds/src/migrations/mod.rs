@@ -26,6 +26,7 @@ pub use manual::Manual;
 pub type MigrationFn = fn(state: &TableState) -> Result<MigrationStep>;
 
 /// Migrate your database to the latest in the list of migrations
+#[maybe_async::maybe_async]
 pub async fn up(client: &dyn TransactStart, migrations: &[MigrationFn]) -> Result<()> {
     //make the migration table if needed
     {
@@ -71,6 +72,7 @@ pub async fn up(client: &dyn TransactStart, migrations: &[MigrationFn]) -> Resul
     Ok(())
 }
 
+#[maybe_async::maybe_async]
 async fn setup_migration_table(trans: Transaction<'_>) -> Result<()> {
     // make sure the migration table exists
     let setup = migration_table().up_sql(trans.syntax());
@@ -93,6 +95,7 @@ fn unixtime() -> u128 {
 /// Rolls back the last migration that ran.
 /// return the name of the migration that rolled back
 /// None, there were not more migrations to rollback
+#[maybe_async::maybe_async]
 pub async fn down_last(client: &dyn TransactStart) -> Result<Option<String>> {
     //make the migration table if needed
     {
@@ -129,6 +132,7 @@ pub async fn down_last(client: &dyn TransactStart) -> Result<Option<String>> {
 /// Rolls back the given migration.
 /// return the name of the migration that rolled back
 /// None, there were no matching migrations to rollback
+#[maybe_async::maybe_async]
 pub async fn down(client: &dyn TransactStart, name: impl Into<String>) -> Result<Option<String>> {
     //make the migration table if needed
     {
@@ -190,6 +194,7 @@ pub struct MigrationLog {
     pub(crate) rollback_sql: String,
 }
 
+#[maybe_async::maybe_async]
 async fn get_state(client: &dyn Client) -> Result<TableState> {
     let state = detect::find_all_tables(client).await?;
     Ok(TableState(state))

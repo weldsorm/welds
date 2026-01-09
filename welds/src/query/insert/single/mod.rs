@@ -12,6 +12,7 @@ use crate::writers::insert::{ColArg, InsertWriter};
 use welds_connections::Client;
 use welds_connections::Fetch;
 
+#[maybe_async::maybe_async]
 pub async fn insert_one<T>(obj: &mut T, client: &dyn Client) -> Result<()>
 where
     T: WriteToArgs + HasSchema + ColumnDefaultCheck,

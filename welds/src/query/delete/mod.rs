@@ -10,6 +10,7 @@ use welds_connections::Client;
 
 pub mod bulk;
 
+#[maybe_async::maybe_async]
 pub async fn delete_one<T>(obj: &T, client: &dyn Client) -> Result<()>
 where
     T: HasSchema + WriteToArgs,

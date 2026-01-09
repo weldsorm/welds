@@ -3,6 +3,60 @@ use super::*;
 #[cfg(any(feature = "sqlite", feature = "postgres", feature = "mysql"))]
 use sqlx::Row as SqlxRow;
 
+#[cfg(feature = "sqlite-sync")]
+impl Row {
+    /// gets the value for a column in the row by its name.
+    /// Errors:
+    ///  * if column missing
+    ///  * if column could not be deserialized into requested type <T>
+    pub fn get<T>(&self, name: &str) -> Result<T>
+    where
+        T: rusqlite::types::FromSql,
+    {
+        match &self.inner {
+            #[cfg(feature = "sqlite")]
+            RowInner::Sqlite(r) => Ok(r.try_get(name)?),
+            #[cfg(feature = "sqlite-sync")]
+            RowInner::SqliteSync(r) => {
+                let index = r
+                    .columns
+                    .iter()
+                    .position(|c| c == name)
+                    .ok_or(crate::Error::ColumnNotFound(name.to_string()))?;
+                Ok(r.try_get(index)?)
+            }
+            #[cfg(feature = "mssql")]
+            RowInner::Mssql(r) => r.try_get(name),
+            #[cfg(feature = "postgres")]
+            RowInner::Postgres(r) => Ok(r.try_get(name)?),
+            #[cfg(feature = "mysql")]
+            RowInner::Mysql(r) => Ok(r.try_get(name)?),
+        }
+    }
+
+    /// gets the value for a column in the row by its index (position, zero based index).
+    /// Errors:
+    ///  * if column missing, out of bounds
+    ///  * if column could not be deserialized into requested type <T>
+    pub fn get_by_position<T>(&self, index: usize) -> Result<T>
+    where
+        T: rusqlite::types::FromSql,
+    {
+        match &self.inner {
+            #[cfg(feature = "sqlite")]
+            RowInner::Sqlite(r) => Ok(r.try_get(index)?),
+            #[cfg(feature = "sqlite-sync")]
+            RowInner::SqliteSync(r) => Ok(r.try_get(index)?),
+            #[cfg(feature = "mssql")]
+            RowInner::Mssql(r) => r.try_get_by_posision(index),
+            #[cfg(feature = "postgres")]
+            RowInner::Postgres(r) => Ok(r.try_get(index)?),
+            #[cfg(feature = "mysql")]
+            RowInner::Mysql(r) => Ok(r.try_get(index)?),
+        }
+    }
+}
+
 #[cfg(all(
     feature = "sqlite",
     not(feature = "postgres"),

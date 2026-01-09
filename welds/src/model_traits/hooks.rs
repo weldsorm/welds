@@ -15,16 +15,23 @@ pub trait BeforeCreate {
     /// you can force a cancel by returning `welds::errors::weldsError::ActionCanceled`
     ///
     /// you can also return any anyhow errors. Useful for things like validation
+    #[cfg(not(feature = "__sync"))]
     fn before(&mut self) -> impl std::future::Future<Output = Result<()>> + Send;
+    #[maybe_async::sync_impl]
+    fn before(&mut self) -> Result<()>;
 }
 
+#[maybe_async::maybe_async]
 pub trait BeforeUpdate {
     /// a last minute opportunity to check/edit a model before it is saved to the database
     /// Err results will cancel the action.
     /// you can force a cancel by returning `welds::errors::weldsError::ActionCanceled`
     ///
     /// you can also return any anyhow errors. Useful for things like validation
+    #[cfg(not(feature = "__sync"))]
     fn before(&mut self) -> impl std::future::Future<Output = Result<()>> + Send;
+    #[maybe_async::sync_impl]
+    fn before(&mut self) -> Result<()>;
 }
 
 pub trait BeforeDelete {
@@ -33,26 +40,38 @@ pub trait BeforeDelete {
     /// you can force a cancel by returning `welds::errors::weldsError::ActionCanceled`
     ///
     /// you can also return any anyhow errors. Useful for things like validation
+    #[cfg(not(feature = "__sync"))]
     fn before(&self) -> impl std::future::Future<Output = Result<()>> + Send;
+    #[maybe_async::sync_impl]
+    fn before(&self) -> Result<()>;
 }
 
 pub trait AfterCreate {
     /// A way go get informed when a model is created in the database.
     ///
     /// is called after a model is created
+    #[cfg(not(feature = "__sync"))]
     fn after(&self) -> impl std::future::Future<Output = Result<()>> + Send;
+    #[maybe_async::sync_impl]
+    fn after(&self) -> Result<()>;
 }
 
 pub trait AfterUpdate {
     /// A way go get informed when a model is updated in the database.
     ///
     /// is called after a model is created
+    #[cfg(not(feature = "__sync"))]
     fn after(&self) -> impl std::future::Future<Output = Result<()>> + Send;
+    #[maybe_async::sync_impl]
+    fn after(&self) -> Result<()>;
 }
 
 pub trait AfterDelete {
     /// A way go get informed when a model is deleted from the database.
     ///
     /// is called after a model is deleted
+    #[cfg(not(feature = "__sync"))]
     fn after(&self) -> impl std::future::Future<Output = Result<()>> + Send;
+    #[maybe_async::sync_impl]
+    fn after(&self) -> Result<()>;
 }

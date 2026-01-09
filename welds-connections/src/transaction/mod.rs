@@ -139,6 +139,9 @@ impl Client for Transaction<'_> {
     }
 
     async fn execute(&self, sql: &str, params: &[&(dyn Param + Sync)]) -> Result<ExecuteResult> {
+        if sql.trim().is_empty() {
+            return Ok(ExecuteResult::new(0));
+        }
         let mut inner = self.take_conn();
         let results = execute_inner(&mut inner, sql, params).await;
         self.return_conn(inner);

@@ -83,7 +83,7 @@ pub struct ProductInsertIgnoreDesc {
     pub id: i32,
     pub name: String,
     #[welds(ignore(insert))]
-    pub description: String,
+    pub description: Option<String>,
 }
 
 #[derive(Debug, WeldsModel)]

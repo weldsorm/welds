@@ -20,6 +20,7 @@ jobs:
           - ./tests/mysql
           - ./tests/postgres
           - ./tests/sqlite
+          - ./tests/sqlite_sync
           - ./welds
           - ./welds-connections
           - ./welds-macros

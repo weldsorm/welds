@@ -67,12 +67,7 @@ fn should_handle_all_callbacks() {
 
     assert_eq!(
         CALLED.lock().unwrap().as_slice(),
-        [
-            "before_create",
-            "before_create_async",
-            "after_create",
-            "after_create_async"
-        ]
+        ["before_create", "after_create",]
     );
 
     clear_called();
@@ -83,12 +78,7 @@ fn should_handle_all_callbacks() {
 
     assert_eq!(
         CALLED.lock().unwrap().as_slice(),
-        [
-            "before_update",
-            "before_update_async",
-            "after_update",
-            "after_update_async"
-        ]
+        ["before_update", "after_update",]
     );
 
     clear_called();
@@ -98,12 +88,7 @@ fn should_handle_all_callbacks() {
 
     assert_eq!(
         CALLED.lock().unwrap().as_slice(),
-        [
-            "before_delete",
-            "before_delete_async",
-            "after_delete",
-            "after_delete_async"
-        ]
+        ["before_delete", "after_delete",]
     );
 
     clear_called();

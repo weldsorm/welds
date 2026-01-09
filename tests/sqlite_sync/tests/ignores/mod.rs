@@ -56,18 +56,18 @@ fn should_not_insert_ignore_insert() {
     let conn = get_conn();
 
     let mut product = Product::new();
-    product.description = "VALUE NOT SAVED".to_owned();
+    product.description = Some("VALUE NOT SAVED".to_owned());
     product.save(&conn).unwrap();
 
     // verify value is not inserted
     product = Product::find_by_id(&conn, product.id).unwrap().unwrap();
-    assert_eq!(product.description, "");
+    assert_eq!(product.description, None);
 
     // verify value is updated
-    product.description = "VALUE IS UPDATED".to_owned();
+    product.description = Some("VALUE IS UPDATED".to_owned());
     product.save(&conn).unwrap();
     product = Product::find_by_id(&conn, product.id).unwrap().unwrap();
-    assert_eq!(product.description, "VALUE IS UPDATED");
+    assert_eq!(product.description, Some("VALUE IS UPDATED".to_owned()));
 }
 
 #[test]

@@ -18,7 +18,9 @@ pub(crate) fn write(info: &Info) -> TokenStream {
 pub(crate) fn setfield(col: &Column) -> TokenStream {
     let dbname = col.dbname.as_str();
     let field = &col.field;
-    quote! { if row.has(#dbname) { self.#field = row.get(#dbname)?; } }
+    quote! {
+        if row.has(#dbname) { self.#field = row.get(#dbname)?; }
+    }
 }
 
 pub(crate) fn write_for_db(info: &Info, fieldsets: &TokenStream) -> TokenStream {

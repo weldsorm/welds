@@ -42,6 +42,14 @@ where
     }
 }
 
+impl<T: PartialEq> PartialEq for DbState<T> {
+    fn eq(&self, other: &Self) -> bool {
+        // trick to avoid missing fields when adding new ones
+        let Self { inner, status, _t } = &self;
+        inner == &other.inner && status == &other.status
+    }
+}
+
 #[maybe_async::maybe_async]
 impl<T> DbState<T> {
     /// Returns status of the entity. If it is in the database/unsaved/modified/..

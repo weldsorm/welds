@@ -10,9 +10,9 @@ use sqlx::sqlite::SqliteArguments;
 use sqlx::{Sqlite, SqlitePool};
 use std::sync::Arc;
 
-#[cfg(feature = "unstable-api")]
+#[cfg(all(not(feature = "__sync"), feature = "unstable-api"))]
 use crate::StreamClient;
-#[cfg(feature = "unstable-api")]
+#[cfg(all(not(feature = "__sync"), feature = "unstable-api"))]
 use futures_core::stream::BoxStream;
 
 #[derive(Clone)]
@@ -104,7 +104,7 @@ impl Client for SqliteClient {
     }
 }
 
-#[cfg(feature = "unstable-api")]
+#[cfg(all(not(feature = "__sync"), feature = "unstable-api"))]
 #[async_trait]
 impl StreamClient for SqliteClient {
     /// Run the SQL streaming the results back in a future::stream

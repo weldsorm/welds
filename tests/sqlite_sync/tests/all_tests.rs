@@ -507,24 +507,23 @@ fn should_be_able_to_fetch_a_single_object() {
     let _product: DbState<Product> = Product::where_col(|p| p.id.gt(1)).fetch_one(&conn).unwrap();
 }
 
-// // unstable-api is not enabled
-// #[test]
-// fn should_be_able_to_select_hourse_or_dog() {
-//     use welds::query::clause::or;
-//     let conn = get_conn();
-//     use sqlite_test::models::product::ProductSchema;
-//
-//     // verify pulling out lambda into variable
-//     let clause = |x: ProductSchema| or(x.name.like("horse"), x.name.like("dog"));
-//     let q = Product::all().where_col(clause);
-//
-//     eprintln!("SQL: {}", q.to_sql(Syntax::Sqlite));
-//     let data = q.run(&conn).unwrap();
-//     assert_eq!(data.len(), 2, "Expected horse and dog",);
-//
-//     // verify inline clause
-//     let q2 = Product::all().where_col(|x| or(x.name.like("horse"), x.name.like("dog")));
-//     eprintln!("SQL: {}", q2.to_sql(Syntax::Sqlite));
-//     let data = q2.run(&conn).unwrap();
-//     assert_eq!(data.len(), 2, "Expected horse and dog",);
-// }
+#[test]
+fn should_be_able_to_select_hourse_or_dog() {
+    use welds::query::clause::or;
+    let conn = get_conn();
+    use sqlite_test::models::product::ProductSchema;
+
+    // verify pulling out lambda into variable
+    let clause = |x: ProductSchema| or(x.name.like("horse"), x.name.like("dog"));
+    let q = Product::all().where_col(clause);
+
+    eprintln!("SQL: {}", q.to_sql(Syntax::Sqlite));
+    let data = q.run(&conn).unwrap();
+    assert_eq!(data.len(), 2, "Expected horse and dog",);
+
+    // verify inline clause
+    let q2 = Product::all().where_col(|x| or(x.name.like("horse"), x.name.like("dog")));
+    eprintln!("SQL: {}", q2.to_sql(Syntax::Sqlite));
+    let data = q2.run(&conn).unwrap();
+    assert_eq!(data.len(), 2, "Expected horse and dog",);
+}

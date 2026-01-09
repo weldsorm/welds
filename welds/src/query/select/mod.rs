@@ -7,13 +7,13 @@ use crate::{Syntax, WeldsError};
 use welds_connections::Client;
 use welds_connections::Row;
 
-#[cfg(feature = "unstable-api")]
+#[cfg(all(not(feature = "__sync"), feature = "unstable-api"))]
 use futures::StreamExt;
-#[cfg(feature = "unstable-api")]
+#[cfg(all(not(feature = "__sync"), feature = "unstable-api"))]
 use futures::TryStreamExt;
-#[cfg(feature = "unstable-api")]
+#[cfg(all(not(feature = "__sync"), feature = "unstable-api"))]
 use futures_core::stream::BoxStream;
-#[cfg(feature = "unstable-api")]
+#[cfg(all(not(feature = "__sync"), feature = "unstable-api"))]
 use welds_connections::StreamClient;
 
 mod writer;
@@ -130,7 +130,7 @@ where
     }
 
     /// Executes the query in the database returning the results
-    #[cfg(feature = "unstable-api")]
+    #[cfg(all(not(feature = "__sync"), feature = "unstable-api"))]
     pub async fn stream<'e, 'q, 'c, C>(&'q self, client: &'c C) -> BoxStream<'e, Result<T>>
     where
         'q: 'e,

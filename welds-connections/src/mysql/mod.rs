@@ -10,9 +10,9 @@ use sqlx::query::Query;
 use sqlx::{MySql, MySqlPool};
 use std::sync::Arc;
 
-#[cfg(feature = "unstable-api")]
+#[cfg(all(not(feature = "__sync"), feature = "unstable-api"))]
 use crate::StreamClient;
-#[cfg(feature = "unstable-api")]
+#[cfg(all(not(feature = "__sync"), feature = "unstable-api"))]
 use futures_core::stream::BoxStream;
 
 #[derive(Clone)]
@@ -104,7 +104,7 @@ impl Client for MysqlClient {
     }
 }
 
-#[cfg(feature = "unstable-api")]
+#[cfg(all(not(feature = "__sync"), feature = "unstable-api"))]
 #[async_trait]
 impl StreamClient for MysqlClient {
     /// Run the SQL streaming the results back in a future::stream
@@ -122,7 +122,7 @@ impl StreamClient for MysqlClient {
     }
 }
 
-#[cfg(feature = "unstable-api")]
+#[cfg(all(not(feature = "__sync"), feature = "unstable-api"))]
 mod row_stream;
 
 pub trait MysqlParam {

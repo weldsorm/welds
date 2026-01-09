@@ -10,9 +10,9 @@ use sqlx::query::Query;
 use sqlx::{PgPool, Postgres};
 use std::sync::Arc;
 
-#[cfg(feature = "unstable-api")]
+#[cfg(all(not(feature = "__sync"), feature = "unstable-api"))]
 use crate::StreamClient;
-#[cfg(feature = "unstable-api")]
+#[cfg(all(not(feature = "__sync"), feature = "unstable-api"))]
 use futures_core::stream::BoxStream;
 
 #[derive(Debug, Clone)]
@@ -104,7 +104,7 @@ impl Client for PostgresClient {
     }
 }
 
-#[cfg(feature = "unstable-api")]
+#[cfg(all(not(feature = "__sync"), feature = "unstable-api"))]
 #[async_trait]
 impl StreamClient for PostgresClient {
     /// Run the SQL streaming the results back in a future::stream
@@ -122,7 +122,7 @@ impl StreamClient for PostgresClient {
     }
 }
 
-#[cfg(feature = "unstable-api")]
+#[cfg(all(not(feature = "__sync"), feature = "unstable-api"))]
 mod row_stream;
 
 pub trait PostgresParam {

@@ -110,7 +110,7 @@ impl Client for AnyClient {
     }
 }
 
-#[cfg(feature = "unstable-api")]
+#[cfg(all(not(feature = "__sync"), feature = "unstable-api"))]
 #[async_trait]
 impl StreamClient for AnyClient {
     /// Run the SQL streaming the results back in a future::stream
@@ -126,8 +126,6 @@ impl StreamClient for AnyClient {
         match self {
             #[cfg(feature = "sqlite")]
             AnyClient::Sqlite(c) => c.stream(sql, params).await,
-            #[cfg(feature = "sqlite-sync")]
-            AnyClient::SqliteSync(c) => compile_error!("streaming unsupported in sync-mode"),
             #[cfg(feature = "postgres")]
             AnyClient::Postgres(c) => c.stream(sql, params).await,
             #[cfg(feature = "mysql")]

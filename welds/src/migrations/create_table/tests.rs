@@ -17,19 +17,19 @@ fn should_create_basic_table() {
     //postgres
     let sql2 = MigrationWriter::up_sql(&m, Syntax::Postgres).join("; ");
     let expected = r#"
-    CREATE TABLE s1.MyTable ( id SERIAL PRIMARY KEY NOT NULL, name TEXT NOT NULL )"#;
+    CREATE TABLE s1.MyTable ( "id" SERIAL PRIMARY KEY NOT NULL, "name" TEXT NOT NULL )"#;
     assert_eq!(sql2, expected.trim());
 
     //mysql
     let sql = MigrationWriter::up_sql(&m, Syntax::Mssql).join("; ");
     let expected = r#"
-    CREATE TABLE s1.MyTable ( id INT IDENTITY(1,1) PRIMARY KEY NOT NULL, name NVARCHAR(MAX) NOT NULL )"#;
+    CREATE TABLE s1.MyTable ( "id" INT IDENTITY(1,1) PRIMARY KEY NOT NULL, "name" NVARCHAR(MAX) NOT NULL )"#;
     assert_eq!(sql, expected.trim());
 
     //sqlite
     let sql2 = MigrationWriter::up_sql(&m, Syntax::Sqlite).join("; ");
     let expected = r#"
-    CREATE TABLE s1.MyTable ( id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, name TEXT NOT NULL )"#;
+    CREATE TABLE s1.MyTable ( "id" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, "name" TEXT NOT NULL )"#;
     assert_eq!(sql2, expected.trim());
 }
 
@@ -48,12 +48,12 @@ fn should_be_able_to_make_a_fk() {
 
     //postgres
     let sql = MigrationWriter::up_sql(&m, Syntax::Postgres).pop().unwrap();
-    let expected = r#"ALTER TABLE s1.MyTable ADD CONSTRAINT fk_MyTable_other_id FOREIGN KEY (other_id) REFERENCES others (o_id) ON DELETE CASCADE"#;
+    let expected = r#"ALTER TABLE s1.MyTable ADD CONSTRAINT fk_MyTable_other_id FOREIGN KEY ("other_id") REFERENCES others ("o_id") ON DELETE CASCADE"#;
     assert_eq!(sql, expected.trim());
 
     //mysql
     let sql = MigrationWriter::up_sql(&m, Syntax::Mssql).pop().unwrap();
-    let expected = r#"ALTER TABLE s1.MyTable ADD CONSTRAINT fk_MyTable_other_id FOREIGN KEY (other_id) REFERENCES others (o_id) ON DELETE CASCADE"#;
+    let expected = r#"ALTER TABLE s1.MyTable ADD CONSTRAINT fk_MyTable_other_id FOREIGN KEY ("other_id") REFERENCES others ("o_id") ON DELETE CASCADE"#;
     assert_eq!(sql, expected.trim());
 
     //sqlite

@@ -43,7 +43,7 @@ fn down_should_recreate_the_table() {
     let table = mock_table(Syntax::Postgres);
     let m = table.drop();
     let expected = r#"
-    CREATE TABLE s2.cars ( id SERIAL PRIMARY KEY NOT NULL, name TEXT NOT NULL )"#;
+    CREATE TABLE s2.cars ( "id" SERIAL PRIMARY KEY NOT NULL, "name" TEXT NOT NULL )"#;
     let sql = MigrationWriter::down_sql(&m, Syntax::Postgres).join("; ");
     assert_eq!(sql, expected.trim());
 }
@@ -54,11 +54,11 @@ fn should_be_able_to_rename_column() {
     let m = table.change("name").rename("name2");
     // up sql
     let sql = MigrationWriter::up_sql(&m, Syntax::Postgres).join("; ");
-    let expected_up = r#"ALTER TABLE s2.cars RENAME name TO name2"#;
+    let expected_up = r#"ALTER TABLE s2.cars RENAME "name" TO "name2""#;
     assert_eq!(sql, expected_up);
     // down sql
     let sql = MigrationWriter::down_sql(&m, Syntax::Postgres).join("; ");
-    let expected_down = r#"ALTER TABLE s2.cars RENAME name2 TO name"#;
+    let expected_down = r#"ALTER TABLE s2.cars RENAME "name2" TO "name""#;
     assert_eq!(sql, expected_down);
 }
 
@@ -82,7 +82,7 @@ fn should_be_able_to_drop_a_column() {
     let m = table.change("name").drop_column();
     // up sql
     let sql = MigrationWriter::up_sql(&m, Syntax::Mssql).join("; ");
-    let expected_up = r#"ALTER TABLE s2.cars DROP COLUMN name"#;
+    let expected_up = r#"ALTER TABLE s2.cars DROP COLUMN "name""#;
     assert_eq!(sql, expected_up);
 }
 

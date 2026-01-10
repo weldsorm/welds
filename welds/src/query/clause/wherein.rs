@@ -26,9 +26,10 @@ where
         WhereIn { qb }
     }
 
-    fn outer_tablecolumn(&self, outer_tablealias: &str) -> String {
+    fn outer_tablecolumn(&self, syntax: Syntax, outer_tablealias: &str) -> String {
         let column = T::Schema::id_column();
-        format!("{}.{}", outer_tablealias, column.name())
+        let col_writer = ColumnWriter::new(syntax);
+        format!("{}.{}", outer_tablealias, col_writer.excape(column.name()))
     }
 }
 
@@ -52,7 +53,7 @@ where
     fn clause(&self, syntax: Syntax, alias: &str, next_params: &NextParam) -> Option<String> {
         // writes => ID IN ( SELECT ID FROM ... )
 
-        let outcol = self.outer_tablecolumn(alias);
+        let outcol = self.outer_tablecolumn(syntax, alias);
         let inner_alias = &self.qb.alias;
         let mut args = None;
         let inner_sql = join_sql_parts(&[

@@ -1,6 +1,6 @@
 use crate::Syntax;
 use crate::detect::TableDef;
-use crate::writers::TableWriter;
+use crate::writers::{ColumnWriter, TableWriter};
 
 pub(crate) fn down_sql(
     syntax: Syntax,
@@ -66,7 +66,7 @@ fn write_col(col: &Col) -> String {
     if col.primary_key {
         return write_pk(col);
     }
-    let name = &col.name;
+    let name = ColumnWriter::new(Syntax::Sqlite).excape(&col.name);
     let ty = &col.ty;
     let nullable = if col.nullable { "NULL" } else { "NOT NULL" };
     format!("{name} {ty} {nullable}")
@@ -74,7 +74,7 @@ fn write_col(col: &Col) -> String {
 
 /// write the primary key column part for a create table
 fn write_pk(col: &Col) -> String {
-    let name = &col.name;
+    let name = ColumnWriter::new(Syntax::Sqlite).excape(&col.name);
     let mut ty = col.ty.as_str();
     let mut auto = "";
     if is_int(ty) {
@@ -148,15 +148,19 @@ fn build_copy_data(
     dest_table: &str,
     dest_cols: &[Col],
 ) -> String {
-    let dest_col_parts: Vec<_> = dest_cols.iter().map(|c| c.name.as_str()).collect();
+    let dest_col_parts: Vec<_> = dest_cols
+        .iter()
+        .map(|c| ColumnWriter::new(Syntax::Sqlite).excape(c.name.as_str()))
+        .collect();
     let dest_col_joined = dest_col_parts.join(", ");
 
     let mut src_col_parts = Vec::default();
     for (src, dest) in src_cols.iter().zip(dest_cols) {
+        let name = ColumnWriter::new(Syntax::Sqlite).excape(&src.name);
         if src.ty == dest.ty {
-            src_col_parts.push(src.name.to_string());
+            src_col_parts.push(name);
         } else {
-            let convert = format!("CAST({} AS {})", src.name, dest.ty);
+            let convert = format!("CAST({} AS {})", name, dest.ty);
             src_col_parts.push(convert);
         }
     }

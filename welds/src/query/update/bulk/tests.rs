@@ -55,7 +55,7 @@ fn should_be_able_to_write_complex_set_values() {
             .last_sql()
             .expect("Expected to get SQL back from client");
 
-        let expected = "UPDATE nums SET \"a\"=$1, \"b\"=$2 WHERE ( nums.id > $3 )";
+        let expected = "UPDATE nums SET \"a\"=$1, \"b\"=$2 WHERE ( nums.\"id\" > $3 )";
         assert_eq!(expected, &ran_sql);
 
         assert_eq!(client.args_count().unwrap(), 3);
@@ -78,7 +78,7 @@ fn should_be_able_to_write_complex_set_col_values() {
             .expect("Expected to get SQL back from client");
 
         //let expected = "UPDATE nums SET nums.a = $1, nums.b = $2 WHERE ( nums.id > $3 )";
-        let expected = "UPDATE nums SET \"a\"=$1, \"b\"=$2 WHERE ( nums.id > $3 )";
+        let expected = "UPDATE nums SET \"a\"=$1, \"b\"=$2 WHERE ( nums.\"id\" > $3 )";
         assert_eq!(expected, &ran_sql);
     });
 }
@@ -100,7 +100,7 @@ fn should_be_able_to_write_a_custom_set_statement() {
             .last_sql()
             .expect("Expected to get SQL back from client");
 
-        let expected = "UPDATE nums SET \"a\" = ( nums.b + $1 ) WHERE ( nums.id > $2 )";
+        let expected = "UPDATE nums SET \"a\" = ( nums.b + $1 ) WHERE ( nums.\"id\" > $2 )";
         assert_eq!(expected, &ran_sql);
     });
 }

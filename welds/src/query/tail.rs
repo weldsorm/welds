@@ -25,7 +25,7 @@ pub(crate) fn write(
     }
 
     if !orders.is_empty() {
-        parts.push_front(orderby::to_sql(orders, table_alias));
+        parts.push_front(orderby::to_sql(syntax, orders, table_alias));
     }
 
     if parts.is_empty() {

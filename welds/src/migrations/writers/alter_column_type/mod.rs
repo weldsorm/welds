@@ -2,7 +2,7 @@ use crate::Syntax;
 use crate::detect::{ColumnDef, TableDef};
 mod pg_writer;
 mod sqlite_writer;
-use crate::writers::TableWriter;
+use crate::writers::{ColumnWriter, TableWriter};
 
 /// writes the up SQL change the type/null of a column
 pub fn write_up(
@@ -17,6 +17,7 @@ pub fn write_up(
 
     let current_col = column.name();
     let colname: String = sanitize_column(colname.into());
+    let colname_esc = ColumnWriter::new(syntax).excape(&colname);
     let ty: String = ty.into();
     let null = if nullable { "NULL" } else { "NOT NULL" };
 
@@ -24,10 +25,10 @@ pub fn write_up(
         Syntax::Sqlite => sqlite_writer::up_sql(syntax, table, current_col, colname, ty, nullable),
         Syntax::Postgres => pg_writer::up_sql(syntax, table, column, colname, ty, nullable),
         Syntax::Mssql => vec![format!(
-            "ALTER TABLE {tablename} ALTER COLUMN {colname} {ty} {null}"
+            "ALTER TABLE {tablename} ALTER COLUMN {colname_esc} {ty} {null}"
         )],
         Syntax::Mysql => vec![format!(
-            "ALTER TABLE {tablename} MODIFY COLUMN {colname} {ty} {null}"
+            "ALTER TABLE {tablename} MODIFY COLUMN {colname_esc} {ty} {null}"
         )],
     }
 }
@@ -45,6 +46,7 @@ pub fn write_down(
 
     let current_col = column.name();
     let colname: String = sanitize_column(colname.into());
+    let colname_esc = ColumnWriter::new(syntax).excape(&colname);
     let ty: String = ty.into();
     let null = if nullable { "NULL" } else { "NOT NULL" };
 
@@ -54,10 +56,10 @@ pub fn write_down(
         }
         Syntax::Postgres => pg_writer::down_sql(syntax, table, column, colname, ty, nullable),
         Syntax::Mssql => vec![format!(
-            "ALTER TABLE {tablename} ALTER COLUMN {colname} {ty} {null}"
+            "ALTER TABLE {tablename} ALTER COLUMN {colname_esc} {ty} {null}"
         )],
         Syntax::Mysql => vec![format!(
-            "ALTER TABLE {tablename} MODIFY COLUMN {colname} {ty} {null}"
+            "ALTER TABLE {tablename} MODIFY COLUMN {colname_esc} {ty} {null}"
         )],
     }
 }

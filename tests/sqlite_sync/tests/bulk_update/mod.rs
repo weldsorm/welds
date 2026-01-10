@@ -34,7 +34,7 @@ fn should_be_able_to_update_table_with_where() {
         .to_sql(Syntax::Sqlite);
     assert_eq!(
         q,
-        "UPDATE Products SET \"name\"=? WHERE ( Products.pid = ? )"
+        "UPDATE Products SET \"name\"=? WHERE ( Products.\"pid\" = ? )"
     );
 }
 
@@ -46,7 +46,7 @@ fn should_be_able_to_update_table_with_where_exists_from_map_query() {
         .to_sql(Syntax::Sqlite);
     assert_eq!(
             q,
-            "UPDATE Products SET \"name\"=? WHERE ( EXISTS ( SELECT product_id FROM orders t1 WHERE t1.oid = ? AND t1.product_id = Products.pid ) )"
+            "UPDATE Products SET \"name\"=? WHERE ( EXISTS ( SELECT \"product_id\" FROM orders t1 WHERE t1.\"oid\" = ? AND t1.\"product_id\" = Products.\"pid\" ) )"
         );
 }
 
@@ -59,7 +59,7 @@ fn should_be_able_to_update_table_with_where_in_from_map_query_with_limit() {
         .to_sql(Syntax::Sqlite);
     assert_eq!(
             q,
-            "UPDATE Products SET \"name\"=? WHERE (  Products.pid IN (SELECT t1.product_id FROM orders t1 WHERE t1.oid = ? ORDER BY 1 LIMIT 1 OFFSET 0 )  )"
+            "UPDATE Products SET \"name\"=? WHERE (  Products.\"pid\" IN (SELECT t1.\"product_id\" FROM orders t1 WHERE t1.\"oid\" = ? ORDER BY 1 LIMIT 1 OFFSET 0 )  )"
         );
 }
 
@@ -71,6 +71,6 @@ fn should_be_able_to_update_with_just_limit() {
         .to_sql(Syntax::Sqlite);
     assert_eq!(
             q,
-            "UPDATE Products SET \"name\"=? WHERE (  Products.pid IN (SELECT t1.\"pid\" FROM Products t1 ORDER BY 1 LIMIT 1 OFFSET 0 )  )"
+            "UPDATE Products SET \"name\"=? WHERE (  Products.\"pid\" IN (SELECT t1.\"pid\" FROM Products t1 ORDER BY 1 LIMIT 1 OFFSET 0 )  )"
         );
 }

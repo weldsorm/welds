@@ -3,6 +3,7 @@ use crate::Syntax;
 use crate::query::builder::QueryBuilder;
 use crate::query::clause::OrderBy;
 use crate::query::clause::ParamArgs;
+use crate::writers::ColumnWriter;
 use crate::writers::NextParam;
 use crate::writers::TableWriter;
 use crate::writers::alias::TableAlias;
@@ -50,10 +51,14 @@ impl ExistIn {
         }
     }
 
-    fn inner_fk_equal(&self, tablealias: &str) -> String {
+    fn inner_fk_equal(&self, syntax: Syntax, tablealias: &str) -> String {
+        let col_writer = ColumnWriter::new(syntax);
         format!(
             "{}.{} = {}.{}",
-            self.inner_tablealias, self.inner_column, tablealias, self.outer_column
+            self.inner_tablealias,
+            col_writer.excape(&self.inner_column),
+            tablealias,
+            col_writer.excape(&self.outer_column)
         )
     }
 
@@ -66,15 +71,25 @@ impl ExistIn {
     fn exists_clause(&self, syntax: Syntax, _tablealias: &str, inner_clauses: &str) -> String {
         let tails = self.tails(syntax, &self.inner_tablealias);
         let inner_tablename = TableWriter::new(syntax).write2(self.inner_tablename);
+        let col_writer = ColumnWriter::new(syntax);
         format!(
             "EXISTS ( SELECT {} FROM {} {} WHERE {} {})",
-            self.inner_column, inner_tablename, self.inner_tablealias, inner_clauses, tails
+            col_writer.excape(&self.inner_column),
+            inner_tablename,
+            &self.inner_tablealias,
+            inner_clauses,
+            tails
         )
     }
 
     fn in_clause(&self, syntax: Syntax, tablealias: &str, inner_clauses: &str) -> String {
-        let outcol = format!("{}.{}", tablealias, self.outer_column);
-        let innercol = format!("{}.{}", self.inner_tablealias, self.inner_column);
+        let col_writer = ColumnWriter::new(syntax);
+        let outcol = format!("{}.{}", tablealias, col_writer.excape(&self.outer_column));
+        let innercol = format!(
+            "{}.{}",
+            self.inner_tablealias,
+            col_writer.excape(&self.inner_column)
+        );
         let inner_tablename = TableWriter::new(syntax).write2(self.inner_tablename);
         let tails = self.tails(syntax, &self.inner_tablealias);
         let mut wheres = "".to_string();
@@ -111,7 +126,7 @@ impl ClauseAdder for ExistIn {
             .collect();
 
         if !using_in {
-            inner_wheres.push(self.inner_fk_equal(self_tablealias));
+            inner_wheres.push(self.inner_fk_equal(syntax, self_tablealias));
         }
 
         // exists inside this exist clause

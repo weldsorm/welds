@@ -5,6 +5,7 @@ use crate::migrations::create_table::ColumnBuilder;
 use crate::migrations::create_table::IdBuilder;
 use crate::migrations::create_table::TableBuilder;
 use crate::migrations::types::Type;
+use crate::writers::ColumnWriter;
 use crate::writers::TableWriter;
 use crate::writers::types::pk_override;
 
@@ -76,7 +77,7 @@ fn build_columns(syntax: Syntax, idcol: &IdBuilder, cols: &[ColumnBuilder]) -> V
 }
 
 fn build_id_column(syntax: Syntax, col: &IdBuilder) -> String {
-    let name = &col.name;
+    let name = ColumnWriter::new(syntax).excape(&col.name);
     let ty: String = col.ty.db_id_type(syntax);
     let mut tail = "PRIMARY KEY";
     if col.ty == Type::Int || col.ty == Type::IntSmall || col.ty == Type::IntBig {
@@ -91,7 +92,7 @@ fn build_id_column(syntax: Syntax, col: &IdBuilder) -> String {
 }
 
 fn build_column(syntax: Syntax, col: &ColumnBuilder) -> String {
-    let name = &col.name;
+    let name = ColumnWriter::new(syntax).excape(col.name.as_str());
     let ty: String = col.ty.db_type(syntax);
 
     let null = if col.nullable { "NULL" } else { "NOT NULL" };

@@ -82,7 +82,7 @@ fn should_be_able_to_select_join_with_where() {
         .to_sql(Syntax::Sqlite);
     assert_eq!(
             q,
-            "SELECT t1.\"oid\", t2.\"pid\" FROM orders t1 JOIN Products t2 ON t1.\"product_id\" = t2.\"pid\" WHERE ( t1.oid = ? )"
+            "SELECT t1.\"oid\", t2.\"pid\" FROM orders t1 JOIN Products t2 ON t1.\"product_id\" = t2.\"pid\" WHERE ( t1.\"oid\" = ? )"
         );
 }
 
@@ -97,7 +97,7 @@ fn should_be_able_to_select_where_in_join() {
         .to_sql(Syntax::Sqlite);
     assert_eq!(
             q,
-            "SELECT t1.\"oid\", t2.\"pid\" FROM orders t1 JOIN Products t2 ON t1.\"product_id\" = t2.\"pid\" WHERE ( t2.pid = ? )"
+            "SELECT t1.\"oid\", t2.\"pid\" FROM orders t1 JOIN Products t2 ON t1.\"product_id\" = t2.\"pid\" WHERE ( t2.\"pid\" = ? )"
         );
 }
 

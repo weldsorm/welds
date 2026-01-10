@@ -55,7 +55,7 @@ fn should_be_able_to_select_join_with_order_by() {
         let sql = q.to_sql(Syntax::Postgres);
         assert_eq!(
             sql,
-            "SELECT t1.\"id\", t2.\"price\" FROM products t1 JOIN orders t2 ON t1.\"id\" = t2.\"product_id\" ORDER BY t1.id ASC"
+            "SELECT t1.\"id\", t2.\"price\" FROM products t1 JOIN orders t2 ON t1.\"id\" = t2.\"product_id\" ORDER BY t1.\"id\" ASC"
         );
     });
 }

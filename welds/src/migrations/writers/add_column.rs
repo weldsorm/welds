@@ -1,4 +1,4 @@
-use crate::writers::TableWriter;
+use crate::writers::{ColumnWriter, TableWriter};
 use welds_connections::Syntax;
 
 use crate::detect::TableDef;
@@ -13,6 +13,7 @@ pub fn write(
 ) -> String {
     let tablename: String = TableWriter::new(syntax).write(&table.ident());
     let col: String = sanitize_column(col.into());
+    let col = ColumnWriter::new(syntax).excape(&col);
     let ty: String = ty.into();
     let null = if nullable { "NULL" } else { "NOT NULL" };
     let coldef = format!("{ty} {null}");

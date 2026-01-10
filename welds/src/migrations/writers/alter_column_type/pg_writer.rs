@@ -12,6 +12,7 @@ pub(crate) fn up_sql(
 ) -> Vec<String> {
     let mut cmds = Vec::default();
     let tablename: String = TableWriter::new(syntax).write(&table.ident());
+    let colname = ColumnWriter::new(syntax).excape(&colname);
 
     // Change the type
     if column.ty() != ty {
@@ -44,6 +45,7 @@ pub(crate) fn down_sql(
 ) -> Vec<String> {
     let mut cmds = Vec::default();
     let tablename: String = TableWriter::new(syntax).write(&table.ident());
+    let colname = ColumnWriter::new(syntax).excape(&colname);
 
     // NOTE: changing the type to the type it currently is is valid in PG
     // IE: table has type TEXT for column name, and changing it to type TEXT

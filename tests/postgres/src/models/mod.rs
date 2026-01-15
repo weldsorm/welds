@@ -44,3 +44,21 @@ pub struct UuidIdFromDev {
     pub id: uuid::Uuid,
     pub name: String,
 }
+
+#[derive(WeldsModel)]
+#[welds(table = "BadColumnNames")]
+pub struct BadColumnNames {
+    #[welds(primary_key)]
+    #[welds(rename = " id")]
+    pub id: i64,
+    #[welds(rename = "camelCase")]
+    pub camel_case: String,
+    #[welds(rename = "col With     SPACES")]
+    pub spaces: String,
+    #[welds(rename = "col With -- DASH")]
+    pub dash: String,
+    #[welds(rename = "select")]
+    pub keyword: String,
+    #[welds(rename = "from 'quotes' ed")]
+    pub quote: String,
+}

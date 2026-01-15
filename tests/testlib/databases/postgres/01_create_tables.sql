@@ -37,6 +37,15 @@ CREATE TABLE alt.Others (
   colour public.Color
 );
 
+CREATE TABLE BadColumnNames (
+  " id" bigserial PRIMARY KEY,
+  "camelCase" text,
+  "col With     SPACES" text,
+  "col With -- DASH" text,
+  "select" text,
+  "from 'quotes' ed" text
+);
+
 CREATE TABLE uuid_id_from_db (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(128) NOT NULL

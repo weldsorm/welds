@@ -809,3 +809,29 @@ fn should_be_able_to_select_hourse_or_dog() {
         assert_eq!(data.len(), 2, "Expected horse and dog",);
     })
 }
+
+#[test]
+fn should_be_able_to_crud_bad_column_names() {
+    async_std::task::block_on(async {
+        use postgres_test::models::BadColumnNames;
+
+        let conn = get_conn().await;
+        let trans = conn.begin().await.unwrap();
+        let mut o = BadColumnNames::new();
+        o.camel_case = "test".to_owned();
+        // insert
+        o.save(&trans).await.unwrap();
+        // update
+        o.camel_case = "test2".to_owned();
+        o.save(&trans).await.unwrap();
+        // select
+        let mut obj = BadColumnNames::where_col(|x| x.camel_case.equal("test2"))
+            .run(&trans)
+            .await
+            .unwrap();
+        // delete
+        let mut obj = obj.pop().unwrap();
+        obj.delete(&trans).await.unwrap();
+        trans.rollback().await.unwrap();
+    })
+}

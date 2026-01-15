@@ -32,6 +32,15 @@ fn should_be_able_to_select_as() {
 }
 
 #[test]
+fn should_be_able_to_select_distinct() {
+    futures::executor::block_on(async move {
+        let q = Product::all().select(|x| x.name).distinct();
+        let sql = q.to_sql(Syntax::Postgres);
+        assert_eq!(sql, "SELECT DISTINCT t1.\"name\" FROM products t1");
+    });
+}
+
+#[test]
 fn should_be_able_to_select_both_sets_of_ids() {
     futures::executor::block_on(async move {
         let q = Product::all()

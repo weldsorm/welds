@@ -48,7 +48,7 @@ where
         let select_renders = build_select_renders(self);
 
         join_sql_parts(&[
-            build_head_select(syntax, &select_renders, self),
+            build_head_select(syntax, self.distinct, &select_renders, self),
             build_joins(syntax, self),
             where_sql,
             build_group_by(syntax, &select_renders, self),
@@ -143,6 +143,7 @@ where
 /// write the head of of the select statement
 fn build_head_select<T>(
     syntax: Syntax,
+    distinct: bool,
     columns: &[SelectRender],
     sb: &SelectBuilder<T>,
 ) -> Option<String>
@@ -152,6 +153,10 @@ where
 {
     let mut head: Vec<&str> = Vec::default();
     head.push("SELECT");
+
+    if distinct {
+        head.push("DISTINCT");
+    }
 
     let mut cols_text_parts: Vec<_> = Vec::default();
     for col in columns {

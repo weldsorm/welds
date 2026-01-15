@@ -30,6 +30,7 @@ pub struct SelectBuilder<T> {
     selects: Vec<SelectColumn>,
     joins: Vec<JoinBuilder>,
     group_bys: Vec<GroupBy>,
+    distinct: bool,
 }
 
 impl<T> Clone for SelectBuilder<T> {
@@ -39,6 +40,7 @@ impl<T> Clone for SelectBuilder<T> {
             selects: self.selects.clone(),
             joins: self.joins.clone(),
             group_bys: self.group_bys.clone(),
+            distinct: self.distinct,
         }
     }
 }
@@ -53,6 +55,7 @@ where
             selects: Vec::default(),
             joins: Vec::default(),
             group_bys: Vec::default(),
+            distinct: false,
         }
     }
 
@@ -273,6 +276,12 @@ where
     ) -> Self {
         let field = lam(Default::default());
         self.group_bys.push(GroupBy::new(field.colname()));
+        self
+    }
+
+    /// Adds a "select distinct" instead of "select" when selecting from the database
+    pub fn distinct(mut self) -> Self {
+        self.distinct = true;
         self
     }
 

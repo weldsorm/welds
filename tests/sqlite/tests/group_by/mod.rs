@@ -216,3 +216,12 @@ fn should_return_an_error_if_group_by_clause_is_required() {
         }
     })
 }
+
+#[test]
+fn should_be_able_to_get_distinct_list_of_names() {
+    async_std::task::block_on(async {
+        let conn = get_conn().await;
+        let result = Team::all().select(|x| x.name).distinct().run(&conn).await;
+        assert!(result.is_ok())
+    })
+}

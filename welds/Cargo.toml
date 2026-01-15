@@ -28,6 +28,7 @@ maybe-async = "0.2"
 "mssql" = ["welds-connections/mssql"]
 "sqlite" = ["welds-connections/sqlite"]
 "sqlite-sync" = ["__sync", "welds-connections/sqlite-sync"]
+"sqlite-sync-bundled" = ["sqlite-sync", "welds-connections/sqlite-sync-bundled"]
 "full" = ["postgres", "mysql", "mssql", "sqlite", "check", "detect", "migrations", "unstable-api"]
 "full-sync" = ["sqlite-sync", "check", "detect", "migrations"]
 "detect" = []

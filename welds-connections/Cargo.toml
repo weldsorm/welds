@@ -19,6 +19,7 @@ description = "An async ORM for (postgres, mssql, mysql, sqlite)"
 "mysql" = ["sqlx/mysql"]
 "sqlite" = ["sqlx/sqlite"]
 "sqlite-sync" = ["__sync", "rusqlite", "rusqlite/chrono", "rusqlite/uuid"]
+"sqlite-sync-bundled" = ["sqlite-sync", "rusqlite/bundled"]
 "mssql" = ["tokio", "tokio-util", "futures-util", "tiberius", "bb8-tiberius", "bb8", "futures", "async-mutex"]
 "mssql-chrono" = ["tiberius/chrono"]
 "mssql-time" = ["tiberius/time"]

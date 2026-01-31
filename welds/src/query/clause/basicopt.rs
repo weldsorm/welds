@@ -19,7 +19,7 @@ impl<T> AsFieldName<T> for BasicOpt<T> {
         self.field
     }
 }
-impl<T:Clone> Copy for BasicOpt<T> {}
+impl<T: Clone> Copy for BasicOpt<T> {}
 
 impl<T> AsOptField for BasicOpt<T> {}
 
@@ -82,6 +82,24 @@ where
         let c = ClauseColValIn::<T> {
             col: self.col,
             operator: "IN",
+            list,
+        };
+        Box::new(c)
+    }
+
+    /// Will write SQL "NOT IN ()" to check that the value is not in a list
+    pub fn not_in_list<P>(self, slice: &[P]) -> Box<ClauseColValIn<T>>
+    where
+        P: Into<T> + Clone,
+        T: Param,
+    {
+        let mut list = Vec::default();
+        for param in slice {
+            list.push(param.clone().into());
+        }
+        let c = ClauseColValIn::<T> {
+            col: self.col,
+            operator: "NOT IN",
             list,
         };
         Box::new(c)

@@ -19,7 +19,7 @@ impl<T> AsFieldName<T> for TextOpt<T> {
         self.field
     }
 }
-impl<T:Clone> Copy for TextOpt<T> {}
+impl<T: Clone> Copy for TextOpt<T> {}
 
 impl<T> AsOptField for TextOpt<T> {}
 

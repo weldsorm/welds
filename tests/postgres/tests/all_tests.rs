@@ -735,6 +735,20 @@ fn should_be_able_to_filter_by_multiple_values() {
 }
 
 #[test]
+fn should_be_able_to_filter_by_multiple_values_negated() {
+    async_std::task::block_on(async {
+        let conn = get_conn().await;
+        let total = Product::all().count(&conn).await.unwrap() as usize;
+        let query = Product::all().where_col(|p| p.product_id.not_in_list(&[2, 3, 4]));
+        let results = query.run(&conn).await.unwrap();
+        assert_eq!(results.len(), total - 3);
+        let query = Product::all().where_col(|p| p.name.not_in_list(&["cat", "dog"]));
+        let results = query.run(&conn).await.unwrap();
+        assert_eq!(results.len(), total - 2);
+    })
+}
+
+#[test]
 fn should_be_able_to_select_all_products_with_there_orders() {
     async_std::task::block_on(async {
         let conn = get_conn().await;

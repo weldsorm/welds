@@ -17,7 +17,7 @@ impl<T> AsFieldName<T> for Basic<T> {
         self.field
     }
 }
-impl<T:Clone> Copy for Basic<T> {}
+impl<T: Clone> Copy for Basic<T> {}
 
 impl<T> Basic<T>
 where
@@ -72,6 +72,24 @@ where
         let c = ClauseColValIn::<T> {
             col: self.col,
             operator: "IN",
+            list,
+        };
+        Box::new(c)
+    }
+
+    /// Will write SQL "NOT IN ()" to check that the value is not in a list
+    pub fn not_in_list<P>(self, slice: &[P]) -> Box<ClauseColValIn<T>>
+    where
+        P: Into<T> + Clone,
+        T: Param,
+    {
+        let mut list = Vec::default();
+        for param in slice {
+            list.push(param.clone().into());
+        }
+        let c = ClauseColValIn::<T> {
+            col: self.col,
+            operator: "NOT IN",
             list,
         };
         Box::new(c)

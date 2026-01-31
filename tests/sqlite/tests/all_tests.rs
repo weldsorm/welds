@@ -629,3 +629,26 @@ fn should_be_able_to_select_hourse_or_dog() {
         assert_eq!(data.len(), 2, "Expected horse and dog",);
     })
 }
+
+#[test]
+fn should_be_able_to_find_all_not_horses() {
+    async_std::task::block_on(async {
+        use welds::query::clause::not;
+        let conn = get_conn().await;
+        // get expected count for non-horse
+        let total = Product::all().count(&conn).await.unwrap();
+        let horses = Product::where_col(|x| x.name.like("horse"))
+            .count(&conn)
+            .await
+            .unwrap();
+        // for this test to be valid we want to make sure there are horses,
+        // and there are non-horses
+        assert!(horses > 0);
+        assert!(horses != total);
+        // get not-horse count
+        let q = Product::where_col(|x| not(x.name.like("horse")));
+        let not_horse_count = q.count(&conn).await.unwrap();
+        // verify not-horse count is total of everything not a horse
+        assert_eq!(total - horses, not_horse_count);
+    })
+}

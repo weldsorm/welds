@@ -39,6 +39,10 @@ pub use or_and::ClauseAdderAndOrExt;
 pub use or_and::and;
 #[cfg(feature = "unstable-api")]
 pub use or_and::or;
+#[cfg(feature = "unstable-api")]
+mod not;
+#[cfg(feature = "unstable-api")]
+pub use not::not;
 
 pub use assignment_adder::AssignmentAdder;
 

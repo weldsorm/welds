@@ -63,3 +63,34 @@ fn should_be_able_to_save_load_extra_types() {
         trans.rollback().await.unwrap();
     })
 }
+
+#[test]
+fn should_be_able_to_lg_gt_dates() {
+    async_std::task::block_on(async {
+        let now_tz = chrono::Local::now();
+        let now_native = chrono::Local::now().naive_local();
+        let now_time = now_tz.time();
+        let now_date = now_tz.date_naive();
+
+        // NOTE: the test here is that all these compile
+        let _q1 = ExtraType::all().where_col(|x| x.datetimetz_col.lt(now_tz));
+        let _q2 = ExtraType::all().where_col(|x| x.datetime_col.lt(now_native));
+        let _q3 = ExtraType::all().where_col(|x| x.time_col.lt(now_time));
+        let _q4 = ExtraType::all().where_col(|x| x.date_col.lt(now_date));
+
+        let _q1 = ExtraType::all().where_col(|x| x.datetimetz_col.lte(now_tz));
+        let _q2 = ExtraType::all().where_col(|x| x.datetime_col.lte(now_native));
+        let _q3 = ExtraType::all().where_col(|x| x.time_col.lte(now_time));
+        let _q4 = ExtraType::all().where_col(|x| x.date_col.lte(now_date));
+
+        let _q1 = ExtraType::all().where_col(|x| x.datetimetz_col.gt(now_tz));
+        let _q2 = ExtraType::all().where_col(|x| x.datetime_col.gt(now_native));
+        let _q3 = ExtraType::all().where_col(|x| x.time_col.gt(now_time));
+        let _q4 = ExtraType::all().where_col(|x| x.date_col.gt(now_date));
+
+        let _q1 = ExtraType::all().where_col(|x| x.datetimetz_col.gte(now_tz));
+        let _q2 = ExtraType::all().where_col(|x| x.datetime_col.gte(now_native));
+        let _q3 = ExtraType::all().where_col(|x| x.time_col.gte(now_time));
+        let _q4 = ExtraType::all().where_col(|x| x.date_col.gte(now_date));
+    })
+}

@@ -29,7 +29,7 @@ pub fn write(syntax: Syntax, table: &TableIdent, col: &ColumnBuilder) -> String 
     }
 }
 
-/// write the fk crateion for sqlite. inline while table is being created
+/// write the fk creation for sqlite. inline while table is being created
 pub(crate) fn write_inline_fk(syntax: Syntax, col: &ColumnBuilder) -> Option<String> {
     // only sqlite needs FKs create in the table create
     if syntax != Syntax::Sqlite {

@@ -22,6 +22,8 @@ mod utils;
 use crate::connections::Transaction;
 mod manual;
 pub use manual::Manual;
+mod indexes;
+pub use indexes::create_index;
 
 pub type MigrationFn = fn(state: &TableState) -> Result<MigrationStep>;
 

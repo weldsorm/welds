@@ -76,6 +76,7 @@ impl From<&Option<&str>> for Optional<String> {
         }
     }
 }
+
 impl From<&Option<String>> for Optional<String> {
     fn from(inner: &Option<String>) -> Optional<String> {
         match inner {

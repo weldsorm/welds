@@ -92,3 +92,17 @@ CREATE TABLE welds.Cities (
     name varchar(max)
 );
 
+
+CREATE TABLE welds.binary_table (
+	id UNIQUEIDENTIFIER PRIMARY KEY,
+	b1 BINARY(16) NOT NULL,
+	b2 VARBINARY(256) NOT NULL,
+	b3 VARBINARY(MAX) NOT NULL,
+	ob1 BINARY(16) NULL,
+	ob2 VARBINARY(256) NULL,
+	ob3 VARBINARY(MAX) NULL
+);
+
+CREATE TABLE welds.binary_key (
+	id VARBINARY(256) PRIMARY KEY
+);

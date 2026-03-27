@@ -20,6 +20,7 @@ anyhow = "1.0"
 thiserror = "2.0"
 welds-macros = { path="../welds-macros", version = "^0.4.20" }
 maybe-async = "0.2"
+log = "0.4"
 
 [features]
 "default" = []

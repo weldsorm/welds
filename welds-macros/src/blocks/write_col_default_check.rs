@@ -29,6 +29,11 @@ pub(crate) fn col_switch(col: &Column) -> TokenStream {
     if col.is_option {
         return quote! { #dbname => self.#field.is_none(), };
     }
+
+    if is_vec_type(field_type) {
+        return quote! { #dbname => self.#field.is_empty(), };
+    }
+
     if is_generic_type(field_type) {
         return quote! { #dbname => true, };
     }
@@ -71,6 +76,16 @@ fn is_generic_type(ty: &Type) -> bool {
                 return true;
             }
         }
+    }
+    false
+}
+
+/// returns true if a given syn::Type is a Vec<T>
+fn is_vec_type(ty: &Type) -> bool {
+    if let Type::Path(TypePath { path, .. }) = ty
+        && let Some(segment) = path.segments.last()
+    {
+        return segment.ident == "Vec";
     }
     false
 }

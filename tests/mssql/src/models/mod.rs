@@ -1,3 +1,4 @@
+pub mod binary;
 pub mod order;
 pub mod person;
 pub mod persons_2;

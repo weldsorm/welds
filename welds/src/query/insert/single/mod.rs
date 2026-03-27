@@ -56,10 +56,13 @@ where
                 // If it is NOT the default value we need to include
                 // it in the query for insertion
                 if !obj.col_is_default(col.name())? {
+                    log::trace!("col: {} is not default, using in insert", col.name());
                     id_return_required = false;
                     obj.bind(col.name(), &mut args)?;
                     let col = col_writer.excape(col.name());
                     colargs.push(ColArg(col, next_params.next()));
+                } else {
+                    log::trace!("col: {} is default, not used for insert", col.name());
                 }
             }
         }

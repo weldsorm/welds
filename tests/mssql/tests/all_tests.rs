@@ -8,6 +8,7 @@ use welds::state::{DbState, DbStatus};
 use welds::TransactStart;
 use welds::{Client, Syntax};
 
+mod binary;
 mod extra_types;
 mod group_by;
 mod migrations;

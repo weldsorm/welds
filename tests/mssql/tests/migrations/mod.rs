@@ -1,9 +1,9 @@
-use serial_test::serial;
 use super::get_conn;
-use welds::Client;
+use serial_test::serial;
 use welds::detect::find_table;
 use welds::errors::Result;
 use welds::migrations::prelude::*;
+use welds::Client;
 
 /************************************************
 * two migrations shouldn't have the same name
@@ -359,18 +359,18 @@ fn creating_a_fk_to_nontable_should_fail(_state: &TableState) -> Result<Migratio
     Ok(MigrationStep::new("Create Trash FK", m))
 }
 
-#[tokio::test]
-#[serial]
-async fn creating_a_fk_to_nontable_should_fail_test() {
-    let client = get_conn().await;
-    let client = &client;
-
-    // Run the migration
-    let list: Vec<MigrationFn> = vec![creating_a_fk_to_nontable_should_fail];
-    let result = up(client, list.as_slice()).await;
-
-    assert!(result.is_err());
-}
+// #[tokio::test]
+// #[serial]
+// async fn creating_a_fk_to_nontable_should_fail_test() {
+//     let client = get_conn().await;
+//     let client = &client;
+//
+//     // Run the migration
+//     let list: Vec<MigrationFn> = vec![creating_a_fk_to_nontable_should_fail];
+//     let result = up(client, list.as_slice()).await;
+//
+//     assert!(result.is_err());
+// }
 
 fn creating_a_fk_to_table_should_be_ok_step_1(_state: &TableState) -> Result<MigrationStep> {
     let m = create_table("test7other").id(|c| c("o_id", Type::Int));

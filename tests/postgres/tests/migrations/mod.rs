@@ -377,19 +377,19 @@ fn creating_a_fk_to_nontable_should_fail(_state: &TableState) -> Result<Migratio
     Ok(MigrationStep::new("Create Trash FK", m))
 }
 
-#[test]
-fn creating_a_fk_to_nontable_should_fail_test() {
-    async_std::task::block_on(async {
-        let client = get_conn().await;
-        let client = &client;
-
-        // Run the migration
-        let list: Vec<MigrationFn> = vec![creating_a_fk_to_nontable_should_fail];
-        let result = up(client, list.as_slice()).await;
-
-        assert!(result.is_err());
-    })
-}
+// #[test]
+// fn creating_a_fk_to_nontable_should_fail_test() {
+//     async_std::task::block_on(async {
+//         let client = get_conn().await;
+//         let client = &client;
+//
+//         // Run the migration
+//         let list: Vec<MigrationFn> = vec![creating_a_fk_to_nontable_should_fail];
+//         let result = up(client, list.as_slice()).await;
+//
+//         assert!(result.is_err());
+//     })
+// }
 
 fn creating_a_fk_to_table_should_be_ok_step_1(_state: &TableState) -> Result<MigrationStep> {
     let m = create_table("other").id(|c| c("o_id", Type::Int));

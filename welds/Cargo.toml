@@ -11,14 +11,14 @@ repository = "https://github.com/weldsorm/welds"
 description = "An async ORM for (postgres, mssql, mysql, sqlite)"
 
 [dependencies]
-welds-connections = { path="../welds-connections", version = "^0.4.20" }
+welds-connections = { path="../welds-connections", version = "^0.4.21" }
 futures = {version= "0.3", optional = true  }
 futures-core = {version= "0.3", optional=true }
 async-trait = "0.1"
 colored = { version="3", optional = true }
 anyhow = "1.0"
 thiserror = "2.0"
-welds-macros = { path="../welds-macros", version = "^0.4.20" }
+welds-macros = { path="../welds-macros", version = "^0.4.21" }
 maybe-async = "0.2"
 log = "0.4"
 

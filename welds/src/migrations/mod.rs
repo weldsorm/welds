@@ -22,6 +22,8 @@ mod utils;
 use crate::connections::Transaction;
 mod manual;
 pub use manual::Manual;
+mod steps;
+pub use steps::Steps;
 mod indexes;
 pub use indexes::create_index;
 

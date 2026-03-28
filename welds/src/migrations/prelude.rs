@@ -2,6 +2,7 @@ pub use crate::migrations::Manual;
 pub use crate::migrations::MigrationFn;
 pub use crate::migrations::MigrationStep;
 pub use crate::migrations::MigrationWriter;
+pub use crate::migrations::Steps;
 pub use crate::migrations::TableState;
 pub use crate::migrations::create_table;
 pub use crate::migrations::down;

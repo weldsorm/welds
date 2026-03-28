@@ -10,7 +10,7 @@ use crate::migrations::writers::drop_column;
 use crate::migrations::writers::rename_column;
 
 pub struct Change {
-    pub(super) tabledef: TableDef,
+    pub(super) tabledef: Option<TableDef>,
     pub(super) column_name: String,
     new_name: Option<String>,
     set_null: Option<bool>,
@@ -18,7 +18,7 @@ pub struct Change {
 }
 
 impl Change {
-    pub(crate) fn new(tabledef: TableDef, column_name: String) -> Change {
+    pub(crate) fn new(tabledef: Option<TableDef>, column_name: String) -> Change {
         Change {
             tabledef,
             column_name,
@@ -63,9 +63,13 @@ impl Change {
 
 impl MigrationWriter for Change {
     fn down_sql(&self, syntax: Syntax) -> Vec<String> {
+        let tabledef = match &self.tabledef {
+            Some(x) => x,
+            None => return vec![],
+        };
         let mut commands = Vec::default();
-        let ident = self.tabledef.ident();
-        let col = find_column_or_unwrap(&self.tabledef, &self.column_name);
+        let ident = tabledef.ident();
+        let col = find_column_or_unwrap(tabledef, &self.column_name);
         // None means no change to the null-ability of the column
         let nullable = col.null();
         let null_changed = self.set_null.is_some() && col.null() != nullable;
@@ -90,7 +94,7 @@ impl MigrationWriter for Change {
         // If there is a change, update the column type/null
         if type_changed || null_changed {
             let mut alters =
-                alter_column_type_down(syntax, &self.tabledef, col, columnname, ty, nullable);
+                alter_column_type_down(syntax, tabledef, col, columnname, ty, nullable);
             commands.append(&mut alters);
         }
 
@@ -101,9 +105,13 @@ impl MigrationWriter for Change {
     }
 
     fn up_sql(&self, syntax: Syntax) -> Vec<String> {
+        let tabledef = match &self.tabledef {
+            Some(x) => x,
+            None => return vec![],
+        };
         let mut commands = Vec::default();
-        let ident = self.tabledef.ident();
-        let col = find_column_or_unwrap(&self.tabledef, &self.column_name);
+        let ident = tabledef.ident();
+        let col = find_column_or_unwrap(tabledef, &self.column_name);
         // None means no change to the null-ability of the column
         let nullable = self.set_null.unwrap_or(col.null());
         let null_changed = self.set_null.is_some() && col.null() != nullable;
@@ -136,8 +144,7 @@ impl MigrationWriter for Change {
 
         // If there is a change, update the column type/null
         if type_changed || null_changed {
-            let mut alters =
-                alter_column_type_up(syntax, &self.tabledef, col, columnname, ty, nullable);
+            let mut alters = alter_column_type_up(syntax, tabledef, col, columnname, ty, nullable);
             commands.append(&mut alters);
         }
 
@@ -146,17 +153,25 @@ impl MigrationWriter for Change {
 }
 
 pub struct DropColumn {
-    tabledef: TableDef,
+    tabledef: Option<TableDef>,
     column_name: String,
 }
 
 impl MigrationWriter for DropColumn {
     fn up_sql(&self, syntax: Syntax) -> Vec<String> {
-        vec![drop_column(syntax, &self.tabledef, &self.column_name)]
+        let tabledef = match &self.tabledef {
+            Some(x) => x,
+            None => return vec![],
+        };
+        vec![drop_column(syntax, tabledef, &self.column_name)]
     }
 
     fn down_sql(&self, syntax: Syntax) -> Vec<String> {
-        let col = find_column_or_unwrap(&self.tabledef, &self.column_name);
+        let tabledef = match &self.tabledef {
+            Some(x) => x,
+            None => return vec![],
+        };
+        let col = find_column_or_unwrap(tabledef, &self.column_name);
 
         // use the Type enum to make sure they type
         // has sizing if needed
@@ -165,7 +180,7 @@ impl MigrationWriter for DropColumn {
         let nullable = col.null();
         vec![add_column(
             syntax,
-            &self.tabledef,
+            tabledef,
             &self.column_name,
             ty,
             nullable,

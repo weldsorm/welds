@@ -8,7 +8,7 @@ pub mod add_column;
 pub mod change;
 pub mod drop;
 
-pub struct Table(TableDef);
+pub struct Table(Option<TableDef>);
 
 /// Start a migration to change a table.
 pub fn change_table(table_state: &TableState, tablename: impl Into<String>) -> Result<Table> {
@@ -40,10 +40,9 @@ pub fn change_table(table_state: &TableState, tablename: impl Into<String>) -> R
             .collect()
     }
 
-    // Make sure we found exactly ONE table. no more, no less
-    if search.is_empty() {
-        Err(WeldsError::MissingTable(ident.clone()))?;
-    }
+    // Note: The table could have been deleted in a later migration.
+
+    // Make sure we found exactly ONE table. no more
     if search.len() > 1 {
         let err = format!(
             "The table {} is ambiguous. This table was found under multiple schemanames. Please include the schema name when migrating.",
@@ -51,9 +50,9 @@ pub fn change_table(table_state: &TableState, tablename: impl Into<String>) -> R
         );
         Err(WeldsError::MigrationError(err))?;
     }
-    let found: &TableDef = search.pop().unwrap();
-
-    Ok(Table(found.clone()))
+    //let found: &TableDef = search.pop().unwrap();
+    let mut search: Vec<TableDef> = search.iter().map(|&x| x.clone()).collect();
+    Ok(Table(search.pop()))
 }
 
 impl Table {
@@ -81,7 +80,7 @@ pub mod mock {
 
     impl Table {
         pub fn mock(t: MockTableDef) -> Table {
-            Table(t.build())
+            Table(Some(t.build()))
         }
     }
 }

@@ -5,11 +5,19 @@ use crate::migrations::writers;
 
 impl MigrationWriter for Drop {
     fn down_sql(&self, syntax: Syntax) -> Vec<String> {
-        writers::create_table::from_def(syntax, &self.tabledef)
+        let tabledef = match &self.tabledef {
+            Some(x) => x,
+            None => return vec![],
+        };
+        writers::create_table::from_def(syntax, tabledef)
     }
 
     fn up_sql(&self, syntax: Syntax) -> Vec<String> {
-        let tablename = self.tabledef.ident();
+        let tabledef = match &self.tabledef {
+            Some(x) => x,
+            None => return vec![],
+        };
+        let tablename = tabledef.ident();
         vec![writers::drop_table(syntax, tablename)]
     }
 }
@@ -17,11 +25,11 @@ impl MigrationWriter for Drop {
 mod writer;
 
 pub struct Drop {
-    pub(super) tabledef: TableDef,
+    pub(super) tabledef: Option<TableDef>,
 }
 
 impl Drop {
-    pub(crate) fn new(tabledef: TableDef) -> Drop {
+    pub(crate) fn new(tabledef: Option<TableDef>) -> Drop {
         Drop { tabledef }
     }
 }

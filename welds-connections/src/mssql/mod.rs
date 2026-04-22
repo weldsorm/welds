@@ -39,8 +39,7 @@ impl TransactStart for MssqlClient {
 }
 
 pub async fn connect(cs: &str) -> Result<MssqlClient> {
-    let mgr = bb8_tiberius::ConnectionManager::build(cs)?;
-    let pool = Pool::new(mgr);
+    let pool = Pool::new(cs);
     Ok(MssqlClient { pool })
 }
 

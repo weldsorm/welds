@@ -7,12 +7,11 @@ pub enum Error {
     #[cfg(any(feature = "mysql", feature = "sqlite", feature = "postgres"))]
     Sqlx(sqlx::Error),
     #[cfg(feature = "mssql")]
-    TiberiusConnPool(bb8_tiberius::Error),
+    TiberiusConnPool(std::io::Error),
     #[cfg(feature = "mssql")]
     Tiberius(tiberius::error::Error),
     #[cfg(feature = "sqlite-sync")]
     Rusqlite(rusqlite::Error),
-    Bb8(&'static str),
     InvalidDatabaseUrl,
     RowNowFound,
     PoolError,
@@ -35,7 +34,6 @@ impl Display for Error {
             Error::TiberiusConnPool(err) => err.to_string(),
             #[cfg(feature = "mssql")]
             Error::Tiberius(err) => err.to_string(),
-            Error::Bb8(err) => err.to_string(),
             Error::InvalidDatabaseUrl => "Invalid database URL. If your connection string is valid, make sure the feature for your database type is enabled".to_string(),
             Error::PoolError => "the MSSQL connection pool has a locked mutex".to_string(),
             Error::RowNowFound => "Row not found".to_string(),
@@ -61,23 +59,23 @@ impl From<sqlx::error::Error> for Error {
     }
 }
 
-#[cfg(feature = "mssql")]
-impl From<bb8_tiberius::Error> for Error {
-    fn from(inner: bb8_tiberius::Error) -> Self {
-        Error::TiberiusConnPool(inner)
-    }
-}
-
-#[cfg(feature = "mssql")]
-impl<T> From<bb8::RunError<T>> for Error {
-    fn from(inner: bb8::RunError<T>) -> Self {
-        let inner = match inner {
-            bb8::RunError::TimedOut => "bb8 timeout",
-            bb8::RunError::User(_) => "bb8 user error",
-        };
-        Error::Bb8(inner)
-    }
-}
+//  #[cfg(feature = "mssql")]
+//  impl From<bb8_tiberius::Error> for Error {
+//      fn from(inner: bb8_tiberius::Error) -> Self {
+//          Error::TiberiusConnPool(inner)
+//      }
+//  }
+//
+//  #[cfg(feature = "mssql")]
+//  impl<T> From<bb8::RunError<T>> for Error {
+//      fn from(inner: bb8::RunError<T>) -> Self {
+//          let inner = match inner {
+//              bb8::RunError::TimedOut => "bb8 timeout",
+//              bb8::RunError::User(_) => "bb8 user error",
+//          };
+//          Error::Bb8(inner)
+//      }
+//  }
 
 #[cfg(feature = "mssql")]
 impl From<tiberius::error::Error> for Error {

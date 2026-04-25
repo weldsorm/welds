@@ -10,7 +10,33 @@ impl ManualParam {
         ManualParam::default()
     }
 
+    /// Add a value to the list of Params to send to the database.
+    #[deprecated(
+        note = "Push will be changed in a future version of welds to behave like std push. Use `push_mut` or `with` instread"
+    )]
     pub fn push<P>(mut self, p: P) -> Self
+    where
+        P: Param + Send + Sync,
+        P: 'static,
+    {
+        let _ = self.push_mut(p);
+        self
+    }
+
+    /// Add a value to the list of Params to send to the database.
+    /// returns a self reference so that pushes can be chained
+    pub fn push_mut<P>(&mut self, p: P) -> &mut Self
+    where
+        P: Param + Send + Sync,
+        P: 'static,
+    {
+        self.0.push(Box::new(p));
+        self
+    }
+
+    /// Add a value to the list of Params to send to the database.
+    /// Part of the builder constructor
+    pub fn with<P>(mut self, p: P) -> Self
     where
         P: Param + Send + Sync,
         P: 'static,
@@ -35,7 +61,7 @@ where
     T1: 'static + Param + Send + Sync,
 {
     fn from(p: (T1,)) -> Self {
-        ManualParam::new().push(p.0)
+        ManualParam::new().with(p.0)
     }
 }
 
@@ -45,7 +71,7 @@ where
     T2: 'static + Param + Send + Sync,
 {
     fn from(p: (T1, T2)) -> Self {
-        ManualParam::new().push(p.0).push(p.1)
+        ManualParam::new().with(p.0).with(p.1)
     }
 }
 
@@ -56,7 +82,7 @@ where
     T3: 'static + Param + Send + Sync,
 {
     fn from(p: (T1, T2, T3)) -> Self {
-        ManualParam::new().push(p.0).push(p.1).push(p.2)
+        ManualParam::new().with(p.0).with(p.1).with(p.2)
     }
 }
 
@@ -68,7 +94,7 @@ where
     T4: 'static + Param + Send + Sync,
 {
     fn from(p: (T1, T2, T3, T4)) -> Self {
-        ManualParam::new().push(p.0).push(p.1).push(p.2).push(p.3)
+        ManualParam::new().with(p.0).with(p.1).with(p.2).with(p.3)
     }
 }
 
@@ -82,11 +108,11 @@ where
 {
     fn from(p: (T1, T2, T3, T4, T5)) -> Self {
         ManualParam::new()
-            .push(p.0)
-            .push(p.1)
-            .push(p.2)
-            .push(p.3)
-            .push(p.4)
+            .with(p.0)
+            .with(p.1)
+            .with(p.2)
+            .with(p.3)
+            .with(p.4)
     }
 }
 
@@ -101,11 +127,33 @@ where
 {
     fn from(p: (T1, T2, T3, T4, T5, T6)) -> Self {
         ManualParam::new()
-            .push(p.0)
-            .push(p.1)
-            .push(p.2)
-            .push(p.3)
-            .push(p.4)
-            .push(p.5)
+            .with(p.0)
+            .with(p.1)
+            .with(p.2)
+            .with(p.3)
+            .with(p.4)
+            .with(p.5)
+    }
+}
+
+impl<T1, T2, T3, T4, T5, T6, T7> From<(T1, T2, T3, T4, T5, T6, T7)> for ManualParam
+where
+    T1: 'static + Param + Send + Sync,
+    T2: 'static + Param + Send + Sync,
+    T3: 'static + Param + Send + Sync,
+    T4: 'static + Param + Send + Sync,
+    T5: 'static + Param + Send + Sync,
+    T6: 'static + Param + Send + Sync,
+    T7: 'static + Param + Send + Sync,
+{
+    fn from(p: (T1, T2, T3, T4, T5, T6, T7)) -> Self {
+        ManualParam::new()
+            .with(p.0)
+            .with(p.1)
+            .with(p.2)
+            .with(p.3)
+            .with(p.4)
+            .with(p.5)
+            .with(p.6)
     }
 }

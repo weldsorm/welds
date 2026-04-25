@@ -14,13 +14,12 @@ impl ManualParam {
     #[deprecated(
         note = "Push will be changed in a future version of welds to behave like std push. Use `push_mut` or `with` instread"
     )]
-    pub fn push<P>(mut self, p: P) -> Self
+    pub fn push<P>(self, p: P) -> Self
     where
         P: Param + Send + Sync,
         P: 'static,
     {
-        let _ = self.push_mut(p);
-        self
+        self.with(p)
     }
 
     /// Add a value to the list of Params to send to the database.

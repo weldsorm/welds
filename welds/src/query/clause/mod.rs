@@ -31,18 +31,14 @@ pub use clause_adder::ClauseAdder;
 // trait used to write assignments in a sql statement
 mod assignment_adder;
 
-#[cfg(feature = "unstable-api")]
 mod or_and;
+pub use or_and::and;
+pub use or_and::or;
+mod not;
+pub use not::not;
+
 #[cfg(feature = "unstable-api")]
 pub use or_and::ClauseAdderAndOrExt;
-#[cfg(feature = "unstable-api")]
-pub use or_and::and;
-#[cfg(feature = "unstable-api")]
-pub use or_and::or;
-#[cfg(feature = "unstable-api")]
-mod not;
-#[cfg(feature = "unstable-api")]
-pub use not::not;
 
 pub use assignment_adder::AssignmentAdder;
 

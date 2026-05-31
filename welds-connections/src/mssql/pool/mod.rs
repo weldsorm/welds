@@ -2,13 +2,13 @@ use super::{Client, Param};
 use crate::errors::Error::PoolError;
 use crate::errors::Result;
 use async_mutex::Mutex as AsyncMutex;
-// use bb8::ManageConnection;
-// use bb8_tiberius::ConnectionManager;
 use std::ops::DerefMut;
 use std::sync::Arc;
 use std::sync::Mutex;
 use std::sync::mpsc::{Receiver, Sender, channel};
+use std::time::Duration;
 use tokio::task::yield_now;
+use tokio::time::sleep;
 
 #[cfg(feature = "unstable-api")]
 pub(crate) mod pooled_stream;
@@ -34,7 +34,6 @@ pub(crate) use pooledconnection::PooledConnection;
 
 pub(crate) struct Pool {
     ado_connection_string: String,
-    //mgr: ConnectionManager,
     slots: Vec<Mutex<Slot>>,
     round_robin_next: Mutex<usize>,
     tx: Sender<(TiberiusConn, ConnectionStatus)>,
@@ -206,8 +205,16 @@ pub(crate) enum ConnectionStatus {
 
 async fn pool_return(pool: Arc<Pool>, mut rx: Receiver<(TiberiusConn, ConnectionStatus)>) {
     loop {
-        let _ = pool_return_inner(pool.clone(), &mut rx).await;
+        if let Ok(returned_count) = pool_return_inner(pool.clone(), &mut rx).await
+            && returned_count == 0
+        {
+            // If we aren't actively using the pool, don't just hammer the CPU
+            // if we don't have returned connections. Back off the return job
+            sleep(Duration::from_millis(10)).await;
+        }
+
         if Arc::strong_count(&pool) == 1 {
+            // If we are the lass reference to the pool, no need to keep going
             return;
         }
         yield_now().await;
@@ -217,10 +224,10 @@ async fn pool_return(pool: Arc<Pool>, mut rx: Receiver<(TiberiusConn, Connection
 async fn pool_return_inner(
     pool: Arc<Pool>,
     rx: &mut Receiver<(TiberiusConn, ConnectionStatus)>,
-) -> Result<()> {
+) -> Result<usize> {
     // wait for a connection to be returned
     let tuple = match rx.try_recv().ok() {
-        None => return Ok(()),
+        None => return Ok(0),
         Some(conn) => conn,
     };
 
@@ -275,5 +282,5 @@ async fn pool_return_inner(
         panic!("unable to return a connection to the connection pool, pool is full");
         //
     });
-    Ok(())
+    Ok(1)
 }

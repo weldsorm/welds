@@ -7,3 +7,5 @@ resolver = "3"
 [profile.dev.package.sqlx-macros]
 opt-level = 3
 
+#[package.metadata.docs.rs]
+#features = ["full", "unstable-api"]

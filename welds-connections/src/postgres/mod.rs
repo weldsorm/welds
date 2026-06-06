@@ -57,7 +57,7 @@ use sqlx::types::Type;
 impl Client for PostgresClient {
     async fn execute(&self, sql: &str, params: &[&(dyn Param + Sync)]) -> Result<ExecuteResult> {
         log::trace!("POSTGRES EXECUTE: {}", sql);
-        let mut query = sqlx::query::<Postgres>(sql);
+        let mut query = sqlx::query::<Postgres>(sqlx::AssertSqlSafe(sql));
         for param in params {
             query = PostgresParam::add_param(*param, query);
         }
@@ -69,7 +69,7 @@ impl Client for PostgresClient {
 
     async fn fetch_rows(&self, sql: &str, params: &[&(dyn Param + Sync)]) -> Result<Vec<Row>> {
         log::trace!("POSTGRES FETCH_ROWS: {}", sql);
-        let mut query = sqlx::query::<Postgres>(sql);
+        let mut query = sqlx::query::<Postgres>(sqlx::AssertSqlSafe(sql));
         for param in params {
             query = PostgresParam::add_param(*param, query);
         }
@@ -88,7 +88,7 @@ impl Client for PostgresClient {
             let sql = fetch.sql;
             log::trace!("POSTGRES FETCH_MANY: {}", sql);
             let params = fetch.params;
-            let mut query = sqlx::query::<Postgres>(sql);
+            let mut query = sqlx::query::<Postgres>(sqlx::AssertSqlSafe(sql));
             for param in params {
                 query = PostgresParam::add_param(*param, query);
             }

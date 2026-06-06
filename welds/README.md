@@ -28,6 +28,7 @@ Under the hood welds uses:
 - Tiberius for MSSQL
 
 Compatibility:
+- the `0.5.*` line of welds is compiled with sqlx 0.9
 - the `0.4.*` line of welds is compiled with sqlx 0.8
 - the `0.3.*` line of welds is compiled with sqlx 0.7
 

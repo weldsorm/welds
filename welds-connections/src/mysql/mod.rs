@@ -57,7 +57,7 @@ use sqlx::types::Type;
 impl Client for MysqlClient {
     async fn execute(&self, sql: &str, params: &[&(dyn Param + Sync)]) -> Result<ExecuteResult> {
         log::trace!("MYSQL EXECUTE: {}", sql);
-        let mut query = sqlx::query::<MySql>(sql);
+        let mut query = sqlx::query::<MySql>(sqlx::AssertSqlSafe(sql));
         for param in params {
             query = MysqlParam::add_param(*param, query);
         }
@@ -69,7 +69,7 @@ impl Client for MysqlClient {
 
     async fn fetch_rows(&self, sql: &str, params: &[&(dyn Param + Sync)]) -> Result<Vec<Row>> {
         log::trace!("MYSQL FETCH_ROWS: {}", sql);
-        let mut query = sqlx::query::<MySql>(sql);
+        let mut query = sqlx::query::<MySql>(sqlx::AssertSqlSafe(sql));
         for param in params {
             query = MysqlParam::add_param(*param, query);
         }
@@ -88,7 +88,7 @@ impl Client for MysqlClient {
             let sql = fetch.sql;
             log::trace!("MYSQL FETCH_MANY: {}", sql);
             let params = fetch.params;
-            let mut query = sqlx::query::<MySql>(sql);
+            let mut query = sqlx::query::<MySql>(sqlx::AssertSqlSafe(sql));
             for param in params {
                 query = MysqlParam::add_param(*param, query);
             }

@@ -1,10 +1,10 @@
 use super::get_conn;
 use welds::detect::find_table;
 use welds::errors::Result;
+use welds::migrations::prelude::*;
 use welds::migrations::types::Type;
 use welds::migrations::MigrationFn;
 use welds::migrations::MigrationStep;
-use welds::migrations::{change_table, create_table, TableState};
 use welds::migrations::{down, up};
 use welds::Client;
 
@@ -431,5 +431,46 @@ fn should_create_a_fk() {
         // verify the FK exists
         let row = client.fetch_rows(sql, &[]).await.unwrap();
         assert_eq!(row.len(), 1);
+    })
+}
+
+/************************************************
+* Test adding indexes to tables
+* **********************************************/
+
+fn create_able_to_add_indexes_to(_state: &TableState) -> Result<MigrationStep> {
+    let m = create_table("test_table_for_indexes")
+        .id(|c| c("id", Type::Int))
+        .column(|c| c("col1", Type::String))
+        .column(|c| c("col2", Type::Int))
+        .column(|c| c("col3", Type::Bool))
+        .column(|c| c("col4", Type::Float));
+    Ok(MigrationStep::new("create_test_index_table", m))
+}
+
+fn add_index_with_include_column(_state: &TableState) -> Result<MigrationStep> {
+    let m = create_index()
+        .table("test_table_for_indexes")
+        .with_name("test_index_name")
+        .unique()
+        .column("col1")
+        .column("col2")
+        .include("col3");
+    let sql = m.up_sql(welds::Syntax::Mysql).join(" ").to_lowercase();
+    println!("{sql}");
+    assert!(sql.contains("create index"));
+    assert!(sql.contains("test_index_name"));
+    //assert!(sql.contains("include"));
+    Ok(MigrationStep::new("add_index_with_include_column", m))
+}
+
+#[test]
+fn should_be_able_to_add_indexes_to_table() {
+    async_std::task::block_on(async {
+        let client = get_conn().await;
+        let client = &client;
+        let list1: Vec<MigrationFn> =
+            vec![create_able_to_add_indexes_to, add_index_with_include_column];
+        up(client, list1.as_slice()).await.unwrap();
     })
 }

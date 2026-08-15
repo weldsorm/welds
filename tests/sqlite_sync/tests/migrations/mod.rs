@@ -1,10 +1,10 @@
 use super::get_conn;
 use welds::detect::find_table;
 use welds::errors::Result;
+use welds::migrations::prelude::*;
 use welds::migrations::types::Type;
 use welds::migrations::MigrationFn;
 use welds::migrations::MigrationStep;
-use welds::migrations::{change_table, create_table, TableState};
 use welds::migrations::{down_last, up};
 use welds::Client;
 
@@ -344,4 +344,43 @@ fn should_create_a_fk() {
     let count: i32 = row.get_by_position(0).unwrap();
     // verify the FK exists
     assert!(count > 0);
+}
+
+/************************************************
+* Test adding indexes to tables
+* **********************************************/
+
+fn create_able_to_add_indexes_to(_state: &TableState) -> Result<MigrationStep> {
+    let m = create_table("test_table_for_indexes")
+        .id(|c| c("id", Type::Int))
+        .column(|c| c("col1", Type::String))
+        .column(|c| c("col2", Type::Int))
+        .column(|c| c("col3", Type::Bool))
+        .column(|c| c("col4", Type::Float));
+    Ok(MigrationStep::new("create_test_index_table", m))
+}
+
+fn add_index_with_include_column(_state: &TableState) -> Result<MigrationStep> {
+    let m = create_index()
+        .table("test_table_for_indexes")
+        .with_name("test_index_name")
+        .unique()
+        .column("col1")
+        .column("col2")
+        .include("col3");
+    let sql = m.up_sql(welds::Syntax::Sqlite).join(" ").to_lowercase();
+    println!("{sql}");
+    assert!(sql.contains("create index"));
+    assert!(sql.contains("test_index_name"));
+    //assert!(sql.contains("include"));
+    Ok(MigrationStep::new("add_index_with_include_column", m))
+}
+
+#[test]
+fn should_be_able_to_add_indexes_to_table() {
+    let client = get_conn();
+    let client = &client;
+    let list1: Vec<MigrationFn> =
+        vec![create_able_to_add_indexes_to, add_index_with_include_column];
+    up(client, list1.as_slice()).unwrap();
 }

@@ -397,7 +397,44 @@ async fn creating_a_fk_to_table_should_be_ok_test() {
         creating_a_fk_to_table_should_be_ok_step_1,
         creating_a_fk_to_table_should_be_ok_step_2,
     ];
-    let result = up(client, list.as_slice()).await;
+    up(client, list.as_slice()).await.unwrap();
+}
 
-    assert!(result.is_ok());
+/************************************************
+* Test adding indexes to tables
+* **********************************************/
+
+fn create_able_to_add_indexes_to(_state: &TableState) -> Result<MigrationStep> {
+    let m = create_table("test_table_for_indexes")
+        .id(|c| c("id", Type::Int))
+        .column(|c| c("col1", Type::String))
+        .column(|c| c("col2", Type::Int))
+        .column(|c| c("col3", Type::Bool))
+        .column(|c| c("col4", Type::Float));
+    Ok(MigrationStep::new("create_test_index_table", m))
+}
+
+fn add_index_with_include_column(_state: &TableState) -> Result<MigrationStep> {
+    let m = create_index()
+        .table("test_table_for_indexes")
+        .with_name("test_index_name")
+        .unique()
+        .column("col4")
+        .column("col2")
+        .include("col3");
+    let sql = m.up_sql(welds::Syntax::Mssql).join(" ").to_lowercase();
+    println!("{sql}");
+    assert!(sql.contains("create index"));
+    assert!(sql.contains("test_index_name"));
+    assert!(sql.contains("include"));
+    Ok(MigrationStep::new("add_index_with_include_column", m))
+}
+
+#[tokio::test]
+async fn should_be_able_to_add_indexes_to_table() {
+    let client = get_conn().await;
+    let client = &client;
+    let list1: Vec<MigrationFn> =
+        vec![create_able_to_add_indexes_to, add_index_with_include_column];
+    up(client, list1.as_slice()).await.unwrap();
 }

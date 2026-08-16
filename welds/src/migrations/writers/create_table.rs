@@ -32,6 +32,7 @@ pub fn from_def(syntax: Syntax, def: &TableDef) -> Vec<String> {
             nullable: c.null,
             index: None,
             index_name: None,
+            default: None,
         };
         columns.push(build_column(syntax, &col))
     }
@@ -96,5 +97,11 @@ fn build_column(syntax: Syntax, col: &ColumnBuilder) -> String {
     let ty: String = col.ty.db_type(syntax);
 
     let null = if col.nullable { "NULL" } else { "NOT NULL" };
-    format!("{name} {ty} {null}")
+    let mut parts = vec![name, ty, null.to_string()];
+
+    if let Some(default) = &col.default {
+        parts.push(default.to_raw_sql(syntax, &col.ty))
+    }
+
+    parts.join(" ")
 }

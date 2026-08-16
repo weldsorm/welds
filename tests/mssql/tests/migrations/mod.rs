@@ -3,6 +3,7 @@ use serial_test::serial;
 use welds::detect::find_table;
 use welds::errors::Result;
 use welds::migrations::prelude::*;
+use welds::migrations::writers::default_value::DefaultValueNow;
 use welds::Client;
 
 /************************************************
@@ -436,5 +437,53 @@ async fn should_be_able_to_add_indexes_to_table() {
     let client = &client;
     let list1: Vec<MigrationFn> =
         vec![create_able_to_add_indexes_to, add_index_with_include_column];
+    up(client, list1.as_slice()).await.unwrap();
+}
+
+/************************************************
+* Create A table with a default value
+* **********************************************/
+
+fn create_table_with_default(_state: &TableState) -> Result<MigrationStep> {
+    let m = create_table("test_table_with_default")
+        .id(|c| c("id", Type::Int))
+        .column(|c| c("col1", Type::String).with_default("test string"))
+        .column(|c| c("col2", Type::Int).with_default(33))
+        .column(|c| c("col3", Type::Datetime).with_default(DefaultValueNow::default()));
+    let sql = m.up_sql(welds::Syntax::Mssql).join("; ").to_lowercase();
+    assert!(sql.contains(" default "));
+    Ok(MigrationStep::new("create_table_with_default", m))
+}
+
+#[tokio::test]
+async fn should_be_able_to_create_table_with_default() {
+    let client = get_conn().await;
+    let client = &client;
+    let list1: Vec<MigrationFn> = vec![create_table_with_default];
+    up(client, list1.as_slice()).await.unwrap();
+}
+
+fn create_table_for_default(_state: &TableState) -> Result<MigrationStep> {
+    let m = create_table("test_table_for_adding_defaults").id(|c| c("id", Type::Int));
+    Ok(MigrationStep::new("create_table_for_default", m))
+}
+
+fn add_col_with_default_to_table(state: &TableState) -> Result<MigrationStep> {
+    let m = change_table(state, "test_table_for_adding_defaults")
+        .unwrap()
+        .add_column("col1", Type::Bool)
+        .null()
+        .with_default(true);
+    let sql = m.up_sql(welds::Syntax::Mssql).join("; ").to_lowercase();
+    println!("{sql}");
+    assert!(sql.contains(" default "));
+    Ok(MigrationStep::new("add_col_with_default_to_table", m))
+}
+
+#[tokio::test]
+async fn should_be_able_add_column_with_default_values() {
+    let client = get_conn().await;
+    let client = &client;
+    let list1: Vec<MigrationFn> = vec![create_table_for_default, add_col_with_default_to_table];
     up(client, list1.as_slice()).await.unwrap();
 }

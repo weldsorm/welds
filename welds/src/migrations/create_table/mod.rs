@@ -2,6 +2,7 @@ use super::types::{Index, OnDelete, Type};
 use crate::Syntax;
 use crate::migrations::MigrationWriter;
 use crate::migrations::writers;
+use crate::migrations::writers::default_value::DefaultValue;
 use crate::model_traits::TableIdent;
 
 impl MigrationWriter for TableBuilder {
@@ -73,6 +74,7 @@ impl TableBuilder {
                 nullable: false,
                 index: None,
                 index_name: None,
+                default: None,
             }
         };
         let col = lam(builder);
@@ -87,6 +89,7 @@ pub struct ColumnBuilder {
     pub(crate) nullable: bool,
     pub(crate) index: Option<Index>,
     pub(crate) index_name: Option<String>,
+    pub(crate) default: Option<Box<dyn DefaultValue>>,
 }
 
 impl ColumnBuilder {
@@ -103,6 +106,16 @@ impl ColumnBuilder {
         if self.index.is_none() {
             self.index = Some(Index::Default);
         }
+        self
+    }
+
+    /// Creates default value for the column
+    pub fn with_default<T>(mut self, default_value: T) -> Self
+    where
+        T: DefaultValue + 'static,
+    {
+        let value: Box<dyn DefaultValue> = Box::new(default_value);
+        self.default = Some(value);
         self
     }
 

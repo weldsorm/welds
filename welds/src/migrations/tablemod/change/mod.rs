@@ -175,15 +175,16 @@ impl MigrationWriter for DropColumn {
 
         // use the Type enum to make sure they type
         // has sizing if needed
-        let ty = Type::parse_db_type(syntax, col.ty()).db_type(syntax);
+        let ty = Type::parse_db_type(syntax, col.ty());
 
         let nullable = col.null();
         vec![add_column(
             syntax,
             tabledef,
             &self.column_name,
-            ty,
+            &ty,
             nullable,
+            None,
         )]
     }
 }

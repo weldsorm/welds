@@ -652,3 +652,31 @@ fn should_be_able_to_find_all_not_horses() {
         assert_eq!(total - horses, not_horse_count);
     })
 }
+
+#[test]
+fn should_be_able_to_insert_with_default_key_value() {
+    // has use PK attribute
+    use sqlite_test::models::product::ProductManualPk as Product;
+    async_std::task::block_on(async {
+        let conn = get_conn().await;
+        let trans = conn.begin().await.unwrap();
+
+        let existing = Product::find_by_id(&trans, 0).await.unwrap();
+        assert!(existing.is_none());
+
+        let mut p1 = DbState::new_uncreated(Product {
+            id: 0,
+            name: "Id with default value".to_string(),
+            description: "test".to_string(),
+        });
+        p1.save(&trans).await.unwrap();
+
+        let from_db = Product::find_by_id(&trans, 0).await.unwrap();
+        assert!(from_db.is_some());
+        let from_db = from_db.unwrap();
+
+        assert_eq!(from_db.id, 0);
+
+        trans.rollback().await.unwrap();
+    })
+}

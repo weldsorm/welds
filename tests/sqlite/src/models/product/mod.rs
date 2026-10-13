@@ -96,3 +96,13 @@ pub struct ProductUpdateIgnoreDesc {
     #[welds(ignore(update))]
     pub description: String,
 }
+
+#[derive(Debug, WeldsModel)]
+#[welds(table = "Products")]
+pub struct ProductManualPk {
+    #[welds(primary_key(include_in_insert))]
+    #[welds(rename = "product_id")]
+    pub id: i32,
+    pub name: String,
+    pub description: String,
+}

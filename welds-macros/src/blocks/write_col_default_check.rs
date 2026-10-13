@@ -34,6 +34,10 @@ pub(crate) fn col_switch(col: &Column) -> TokenStream {
         return quote! { #dbname => self.#field.is_empty(), };
     }
 
+    if col.primary_key && col.include_in_insert {
+        return quote! { #dbname => false, };
+    }
+
     if is_generic_type(field_type) {
         return quote! { #dbname => true, };
     }

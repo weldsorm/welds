@@ -37,14 +37,14 @@ pub fn create_table(name: impl Into<String>) -> TableBuilder {
     let ident = TableIdent::parse(&name);
     TableBuilder {
         ident,
-        pk: IdBuilder::default(),
+        pks: Vec::default(),
         columns: Vec::default(),
     }
 }
 
 pub struct TableBuilder {
     pub(crate) ident: TableIdent,
-    pub(crate) pk: IdBuilder,
+    pub(crate) pks: Vec<IdBuilder>,
     pub(crate) columns: Vec<ColumnBuilder>,
 }
 
@@ -52,6 +52,14 @@ type ColumnLambda = fn(&str, Type) -> ColumnBuilder;
 type TableLambda = fn(&str, Type) -> IdBuilder;
 
 impl TableBuilder {
+    pub(crate) fn primary_keys(&self) -> Vec<IdBuilder> {
+        if self.pks.is_empty() {
+            vec![IdBuilder::default()]
+        } else {
+            self.pks.clone()
+        }
+    }
+
     /// Set the name and type of the primary_key column for the table.
     pub fn id(mut self, lam: fn(TableLambda) -> IdBuilder) -> Self {
         let builder = |name: &str, ty: Type| -> IdBuilder {
@@ -61,7 +69,7 @@ impl TableBuilder {
             }
         };
         let col = lam(builder);
-        self.pk = col;
+        self.pks.push(col);
         self
     }
 
@@ -143,6 +151,7 @@ impl ColumnBuilder {
     }
 }
 
+#[derive(Clone)]
 pub struct IdBuilder {
     pub(crate) name: String,
     pub(crate) ty: Type,

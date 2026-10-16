@@ -34,6 +34,30 @@ fn should_create_basic_table() {
 }
 
 #[test]
+fn should_support_multiple_primary_keys() {
+    let m = create_table("link")
+        .id(|c| c("sensor_id", Type::StringSized(100)))
+        .id(|c| c("type", Type::IntSmall))
+        .column(|c| c("name", Type::String));
+
+    let mysql_sql = MigrationWriter::up_sql(&m, Syntax::Mysql).join("; ");
+    assert!(mysql_sql.contains("sensor_id"));
+    assert!(mysql_sql.contains("PRIMARY KEY (sensor_id, type)"));
+
+    let postgres_sql = MigrationWriter::up_sql(&m, Syntax::Postgres).join("; ");
+    assert!(postgres_sql.contains("\"sensor_id\""));
+    assert!(postgres_sql.contains("PRIMARY KEY (\"sensor_id\", \"type\")"));
+
+    let mssql_sql = MigrationWriter::up_sql(&m, Syntax::Mssql).join("; ");
+    assert!(mssql_sql.contains("\"sensor_id\""));
+    assert!(mssql_sql.contains("PRIMARY KEY (\"sensor_id\", \"type\")"));
+
+    let sqlite_sql = MigrationWriter::up_sql(&m, Syntax::Sqlite).join("; ");
+    assert!(sqlite_sql.contains("\"sensor_id\""));
+    assert!(sqlite_sql.contains("PRIMARY KEY (\"sensor_id\", \"type\")"));
+}
+
+#[test]
 fn should_be_able_to_make_a_fk() {
     let m = create_table("s1.MyTable")
         .id(|c| c("id", Type::Int))

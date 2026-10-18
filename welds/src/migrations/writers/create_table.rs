@@ -4,6 +4,7 @@ use crate::detect::TableDef;
 use crate::migrations::create_table::ColumnBuilder;
 use crate::migrations::create_table::IdBuilder;
 use crate::migrations::create_table::TableBuilder;
+use crate::migrations::types::Index;
 use crate::migrations::types::Type;
 use crate::writers::ColumnWriter;
 use crate::writers::TableWriter;
@@ -24,6 +25,8 @@ pub fn from_def(syntax: Syntax, def: &TableDef) -> Vec<String> {
             IdBuilder {
                 name: c.name.to_string(),
                 ty: Type::parse_db_type(syntax, pk_type),
+                index: None,
+                index_name: None,
             }
         })
         .collect();
@@ -82,6 +85,28 @@ pub fn from_builder(syntax: Syntax, tb: &TableBuilder) -> Vec<String> {
     for col in index_cols {
         parts.push(create_index(syntax, &tb.ident, col));
     }
+    for col in tb.pks.iter().filter(|c| c.index.is_some()) {
+        if let Some(index) = &col.index {
+            if let Index::ForeignKey((f_table, f_column, on_delete)) = index {
+                let fk_name = match &col.index_name {
+                    Some(n) => n.to_owned(),
+                    None => format!("fk_{}_{}", tb.ident.name, col.name),
+                };
+                let foreign_column = ColumnWriter::new(syntax).excape(f_column.as_str());
+                let column_name = ColumnWriter::new(syntax).excape(col.name.as_str());
+                let on_delete_str = match on_delete {
+                    crate::migrations::types::OnDelete::Cascade => "CASCADE",
+                    crate::migrations::types::OnDelete::SetNull => "SET NULL",
+                    crate::migrations::types::OnDelete::SetDefault => "SET DEFAULT",
+                    crate::migrations::types::OnDelete::Restrict => "RESTRICT",
+                    crate::migrations::types::OnDelete::NoAction => "NO ACTION",
+                };
+                if syntax != Syntax::Sqlite {
+                    parts.push(format!("ALTER TABLE {tablename} ADD CONSTRAINT {fk_name} FOREIGN KEY ({column_name}) REFERENCES {f_table} ({foreign_column}) ON DELETE {on_delete_str}"));
+                }
+            }
+        }
+    }
     parts
 }
 
@@ -132,7 +157,20 @@ fn build_id_column(syntax: Syntax, col: &IdBuilder, include_primary_key: bool) -
             Syntax::Sqlite => "PRIMARY KEY AUTOINCREMENT",
         }
     }
-    format!("{name} {ty} {tail} NOT NULL")
+
+    let mut sql = format!("{name} {ty} {tail} NOT NULL");
+    if let Some(Index::ForeignKey((f_table, f_column, on_delete))) = &col.index {
+        let foreign_column = ColumnWriter::new(syntax).excape(f_column.as_str());
+        let on_delete_str = match on_delete {
+            crate::migrations::types::OnDelete::Cascade => "CASCADE",
+            crate::migrations::types::OnDelete::SetNull => "SET NULL",
+            crate::migrations::types::OnDelete::SetDefault => "SET DEFAULT",
+            crate::migrations::types::OnDelete::Restrict => "RESTRICT",
+            crate::migrations::types::OnDelete::NoAction => "NO ACTION",
+        };
+        sql = format!("{name} {ty} {tail} NOT NULL REFERENCES {f_table}({foreign_column}) ON DELETE {on_delete_str}");
+    }
+    sql
 }
 
 fn build_column(syntax: Syntax, col: &ColumnBuilder) -> String {

@@ -66,6 +66,8 @@ impl TableBuilder {
             IdBuilder {
                 name: name.to_string(),
                 ty,
+                index: None,
+                index_name: None,
             }
         };
         let col = lam(builder);
@@ -155,6 +157,43 @@ impl ColumnBuilder {
 pub struct IdBuilder {
     pub(crate) name: String,
     pub(crate) ty: Type,
+    pub(crate) index: Option<Index>,
+    pub(crate) index_name: Option<String>,
+}
+
+impl IdBuilder {
+    pub fn is_null(self) -> Self {
+        self
+    }
+
+    pub fn with_index_name(mut self, name: impl Into<String>) -> Self {
+        let name: String = name.into();
+        self.index_name = Some(name);
+        if self.index.is_none() {
+            self.index = Some(Index::Default);
+        }
+        self
+    }
+
+    pub fn create_index(mut self) -> Self {
+        self.index = Some(Index::Default);
+        self
+    }
+
+    pub fn create_unique_index(mut self) -> Self {
+        self.index = Some(Index::Unique);
+        self
+    }
+
+    pub fn create_foreign_key(
+        mut self,
+        table: impl Into<String>,
+        column: impl Into<String>,
+        on_delete: OnDelete,
+    ) -> Self {
+        self.index = Some(Index::ForeignKey((table.into(), column.into(), on_delete)));
+        self
+    }
 }
 
 impl Default for IdBuilder {
@@ -162,6 +201,8 @@ impl Default for IdBuilder {
         Self {
             name: "id".to_string(),
             ty: Type::Int,
+            index: None,
+            index_name: None,
         }
     }
 }

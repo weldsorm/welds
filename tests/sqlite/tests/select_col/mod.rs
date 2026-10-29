@@ -261,3 +261,101 @@ fn should_be_able_to_write_order_by_with_table_and_column_aliases() {
         );
     });
 }
+
+#[derive(Debug, WeldsModel)]
+#[welds(db(Sqlite))]
+#[welds(table = "Products")]
+#[welds(HasMany(orders, Order3, "product_id"))]
+pub struct Product3 {
+    #[welds(primary_key)]
+    #[welds(rename = "product_id")]
+    pub id: i32,
+    pub name: String,
+}
+
+#[derive(Debug, WeldsModel)]
+#[welds(db(Sqlite))]
+#[welds(table = "Orders")]
+#[welds(BelongsTo(product, Product3, "product_id"))]
+pub struct Order3 {
+    #[welds(primary_key)]
+    pub id: i32,
+    pub product_id: i32,
+    pub product_id2: Option<i32>,
+    pub price: Option<f32>,
+}
+
+#[derive(Debug, Default, WeldsModel)]
+#[welds(db(Sqlite))]
+pub struct ProductOrderRow {
+    pub pid: i32,
+    pub oid: Option<i32>,
+}
+
+#[test]
+fn should_be_able_to_left_join_on_multiple_keys() {
+    async_std::task::block_on(async {
+        let conn = get_conn().await;
+
+        // baseline: horse (product 1) has orders 1 and 2
+        let rows: Vec<ProductOrderRow> = Product3::where_col(|p| p.id.equal(1))
+            .select_as(|p| p.id, "pid")
+            .left_join(|p| p.orders, Order3::all().select_as(|o| o.id, "oid"))
+            .run(&conn)
+            .await
+            .unwrap()
+            .into_iter()
+            .map(|r| r.try_into().unwrap())
+            .collect();
+        assert_eq!(rows.len(), 2);
+
+        // second key on the ON clause: no order has product_id2 set,
+        // so the LEFT JOIN keeps the product with a NULL order
+        let q = Product3::where_col(|p| p.id.equal(1))
+            .select_as(|p| p.id, "pid")
+            .left_join_on(
+                |p| p.orders,
+                Order3::all().select_as(|o| o.id, "oid"),
+                |on| on.eq(|p| p.id, |o| o.product_id2),
+            );
+        assert_eq!(
+            q.to_sql(Syntax::Sqlite),
+            "SELECT t1.\"product_id\" AS \"pid\", t2.\"id\" AS \"oid\" FROM Products t1 \
+            LEFT JOIN Orders t2 ON t1.\"product_id\" = t2.\"product_id\" AND t1.\"product_id\" = t2.\"product_id2\" \
+            WHERE ( t1.\"product_id\" = ? )"
+        );
+        let rows: Vec<ProductOrderRow> = q
+            .run(&conn)
+            .await
+            .unwrap()
+            .into_iter()
+            .map(|r| r.try_into().unwrap())
+            .collect();
+        assert_eq!(rows.len(), 1);
+        assert_eq!(rows[0].pid, 1);
+        assert_eq!(rows[0].oid, None);
+    })
+}
+
+#[test]
+fn on_clause_params_bind_before_where_params() {
+    async_std::task::block_on(async {
+        let conn = get_conn().await;
+        // ON param (price > 20) must bind before WHERE param (name = 'horse')
+        let rows: Vec<ProductOrderRow> = Product3::where_col(|p| p.name.equal("horse"))
+            .select_as(|p| p.id, "pid")
+            .left_join_on(
+                |p| p.orders,
+                Order3::all().select_as(|o| o.id, "oid"),
+                |on| on.inner(|o| o.price.gt(20.0)),
+            )
+            .run(&conn)
+            .await
+            .unwrap()
+            .into_iter()
+            .map(|r| r.try_into().unwrap())
+            .collect();
+        assert_eq!(rows.len(), 1);
+        assert_eq!(rows[0].oid, Some(2));
+    })
+}

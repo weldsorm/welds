@@ -7,6 +7,7 @@ use crate::relations::{HasRelations, Relationship};
 use crate::writers::alias::TableAlias;
 pub use join::Join;
 use join::JoinBuilder;
+pub use join::JoinOn;
 use select_column::SelectColumn;
 use std::sync::Arc;
 
@@ -242,10 +243,89 @@ where
     /// Join to another table to be able to select additional columns
     /// Allow manual selection of Join Type
     pub fn join_with<R, Ship>(
+        self,
+        relationship: impl Fn(<T as HasRelations>::Relation) -> Ship,
+        sb: SelectBuilder<R>,
+        join_type: Join,
+    ) -> Self
+    where
+        T: HasRelations,
+        Ship: Relationship<T, R>,
+        R: HasSchema,
+        R: Send + HasSchema,
+        <R as HasSchema>::Schema: TableInfo + TableColumns,
+        <T as HasSchema>::Schema: TableInfo + TableColumns,
+    {
+        self.join_with_on(relationship, sb, join_type, |on| on)
+    }
+
+    /// Inner Join to another table, adding extra conditions to the `ON` clause.
+    ///
+    /// See [`JoinOn`] for the conditions that can be added.
+    pub fn join_on<R, Ship>(
+        self,
+        relationship: impl Fn(<T as HasRelations>::Relation) -> Ship,
+        sb: SelectBuilder<R>,
+        on: impl FnOnce(
+            JoinOn<<T as HasSchema>::Schema, <R as HasSchema>::Schema>,
+        ) -> JoinOn<<T as HasSchema>::Schema, <R as HasSchema>::Schema>,
+    ) -> Self
+    where
+        T: HasRelations,
+        Ship: Relationship<T, R>,
+        R: HasSchema,
+        R: Send + HasSchema,
+        <R as HasSchema>::Schema: TableInfo + TableColumns,
+        <T as HasSchema>::Schema: TableInfo + TableColumns,
+    {
+        self.join_with_on(relationship, sb, Join::Inner, on)
+    }
+
+    /// Left Join to another table, adding extra conditions to the `ON` clause.
+    ///
+    /// ```ignore
+    /// Contact::all()
+    ///     .select(|c| c.id)
+    ///     .left_join_on(
+    ///         |c| c.logins,
+    ///         Login::all().select(|l| l.created_at),
+    ///         |on| on.eq(|c| c.app, |l| l.app),
+    ///     );
+    /// // ... LEFT JOIN logins t2 ON t1."id" = t2."contact_id" AND t1."app" = t2."app"
+    /// ```
+    ///
+    /// See [`JoinOn`] for the conditions that can be added.
+    pub fn left_join_on<R, Ship>(
+        self,
+        relationship: impl Fn(<T as HasRelations>::Relation) -> Ship,
+        sb: SelectBuilder<R>,
+        on: impl FnOnce(
+            JoinOn<<T as HasSchema>::Schema, <R as HasSchema>::Schema>,
+        ) -> JoinOn<<T as HasSchema>::Schema, <R as HasSchema>::Schema>,
+    ) -> Self
+    where
+        T: HasRelations,
+        Ship: Relationship<T, R>,
+        R: HasSchema,
+        R: Send + HasSchema,
+        <R as HasSchema>::Schema: TableInfo + TableColumns,
+        <T as HasSchema>::Schema: TableInfo + TableColumns,
+    {
+        self.join_with_on(relationship, sb, Join::Left, on)
+    }
+
+    /// Join to another table to be able to select additional columns.
+    /// Allows manual selection of Join Type, and extra conditions on the `ON` clause.
+    ///
+    /// See [`JoinOn`] for the conditions that can be added.
+    pub fn join_with_on<R, Ship>(
         mut self,
         relationship: impl Fn(<T as HasRelations>::Relation) -> Ship,
         mut sb: SelectBuilder<R>,
         join_type: Join,
+        on: impl FnOnce(
+            JoinOn<<T as HasSchema>::Schema, <R as HasSchema>::Schema>,
+        ) -> JoinOn<<T as HasSchema>::Schema, <R as HasSchema>::Schema>,
     ) -> Self
     where
         T: HasRelations,
@@ -266,6 +346,7 @@ where
         let inner_key = ship.their_key();
         let mut jb = JoinBuilder::new(sb, outer_key, inner_key);
         jb.ty = join_type;
+        jb.on_conditions = on(JoinOn::new()).conditions;
         self.joins.push(jb);
         self
     }

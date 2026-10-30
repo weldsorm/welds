@@ -6,7 +6,7 @@ use crate::exts::VecStateExt;
 use crate::model_traits::{HasSchema, TableColumns, TableInfo, UniqueIdentifier};
 use crate::query::builder::QueryBuilder;
 use crate::query::clause::exists::ExistIn;
-use crate::relations::Relationship;
+use crate::relations::{Relationship, RelationshipWriter, Side};
 use async_trait::async_trait;
 use std::any::Any;
 use std::marker::PhantomData;
@@ -40,7 +40,8 @@ where
     for<'r> &'r IncludeQuery<T, R, Ship>: Send,
     for<'b> &'b QueryBuilder<T>: Send,
     Ship: 'static + Relationship<T, R>,
-    T: 'static + Send,
+    T: 'static + Send + HasSchema,
+    <T as HasSchema>::Schema: TableInfo,
     R: 'static,
     <R as HasSchema>::Schema: TableInfo + TableColumns + UniqueIdentifier,
     R: Send + Sync + HasSchema,
@@ -57,12 +58,10 @@ where
         let mut qb: QueryBuilder<R> = self.qb.clone();
         qb.set_aliases(&primary_query.alias_asigner);
 
-        let exist_in = ExistIn::new(
-            &primary_query,
-            //self.out_col.clone(),
-            //self.inner_tn,
-            //self.inner_col.clone(),
-        );
+        // the primary query (T) is the inner sub-query, the included model (R) is the outer query
+        let ship = RelationshipWriter::new(&self.ship, Side::MineIsInner);
+        let inner_tn = <T as HasSchema>::Schema::identifier();
+        let exist_in = ExistIn::new(&primary_query, inner_tn, ship);
         qb.exist_ins.push(exist_in);
 
         let rows = qb.run(client).await?;
@@ -78,12 +77,10 @@ where
         let primary_query = primary_query.clone();
         let mut qb: QueryBuilder<R> = QueryBuilder::new();
         qb.set_aliases(&primary_query.alias_asigner);
-        let exist_in = ExistIn::new(
-            &primary_query,
-            //self.out_col.clone(),
-            //self.inner_tn,
-            //self.inner_col.clone(),
-        );
+        // the primary query (T) is the inner sub-query, the included model (R) is the outer query
+        let ship = RelationshipWriter::new(&self.ship, Side::MineIsInner);
+        let inner_tn = <T as HasSchema>::Schema::identifier();
+        let exist_in = ExistIn::new(&primary_query, inner_tn, ship);
         qb.exist_ins.push(exist_in);
         qb.to_sql(syntax)
     }

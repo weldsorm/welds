@@ -73,7 +73,6 @@ where
 {
     fn is_related(&self, source: &T, other: &R) -> bool {
         let pk = other.primary_key_value();
-        //let fk_field: String = Self::my_key(self);
         let KeyPair { my_key, .. } = self.belongsto_clauses();
         source.eq(&my_key, &pk)
     }

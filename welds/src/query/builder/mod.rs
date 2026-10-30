@@ -6,7 +6,7 @@ use crate::query::clause::exists::ExistIn;
 use crate::query::clause::{AsFieldName, AssignmentAdder, ClauseAdder, OrderBy};
 use crate::query::include::IncludeBuilder;
 use crate::query::optional::Optional;
-use crate::relations::{HasRelations, Relationship};
+use crate::relations::{HasRelations, Relationship, RelationshipWriter, Side};
 use crate::writers::alias::TableAlias;
 use std::marker::PhantomData;
 use std::sync::Arc;
@@ -218,10 +218,10 @@ where
         <T as HasRelations>::Relation: Default,
     {
         let ship = relationship(Default::default());
-        let out_col = ship.my_key();
+        // self (the outer query) is the table the relationship is defined on
+        let ship = RelationshipWriter::new(&ship, Side::MineIsOuter);
         let inner_tn = <R as HasSchema>::Schema::identifier();
-        let inner_col = ship.their_key();
-        let mut exist_in = ExistIn::new(&filter, out_col, inner_tn, inner_col);
+        let mut exist_in = ExistIn::new(&filter, inner_tn, ship);
         exist_in.set_aliases(&self.alias_asigner);
         self.exist_ins.push(exist_in);
         self
@@ -245,10 +245,10 @@ where
         let mut qb: QueryBuilder<R> = QueryBuilder::new();
         qb.set_aliases(&self.alias_asigner);
 
-        let out_col = ship.their_key();
+        // self becomes the inner query, R is the outer query
+        let ship = RelationshipWriter::new(&ship, Side::MineIsInner);
         let inner_tn = <T as HasSchema>::Schema::identifier();
-        let inner_col = ship.my_key();
-        let exist_in = ExistIn::new(self, out_col, inner_tn, inner_col);
+        let exist_in = ExistIn::new(self, inner_tn, ship);
 
         qb.exist_ins.push(exist_in);
         qb

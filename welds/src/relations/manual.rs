@@ -1,16 +1,38 @@
-use super::Relationship;
+use super::{KeyPair, MyKeyEq, Relationship, RelationshipClause, TheirKeyEq};
 use std::marker::PhantomData;
+use welds_connections::Param;
 
+/// A relationship between two tables that is defined by hand.
+///
+/// At its simplest it links a column on self to a column on the other table.
+/// ```ignore
+/// ManualRelationship::<Order, Extra>::using("extra_order_id1", "extra_order_id2")
+/// ```
+///
+/// Additional clauses can be chained on to build a relationship that needs
+/// more than a single column to link the tables. All clauses are ANDed together.
+/// ```ignore
+/// ManualRelationship::<Order, Extra>::using("tenant_id", "tenant_id")
+///     .and_using("extra_order_id1", "extra_order_id2")
+///     .and_their_eq("kind", "shipping")
+/// ```
 pub struct ManualRelationship<T, R> {
     _t: PhantomData<T>,
     _r: PhantomData<R>,
-    // These database column on self to use for this relationship
-    self_key: &'static str,
-    // The database column on the other table to use for this relationship
-    other_key: &'static str,
+    clauses: Vec<ManualClause>,
+}
+
+#[derive(Clone, PartialEq)]
+enum ManualClause {
+    Keys(KeyPair),
+    Mine(MyKeyEq),
+    Theirs(TheirKeyEq),
 }
 
 impl<T, R> ManualRelationship<T, R> {
+    /// Link a column on self to a column on the other table
+    /// `self_col_key`: The database column on self to use for this relationship
+    /// `other_col_key`: The database column on the other table to use for this relationship
     pub fn using(
         self_col_key: &'static str,
         other_col_key: &'static str,
@@ -18,51 +40,80 @@ impl<T, R> ManualRelationship<T, R> {
         ManualRelationship {
             _t: Default::default(),
             _r: Default::default(),
-            self_key: self_col_key,
-            other_key: other_col_key,
+            clauses: vec![ManualClause::Keys(KeyPair::new(
+                self_col_key,
+                other_col_key,
+            ))],
         }
+    }
+
+    /// Start building a relationship with no clauses.
+    /// Add clauses with `and_using`, `and_my_eq`, and `and_their_eq`
+    pub fn empty() -> ManualRelationship<T, R> {
+        ManualRelationship {
+            _t: Default::default(),
+            _r: Default::default(),
+            clauses: Vec::default(),
+        }
+    }
+
+    /// Also require a column on self to equal a column on the other table
+    pub fn and_using(mut self, self_col_key: &str, other_col_key: &str) -> Self {
+        self.clauses.push(ManualClause::Keys(KeyPair::new(
+            self_col_key,
+            other_col_key,
+        )));
+        self
+    }
+
+    /// Also require a column on self to equal a given value
+    pub fn and_my_eq<P>(mut self, self_col_key: &str, value: P) -> Self
+    where
+        P: 'static + Param + Send + Sync,
+    {
+        self.clauses
+            .push(ManualClause::Mine(MyKeyEq::new(self_col_key, value)));
+        self
+    }
+
+    /// Also require a column on the other table to equal a given value
+    pub fn and_their_eq<P>(mut self, other_col_key: &str, value: P) -> Self
+    where
+        P: 'static + Param + Send + Sync,
+    {
+        self.clauses
+            .push(ManualClause::Theirs(TheirKeyEq::new(other_col_key, value)));
+        self
     }
 }
 
 impl<T, R> PartialEq for ManualRelationship<T, R> {
     fn eq(&self, other: &Self) -> bool {
-        self.self_key == other.self_key && self.other_key == other.other_key
+        self.clauses == other.clauses
     }
 }
+
 impl<T, R> Clone for ManualRelationship<T, R> {
     fn clone(&self) -> Self {
         Self {
             _t: Default::default(),
             _r: Default::default(),
-            self_key: self.self_key,
-            other_key: self.other_key,
+            clauses: self.clauses.clone(),
         }
     }
 }
 
 impl<T: Send, R: Send> Relationship<T, R> for ManualRelationship<T, R> {
-    fn my_key(&self) -> String {
-        self.self_key.to_owned()
-    }
-
-    fn their_key(&self) -> String {
-        self.other_key.to_owned()
+    fn clauses(&self) -> Vec<Box<dyn RelationshipClause>> {
+        self.clauses
+            .iter()
+            .map(|c| -> Box<dyn RelationshipClause> {
+                match c {
+                    ManualClause::Keys(x) => Box::new(x.clone()),
+                    ManualClause::Mine(x) => Box::new(x.clone()),
+                    ManualClause::Theirs(x) => Box::new(x.clone()),
+                }
+            })
+            .collect()
     }
 }
-
-// RelationshipCompare is used for include Queries
-//impl<T, R> RelationshipCompare<T, R> for Manual<R>
-//where
-//    Self: Relationship<R>,
-//    T: PrimaryKeyValue + HasSchema,
-//    T::Schema: UniqueIdentifier,
-//    R: HasSchema,
-//    R::Schema: UniqueIdentifier,
-//    R: ForeignKeyPartialEq<T::PrimaryKeyType>,
-//{
-//    fn is_related(&self, source: &T, other: &R) -> bool {
-//        let pk = source.primary_key_value();
-//        let fk_field: String = Self::their_key::<R::Schema, T::Schema>(self);
-//        other.eq(&fk_field, &pk)
-//    }
-//}

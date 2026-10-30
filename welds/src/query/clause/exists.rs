@@ -3,6 +3,7 @@ use crate::Syntax;
 use crate::query::builder::QueryBuilder;
 use crate::query::clause::OrderBy;
 use crate::query::clause::ParamArgs;
+use crate::relations::RelationshipWriter;
 use crate::writers::ColumnWriter;
 use crate::writers::NextParam;
 use crate::writers::TableWriter;
@@ -12,8 +13,8 @@ use std::sync::Arc;
 /// Used to generated a SQL EXISTS OR IN clause for writing sub-queries
 #[derive(Clone)]
 pub struct ExistIn {
-    outer_column: String,
-    inner_column: String,
+    // how the outer table is linked to the inner table
+    ship: RelationshipWriter,
     inner_tablename: &'static [&'static str],
     pub(crate) inner_tablealias: String,
     wheres: Vec<Arc<Box<dyn ClauseAdder>>>,
@@ -26,13 +27,12 @@ pub struct ExistIn {
 impl ExistIn {
     pub(crate) fn new<T>(
         sb: &QueryBuilder<T>,
-        outer_column: String,
         inner_tablename: &'static [&'static str],
-        inner_column: String,
+        ship: RelationshipWriter,
     ) -> Self {
         ExistIn {
-            outer_column,
-            inner_column,
+            // sub-queries are written as `inner.col = outer.col`
+            ship: ship.inner_on_left(),
             inner_tablename,
             inner_tablealias: sb.alias.clone(),
             wheres: sb.wheres.clone(),
@@ -51,15 +51,23 @@ impl ExistIn {
         }
     }
 
-    fn inner_fk_equal(&self, syntax: Syntax, tablealias: &str) -> String {
-        let col_writer = ColumnWriter::new(syntax);
-        format!(
-            "{}.{} = {}.{}",
-            self.inner_tablealias,
-            col_writer.excape(&self.inner_column),
-            tablealias,
-            col_writer.excape(&self.outer_column)
-        )
+    // Write the parts of the relationship that link the inner table to the outer table
+    fn relationship_clauses(
+        &self,
+        syntax: Syntax,
+        tablealias: &str,
+        next_params: &NextParam,
+        using_in: bool,
+    ) -> Vec<String> {
+        let outer = tablealias;
+        let inner = &self.inner_tablealias;
+        if using_in {
+            // the first key pair is written as the IN, don't write it twice
+            self.ship
+                .to_sql_without_first_key_pair(syntax, outer, inner, next_params)
+        } else {
+            self.ship.to_sql(syntax, outer, inner, next_params)
+        }
     }
 
     fn tails(&self, syntax: Syntax, tablealias: &str) -> String {
@@ -72,23 +80,29 @@ impl ExistIn {
         let tails = self.tails(syntax, &self.inner_tablealias);
         let inner_tablename = TableWriter::new(syntax).write2(self.inner_tablename);
         let col_writer = ColumnWriter::new(syntax);
+        let select_col = match self.ship.first_key_pair() {
+            Some((_, inner_col)) => col_writer.excape(inner_col),
+            None => "1".to_string(),
+        };
         format!(
             "EXISTS ( SELECT {} FROM {} {} WHERE {} {})",
-            col_writer.excape(&self.inner_column),
-            inner_tablename,
-            &self.inner_tablealias,
-            inner_clauses,
-            tails
+            select_col, inner_tablename, &self.inner_tablealias, inner_clauses, tails
         )
     }
 
-    fn in_clause(&self, syntax: Syntax, tablealias: &str, inner_clauses: &str) -> String {
+    fn in_clause(
+        &self,
+        syntax: Syntax,
+        tablealias: &str,
+        inner_clauses: &str,
+        (outer_column, inner_column): (&str, &str),
+    ) -> String {
         let col_writer = ColumnWriter::new(syntax);
-        let outcol = format!("{}.{}", tablealias, col_writer.excape(&self.outer_column));
+        let outcol = format!("{}.{}", tablealias, col_writer.excape(outer_column));
         let innercol = format!(
             "{}.{}",
             self.inner_tablealias,
-            col_writer.excape(&self.inner_column)
+            col_writer.excape(inner_column)
         );
         let inner_tablename = TableWriter::new(syntax).write2(self.inner_tablename);
         let tails = self.tails(syntax, &self.inner_tablealias);
@@ -111,13 +125,21 @@ impl ClauseAdder for ExistIn {
         for w in &self.wheres {
             w.bind(args);
         }
+        // must match the order the clauses are written in `clause`
+        self.ship.bind(args);
         for w in &self.inner_exists_ins {
             w.bind(args);
         }
     }
 
     fn clause(&self, syntax: Syntax, alias: &str, next_params: &NextParam) -> Option<String> {
-        let using_in = self.limit.is_some();
+        // When limited, the sub-query is written as an IN so the limit applies to the whole
+        // sub-query and not per row. An IN needs a column to column link, fallback to EXISTS
+        let in_cols = match self.limit {
+            Some(_) => self.ship.first_key_pair(),
+            None => None,
+        };
+        let using_in = in_cols.is_some();
         let self_tablealias = alias;
         let mut inner_wheres: Vec<String> = self
             .wheres
@@ -125,9 +147,12 @@ impl ClauseAdder for ExistIn {
             .filter_map(|w| w.clause(syntax, &self.inner_tablealias, next_params))
             .collect();
 
-        if !using_in {
-            inner_wheres.push(self.inner_fk_equal(syntax, self_tablealias));
-        }
+        inner_wheres.append(&mut self.relationship_clauses(
+            syntax,
+            self_tablealias,
+            next_params,
+            using_in,
+        ));
 
         // exists inside this exist clause
         for ins in &self.inner_exists_ins {
@@ -137,8 +162,8 @@ impl ClauseAdder for ExistIn {
         }
 
         let inner_clauses = inner_wheres.join(" AND ");
-        if using_in {
-            Some(self.in_clause(syntax, self_tablealias, &inner_clauses))
+        if let Some(in_cols) = in_cols {
+            Some(self.in_clause(syntax, self_tablealias, &inner_clauses, in_cols))
         } else {
             Some(self.exists_clause(syntax, self_tablealias, &inner_clauses))
         }

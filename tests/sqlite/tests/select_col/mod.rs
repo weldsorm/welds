@@ -261,3 +261,51 @@ fn should_be_able_to_write_order_by_with_table_and_column_aliases() {
         );
     });
 }
+
+#[test]
+fn should_be_able_to_join_manual_with_a_value_clause() {
+    use welds::query::select_cols::Join;
+    use welds::relations::ManualRelationship;
+    async_std::task::block_on(async {
+        let conn = get_conn().await;
+        // The join's param must be bound before the where's param.
+        // If swapped, this query would return no rows
+        let ship = ManualRelationship::<Order, Product>::using("product_id", "product_id")
+            .and_their_eq("name", "dog".to_string());
+        let rows = Order::where_col(|o| o.id.lte(3))
+            .select_as(|o| o.id, "oid")
+            .join_manual(Join::Inner, ship, Product::all().select(|p| p.name))
+            .run(&conn)
+            .await
+            .unwrap();
+        assert_eq!(rows.len(), 1);
+        let oid: i32 = rows[0].get("oid").unwrap();
+        let name: String = rows[0].get("name").unwrap();
+        assert_eq!(oid, 3);
+        assert_eq!(name, "dog");
+    })
+}
+
+#[test]
+fn should_be_able_to_left_join_manual_with_a_value_clause() {
+    use welds::query::select_cols::Join;
+    use welds::relations::ManualRelationship;
+    async_std::task::block_on(async {
+        let conn = get_conn().await;
+        let ship = ManualRelationship::<Order, Product>::using("product_id", "product_id")
+            .and_their_eq("name", "horse".to_string());
+        let rows = Order::all()
+            .select_as(|o| o.id, "oid")
+            .join_manual(Join::Left, ship, Product::all().select(|p| p.name))
+            .order_by_asc(|o| o.id)
+            .run(&conn)
+            .await
+            .unwrap();
+        // every order is returned, only the horse orders found a product
+        let names: Vec<Option<String>> = rows.iter().map(|r| r.get("name").unwrap()).collect();
+        assert_eq!(
+            names,
+            vec![Some("horse".to_string()), Some("horse".to_string()), None]
+        );
+    })
+}

@@ -10,45 +10,24 @@ pub use hasone::HasOne;
 mod manual;
 pub use manual::ManualRelationship;
 
-pub struct KeyPair {
-    pub their_key: String,
-    pub my_key: String,
-}
+mod clauses;
+pub use clauses::{ClauseContext, KeyPair, MyKeyEq, RelationshipClause, TheirKeyEq};
 
-pub struct TheirKeyEq {
-    pub key: String,
-    pub value: &'static str, // use sql params
-}
+mod writer;
+pub(crate) use writer::{RelationshipWriter, Side};
 
-pub struct MyKeyEq {
-    pub key: String,
-    pub value: &'static str, // use sql params
-}
-
-trait RelationshipClause {}
-impl RelationshipClause for KeyPair {}
-impl RelationshipClause for TheirKeyEq {}
-impl RelationshipClause for MyKeyEq {}
+#[cfg(test)]
+mod tests;
 
 /// Describes how a relationship should be wired up.
 /// Gives info about what DB columns to use on both Models
 pub trait Relationship<SELF, R>: Clone + PartialEq + Send {
     /// a collection of the parts of the 'on' clause
     /// all the parts that are requires to join table `SELF` to table `R`
+    ///
+    /// Each part is ANDed together when the relationship is written as SQL.
+    /// "my" refers to the table of `SELF`, "their" refers to the table of `R`
     fn clauses(&self) -> Vec<Box<dyn RelationshipClause>>;
-}
-
-pub trait RelationshipWriter {
-    fn to_sql(table_a: &str, table_b: &str) -> String;
-}
-
-impl<T, S, R> RelationshipWriter for T
-where
-    T: Relationship<S, R>,
-{
-    fn to_sql(table_a: &str, table_b: &str) -> String {
-        todo!()
-    }
 }
 
 /// Used to check if a relationship holds between two models.

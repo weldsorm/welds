@@ -3,7 +3,7 @@ use crate::query::builder::QueryBuilder;
 use crate::query::clause::{AsFieldName, ClauseAdder};
 use crate::query::select_cols::group_by::GroupBy;
 use crate::query::select_cols::select_column::SelectKind;
-use crate::relations::{HasRelations, Relationship};
+use crate::relations::{HasRelations, Relationship, RelationshipWriter, Side};
 use crate::writers::alias::TableAlias;
 pub use join::Join;
 use join::JoinBuilder;
@@ -261,6 +261,14 @@ where
 
     /// Join to another table to be able to select additional columns
     /// Manually build a join relationship by hand
+    ///
+    /// Unlike `join_with` the relationship does not need to be defined on the model.
+    /// Any `Relationship` can be used, for example a `ManualRelationship` with multiple clauses
+    /// ```ignore
+    /// let ship = ManualRelationship::<Order, Extra>::using("extra_order_id1", "extra_order_id2")
+    ///     .and_their_eq("ext", 3);
+    /// let q = Order::all().select_all().join_manual(Join::Left, ship, Extra::all().select_all());
+    /// ```
     pub fn join_manual<R, Ship>(
         mut self,
         join_type: Join,
@@ -268,27 +276,23 @@ where
         mut sb: SelectBuilder<R>,
     ) -> Self
     where
-        T: HasRelations,
         Ship: Relationship<T, R>,
-        R: HasSchema,
         R: Send + HasSchema,
         <R as HasSchema>::Schema: TableInfo + TableColumns,
         <T as HasSchema>::Schema: TableInfo + TableColumns,
     {
-        todo!()
-        // let ship = relationship;
-        // sb.set_aliases(&self.qb.alias_asigner);
-        // let _joined_group_bys = sb
-        //     .group_bys
-        //     .drain(..)
-        //     .map(|gb| self.group_bys.push(gb.set_alias(&sb.qb.alias)))
-        //     .collect::<Vec<_>>();
-        // let outer_key = ship.my_key();
-        // let inner_key = ship.their_key();
-        // let mut jb = JoinBuilder::new(sb, outer_key, inner_key);
-        // jb.ty = join_type;
-        // self.joins.push(jb);
-        // self
+        sb.set_aliases(&self.qb.alias_asigner);
+        let _joined_group_bys = sb
+            .group_bys
+            .drain(..)
+            .map(|gb| self.group_bys.push(gb.set_alias(&sb.qb.alias)))
+            .collect::<Vec<_>>();
+        // self (the outer table) is the table the relationship is defined on
+        let ship = RelationshipWriter::new(&relationship, Side::MineIsOuter);
+        let mut jb = JoinBuilder::new(sb, ship);
+        jb.ty = join_type;
+        self.joins.push(jb);
+        self
     }
 
     pub fn group_by<V, FN: AsFieldName<V>>(

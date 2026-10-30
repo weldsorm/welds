@@ -4,6 +4,7 @@ use crate::model_traits::ForeignKeyPartialEq;
 use crate::model_traits::HasSchema;
 use crate::model_traits::PrimaryKeyValue;
 use crate::model_traits::UniqueIdentifier;
+use crate::relations::KeyPair;
 use std::marker::PhantomData;
 
 pub struct BelongsTo<T, R> {
@@ -43,11 +44,21 @@ where
     R: HasSchema,
     <R as HasSchema>::Schema: UniqueIdentifier,
 {
-    fn my_key(&self) -> String {
-        self.foreign_key.to_owned()
+    fn clauses(&self) -> Vec<Box<dyn super::RelationshipClause>> {
+        vec![Box::new(self.belongsto_clauses())]
     }
-    fn their_key(&self) -> String {
-        <R as HasSchema>::Schema::id_column().name().to_owned()
+}
+
+impl<T: Send, R: Send> BelongsTo<T, R>
+where
+    R: HasSchema,
+    <R as HasSchema>::Schema: UniqueIdentifier,
+{
+    fn belongsto_clauses(&self) -> KeyPair {
+        KeyPair {
+            my_key: self.foreign_key.to_owned(),
+            their_key: <R as HasSchema>::Schema::id_column().name().to_owned(),
+        }
     }
 }
 
@@ -62,7 +73,8 @@ where
 {
     fn is_related(&self, source: &T, other: &R) -> bool {
         let pk = other.primary_key_value();
-        let fk_field: String = Self::my_key(self);
-        source.eq(&fk_field, &pk)
+        //let fk_field: String = Self::my_key(self);
+        let KeyPair { my_key, .. } = self.belongsto_clauses();
+        source.eq(&my_key, &pk)
     }
 }

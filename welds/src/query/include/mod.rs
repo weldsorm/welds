@@ -49,16 +49,10 @@ where
     {
         // capture how to run this query as a sub-query in on the related table
         let ship = relationship(Default::default());
-        let out_col = ship.their_key();
-        let inner_tn = <T as HasSchema>::Schema::identifier();
-        let inner_col = ship.my_key();
 
         let include_query: IncludeQuery<T, R, Ship> = IncludeQuery::<T, R, Ship> {
             _t: Default::default(),
             row_type: Default::default(),
-            out_col,
-            inner_tn,
-            inner_col,
             ship: ship.clone(),
             qb: QueryBuilder::new(),
         };
@@ -90,16 +84,10 @@ where
         WeldsError: From<<R as TryFrom<Row>>::Error>,
     {
         let ship = relationship(Default::default());
-        let out_col = ship.their_key();
-        let inner_tn = <T as HasSchema>::Schema::identifier();
-        let inner_col = ship.my_key();
 
         let include_query: IncludeQuery<T, R, Ship> = IncludeQuery::<T, R, Ship> {
             _t: Default::default(),
             row_type: Default::default(),
-            out_col,
-            inner_tn,
-            inner_col,
             ship: ship.clone(),
             qb,
         };

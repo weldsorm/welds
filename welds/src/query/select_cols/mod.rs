@@ -242,9 +242,9 @@ where
     /// Join to another table to be able to select additional columns
     /// Allow manual selection of Join Type
     pub fn join_with<R, Ship>(
-        mut self,
+        self,
         relationship: impl Fn(<T as HasRelations>::Relation) -> Ship,
-        mut sb: SelectBuilder<R>,
+        sb: SelectBuilder<R>,
         join_type: Join,
     ) -> Self
     where
@@ -256,18 +256,39 @@ where
         <T as HasSchema>::Schema: TableInfo + TableColumns,
     {
         let ship = relationship(Default::default());
-        sb.set_aliases(&self.qb.alias_asigner);
-        let _joined_group_bys = sb
-            .group_bys
-            .drain(..)
-            .map(|gb| self.group_bys.push(gb.set_alias(&sb.qb.alias)))
-            .collect::<Vec<_>>();
-        let outer_key = ship.my_key();
-        let inner_key = ship.their_key();
-        let mut jb = JoinBuilder::new(sb, outer_key, inner_key);
-        jb.ty = join_type;
-        self.joins.push(jb);
-        self
+        self.join_manual(join_type, ship, sb)
+    }
+
+    /// Join to another table to be able to select additional columns
+    /// Manually build a join relationship by hand
+    pub fn join_manual<R, Ship>(
+        mut self,
+        join_type: Join,
+        relationship: Ship,
+        mut sb: SelectBuilder<R>,
+    ) -> Self
+    where
+        T: HasRelations,
+        Ship: Relationship<T, R>,
+        R: HasSchema,
+        R: Send + HasSchema,
+        <R as HasSchema>::Schema: TableInfo + TableColumns,
+        <T as HasSchema>::Schema: TableInfo + TableColumns,
+    {
+        todo!()
+        // let ship = relationship;
+        // sb.set_aliases(&self.qb.alias_asigner);
+        // let _joined_group_bys = sb
+        //     .group_bys
+        //     .drain(..)
+        //     .map(|gb| self.group_bys.push(gb.set_alias(&sb.qb.alias)))
+        //     .collect::<Vec<_>>();
+        // let outer_key = ship.my_key();
+        // let inner_key = ship.their_key();
+        // let mut jb = JoinBuilder::new(sb, outer_key, inner_key);
+        // jb.ty = join_type;
+        // self.joins.push(jb);
+        // self
     }
 
     pub fn group_by<V, FN: AsFieldName<V>>(

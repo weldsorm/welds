@@ -29,9 +29,6 @@ where
     // The model that is being included
     pub(crate) _t: PhantomData<T>,
     pub(crate) row_type: std::marker::PhantomData<R>,
-    pub(crate) out_col: String,
-    pub(crate) inner_tn: &'static [&'static str],
-    pub(crate) inner_col: String,
     pub(crate) ship: Ship,
     pub(crate) qb: QueryBuilder<R>,
 }
@@ -62,9 +59,9 @@ where
 
         let exist_in = ExistIn::new(
             &primary_query,
-            self.out_col.clone(),
-            self.inner_tn,
-            self.inner_col.clone(),
+            //self.out_col.clone(),
+            //self.inner_tn,
+            //self.inner_col.clone(),
         );
         qb.exist_ins.push(exist_in);
 
@@ -83,9 +80,9 @@ where
         qb.set_aliases(&primary_query.alias_asigner);
         let exist_in = ExistIn::new(
             &primary_query,
-            self.out_col.clone(),
-            self.inner_tn,
-            self.inner_col.clone(),
+            //self.out_col.clone(),
+            //self.inner_tn,
+            //self.inner_col.clone(),
         );
         qb.exist_ins.push(exist_in);
         qb.to_sql(syntax)

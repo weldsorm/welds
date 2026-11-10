@@ -370,7 +370,7 @@ fn add_index_with_include_column(_state: &TableState) -> Result<MigrationStep> {
         .include("col3");
     let sql = m.up_sql(welds::Syntax::Sqlite).join(" ").to_lowercase();
     println!("{sql}");
-    assert!(sql.contains("create index"));
+    assert!(sql.contains("create unique index"));
     assert!(sql.contains("test_index_name"));
     //assert!(sql.contains("include"));
     Ok(MigrationStep::new("add_index_with_include_column", m))

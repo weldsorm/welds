@@ -56,7 +56,7 @@ impl CreateIndexWithTable {
             table: self.table,
             columns: vec![column.into()],
             includes: Vec::default(),
-            unique: false,
+            unique: self.unique,
         }
     }
 }
@@ -81,6 +81,12 @@ impl CreateIndexWithTableColumn {
             includes: self.includes,
             unique: self.unique,
         }
+    }
+
+    /// Creates a unique index. Insures uniqueness over columns in index
+    pub fn unique(mut self) -> CreateIndexWithTableColumn {
+        self.unique = true;
+        self
     }
 
     /// Add another column to this index

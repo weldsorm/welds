@@ -4,7 +4,8 @@ use crate::model_traits::ForeignKeyPartialEq;
 use crate::model_traits::HasSchema;
 use crate::model_traits::PrimaryKeyValue;
 use crate::model_traits::UniqueIdentifier;
-use crate::relations::KeyPair;
+use crate::relations::RelationshipKeyPairs;
+use crate::writers::ColumnWriter;
 use std::marker::PhantomData;
 
 pub struct BelongsTo<T, R> {
@@ -39,26 +40,69 @@ impl<T, R> Clone for BelongsTo<T, R> {
     }
 }
 
-impl<T: Send, R: Send> Relationship<T, R> for BelongsTo<T, R>
+// impl<T: Send, R: Send> Relationship<T, R> for BelongsTo<T, R>
+// where
+//     R: HasSchema,
+//     <R as HasSchema>::Schema: UniqueIdentifier,
+// {
+//     fn my_key(&self) -> String {
+//         self.foreign_key.to_owned()
+//     }
+//     fn their_key(&self) -> String {
+//         <R as HasSchema>::Schema::id_column().name().to_owned()
+//     }
+// }
+
+use super::RelationshipWriteContext;
+use super::RelationshipWriter;
+
+impl<T, R> Relationship<T, R> for BelongsTo<T, R>
 where
+    T: Send + Sync + 'static,
+    R: Send + Sync + 'static,
     R: HasSchema,
     <R as HasSchema>::Schema: UniqueIdentifier,
 {
-    fn clauses(&self) -> Vec<Box<dyn super::RelationshipClause>> {
-        vec![Box::new(self.belongsto_clauses())]
+}
+
+impl<T, R> RelationshipWriter for BelongsTo<T, R>
+where
+    T: Send + Sync,
+    R: Send + Sync,
+    R: HasSchema,
+    <R as HasSchema>::Schema: UniqueIdentifier,
+{
+    /// Returns the SQL snipit for this relationship
+    fn to_sql(&self, context: RelationshipWriteContext) -> Option<String> {
+        let table_a_key = RelationshipKeyPairs::a_key_column(self);
+        let table_b_key = RelationshipKeyPairs::b_key_column(self);
+        let RelationshipWriteContext {
+            table_a_alias,
+            table_b_alias,
+            syntax,
+        } = context;
+        let col_writer = ColumnWriter::new(syntax);
+        let table_a_key = col_writer.excape(&table_a_key);
+        let table_b_key = col_writer.excape(&table_b_key);
+
+        Some(format!(
+            "{table_a_alias}.{table_a_key} = {table_b_alias}.{table_b_key}"
+        ))
     }
 }
 
-impl<T: Send, R: Send> BelongsTo<T, R>
+impl<T, R> RelationshipKeyPairs for BelongsTo<T, R>
 where
+    T: Send + Sync,
+    R: Send + Sync,
     R: HasSchema,
     <R as HasSchema>::Schema: UniqueIdentifier,
 {
-    fn belongsto_clauses(&self) -> KeyPair {
-        KeyPair {
-            my_key: self.foreign_key.to_owned(),
-            their_key: <R as HasSchema>::Schema::id_column().name().to_owned(),
-        }
+    fn a_key_column(&self) -> String {
+        self.foreign_key.to_owned()
+    }
+    fn b_key_column(&self) -> String {
+        <R as HasSchema>::Schema::id_column().name().to_owned()
     }
 }
 
@@ -73,7 +117,7 @@ where
 {
     fn is_related(&self, source: &T, other: &R) -> bool {
         let pk = other.primary_key_value();
-        let KeyPair { my_key, .. } = self.belongsto_clauses();
-        source.eq(&my_key, &pk)
+        let fk_field: String = Self::a_key_column(self);
+        source.eq(&fk_field, &pk)
     }
 }

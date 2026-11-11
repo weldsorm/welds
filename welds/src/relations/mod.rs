@@ -1,37 +1,54 @@
 mod belongsto;
 pub use belongsto::BelongsTo;
-
+use std::sync::Arc;
 mod hasmany;
 pub use hasmany::HasMany;
-
 mod hasone;
 pub use hasone::HasOne;
-
 mod manual;
+use crate::Syntax;
+use crate::query::clause::ParamArgs;
 pub use manual::ManualRelationship;
+mod invert;
+pub(crate) use invert::RelationshipKeyPairsInvert;
 
-mod clauses;
-pub use clauses::{ClauseContext, KeyPair, MyKeyEq, RelationshipClause, TheirKeyEq};
+pub(crate) struct RelationshipWriteContext<'t> {
+    pub syntax: Syntax,
+    pub table_a_alias: &'t str,
+    pub table_b_alias: &'t str,
+}
 
-mod writer;
-pub(crate) use writer::{RelationshipWriter, Side};
+/// A `Relationship` is a trait used to compile time guard how table are joined together
+/// this is used for joins, existin, etc
+pub trait Relationship<A, B>: RelationshipWriter + Clone + 'static + PartialEq {
+    fn as_writer(self) -> Arc<Box<dyn RelationshipWriter>> {
+        Arc::new(Box::new(self))
+    }
+}
 
-#[cfg(test)]
-mod tests;
+/// How a relationship is write into sql and params are written to sql.
+pub trait RelationshipWriter: Send + Sync {
+    /// Add the argument to the list of Arguments to send to the database
+    fn bind<'lam, 'args, 'p>(&'lam self, _args: &'args mut ParamArgs<'p>)
+    where
+        'lam: 'p,
+    {
+    }
 
-/// Describes how a relationship should be wired up.
-/// Gives info about what DB columns to use on both Models
-pub trait Relationship<SELF, R>: Clone + PartialEq + Send {
-    /// a collection of the parts of the 'on' clause
-    /// all the parts that are requires to join table `SELF` to table `R`
-    ///
-    /// Each part is ANDed together when the relationship is written as SQL.
-    /// "my" refers to the table of `SELF`, "their" refers to the table of `R`
-    fn clauses(&self) -> Vec<Box<dyn RelationshipClause>>;
+    /// Returns the SQL snipit for this relationship
+    /// this is specifically the clause part of the JOIN.
+    fn to_sql(&self, context: RelationshipWriteContext) -> Option<String>;
+}
+
+/// A relationship that can be used for exist and in where filtering
+pub trait RelationshipKeyPairs: Send + Sync {
+    // they key column for the A side of the relationship
+    fn a_key_column(&self) -> String;
+    // they key column for the B side of the relationship
+    fn b_key_column(&self) -> String;
 }
 
 /// Used to check if a relationship holds between two models.
-/// This is post SQL logic. It is used to get data between sets of data
 pub trait RelationshipCompare<T, R>
 where
     Self: Relationship<T, R>,

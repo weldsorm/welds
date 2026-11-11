@@ -6,10 +6,13 @@ use crate::exts::VecStateExt;
 use crate::model_traits::{HasSchema, TableColumns, TableInfo, UniqueIdentifier};
 use crate::query::builder::QueryBuilder;
 use crate::query::clause::exists::ExistIn;
-use crate::relations::{Relationship, RelationshipWriter, Side};
+use crate::relations::Relationship;
+use crate::relations::RelationshipKeyPairs;
+use crate::relations::RelationshipKeyPairsInvert;
 use async_trait::async_trait;
 use std::any::Any;
 use std::marker::PhantomData;
+use std::sync::Arc;
 
 #[maybe_async::maybe_async]
 #[async_trait]
@@ -29,6 +32,7 @@ where
     // The model that is being included
     pub(crate) _t: PhantomData<T>,
     pub(crate) row_type: std::marker::PhantomData<R>,
+    pub(crate) inner_tn: &'static [&'static str],
     pub(crate) ship: Ship,
     pub(crate) qb: QueryBuilder<R>,
 }
@@ -39,9 +43,8 @@ impl<R, T, Ship> RelatedQuery<T> for IncludeQuery<T, R, Ship>
 where
     for<'r> &'r IncludeQuery<T, R, Ship>: Send,
     for<'b> &'b QueryBuilder<T>: Send,
-    Ship: 'static + Relationship<T, R>,
-    T: 'static + Send + HasSchema,
-    <T as HasSchema>::Schema: TableInfo,
+    Ship: Relationship<T, R> + RelationshipKeyPairs,
+    T: 'static + Send,
     R: 'static,
     <R as HasSchema>::Schema: TableInfo + TableColumns + UniqueIdentifier,
     R: Send + Sync + HasSchema,
@@ -58,10 +61,11 @@ where
         let mut qb: QueryBuilder<R> = self.qb.clone();
         qb.set_aliases(&primary_query.alias_asigner);
 
-        // the primary query (T) is the inner sub-query, the included model (R) is the outer query
-        let ship = RelationshipWriter::new(&self.ship, Side::MineIsInner);
-        let inner_tn = <T as HasSchema>::Schema::identifier();
-        let exist_in = ExistIn::new(&primary_query, inner_tn, ship);
+        // invert the relationship
+        let ship = RelationshipKeyPairsInvert::new(self.ship.clone());
+        let ship: Arc<Box<dyn RelationshipKeyPairs>> = Arc::new(Box::new(ship));
+        let exist_in = ExistIn::new(&primary_query, self.inner_tn, ship);
+
         qb.exist_ins.push(exist_in);
 
         let rows = qb.run(client).await?;
@@ -77,10 +81,12 @@ where
         let primary_query = primary_query.clone();
         let mut qb: QueryBuilder<R> = QueryBuilder::new();
         qb.set_aliases(&primary_query.alias_asigner);
-        // the primary query (T) is the inner sub-query, the included model (R) is the outer query
-        let ship = RelationshipWriter::new(&self.ship, Side::MineIsInner);
-        let inner_tn = <T as HasSchema>::Schema::identifier();
-        let exist_in = ExistIn::new(&primary_query, inner_tn, ship);
+
+        // invert the relationship
+        let ship = RelationshipKeyPairsInvert::new(self.ship.clone());
+        let ship: Arc<Box<dyn RelationshipKeyPairs>> = Arc::new(Box::new(ship));
+
+        let exist_in = ExistIn::new(&primary_query, self.inner_tn, ship);
         qb.exist_ins.push(exist_in);
         qb.to_sql(syntax)
     }

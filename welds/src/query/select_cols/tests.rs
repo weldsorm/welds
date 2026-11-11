@@ -1,5 +1,8 @@
+use std::marker::PhantomData;
+
 use crate::Syntax;
 use crate::WeldsModel;
+use crate::query::clause::ClauseAdderAndOrExt;
 
 #[derive(Debug, Default, WeldsModel)]
 #[welds(table = "products")]
@@ -68,3 +71,81 @@ fn should_be_able_to_select_join_with_order_by() {
         );
     });
 }
+
+use crate::relations::Relationship;
+use crate::relations::RelationshipWriteContext;
+use crate::relations::RelationshipWriter;
+
+#[derive(PartialEq, Clone)]
+struct ManualProductOrderJoin {}
+impl Relationship<Product, Order> for ManualProductOrderJoin {}
+
+impl RelationshipWriter for ManualProductOrderJoin {
+    /// Returns the SQL snipit for this relationship
+    fn to_sql(&self, context: RelationshipWriteContext) -> Option<String> {
+        let RelationshipWriteContext {
+            table_a_alias,
+            table_b_alias,
+            ..
+        } = context;
+        Some(format!(
+            "{table_a_alias}.\"id\" = {table_b_alias}.\"product_id\""
+        ))
+    }
+}
+
+#[test]
+fn should_be_able_to_join_using_manual_clauses() {
+    futures::executor::block_on(async move {
+        let joiner = ManualProductOrderJoin {};
+        let q = Product::all()
+            .select(|x| x.id)
+            .join_using(
+                crate::query::select_cols::Join::Inner,
+                joiner,
+                Order::all().select_as(|o| o.price, "price"),
+            )
+            .order_by_asc(|x| x.id);
+        let sql = q.to_sql(Syntax::Postgres);
+        assert_eq!(
+            sql,
+            "SELECT t1.\"id\", t2.\"price\" FROM products t1 JOIN orders t2 ON t1.\"id\" = t2.\"product_id\" ORDER BY t1.\"id\" ASC"
+        );
+    });
+}
+
+//#[test]
+//fn should_be_able_to_join_using_manual_clauses() {
+//    futures::executor::block_on(async move {
+//        let q = Product::all()
+//            .select(|x| x.id)
+//            .join_on(
+//                |p, o| p.id.equal(0).and(o.id.equal(1)),
+//                Order::all().select_as(|o| o.price, "price"),
+//            )
+//            .order_by_asc(|x| x.id);
+//        let sql = q.to_sql(Syntax::Postgres);
+//        assert_eq!(
+//            sql,
+//            "SELECT t1.\"id\", t2.\"price\" FROM products t1 JOIN orders t2 ON t1.\"id\" = t2.\"product_id\" ORDER BY t1.\"id\" ASC"
+//        );
+//    });
+//}
+//
+//#[test]
+//fn should_be_able_to_join_using_manual_to_join_columns() {
+//    futures::executor::block_on(async move {
+//        let q = Product::all()
+//            .select(|x| x.id)
+//            .join_on(
+//                |p, o| p.id.equal(o.id),
+//                Order::all().select_as(|o| o.price, "price"),
+//            )
+//            .order_by_asc(|x| x.id);
+//        let sql = q.to_sql(Syntax::Postgres);
+//        assert_eq!(
+//            sql,
+//            "SELECT t1.\"id\", t2.\"price\" FROM products t1 JOIN orders t2 ON t1.\"id\" = t2.\"product_id\" ORDER BY t1.\"id\" ASC"
+//        );
+//    });
+//}

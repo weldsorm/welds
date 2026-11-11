@@ -35,10 +35,6 @@ where
         let exists_in = self.qb.exist_ins.as_slice();
         let alias = &self.qb.alias;
 
-        // The JOINs are written before the WHERE in the SQL,
-        // their params must be bound/numbered first
-        let joins_sql = build_joins(syntax, self, &next_params, args);
-
         let mut wheres = build_where_clauses(syntax, &next_params, alias, wheres, args, exists_in);
         for j in &self.joins {
             j.append_where(syntax, &mut wheres, &next_params, args);
@@ -53,7 +49,7 @@ where
 
         join_sql_parts(&[
             build_head_select(syntax, self.distinct, &select_renders, self),
-            joins_sql,
+            build_joins(syntax, self),
             where_sql,
             build_group_by(syntax, &select_renders, self),
             build_tail(syntax, &self.qb),
@@ -203,14 +199,8 @@ where
     parts
 }
 
-fn build_joins<'s, 'args, 'p, T>(
-    syntax: Syntax,
-    sb: &'s SelectBuilder<T>,
-    next_params: &NextParam,
-    args: &'args mut Option<ParamArgs<'p>>,
-) -> Option<String>
+fn build_joins<T>(syntax: Syntax, sb: &SelectBuilder<T>) -> Option<String>
 where
-    's: 'p,
     T: HasSchema,
     <T as HasSchema>::Schema: TableInfo + TableColumns,
 {
@@ -218,7 +208,7 @@ where
     let alias = &sb.qb.alias;
     // Add columns from joins
     for join in &sb.joins {
-        join.append_jointable(syntax, &mut list, alias, next_params, args);
+        join.append_jointable(syntax, &mut list, alias);
     }
     Some(list.join(" "))
 }

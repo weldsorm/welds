@@ -1,4 +1,4 @@
-use welds_connections::Param;
+pub(crate) use welds_connections::Param;
 pub type ParamArgs<'a> = Vec<&'a (dyn Param + Sync)>;
 
 // Concrete Types

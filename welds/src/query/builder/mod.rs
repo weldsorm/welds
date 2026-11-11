@@ -6,7 +6,9 @@ use crate::query::clause::exists::ExistIn;
 use crate::query::clause::{AsFieldName, AssignmentAdder, ClauseAdder, OrderBy};
 use crate::query::include::IncludeBuilder;
 use crate::query::optional::Optional;
-use crate::relations::{HasRelations, Relationship, RelationshipWriter, Side};
+use crate::relations::{
+    HasRelations, Relationship, RelationshipKeyPairs, RelationshipKeyPairsInvert,
+};
 use crate::writers::alias::TableAlias;
 use std::marker::PhantomData;
 use std::sync::Arc;
@@ -210,7 +212,7 @@ where
     ) -> Self
     where
         T: HasRelations,
-        Ship: Relationship<T, R>,
+        Ship: Relationship<T, R> + RelationshipKeyPairs,
         R: HasSchema,
         R: Send + Sync + HasSchema,
         <R as HasSchema>::Schema: TableInfo + TableColumns,
@@ -218,10 +220,11 @@ where
         <T as HasRelations>::Relation: Default,
     {
         let ship = relationship(Default::default());
-        // self (the outer query) is the table the relationship is defined on
-        let ship = RelationshipWriter::new(&ship, Side::MineIsOuter);
+        let ship: Arc<Box<dyn RelationshipKeyPairs>> = Arc::new(Box::new(ship));
         let inner_tn = <R as HasSchema>::Schema::identifier();
+
         let mut exist_in = ExistIn::new(&filter, inner_tn, ship);
+
         exist_in.set_aliases(&self.alias_asigner);
         self.exist_ins.push(exist_in);
         self
@@ -234,7 +237,7 @@ where
     ) -> QueryBuilder<R>
     where
         T: HasRelations,
-        Ship: Relationship<T, R>,
+        Ship: Relationship<T, R> + RelationshipKeyPairs,
         T: HasSchema,
         R: Send + Sync + HasSchema,
         <R as HasSchema>::Schema: TableInfo + TableColumns,
@@ -242,12 +245,16 @@ where
         <T as HasRelations>::Relation: Default,
     {
         let ship = relationship(Default::default());
+        //let ship: Arc<Box<dyn RelationshipKeyPairs>> = Arc::new(Box::new(ship));
         let mut qb: QueryBuilder<R> = QueryBuilder::new();
         qb.set_aliases(&self.alias_asigner);
 
-        // self becomes the inner query, R is the outer query
-        let ship = RelationshipWriter::new(&ship, Side::MineIsInner);
         let inner_tn = <T as HasSchema>::Schema::identifier();
+
+        // invert the relationship
+        let ship = RelationshipKeyPairsInvert::new(ship);
+
+        let ship: Arc<Box<dyn RelationshipKeyPairs>> = Arc::new(Box::new(ship));
         let exist_in = ExistIn::new(self, inner_tn, ship);
 
         qb.exist_ins.push(exist_in);
@@ -534,7 +541,7 @@ where
     ) -> IncludeBuilder<T>
     where
         T: 'static + HasRelations,
-        Ship: 'static + Sync + Relationship<T, R>,
+        Ship: Relationship<T, R> + RelationshipKeyPairs,
         R: HasSchema,
         R: 'static,
         R: Send + Sync + HasSchema,
@@ -559,7 +566,7 @@ where
     ) -> IncludeBuilder<T>
     where
         T: 'static + HasRelations,
-        Ship: 'static + Sync + Relationship<T, R>,
+        Ship: Relationship<T, R> + RelationshipKeyPairs,
         R: HasSchema,
         R: 'static,
         R: Send + Sync + HasSchema,

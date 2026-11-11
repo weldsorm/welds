@@ -3,7 +3,7 @@ use crate::errors::WeldsError;
 use crate::model_traits::{HasSchema, TableColumns, TableInfo, UniqueIdentifier};
 use crate::query::builder::QueryBuilder;
 use crate::query::clause::{AsFieldName, ClauseAdder};
-use crate::relations::{HasRelations, Relationship};
+use crate::relations::{HasRelations, Relationship, RelationshipKeyPairs};
 
 mod exec;
 pub(crate) mod related_query;
@@ -37,7 +37,7 @@ where
     ) -> IncludeBuilder<T>
     where
         T: 'static + HasRelations,
-        Ship: 'static + Sync + Relationship<T, R>,
+        Ship: Relationship<T, R> + RelationshipKeyPairs,
         R: HasSchema,
         R: 'static,
         R: Send + Sync + HasSchema,
@@ -49,10 +49,12 @@ where
     {
         // capture how to run this query as a sub-query in on the related table
         let ship = relationship(Default::default());
+        let inner_tn = <T as HasSchema>::Schema::identifier();
 
         let include_query: IncludeQuery<T, R, Ship> = IncludeQuery::<T, R, Ship> {
             _t: Default::default(),
             row_type: Default::default(),
+            inner_tn,
             ship: ship.clone(),
             qb: QueryBuilder::new(),
         };
@@ -73,7 +75,7 @@ where
     ) -> IncludeBuilder<T>
     where
         T: 'static + HasRelations,
-        Ship: 'static + Sync + Relationship<T, R>,
+        Ship: Relationship<T, R> + RelationshipKeyPairs,
         R: HasSchema,
         R: 'static,
         R: Send + Sync + HasSchema,
@@ -84,10 +86,12 @@ where
         WeldsError: From<<R as TryFrom<Row>>::Error>,
     {
         let ship = relationship(Default::default());
+        let inner_tn = <T as HasSchema>::Schema::identifier();
 
         let include_query: IncludeQuery<T, R, Ship> = IncludeQuery::<T, R, Ship> {
             _t: Default::default(),
             row_type: Default::default(),
+            inner_tn,
             ship: ship.clone(),
             qb,
         };
@@ -142,11 +146,4 @@ where
         self.qb = self.qb.order_by_asc(lam);
         self
     }
-
-    // pub(crate) fn set_aliases(&mut self, alias_asigner: &Arc<TableAlias>) {
-    //     self.qb.set_aliases(alias_asigner);
-    //     for join in &mut self.joins {
-    //         join.set_aliases(&self.qb.alias_asigner);
-    //     }
-    // }
 }

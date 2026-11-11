@@ -4,7 +4,8 @@ use crate::model_traits::ForeignKeyPartialEq;
 use crate::model_traits::HasSchema;
 use crate::model_traits::PrimaryKeyValue;
 use crate::model_traits::UniqueIdentifier;
-use crate::relations::KeyPair;
+use crate::relations::RelationshipKeyPairs;
+use crate::writers::ColumnWriter;
 use std::marker::PhantomData;
 
 pub struct HasOne<T, R> {
@@ -38,26 +39,69 @@ impl<T, R> HasOne<T, R> {
     }
 }
 
-impl<T: Send, R: Send> Relationship<T, R> for HasOne<T, R>
+// impl<T: Send, R: Send> Relationship<T, R> for HasOne<T, R>
+// where
+//     T: HasSchema,
+//     <T as HasSchema>::Schema: UniqueIdentifier,
+// {
+//     fn my_key(&self) -> String {
+//         <T as HasSchema>::Schema::id_column().name().to_owned()
+//     }
+//     fn their_key(&self) -> String {
+//         self.foreign_key.to_owned()
+//     }
+// }
+
+impl<T, R> RelationshipKeyPairs for HasOne<T, R>
 where
+    T: Send + Sync,
+    R: Send + Sync,
     T: HasSchema,
     <T as HasSchema>::Schema: UniqueIdentifier,
 {
-    fn clauses(&self) -> Vec<Box<dyn super::RelationshipClause>> {
-        vec![Box::new(self.hasone_clauses())]
+    fn a_key_column(&self) -> String {
+        <T as HasSchema>::Schema::id_column().name().to_owned()
+    }
+    fn b_key_column(&self) -> String {
+        self.foreign_key.to_owned()
     }
 }
 
-impl<T: Send, R: Send> HasOne<T, R>
+use super::RelationshipWriteContext;
+use super::RelationshipWriter;
+
+impl<T, R> Relationship<T, R> for HasOne<T, R>
 where
+    T: Send + Sync + 'static,
+    R: Send + Sync + 'static,
     T: HasSchema,
     <T as HasSchema>::Schema: UniqueIdentifier,
 {
-    fn hasone_clauses(&self) -> KeyPair {
-        KeyPair {
-            my_key: <T as HasSchema>::Schema::id_column().name().to_owned(),
-            their_key: self.foreign_key.to_owned(),
-        }
+}
+
+impl<T, R> RelationshipWriter for HasOne<T, R>
+where
+    T: Send + Sync,
+    R: Send + Sync,
+    T: HasSchema,
+    <T as HasSchema>::Schema: UniqueIdentifier,
+{
+    /// Returns the SQL snipit for this relationship
+    fn to_sql(&self, context: RelationshipWriteContext) -> Option<String> {
+        let table_a_key = RelationshipKeyPairs::a_key_column(self);
+        let table_b_key = RelationshipKeyPairs::b_key_column(self);
+        let RelationshipWriteContext {
+            table_a_alias,
+            table_b_alias,
+            syntax,
+        } = context;
+        let col_writer = ColumnWriter::new(syntax);
+        let table_a_key = col_writer.excape(&table_a_key);
+        let table_b_key = col_writer.excape(&table_b_key);
+
+        Some(format!(
+            "{table_a_alias}.{table_a_key} = {table_b_alias}.{table_b_key}"
+        ))
     }
 }
 
@@ -71,9 +115,8 @@ where
     R: ForeignKeyPartialEq<T::PrimaryKeyType>,
 {
     fn is_related(&self, source: &T, other: &R) -> bool {
-        let KeyPair { their_key, .. } = self.hasone_clauses();
         let pk = source.primary_key_value();
-        let fk_field: String = their_key;
+        let fk_field: String = Self::b_key_column(self);
         other.eq(&fk_field, &pk)
     }
 }

@@ -3,7 +3,7 @@ use crate::query::builder::QueryBuilder;
 use crate::query::clause::{AsFieldName, ClauseAdder};
 use crate::query::select_cols::group_by::GroupBy;
 use crate::query::select_cols::select_column::SelectKind;
-use crate::relations::{HasRelations, Relationship, RelationshipWriter, Side};
+use crate::relations::{HasRelations, Relationship, RelationshipKeyPairs};
 use crate::writers::alias::TableAlias;
 pub use join::Join;
 use join::JoinBuilder;
@@ -193,7 +193,7 @@ where
     ) -> Self
     where
         T: HasRelations,
-        Ship: Relationship<T, R>,
+        Ship: Relationship<T, R> + RelationshipKeyPairs,
         R: HasSchema,
         T: HasSchema,
         R: Send + HasSchema,
@@ -243,7 +243,7 @@ where
     /// Allow manual selection of Join Type
     pub fn join_with<R, Ship>(
         self,
-        relationship: impl Fn(<T as HasRelations>::Relation) -> Ship,
+        relationship_fn: impl Fn(<T as HasRelations>::Relation) -> Ship,
         sb: SelectBuilder<R>,
         join_type: Join,
     ) -> Self
@@ -255,28 +255,23 @@ where
         <R as HasSchema>::Schema: TableInfo + TableColumns,
         <T as HasSchema>::Schema: TableInfo + TableColumns,
     {
-        let ship = relationship(Default::default());
-        self.join_manual(join_type, ship, sb)
+        let relationship = relationship_fn(Default::default());
+        self.join_using(join_type, relationship, sb)
     }
 
     /// Join to another table to be able to select additional columns
-    /// Manually build a join relationship by hand
-    ///
-    /// Unlike `join_with` the relationship does not need to be defined on the model.
-    /// Any `Relationship` can be used, for example a `ManualRelationship` with multiple clauses
-    /// ```ignore
-    /// let ship = ManualRelationship::<Order, Extra>::using("extra_order_id1", "extra_order_id2")
-    ///     .and_their_eq("ext", 3);
-    /// let q = Order::all().select_all().join_manual(Join::Left, ship, Extra::all().select_all());
-    /// ```
-    pub fn join_manual<R, Ship>(
+    /// Manual provide the joining relationship
+    /// you can manual impl Relationship to fully control how two tables are joined
+    pub fn join_using<R, Ship>(
         mut self,
         join_type: Join,
         relationship: Ship,
         mut sb: SelectBuilder<R>,
     ) -> Self
     where
+        T: HasRelations,
         Ship: Relationship<T, R>,
+        R: HasSchema,
         R: Send + HasSchema,
         <R as HasSchema>::Schema: TableInfo + TableColumns,
         <T as HasSchema>::Schema: TableInfo + TableColumns,
@@ -287,9 +282,7 @@ where
             .drain(..)
             .map(|gb| self.group_bys.push(gb.set_alias(&sb.qb.alias)))
             .collect::<Vec<_>>();
-        // self (the outer table) is the table the relationship is defined on
-        let ship = RelationshipWriter::new(&relationship, Side::MineIsOuter);
-        let mut jb = JoinBuilder::new(sb, ship);
+        let mut jb = JoinBuilder::new(sb, relationship);
         jb.ty = join_type;
         self.joins.push(jb);
         self

@@ -5,6 +5,8 @@ use crate::Syntax;
 use crate::model_traits::{HasSchema, TableInfo};
 use crate::query::clause::ClauseAdder;
 use crate::query::clause::ParamArgs;
+use crate::relations::Relationship;
+use crate::relations::RelationshipWriteContext;
 use crate::relations::RelationshipWriter;
 use crate::writers::NextParam;
 use crate::writers::TableWriter;
@@ -14,10 +16,13 @@ use std::sync::Arc;
 #[derive(Clone)]
 pub(crate) struct JoinBuilder {
     pub(crate) alias_asigner: Arc<TableAlias>,
-    // how the outer table is linked to the joined (inner) table
-    pub(crate) ship: RelationshipWriter,
+
+    relationship_writer: Arc<Box<dyn RelationshipWriter>>,
+    joining_table: &'static [&'static str],
     pub(crate) inner_alias: String,
-    pub(crate) inner_table: &'static [&'static str],
+
+    // pub(crate) outer_key: String,
+    // pub(crate) inner_key: String,
     pub(crate) wheres: Vec<Arc<Box<dyn ClauseAdder>>>,
     pub(crate) selects: Vec<SelectColumn>,
     pub(crate) ty: Join,
@@ -60,40 +65,33 @@ impl JoinBuilder {
         }
     }
 
-    pub(super) fn append_jointable<'s, 'args, 'p>(
-        &'s self,
+    pub(super) fn append_jointable(
+        &self,
         syntax: Syntax,
         list: &mut Vec<String>,
         outer_alias: &str,
-        next_params: &NextParam,
-        args: &'args mut Option<ParamArgs<'p>>,
-    ) where
-        's: 'p,
-    {
-        let inner_table = TableWriter::new(syntax).write2(self.inner_table);
+    ) {
+        let inner_table = TableWriter::new(syntax).write2(self.joining_table);
 
-        // bind in the same order the clauses are written
-        if let Some(args) = args {
-            self.ship.bind(args);
-        }
-        let on_parts = self
-            .ship
-            .to_sql(syntax, outer_alias, &self.inner_alias, next_params);
+        let context = RelationshipWriteContext {
+            syntax,
+            table_a_alias: outer_alias,
+            table_b_alias: &self.inner_alias,
+        };
 
-        let mut sql = format!(
-            "{jointy} {itn} {ita}",
+        let sql = format!(
+            "{jointy} {itn} {ita} ON {join_clause}",
             jointy = self.ty.to_sql(),
             itn = inner_table,
             ita = self.inner_alias,
+            join_clause = self
+                .relationship_writer
+                .to_sql(context)
+                .unwrap_or_else(|| "1=0".to_owned() /* always false*/),
         );
-        // A relationship without any clauses has nothing to join ON
-        if !on_parts.is_empty() {
-            sql.push_str(" ON ");
-            sql.push_str(&on_parts.join(" AND "));
-        }
         list.push(sql);
         for sub in &self.subs {
-            sub.append_jointable(syntax, list, &self.inner_alias, next_params, args);
+            sub.append_jointable(syntax, list, &self.inner_alias);
         }
     }
 
@@ -119,18 +117,19 @@ impl JoinBuilder {
         }
     }
 
-    pub(super) fn new<T>(sb: SelectBuilder<T>, ship: RelationshipWriter) -> JoinBuilder
+    pub(super) fn new<A, B, Ship>(sb: SelectBuilder<B>, relationship: Ship) -> JoinBuilder
     where
-        T: Send + HasSchema,
-        <T as HasSchema>::Schema: TableInfo,
+        B: Send + HasSchema,
+        Ship: Relationship<A, B> + 'static,
+        <B as HasSchema>::Schema: TableInfo,
     {
-        let tn = <T as HasSchema>::Schema::identifier();
+        let joining_table = <B as HasSchema>::Schema::identifier();
 
         JoinBuilder {
             alias_asigner: sb.qb.alias_asigner.clone(),
             inner_alias: sb.qb.alias.clone(),
-            inner_table: tn,
-            ship,
+            relationship_writer: relationship.as_writer(),
+            joining_table,
             wheres: sb.qb.wheres,
             selects: sb.selects,
             ty: Join::Inner,

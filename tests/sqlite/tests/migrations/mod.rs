@@ -422,9 +422,12 @@ fn create_table_with_default(_state: &TableState) -> Result<MigrationStep> {
         .id(|c| c("id", Type::Int))
         .column(|c| c("col1", Type::String).with_default("test string"))
         .column(|c| c("col2", Type::Int).with_default(33))
-        .column(|c| c("col3", Type::Datetime).with_default(DefaultValueNow::default()));
+        .column(|c| c("col3", Type::Datetime).with_default(DefaultValueNow::default()))
+        .column(|c| c("col4", Type::Text).with_default("hello world"));
     let sql = m.up_sql(welds::Syntax::Sqlite).join("; ").to_lowercase();
-    assert!(sql.contains(" default "));
+    assert!(sql.contains("default 'test string'"));
+    assert!(sql.contains("default 33"));
+    assert!(sql.contains("default 'hello world'"));
     Ok(MigrationStep::new("create_table_with_default", m))
 }
 

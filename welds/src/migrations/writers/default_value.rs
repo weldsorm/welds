@@ -30,7 +30,7 @@ impl DefaultValue for DefaultValueNow {
 impl DefaultValue for bool {
     fn to_raw_sql(&self, syntax: Syntax, ty: &Type) -> String {
         match ty {
-            Type::String | Type::StringSized(_) => {
+            Type::String | Type::StringSized(_) | Type::Text => {
                 let s = sql_string_literal(&self.to_string());
                 format!("DEFAULT {}", s)
             }
@@ -49,7 +49,7 @@ impl DefaultValue for bool {
 impl DefaultValue for u8 {
     fn to_raw_sql(&self, _syntax: Syntax, ty: &Type) -> String {
         match ty {
-            Type::String | Type::StringSized(_) => {
+            Type::String | Type::StringSized(_) | Type::Text => {
                 let s = sql_string_literal(&self.to_string());
                 format!("DEFAULT {}", s)
             }
@@ -61,7 +61,7 @@ impl DefaultValue for u8 {
 impl DefaultValue for i8 {
     fn to_raw_sql(&self, _syntax: Syntax, ty: &Type) -> String {
         match ty {
-            Type::String | Type::StringSized(_) => {
+            Type::String | Type::StringSized(_) | Type::Text => {
                 let s = sql_string_literal(&self.to_string());
                 format!("DEFAULT {}", s)
             }
@@ -72,7 +72,7 @@ impl DefaultValue for i8 {
 impl DefaultValue for i16 {
     fn to_raw_sql(&self, _syntax: Syntax, ty: &Type) -> String {
         match ty {
-            Type::String | Type::StringSized(_) => {
+            Type::String | Type::StringSized(_) | Type::Text => {
                 let s = sql_string_literal(&self.to_string());
                 format!("DEFAULT {}", s)
             }
@@ -83,7 +83,7 @@ impl DefaultValue for i16 {
 impl DefaultValue for i32 {
     fn to_raw_sql(&self, _syntax: Syntax, ty: &Type) -> String {
         match ty {
-            Type::String | Type::StringSized(_) => {
+            Type::String | Type::StringSized(_) | Type::Text => {
                 let s = sql_string_literal(&self.to_string());
                 format!("DEFAULT {}", s)
             }
@@ -94,7 +94,7 @@ impl DefaultValue for i32 {
 impl DefaultValue for i64 {
     fn to_raw_sql(&self, _syntax: Syntax, ty: &Type) -> String {
         match ty {
-            Type::String | Type::StringSized(_) => {
+            Type::String | Type::StringSized(_) | Type::Text => {
                 let s = sql_string_literal(&self.to_string());
                 format!("DEFAULT {}", s)
             }
@@ -105,7 +105,7 @@ impl DefaultValue for i64 {
 impl DefaultValue for i128 {
     fn to_raw_sql(&self, _syntax: Syntax, ty: &Type) -> String {
         match ty {
-            Type::String | Type::StringSized(_) => {
+            Type::String | Type::StringSized(_) | Type::Text => {
                 let s = sql_string_literal(&self.to_string());
                 format!("DEFAULT {}", s)
             }
@@ -117,7 +117,7 @@ impl DefaultValue for i128 {
 impl DefaultValue for String {
     fn to_raw_sql(&self, _syntax: Syntax, ty: &Type) -> String {
         match ty {
-            Type::String | Type::StringSized(_) => {
+            Type::String | Type::StringSized(_) | Type::Text => {
                 let s = sql_string_literal(self);
                 format!("DEFAULT {}", s)
             }
@@ -129,7 +129,7 @@ impl DefaultValue for String {
 impl DefaultValue for &str {
     fn to_raw_sql(&self, _syntax: Syntax, ty: &Type) -> String {
         match ty {
-            Type::String | Type::StringSized(_) => {
+            Type::String | Type::StringSized(_) | Type::Text => {
                 let s = sql_string_literal(self);
                 format!("DEFAULT {}", s)
             }

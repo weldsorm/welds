@@ -392,3 +392,53 @@ async fn should_be_able_to_find_all_not_horses() {
     // verify not-horse count is total of everything not a horse
     assert_eq!(total - horses, not_horse_count);
 }
+
+#[tokio::test]
+async fn should_be_able_to_order_by_and_include_in_same_query() {
+    let conn = get_conn().await;
+
+    let q = Product::all().include(|p| p.order).order_by_asc(|p| p.id);
+
+    for sql in q.to_sql(Syntax::Mssql) {
+        println!("SQL: {sql}");
+        println!();
+    }
+
+    let dataset = q.run(&conn).await.unwrap();
+
+    let all_products = Product::all()
+        .order_by_asc(|p| p.id)
+        .run(&conn)
+        .await
+        .unwrap();
+
+    let expected_ids: Vec<i32> = all_products.iter().map(|p| p.id).collect();
+    let real_ids: Vec<i32> = dataset.iter().map(|p| p.id).collect();
+    assert_eq!(expected_ids, real_ids);
+
+    for product in dataset.iter() {
+        let orders = Order::where_col(|o| o.product_id.equal(product.id))
+            .run(&conn)
+            .await
+            .unwrap();
+        let order_expected_ids: Vec<i32> = orders.iter().map(|o| o.id).collect();
+        let order_real_ids: Vec<i32> = product.get(|p| p.order).iter().map(|o| o.id).collect();
+        assert!(
+            contains_same_ids(&order_expected_ids, &order_real_ids),
+            "\nexp: {order_expected_ids:?} \nreal: {order_real_ids:?}"
+        );
+    }
+
+    // pass is no panic while running
+}
+
+fn contains_same_ids(a: &[i32], b: &[i32]) -> bool {
+    if a.len() != b.len() {
+        return false;
+    }
+    let mut a = a.to_vec();
+    let mut b = b.to_vec();
+    a.sort_unstable();
+    b.sort_unstable();
+    a == b
+}

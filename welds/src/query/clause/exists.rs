@@ -64,8 +64,15 @@ impl ExistIn {
 
     fn tails(&self, syntax: Syntax, tablealias: &str) -> String {
         use crate::query::tail;
-        tail::write(syntax, &self.limit, &self.offset, &self.orderby, tablealias)
-            .unwrap_or_default()
+        // this is an existsin query order doesn't mater
+        // within the exist_ins unless there is a limit.
+
+        if self.limit.is_some() {
+            tail::write(syntax, &self.limit, &self.offset, &self.orderby, tablealias)
+                .unwrap_or_default()
+        } else {
+            tail::write(syntax, &self.limit, &self.offset, &[], tablealias).unwrap_or_default()
+        }
     }
 
     fn exists_clause(&self, syntax: Syntax, _tablealias: &str, inner_clauses: &str) -> String {

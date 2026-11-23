@@ -2,6 +2,7 @@ use super::get_conn;
 use welds::detect::find_table;
 use welds::errors::Result;
 use welds::migrations::prelude::*;
+use welds::migrations::writers::default_value::DefaultValueNow;
 use welds::Client;
 
 /************************************************
@@ -426,5 +427,98 @@ fn creating_a_fk_to_table_should_be_ok_test() {
 
         let rows = client.fetch_rows(sql, &[]).await.unwrap();
         assert_eq!(rows.len(), 1);
+    })
+}
+
+/************************************************
+* Test adding indexes to tables
+* **********************************************/
+
+fn create_able_to_add_indexes_to(_state: &TableState) -> Result<MigrationStep> {
+    let m = create_table("test_table_for_indexes")
+        .id(|c| c("id", Type::Int))
+        .column(|c| c("col1", Type::String))
+        .column(|c| c("col2", Type::Int))
+        .column(|c| c("col3", Type::Bool))
+        .column(|c| c("col4", Type::Float));
+    Ok(MigrationStep::new("create_test_index_table", m))
+}
+
+fn add_index_with_include_column(_state: &TableState) -> Result<MigrationStep> {
+    let m = create_index()
+        .table("test_table_for_indexes")
+        .with_name("test_index_name")
+        .unique()
+        .column("col1")
+        .column("col2")
+        .include("col3");
+    let sql = m.up_sql(welds::Syntax::Postgres).join(" ").to_lowercase();
+    println!("{sql}");
+    assert!(sql.contains("create unique index"));
+    assert!(sql.contains("test_index_name"));
+    assert!(sql.contains("include"));
+    Ok(MigrationStep::new("add_index_with_include_column", m))
+}
+
+#[test]
+fn should_be_able_to_add_indexes_to_table() {
+    async_std::task::block_on(async {
+        let client = get_conn().await;
+        let client = &client;
+        let list1: Vec<MigrationFn> =
+            vec![create_able_to_add_indexes_to, add_index_with_include_column];
+        up(client, list1.as_slice()).await.unwrap();
+    })
+}
+
+/************************************************
+* Create A table with a default value
+* **********************************************/
+
+fn create_table_with_default(_state: &TableState) -> Result<MigrationStep> {
+    let m = create_table("test_table_with_default")
+        .id(|c| c("id", Type::Int))
+        .column(|c| c("col1", Type::String).with_default("test string"))
+        .column(|c| c("col2", Type::Int).with_default(33))
+        .column(|c| c("col3", Type::Datetime).with_default(DefaultValueNow::default()));
+    let sql = m.up_sql(welds::Syntax::Postgres).join("; ").to_lowercase();
+    assert!(sql.contains(" default "));
+    Ok(MigrationStep::new("create_table_with_default", m))
+}
+
+#[test]
+fn should_be_able_to_create_table_with_default() {
+    async_std::task::block_on(async {
+        let client = get_conn().await;
+        let client = &client;
+        let list1: Vec<MigrationFn> = vec![create_table_with_default];
+        up(client, list1.as_slice()).await.unwrap();
+    })
+}
+
+fn create_table_for_default(_state: &TableState) -> Result<MigrationStep> {
+    let m = create_table("test_table_for_adding_defaults").id(|c| c("id", Type::Int));
+    Ok(MigrationStep::new("create_table_for_default", m))
+}
+
+fn add_col_with_default_to_table(state: &TableState) -> Result<MigrationStep> {
+    let m = change_table(state, "test_table_for_adding_defaults")
+        .unwrap()
+        .add_column("col1", Type::Bool)
+        .null()
+        .with_default(true);
+    let sql = m.up_sql(welds::Syntax::Postgres).join("; ").to_lowercase();
+    println!("{sql}");
+    assert!(sql.contains(" default "));
+    Ok(MigrationStep::new("add_col_with_default_to_table", m))
+}
+
+#[test]
+fn should_be_able_add_column_with_default_values() {
+    async_std::task::block_on(async {
+        let client = get_conn().await;
+        let client = &client;
+        let list1: Vec<MigrationFn> = vec![create_table_for_default, add_col_with_default_to_table];
+        up(client, list1.as_slice()).await.unwrap();
     })
 }

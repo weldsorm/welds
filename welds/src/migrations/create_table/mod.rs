@@ -2,6 +2,7 @@ use super::types::{Index, OnDelete, Type};
 use crate::Syntax;
 use crate::migrations::MigrationWriter;
 use crate::migrations::writers;
+use crate::migrations::writers::default_value::DefaultValue;
 use crate::model_traits::TableIdent;
 
 impl MigrationWriter for TableBuilder {
@@ -36,14 +37,14 @@ pub fn create_table(name: impl Into<String>) -> TableBuilder {
     let ident = TableIdent::parse(&name);
     TableBuilder {
         ident,
-        pk: IdBuilder::default(),
+        pks: Vec::default(),
         columns: Vec::default(),
     }
 }
 
 pub struct TableBuilder {
     pub(crate) ident: TableIdent,
-    pub(crate) pk: IdBuilder,
+    pub(crate) pks: Vec<IdBuilder>,
     pub(crate) columns: Vec<ColumnBuilder>,
 }
 
@@ -51,16 +52,26 @@ type ColumnLambda = fn(&str, Type) -> ColumnBuilder;
 type TableLambda = fn(&str, Type) -> IdBuilder;
 
 impl TableBuilder {
+    pub(crate) fn primary_keys(&self) -> Vec<IdBuilder> {
+        if self.pks.is_empty() {
+            vec![IdBuilder::default()]
+        } else {
+            self.pks.clone()
+        }
+    }
+
     /// Set the name and type of the primary_key column for the table.
     pub fn id(mut self, lam: fn(TableLambda) -> IdBuilder) -> Self {
         let builder = |name: &str, ty: Type| -> IdBuilder {
             IdBuilder {
                 name: name.to_string(),
                 ty,
+                index: None,
+                index_name: None,
             }
         };
         let col = lam(builder);
-        self.pk = col;
+        self.pks.push(col);
         self
     }
 
@@ -73,6 +84,7 @@ impl TableBuilder {
                 nullable: false,
                 index: None,
                 index_name: None,
+                default: None,
             }
         };
         let col = lam(builder);
@@ -87,6 +99,7 @@ pub struct ColumnBuilder {
     pub(crate) nullable: bool,
     pub(crate) index: Option<Index>,
     pub(crate) index_name: Option<String>,
+    pub(crate) default: Option<Box<dyn DefaultValue>>,
 }
 
 impl ColumnBuilder {
@@ -103,6 +116,16 @@ impl ColumnBuilder {
         if self.index.is_none() {
             self.index = Some(Index::Default);
         }
+        self
+    }
+
+    /// Creates default value for the column
+    pub fn with_default<T>(mut self, default_value: T) -> Self
+    where
+        T: DefaultValue + 'static,
+    {
+        let value: Box<dyn DefaultValue> = Box::new(default_value);
+        self.default = Some(value);
         self
     }
 
@@ -130,9 +153,47 @@ impl ColumnBuilder {
     }
 }
 
+#[derive(Clone)]
 pub struct IdBuilder {
     pub(crate) name: String,
     pub(crate) ty: Type,
+    pub(crate) index: Option<Index>,
+    pub(crate) index_name: Option<String>,
+}
+
+impl IdBuilder {
+    pub fn is_null(self) -> Self {
+        self
+    }
+
+    pub fn with_index_name(mut self, name: impl Into<String>) -> Self {
+        let name: String = name.into();
+        self.index_name = Some(name);
+        if self.index.is_none() {
+            self.index = Some(Index::Default);
+        }
+        self
+    }
+
+    pub fn create_index(mut self) -> Self {
+        self.index = Some(Index::Default);
+        self
+    }
+
+    pub fn create_unique_index(mut self) -> Self {
+        self.index = Some(Index::Unique);
+        self
+    }
+
+    pub fn create_foreign_key(
+        mut self,
+        table: impl Into<String>,
+        column: impl Into<String>,
+        on_delete: OnDelete,
+    ) -> Self {
+        self.index = Some(Index::ForeignKey((table.into(), column.into(), on_delete)));
+        self
+    }
 }
 
 impl Default for IdBuilder {
@@ -140,6 +201,8 @@ impl Default for IdBuilder {
         Self {
             name: "id".to_string(),
             ty: Type::Int,
+            index: None,
+            index_name: None,
         }
     }
 }

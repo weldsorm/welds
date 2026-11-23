@@ -1,3 +1,5 @@
+use welds_connections::Syntax;
+
 // builder pattern style create index
 use crate::migrations::MigrationWriter;
 use crate::model_traits::TableIdent;
@@ -31,6 +33,16 @@ pub struct CreateIndexWithTable {
 }
 
 impl CreateIndexWithTable {
+    /// Manually set the index name
+    /// NOTE: will be truncated if to long for SQL backend
+    pub fn with_name(self, index_name: impl Into<String>) -> CreateIndexWithTable {
+        CreateIndexWithTable {
+            name: index_name.into(),
+            table: self.table,
+            unique: self.unique,
+        }
+    }
+
     /// Creates a unique index. Insures uniqueness over columns in index
     pub fn unique(mut self) -> CreateIndexWithTable {
         self.unique = true;
@@ -44,7 +56,7 @@ impl CreateIndexWithTable {
             table: self.table,
             columns: vec![column.into()],
             includes: Vec::default(),
-            unique: false,
+            unique: self.unique,
         }
     }
 }
@@ -59,6 +71,24 @@ pub struct CreateIndexWithTableColumn {
 }
 
 impl CreateIndexWithTableColumn {
+    /// Manually set the index name
+    /// NOTE: will be truncated if to long for SQL backend
+    pub fn with_name(self, index_name: impl Into<String>) -> CreateIndexWithTableColumn {
+        CreateIndexWithTableColumn {
+            name: index_name.into(),
+            table: self.table,
+            columns: self.columns,
+            includes: self.includes,
+            unique: self.unique,
+        }
+    }
+
+    /// Creates a unique index. Insures uniqueness over columns in index
+    pub fn unique(mut self) -> CreateIndexWithTableColumn {
+        self.unique = true;
+        self
+    }
+
     /// Add another column to this index
     pub fn column(self, column: impl Into<String>) -> CreateIndexWithTableColumn {
         let mut columns = self.columns;
@@ -73,6 +103,7 @@ impl CreateIndexWithTableColumn {
     }
 
     /// Include the contents of another column in the results of this index.
+    /// NOTE: this is ignored if your backend does not support include. (sqlite, mysql)
     pub fn include(self, column: impl Into<String>) -> CreateIndexWithTableColumn {
         let mut includes = self.includes;
         includes.push(column.into());
@@ -105,8 +136,8 @@ impl MigrationWriter for CreateIndexWithTableColumn {
         let cw = ColumnWriter::new(syntax);
         let cols: Vec<String> = self.columns.iter().map(|c| cw.excape(c)).collect();
         let cols: String = cols.join(",");
-        // let includes: Vec<String> = self.includes.iter().map(|c| cw.excape(c)).collect();
-        // let includes: String = includes.join(",");
+        let includes: Vec<String> = self.includes.iter().map(|c| cw.excape(c)).collect();
+        let includes: String = includes.join(",");
         let name = self.index_name();
 
         let mut parts: Vec<&str> = Vec::default();
@@ -121,6 +152,12 @@ impl MigrationWriter for CreateIndexWithTableColumn {
         parts.push("(");
         parts.push(&cols);
         parts.push(")");
+
+        if !self.includes.is_empty() && syntax != Syntax::Sqlite && syntax != Syntax::Mysql {
+            parts.push("INCLUDE (");
+            parts.push(&includes);
+            parts.push(")");
+        }
 
         vec![parts.join(" ")]
     }

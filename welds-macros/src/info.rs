@@ -99,6 +99,8 @@ mod tests {
                 dbname: name,
                 field_type,
                 is_option: null,
+                primary_key: false,
+                include_in_insert: false,
             };
             self.columns.push(col);
             self
@@ -118,6 +120,8 @@ mod tests {
                 dbname: name,
                 field_type,
                 is_option: false,
+                primary_key: true,
+                include_in_insert: false,
             };
             self.columns.push(col.clone());
             self.pks.push(col);

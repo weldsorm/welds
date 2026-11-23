@@ -1,6 +1,7 @@
 use crate::model_traits::TableIdent;
 
 pub mod create_table;
+pub mod default_value;
 use crate::Syntax;
 use crate::writers::TableWriter;
 

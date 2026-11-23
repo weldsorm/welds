@@ -18,6 +18,7 @@ pub enum Type {
     Float,
     FloatBig,
     Binary,
+    BinarySized(u32),
     Uuid,
     Date,
     Time,
@@ -42,6 +43,7 @@ impl Type {
             Type::Float => "f32".to_owned(),
             Type::FloatBig => "f64".to_owned(),
             Type::Binary => "Vec<u8>".to_owned(),
+            Type::BinarySized(_) => "Vec<u8>".to_owned(),
             Type::Uuid => "Uuid".to_owned(),
             Type::Date => "chrono::NaiveDate".to_owned(),
             Type::Time => "chrono::NaiveTime".to_owned(),
@@ -53,23 +55,79 @@ impl Type {
 
     /// Returns the DB type to use in a migration
     pub fn db_type(&self, syntax: Syntax) -> String {
+        if let Type::BinarySized(size) = self {
+            return match syntax {
+                Syntax::Mysql | Syntax::Mssql => format!("VARBINARY({})", size),
+                Syntax::Postgres => "BYTEA".to_owned(),
+                Syntax::Sqlite => "BLOB".to_owned(),
+            };
+        }
+
         let pairs = get_pairs(syntax);
-        let mut pairs_iter = pairs.iter().filter(|x| !x.id_only());
-        find_db_type(self, &mut pairs_iter)
+        find_db_type(self, &pairs[..], false)
     }
 
     /// Returns the DB type to use in a migration for Id columns
     pub fn db_id_type(&self, syntax: Syntax) -> String {
+        if let Type::BinarySized(size) = self {
+            return match syntax {
+                Syntax::Mysql | Syntax::Mssql => format!("VARBINARY({})", size),
+                Syntax::Postgres => "BYTEA".to_owned(),
+                Syntax::Sqlite => "BLOB".to_owned(),
+            };
+        }
+
         let pairs = get_pairs(syntax);
-        let mut pairs_iter = pairs.iter();
-        find_db_type(self, &mut pairs_iter)
+        find_db_type(self, &pairs[..], true)
     }
 
     /// Reads in a DB type and returns a type version of it.
     pub(crate) fn parse_db_type(syntax: Syntax, db_type: &str) -> Type {
-        let db_type = db_type.to_uppercase();
-        let pairs = get_pairs(syntax);
+        let db_type = db_type.trim().replace(' ', "").to_uppercase();
+        let normalized = db_type.as_str();
 
+        if let Some(size) = normalized
+            .strip_prefix("VARCHAR(")
+            .and_then(|s| s.strip_suffix(')'))
+            .filter(|s| !s.eq_ignore_ascii_case("MAX"))
+            .and_then(|s| s.parse::<u32>().ok())
+        {
+            return Type::StringSized(size);
+        }
+        if let Some(size) = normalized
+            .strip_prefix("NVARCHAR(")
+            .and_then(|s| s.strip_suffix(')'))
+            .filter(|s| !s.eq_ignore_ascii_case("MAX"))
+            .and_then(|s| s.parse::<u32>().ok())
+        {
+            return Type::StringSized(size);
+        }
+        if let Some(size) = normalized
+            .strip_prefix("CHAR(")
+            .and_then(|s| s.strip_suffix(')'))
+            .filter(|s| !s.eq_ignore_ascii_case("MAX"))
+            .and_then(|s| s.parse::<u32>().ok())
+        {
+            return Type::StringSized(size);
+        }
+        if let Some(size) = normalized
+            .strip_prefix("BINARY(")
+            .and_then(|s| s.strip_suffix(')'))
+            .filter(|s| !s.eq_ignore_ascii_case("MAX"))
+            .and_then(|s| s.parse::<u32>().ok())
+        {
+            return Type::BinarySized(size);
+        }
+        if let Some(size) = normalized
+            .strip_prefix("VARBINARY(")
+            .and_then(|s| s.strip_suffix(')'))
+            .filter(|s| !s.eq_ignore_ascii_case("MAX"))
+            .and_then(|s| s.parse::<u32>().ok())
+        {
+            return Type::BinarySized(size);
+        }
+
+        let pairs = get_pairs(syntax);
         let found = pairs.iter().find(|&p| p.db_type() == db_type);
         let size = found.and_then(|f| f.default_size());
 
@@ -81,21 +139,38 @@ impl Type {
 }
 
 /// Returns the DB type to use in a migration
-fn find_db_type<'i, I>(ty: &Type, pairs: &mut I) -> String
-where
-    I: Iterator<Item = &'i Pair>,
-{
+fn find_db_type(ty: &Type, pairs: &[Pair], include_id_only: bool) -> String {
     // If the developer want to give us a type use it
     if let Type::Raw(raw) = ty {
         return raw.to_owned();
     }
-    // find the best DB type based on the rust type
+
     let rust_type = ty.rust_type().unwrap();
-    let pair = pairs.find(|&p| p.is_rust_type(&rust_type)).unwrap();
+    let pair = match ty {
+        Type::StringSized(_) => pairs
+            .iter()
+            .filter(|p| include_id_only || !p.id_only())
+            .filter(|p| p.is_rust_type(&rust_type))
+            .find(|p| p.db_sized())
+            .or_else(|| {
+                pairs
+                    .iter()
+                    .filter(|p| include_id_only || !p.id_only())
+                    .find(|p| p.is_rust_type(&rust_type))
+            })
+            .unwrap(),
+        _ => pairs
+            .iter()
+            .filter(|p| include_id_only || !p.id_only())
+            .find(|p| p.is_rust_type(&rust_type))
+            .unwrap(),
+    };
+
     // If the pair is sized. Make sure we add the size info
     if pair.db_sized() {
         let size = match ty {
             Type::StringSized(s) => s.to_string(),
+            Type::BinarySized(s) => s.to_string(),
             _ => pair.default_size().unwrap().to_owned(),
         };
         return format!("{}({})", pair.db_type(), size);
@@ -171,6 +246,46 @@ mod tests {
     }
 
     #[test]
+    fn type_should_support_varbinary() {
+        let db_type = |s| Type::BinarySized(256).db_type(s);
+        assert_eq!(&db_type(Syntax::Sqlite), "BLOB");
+        assert_eq!(&db_type(Syntax::Mysql), "VARBINARY(256)");
+        assert_eq!(&db_type(Syntax::Postgres), "BYTEA");
+        assert_eq!(&db_type(Syntax::Mssql), "VARBINARY(256)");
+    }
+
+    #[test]
+    fn parse_db_type_should_preserve_fixed_length_string_and_binary_types() {
+        let varchar_ty = Type::parse_db_type(Syntax::Mysql, "VARCHAR(255)");
+        assert_eq!(varchar_ty, Type::StringSized(255));
+        assert_eq!(Type::StringSized(255).db_type(Syntax::Mysql), "VARCHAR(255)");
+        assert_eq!(Type::StringSized(255).db_type(Syntax::Mssql), "NVARCHAR(255)");
+        assert_eq!(Type::StringSized(255).db_type(Syntax::Postgres), "VARCHAR(255)");
+        assert_eq!(Type::StringSized(255).db_type(Syntax::Sqlite), "TEXT");
+
+        let char_ty = Type::parse_db_type(Syntax::Mysql, "CHAR(32)");
+        assert_eq!(char_ty, Type::StringSized(32));
+        assert_eq!(Type::StringSized(32).db_type(Syntax::Mysql), "VARCHAR(32)");
+        assert_eq!(Type::StringSized(32).db_type(Syntax::Mssql), "NVARCHAR(32)");
+        assert_eq!(Type::StringSized(32).db_type(Syntax::Postgres), "VARCHAR(32)");
+        assert_eq!(Type::StringSized(32).db_type(Syntax::Sqlite), "TEXT");
+
+        let nvarchar_ty = Type::parse_db_type(Syntax::Mssql, "NVARCHAR(128)");
+        assert_eq!(nvarchar_ty, Type::StringSized(128));
+        assert_eq!(Type::StringSized(128).db_type(Syntax::Mysql), "VARCHAR(128)");
+        assert_eq!(Type::StringSized(128).db_type(Syntax::Mssql), "NVARCHAR(128)");
+        assert_eq!(Type::StringSized(128).db_type(Syntax::Postgres), "VARCHAR(128)");
+        assert_eq!(Type::StringSized(128).db_type(Syntax::Sqlite), "TEXT");
+
+        let varbinary_ty = Type::parse_db_type(Syntax::Mysql, "VARBINARY(256)");
+        assert_eq!(varbinary_ty, Type::BinarySized(256));
+        assert_eq!(Type::BinarySized(256).db_type(Syntax::Mysql), "VARBINARY(256)");
+        assert_eq!(Type::BinarySized(256).db_type(Syntax::Mssql), "VARBINARY(256)");
+        assert_eq!(Type::BinarySized(256).db_type(Syntax::Postgres), "BYTEA");
+        assert_eq!(Type::BinarySized(256).db_type(Syntax::Sqlite), "BLOB");
+    }
+
+    #[test]
     fn no_db_type_should_panic() {
         let syntaxes = [
             Syntax::Sqlite,
@@ -189,6 +304,7 @@ mod tests {
             Type::Float,
             Type::FloatBig,
             Type::Binary,
+            Type::BinarySized(2),
             Type::Uuid,
             Type::Raw("BLA".to_string()),
         ];

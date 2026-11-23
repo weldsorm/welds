@@ -4,9 +4,6 @@ members = ["welds", "welds-connections", "welds-macros"]
 
 resolver = "3"
 
-[patch.crates-io]
-tiberius = { git = "https://github.com/niftitech/tiberius" }
-
 [profile.dev.package.sqlx-macros]
 opt-level = 3
 

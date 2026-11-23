@@ -1,7 +1,7 @@
 [package]
 name = "welds-connections"
 authors = ["Lex Childs <lexchilds@gmail.com>"]
-version = "0.5.0"
+version = "0.5.5"
 edition = "2024"
 license = "BSD-3-Clause"
 categories = ["database"]
@@ -20,14 +20,7 @@ description = "An async ORM for (postgres, mssql, mysql, sqlite)"
 "sqlite" = ["sqlx/sqlite"]
 "sqlite-sync" = ["__sync", "rusqlite", "rusqlite/chrono", "rusqlite/uuid"]
 "sqlite-sync-bundled" = ["sqlite-sync", "rusqlite/bundled"]
-"mssql" = [
-    "tokio",
-    "tokio-util",
-    "futures-util",
-    "tiberius",
-    "futures",
-    "async-mutex",
-]
+"mssql" = ["tokio", "tokio-util", "futures-util", "tiberius", "futures", "async-mutex"]
 "mssql-chrono" = ["tiberius/chrono", "tiberius/tds73"]
 "mssql-time" = ["tiberius/time", "tiberius/tds73"]
 "mssql-rust_decimal" = ["tiberius/rust_decimal"]
@@ -43,12 +36,10 @@ description = "An async ORM for (postgres, mssql, mysql, sqlite)"
 
 [dependencies]
 async-trait = "0.1"
-tiberius = { version = "0.12", default-features = false, features = [
-    "tokio",
-], optional = true }
-futures = { version = "0.3", optional = true }
-futures-core = { version = "0.3", optional = true }
-futures-util = { version = "0.3", optional = true }
+tiberius = { version = "0.13", default-features = false, features = ["tokio"], optional = true }
+futures = {version= "0.3", optional=true }
+futures-core = {version= "0.3", optional=true }
+futures-util = { version= "0.3", optional=true }
 log = "0.4"
 sqlx = { version = "0.9", features = [], optional = true }
 # NOTE: we *need* to pin rusqlite to 0.32.x due to libsqlite-sys version incompatibilities conflicting with sqlx's
@@ -61,10 +52,11 @@ async-mutex = { version = "1.4", optional = true }
 maybe-async = "0.2.10"
 
 [dev-dependencies]
-welds-connections = { path = "./", features = ["full"] }
+welds-connections = { path="./", features = ["full"] }
 sqlx = { version = "0.9", features = ["runtime-tokio"] }
 tokio = { version = "1", features = ["full"] }
 pretty_env_logger = "0.5"
 
 [package.metadata.docs.rs]
 features = ["full", "unstable-api"]
+

@@ -10,4 +10,6 @@ pub(crate) struct Column {
     pub(crate) dbname: String,
     pub(crate) field_type: Type,
     pub(crate) is_option: bool,
+    pub(crate) primary_key: bool,
+    pub(crate) include_in_insert: bool,
 }

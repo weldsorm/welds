@@ -29,6 +29,8 @@ pub(crate) fn get_columns(ast: &syn::DeriveInput) -> Vec<Column> {
             let field = f.ident.as_ref().unwrap().clone();
 
             let ignores = welds_ignores(&f.attrs);
+            let primary_key = is_welds_pk(&f.attrs);
+            let include_in_insert = is_welds_pk_include_in_insert(&f.attrs);
 
             let selectable = !ignores.contains(&Ignores::Select);
             let updateable = !ignores.contains(&Ignores::Update);
@@ -42,6 +44,8 @@ pub(crate) fn get_columns(ast: &syn::DeriveInput) -> Vec<Column> {
                 dbname,
                 field_type,
                 is_option,
+                primary_key,
+                include_in_insert,
             }
         })
         .collect()
@@ -66,6 +70,8 @@ pub(crate) fn get_pks(ast: &syn::DeriveInput) -> Vec<Column> {
             let is_option = field_type.is_some();
             let field_type = field_type.unwrap_or(&f.ty).clone();
             let field = f.ident.as_ref().unwrap().clone();
+            let primary_key = true;
+            let include_in_insert = is_welds_pk_include_in_insert(&f.attrs);
             Column {
                 field,
 
@@ -79,6 +85,8 @@ pub(crate) fn get_pks(ast: &syn::DeriveInput) -> Vec<Column> {
                 dbname,
                 field_type,
                 is_option,
+                primary_key,
+                include_in_insert,
             }
         })
         .collect()
@@ -430,6 +438,29 @@ fn is_welds_pk(attrs: &[Attribute]) -> bool {
         .any(|m| m.path().is_ident("primary_key"))
 }
 
+fn is_welds_pk_include_in_insert(attrs: &[Attribute]) -> bool {
+    let metas = welds_meta(attrs);
+    let nested = metas
+        .iter()
+        .flat_map(as_metalist_nested_meta)
+        .filter(|m| m.path().is_ident("primary_key"))
+        .filter_map(|m| match m {
+            syn::Meta::List(list) => Some(list),
+            _ => None,
+        })
+        .flat_map(|list| as_metalist_nested_meta(&list))
+        .any(|m| m.path().is_ident("include_in_insert"));
+    let bare = metas
+        .iter()
+        .flat_map(as_metalist_nested_meta)
+        .any(|m| m.path().is_ident("primary_key"))
+        && metas
+            .iter()
+            .flat_map(as_metalist_nested_meta)
+            .any(|m| m.path().is_ident("include_in_insert"));
+    nested || bare
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -460,5 +491,11 @@ mod tests {
         assert!(subs.contains(&Ignores::Insert));
         assert!(subs.contains(&Ignores::Select));
         assert!(subs.contains(&Ignores::Update));
+    }
+
+    #[test]
+    fn should_find_include_in_insert_primary_key_option() {
+        let attr1: Attribute = parse_quote!(#[welds(primary_key(include_in_insert))]);
+        assert!(is_welds_pk_include_in_insert(&[attr1]));
     }
 }
